@@ -1823,6 +1823,11 @@ class NicotineFrame:
             self.TrayApp.SetImage()
 
         self.np.queue.put(slskmessages.SetStatus(self.away and 1 or 2))
+
+        # Ensure the UI shows our current status
+        username = self.np.config.sections["server"]["login"]
+        self.np.queue.put(slskmessages.GetUserStatus(username))
+
         self.privatechats.UpdateColours()
 
     def OnExit(self, widget):
