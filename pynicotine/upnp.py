@@ -189,14 +189,14 @@ class UPnPPortMapping:
         # available
         functiontocall = getattr(self, 'AddPortMapping' + self.mode)
 
-        try:
-            functiontocall()
-        except Exception as e:
-            log.addwarning(_('UPnP exception: %(error)s') % {'error': str(e)})
-            log.addwarning(
-                _('Failed to automate the creation of ' +
-                    'UPnP Port Mapping rule.'))
-            return
+        #try:
+        functiontocall()
+        #except Exception as e:
+            #log.addwarning(_('UPnP exception: %(error)s') % {'error': str(e)})
+            #log.addwarning(
+                #_('Failed to automate the creation of ' +
+                    #'UPnP Port Mapping rule.'))
+            #return
 
         log.add(
             _('Managed to map external WAN port %(externalwanport)s ' +
@@ -276,7 +276,7 @@ class UPnPPortMapping:
             $
         """, re.VERBOSE)
 
-        for line in output.split('\n'):
+        for line in output.decode('utf-8').split('\n'):
 
             line = line.strip()
 
@@ -333,7 +333,7 @@ class UPnPPortMapping:
             raise RuntimeError(
                 _('Failed to use UPnPc binary: %(error)s') % {'error': str(e)})
 
-        for line in output.split('\n'):
+        for line in output.decode('utf-8').split('\n'):
             if line.startswith("external ") and \
                line.find(" is redirected to internal ") > -1:
                 log.adddebug('Success')
