@@ -7,13 +7,8 @@ include:
   - README.md
   - AUTHORS.md
 exclude:
-  - files
-  - languages
-  - manpages
-  - plugins
-  - pynicotine
-  - sounds
-  - test
-  - tools
+  - files/README
+  - img/README
+  - plugins/README
 
 theme: jekyll-theme-minimal
