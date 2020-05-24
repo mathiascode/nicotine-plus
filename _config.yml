@@ -7,7 +7,6 @@ include:
   - README.md
   - AUTHORS.md
 exclude:
-  - .github
   - files
   - img
   - languages
