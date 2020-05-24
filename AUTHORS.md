@@ -107,7 +107,7 @@ SeeSchloss
 
 vasi
 - Mac developer
-- [djvasi@gmail.com]
+- [djvasi(at)gmail(dot)com]
 - Packaged nicotine on OSX PowerPc
 
 
