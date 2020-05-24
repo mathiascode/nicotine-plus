@@ -6,6 +6,6 @@ relative_links:
 include:
   - README.md
   - AUTHORS.md
-exclude: .github
+exclude: *
 
 theme: jekyll-theme-minimal
