@@ -7,6 +7,6 @@ include:
   - README.md
   - AUTHORS.md
 exclude:
-  - [*]
+  - pynicotine
 
 theme: jekyll-theme-minimal
