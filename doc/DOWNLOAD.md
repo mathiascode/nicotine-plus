@@ -1,21 +1,23 @@
 # Download Nicotine+
+The current stable version of Nicotine+ is 1.4.1
+
 ## Linux
 If you have no need to modify the Nicotine+ source, you are strongly recommended to use precompiled packages for your distribution. This will save you time.
-
-### Ubuntu PPA (Unstable)
-The project builds [daily unstable snapshots](https://code.launchpad.net/~nicotine-team/+recipe/nicotine+-daily) in a separate [unstable PPA](https://code.launchpad.net/~nicotine-team/+archive/ubuntu/unstable). To use it, run the following:
-
-```console
-$ sudo add-apt-repository ppa:nicotine-team/unstable
-$ sudo apt update
-$ sudo apt install nicotine
-```
 
 ### Ubuntu PPA (Stable)
 To use [stable packages](https://launchpad.net/~nicotine-team/+archive/ubuntu/stable), run the following:
 
 ```console
 $ sudo add-apt-repository ppa:nicotine-team/stable
+$ sudo apt update
+$ sudo apt install nicotine
+```
+
+### Ubuntu PPA (Unstable)
+The project builds [daily unstable snapshots](https://code.launchpad.net/~nicotine-team/+recipe/nicotine+-daily) in a separate [unstable PPA](https://code.launchpad.net/~nicotine-team/+archive/ubuntu/unstable). To use it, run the following:
+
+```console
+$ sudo add-apt-repository ppa:nicotine-team/unstable
 $ sudo apt update
 $ sudo apt install nicotine
 ```

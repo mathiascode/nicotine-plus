@@ -1,10 +1,7 @@
-# Nicotine+ MAINTAINERS
+# Nicotine+ Maintainers
+This is a somewhat up-to-date list of current Nicotine+ maintainers. For inquiries, it is recommended to [open an issue ticket](https://github.com/Nicotine-Plus/nicotine-plus/issues) on GitHub.
 
 ### Active
-
-Michael Labouebe (aka gfarmerfr)
-- Developer
-- [gfarmerfr(at)free(dot)fr]
 
 Mutnick
 - Created Nicotine+ GitHub Organization
@@ -19,6 +16,14 @@ eLvErDe
 Kip Warner
 - Debianization
 - [kip(at)thevertigo(dot)com]
+
+Lene Preuss
+- Python3 migration
+- [lene.preuss(at)here(dot)com]
+
+mathiascode
+- Developer
+- [mail(at)mathias(dot)is]
 
 ### Retired
 
@@ -58,9 +63,13 @@ osiris
 - Author of Nicotine+ Guide
 - [osiris.contact(at)gmail(dot)com]
 
+Michael Labouebe (aka gfarmerfr)
+- Developer
+- [gfarmerfr(at)free(dot)fr]
+
 ---
 
-# Nicotine MAINTAINERS
+# Nicotine Maintainers
 
 ### Retired
 
@@ -102,6 +111,6 @@ vasi
 - Packaged nicotine on OSX PowerPc
 
 
-# Contact info
+# Contact Info
 Have you done something for Nicotine or Nicotine+ and your name is forgotten?
-Please let us know.
+Please [let us know](https://github.com/Nicotine-Plus/nicotine-plus/issues).

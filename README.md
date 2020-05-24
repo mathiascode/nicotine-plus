@@ -11,11 +11,13 @@ Nicotine+ released under the terms of the [GNU Public License v3](https://www.gn
 # Getting Involved
 Please come and join us in the `#nicotine+` channel on Freenode!
 
-If you'd like to contribute, you have a couple of options to get started. You can open an issue ticket on GitHub, discuss in `#nicotine+`, or post to the project [mailing list](mailto:nicotine-team@lists.launchpad.net). Developers are also encouraged to join the [Launchpad Team](https://launchpad.net/~nicotine-team) or subscribe to the mailing list so that they are automatically notified of failed commits.
+If you'd like to contribute, you have a couple of options to get started. You can [open an issue ticket](https://github.com/Nicotine-Plus/nicotine-plus/issues) on GitHub, discuss in `#nicotine+`, or post to the project [mailing list](mailto:nicotine-team@lists.launchpad.net). Developers are also encouraged to join the [Launchpad Team](https://launchpad.net/~nicotine-team) or subscribe to the mailing list so that they are automatically notified of failed commits.
 
-There is a current list of things [TODO](doc/TODO.md). If you'd like to translate Nicotine+ into another language it has not been already, see [TRANSLATIONS](doc/TRANSLATIONS.md).
+There is a current list of things [TODO](doc/TODO.md).
 
-You want to contact someone? See: [MAINTAINERS](AUTHORS.md)
+If you'd like to translate Nicotine+ into another language it has not been already, see [TRANSLATIONS](doc/TRANSLATIONS.md).
+
+If you want to contact someone, see [MAINTAINERS](AUTHORS.md).
 
 # Dependencies
 
