@@ -24,5 +24,5 @@ $ sudo apt install nicotine
 Package maintainers, please insert instructions for users to install pre-compiled packages from your respective repositories here.
 
 ## Windows
-[Nicotine+ Installer](https://github.com/Nicotine-Plus/nicotine-plus/releases/download/1.4.1/Nicotine.-1.4.1.exe)
-[Nicotine+ Source](https://github.com/Nicotine-Plus/nicotine-plus/archive/1.4.1.tar.gz)
+- [Nicotine+ Installer](https://github.com/Nicotine-Plus/nicotine-plus/releases/download/1.4.1/Nicotine.-1.4.1.exe)  
+- [Nicotine+ Source](https://github.com/Nicotine-Plus/nicotine-plus/archive/1.4.1.tar.gz)
