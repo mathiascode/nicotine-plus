@@ -8,6 +8,10 @@ include:
   - AUTHORS.md
 exclude:
   - .github
+  - debian
+  - doc
+  - files
+  - img
   - languages
   - manpages
   - plugins
