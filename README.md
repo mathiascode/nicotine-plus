@@ -1,12 +1,8 @@
 # Nicotine+
 
-[![N|Solid](files/icons/96x96/nicotine-plus.png)](https://github.com/Nicotine-Plus/nicotine-plus/)
-
-## Intro
-
-A graphical client for the SoulSeek peer-to-peer system.
-
 Nicotine+ is a graphical client for the SoulSeek peer-to-peer system. It is an attempt to keep Nicotine working with the latest libraries, kill bugs, keep current with the SoulSeek protocol, and add some new features that users want and/or need.
+
+[Download Nicotine+](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
 
 # License
 
