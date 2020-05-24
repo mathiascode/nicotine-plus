@@ -1,12 +1,12 @@
 # Nicotine+
 
-Nicotine+ is a graphical client for the SoulSeek peer-to-peer system. It is an attempt to keep [Nicotine](https://web.archive.org/web/20150720173459/http://nicotine.thegraveyard.org/) working with the latest libraries, kill bugs, keep current with the SoulSeek protocol, and add some new features that users want and/or need.
+Nicotine+ is a graphical client for the [Soulseek](https://www.slsknet.org/) peer-to-peer system. It is an attempt to keep [Nicotine](https://web.archive.org/web/20150720173459/http://nicotine.thegraveyard.org/) working with the latest libraries, kill bugs, keep current with the Soulseek protocol, and add some new features that users want and/or need.
 
 [Download Nicotine+](doc/DOWNLOAD.md)
 
 # License
 
-Nicotine+ released under the terms of the [GNU Public License v3](https://www.gnu.org/licenses/gpl-3.0-standalone.html) or later.
+Nicotine+ is released under the terms of the [GNU Public License v3](https://www.gnu.org/licenses/gpl-3.0-standalone.html) or later.
 
 # Getting Involved
 Please come and join us in the `#nicotine+` channel on Freenode!
