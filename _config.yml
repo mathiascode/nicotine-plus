@@ -7,6 +7,9 @@ include:
   - README.md
   - AUTHORS.md
 exclude:
+  - languages
+  - manpages
+  - plugins
   - pynicotine
   - sounds
   - test
