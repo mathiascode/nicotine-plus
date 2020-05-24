@@ -42,14 +42,14 @@ win32 = platform.system().startswith("Win")
 
 def checkenv():
 
-    # Require Python 3.6 or newer
+    # Require Python 3.5 or newer
     try:
-        assert sys.version_info[:2] >= (3, 6), '.'.join(
+        assert sys.version_info[:2] >= (3, 5), '.'.join(
             map(str, sys.version_info[:3])
         )
     except AssertionError as e:
         return _("""You're using an unsupported version of Python (%s).
-You should install Python 3.7 or newer.""") % (e)
+You should install Python 3.5 or newer.""") % (e)
 
     # Require GTK+ >= 3
     try:
@@ -89,8 +89,8 @@ binary package and what you try to run Nicotine+ with).""")
         except ImportError:
             msg = _("""Nicotine+ supports a country code blocker.
 This requires a (GPL'ed) library called GeoIP. You can find it here:
-C library:       http://www.maxmind.com/app/c
-Python bindings: http://www.maxmind.com/app/python
+C library:       https://github.com/maxmind/geoip-api-c
+Python bindings: https://github.com/maxmind/geoip-api-python
 (the python bindings require the C library)""")
             log.addwarning(msg)
 

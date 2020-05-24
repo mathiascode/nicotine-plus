@@ -301,7 +301,7 @@
                   </object>
                   <packing>
                     <property name="resize">True</property>
-                    <property name="shrink">True</property>
+                    <property name="shrink">False</property>
                   </packing>
                 </child>
               </object>
@@ -312,7 +312,6 @@
             </child>
             <child>
               <object class="GtkVBox" id="vbox5">
-                <property name="width_request">320</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
