@@ -460,8 +460,7 @@ class FastConfigureAssistant(object):
                 '='.join([
                     'http://tools.slsknet.org/porttest.php?port',
                     str(self.frame.np.waitport)
-                ]),
-                self.window
+                ])
             )
 
         if name == "addshare":

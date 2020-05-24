@@ -1433,6 +1433,8 @@ class NicotineFrame:
             tag.set_property("font", font)
 
     def ChangeListFont(self, listview, font):
+        if font == "":
+            font = 'default font'
         for c in listview.get_columns():
             for r in c.get_cells():
                 if type(r) in (gtk.CellRendererText, gtk.CellRendererCombo):
@@ -1448,6 +1450,8 @@ class NicotineFrame:
         else:
             colour = Gdk.RGBA()
             colour.parse(color)
+        if font == "":
+            font = None
         if first:
             self.tag_log = self.LogWindow.get_buffer().create_tag()
         self.tag_log.set_property("font", font)
@@ -2560,18 +2564,18 @@ class NicotineFrame:
 
     def OnProjectWebsite(self, widget):
         url = "https://github.com/Nicotine-Plus/nicotine-plus/"
-        OpenUri(url, self.MainWindow)
+        OpenUri(url)
 
     def onProjectGithubPage(self, widget):
         url = "https://github.com/Nicotine-Plus/nicotine-plus"
-        OpenUri(url, self.MainWindow)
+        OpenUri(url)
 
     def OnCheckLatest(self, widget):
         checklatest(self.MainWindow)
 
     def OnReportBug(self, widget):
         url = "https://github.com/Nicotine-Plus/nicotine-plus/issues"
-        OpenUri(url, self.MainWindow)
+        OpenUri(url)
 
     def OnAbout(self, widget):
         dlg = AboutDialog(self.MainWindow, self)
@@ -3655,14 +3659,14 @@ class TrayApp:
 
         try:
 
-            self.tray_popup_menu_server = popup0 = PopupMenu(self)
+            self.tray_popup_menu_server = popup0 = PopupMenu(self, False)
 
             popup0.setup(
                 ("#" + _("Connect"), self.frame.OnConnect),
                 ("#" + _("Disconnect"), self.frame.OnDisconnect)
             )
 
-            self.tray_popup_menu = popup = PopupMenu(self)
+            self.tray_popup_menu = popup = PopupMenu(self, False)
 
             popup.setup(
                 ("#" + _("Hide / Show Nicotine+"), self.HideUnhideWindow),

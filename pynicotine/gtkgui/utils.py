@@ -279,11 +279,11 @@ def UrlEvent(tag, widget, event, iter, url):
     if tag.last_event_type == Gdk.EventType.BUTTON_PRESS and event.button.type == Gdk.EventType.BUTTON_RELEASE and event.button.button == 1:
         if url[:4] == "www.":
             url = "http://" + url
-        OpenUri(url, widget.get_toplevel())
+        OpenUri(url)
     tag.last_event_type = event.button.type
 
 
-def OpenUri(uri, window):
+def OpenUri(uri):
     """Open a URI in an external (web) browser. The given argument has
     to be a properly formed URI including the scheme (fe. HTTP).
 
@@ -299,8 +299,18 @@ def OpenUri(uri, window):
             executeCommand(PROTOCOL_HANDLERS[protocol], uri)
             return
 
-    # Situation 2, user did not define a way of handling the protocol
-    gtk.show_uri_on_window(window, uri, Gdk.CURRENT_TIME)
+    # Situation 2, user did not define a way of handling the protocol, we'll leave it up to python
+    if webbrowser:
+        webbrowser.open(uri)
+        return
+
+    # Situation 3, we let Gnome VFS deal with it
+    try:
+        import gnomevfs
+        gnomevfs.url_show(uri)
+        return
+    except Exception as e:  # noqa: F841
+        pass
 
 
 def AppendLine(textview, line, tag=None, timestamp=None, showstamp=True, timestamp_format="%H:%M:%S", username=None, usertag=None, scroll=True):
@@ -975,22 +985,22 @@ class IconNotebook:
 
 class PopupMenu(gtk.Menu):
 
-    def __init__(self, frame=None):
+    def __init__(self, frame=None, shouldattach=True):
 
         gtk.Menu.__init__(self)
 
-        # The frame is passed when the menu needs to be attached to
-        # a widget. In other words, when it's not a submenu.
         self.frame = frame
         self.user = None
         self.useritem = None
         self.handlers = {}
         self.editing = False
 
-    def setup(self, *items):
-
-        if hasattr(self.frame, 'MainWindow'):
+        # If the menu is not a submenu, it needs to be attached
+        # to the main window, otherwise it has no parent
+        if shouldattach and hasattr(self.frame, 'MainWindow'):
             self.attach_to_widget(self.frame.MainWindow, None)
+
+    def setup(self, *items):
 
         for item in items:
 
