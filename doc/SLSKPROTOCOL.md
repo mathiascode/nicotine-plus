@@ -34,12 +34,6 @@ Bool
 
 # Server Messages
 
-- [Packing](#packing)
-- [Server Messages](#server-messages)
-- [Peer Messages](#peer-messages)
-- [Distributed Messages](#distributed-messages)
-- [Museek Data Types](#museek-data-types)
-
 | Send           | Receive             |
 | -------------- | ------------------- |
 | Send to Server | Receive from Server |
@@ -186,32 +180,32 @@ Send your username, password, and client version.
 
   - Send Login
     1.  **string** <ins>username</ins>
-    2.  **string** <span class="underline">password</span> **A non-empty
+    2.  **string** <ins>password</ins> **A non-empty
         string is required**
-    3.  **uint32** <span class="underline">version number</span> *182*
+    3.  **uint32** <ins>version number</ins> *182*
         for Museek+ *181* for Nicotine+
-    4.  **string** <span class="underline">MD5 hex digest of
-        concatenated username & password</span>
-    5.  **uint32** <span class="underline">1</span> ??? No idea what
+    4.  **string** <ins>MD5 hex digest of
+        concatenated username & password</ins>
+    5.  **uint32** <ins>1</ins> ??? No idea what
         exactly this is.
-    6.  **string** <span class="underline">Unknown string</span> *In 157
+    6.  **string** <ins>Unknown string</ins> *In 157
         and up*
 
 <!-- end list -->
 
   - Receive Login Success
-    1.  **uchar** <span class="underline">success</span> 1
-    2.  **string** <span class="underline">greet</span> A MOTD string
-    3.  **uint32** <span class="underline">Your IP Address</span>
-    4.  **string** <span class="underline">MD5 hex digest of the
-        password string</span> *Windows Soulseek uses this hash to
+    1.  **uchar** <ins>success</ins> 1
+    2.  **string** <ins>greet</ins> A MOTD string
+    3.  **uint32** <ins>Your IP Address</ins>
+    4.  **string** <ins>MD5 hex digest of the
+        password string</ins> *Windows Soulseek uses this hash to
         determine if it's connected to the official server*
 
 <!-- end list -->
 
   - Receive Login Failure
-    1.  **uchar** <span class="underline">failure</span> *0*
-    2.  **string** <span class="underline">reason</span> Almost always:
+    1.  **uchar** <ins>failure</ins> *0*
+    2.  **string** <ins>reason</ins> Almost always:
         *Bad Password*; sometimes it's a banned message or another
         error.
 
@@ -231,7 +225,7 @@ The port you listen for connections on (2234 by default)
 #### Data Order
 
   - Send
-    1.  **uint32** <span class="underline">port</span>
+    1.  **uint32** <ins>port</ins>
   - Receive
       - *No Message*
 
@@ -251,11 +245,11 @@ A server for a user's IP Address and port
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">username</span>
+    1.  **string** <ins>username</ins>
   - Receive
-    1.  **string** <span class="underline">username</span>
-    2.  **ip** <span class="underline">ip</span>
-    3.  **int** <span class="underline">port</span>
+    1.  **string** <ins>username</ins>
+    2.  **ip** <ins>ip</ins>
+    3.  **int** <ins>port</ins>
 
 ### Server Code 5
 
@@ -273,21 +267,21 @@ Watch this user's status
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">username</span>
+    1.  **string** <ins>username</ins>
   - Receive
-    1.  **string** <span class="underline">username</span>
-    2.  **char** <span class="underline">exists</span> *converted to
+    1.  **string** <ins>username</ins>
+    2.  **char** <ins>exists</ins> *converted to
         Boolean*
     <!-- end list -->
-      - If <span class="underline">exists</span> is 1/True (may not be
+      - If <ins>exists</ins> is 1/True (may not be
         implemented)
-        1.  **int** <span class="underline">status</span> *0 == Offline,
+        1.  **int** <ins>status</ins> *0 == Offline,
             1 == Away; 2 == Online*
-        2.  **int** <span class="underline">avgspeed</span>
-        3.  **off\_t** <span class="underline">downloadnum</span>
-        4.  **int** <span class="underline">files</span>
-        5.  **int** <span class="underline">dirs</span>
-        6.  **string** <span class="underline">Country Code</span> (may
+        2.  **int** <ins>avgspeed</ins>
+        3.  **off\_t** <ins>downloadnum</ins>
+        4.  **int** <ins>files</ins>
+        5.  **int** <ins>dirs</ins>
+        6.  **string** <ins>Country Code</ins> (may
             not be implemented)
 
 ### Server Code 6
@@ -306,7 +300,7 @@ Something to do with user status. Usually sent just after SAddUser
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">username</span>
+    1.  **string** <ins>username</ins>
   - Receive
       - *No Message*
 
@@ -324,10 +318,10 @@ Nicotine: GetUserStatus
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">username</span>
+    1.  **string** <ins>username</ins>
   - Receive
-    1.  **string** <span class="underline">username</span>
-    2.  **int** <span class="underline">status</span> *0 == Offline, 1
+    1.  **string** <ins>username</ins>
+    2.  **int** <ins>status</ins> *0 == Offline, 1
         == Away; 2 == Online*
 
 ### Server Code 13
@@ -344,12 +338,12 @@ Nicotine: SayChatroom
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">message</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>message</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">username</span>
-    3.  **string** <span class="underline">message</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>username</ins>
+    3.  **string** <ins>message</ins>
 
 ### Server Code 14
 
@@ -365,39 +359,39 @@ Nicotine: JoinRoom
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 <!-- end list -->
 
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **int** <span class="underline">number of users in room</span>
-    3.  Iterate the <span class="underline">number of users</span>
+    1.  **string** <ins>room</ins>
+    2.  **int** <ins>number of users in room</ins>
+    3.  Iterate the <ins>number of users</ins>
         **museekd uses a vector of strings**
-        1.  **string** <span class="underline">user</span>
-    4.  **int** <span class="underline">number of userdata</span>
-    5.  Iterate the <span class="underline">number of users</span>
+        1.  **string** <ins>user</ins>
+    4.  **int** <ins>number of userdata</ins>
+    5.  Iterate the <ins>number of users</ins>
         **museekd uses a vector of userdata**
-        1.  **int** <span class="underline">status</span>
-    6.  **int** <span class="underline">number of userdata</span>
+        1.  **int** <ins>status</ins>
+    6.  **int** <ins>number of userdata</ins>
     7.  Iterate the userdata **vector of userdata** (and add unpacked
         data to [User Data](/wiki/SoulseekProtocol#UserData))
-        1.  **int** <span class="underline">avgspeed</span>
-        2.  **off\_t** <span class="underline">downloadnum</span>
-        3.  **int** <span class="underline">files</span>
-        4.  **int** <span class="underline">dirs</span>
-    8.  **int** <span class="underline">number of slotsfree</span>
+        1.  **int** <ins>avgspeed</ins>
+        2.  **off\_t** <ins>downloadnum</ins>
+        3.  **int** <ins>files</ins>
+        4.  **int** <ins>dirs</ins>
+    8.  **int** <ins>number of slotsfree</ins>
     9.  Iterate thru number of slotsfree
-        1.  **int** <span class="underline">slotsfree</span>
-    10. **int** <span class="underline">number of usercountries</span>
+        1.  **int** <ins>slotsfree</ins>
+    10. **int** <ins>number of usercountries</ins>
         (may not be implemented)
     11. Iterate thru number of usercountries
-        1.  **string** <span class="underline">countrycode</span>
+        1.  **string** <ins>countrycode</ins>
             **Uppercase country code**
 
 ServerMessages.hh then Iterates thru
-<span class="underline">userdata</span> and
-<span class="underline">users</span> (For passing message to daemon)
+<ins>userdata</ins> and
+<ins>users</ins> (For passing message to daemon)
 
   - Add data to [RoomData](/wiki/SoulseekProtocol#RoomData)
     users\[**string** username \] = **data**
@@ -416,9 +410,9 @@ Nicotine: LeaveRoom
 #### Data Order
 
   - Send (leave room)
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive (left room)
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 16
 
@@ -436,15 +430,15 @@ Nicotine: UserJoinedRoom
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">username</span>
-    3.  **int** <span class="underline">status</span>
-    4.  **int** <span class="underline">avgspeed</span>
-    5.  **off\_t** <span class="underline">downloadnum</span>
-    6.  **int** <span class="underline">files</span>
-    7.  **int** <span class="underline">dirs</span>
-    8.  **int** <span class="underline">slotsfree</span>
-    9.  **string** <span class="underline">countrycode</span>\_
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>username</ins>
+    3.  **int** <ins>status</ins>
+    4.  **int** <ins>avgspeed</ins>
+    5.  **off\_t** <ins>downloadnum</ins>
+    6.  **int** <ins>files</ins>
+    7.  **int** <ins>dirs</ins>
+    8.  **int** <ins>slotsfree</ins>
+    9.  **string** <ins>countrycode</ins>\_
         **Uppercase country code**
 
 ### Server Code 17
@@ -465,8 +459,8 @@ A user (not you) left a room you are in.
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">username</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>username</ins>
 
 ### Server Code 18
 
@@ -487,18 +481,18 @@ Order](/wiki/SoulseekProtocol#PeerConnectionMessageOrder)
 #### Data Order
 
   - Send
-    1.  **uint32** <span class="underline">token</span>
-    2.  **string** <span class="underline">username</span>
-    3.  **string** <span class="underline">type</span> *Connection Type
+    1.  **uint32** <ins>token</ins>
+    2.  **string** <ins>username</ins>
+    3.  **string** <ins>type</ins> *Connection Type
         (P, F or D)*
   - Receive
-    1.  **string** <span class="underline">username</span>
-    2.  **string** <span class="underline">type</span> *Connection Type
+    1.  **string** <ins>username</ins>
+    2.  **string** <ins>type</ins> *Connection Type
         (P, F or D)*
-    3.  **ip** <span class="underline">ip</span>
-    4.  **int** <span class="underline">port</span>
-    5.  **uint32** <span class="underline">token</span> *Use this token
-        for [Pierce Firewall](/wiki/SoulseekProtocol#PeerCode0)*
+    3.  **ip** <ins>ip</ins>
+    4.  **int** <ins>port</ins>
+    5.  **uint32** <ins>token</ins> *Use this token
+        for [Pierce Firewall](#peer-code-0)*
 
 ### Server Code 22
 
@@ -514,13 +508,13 @@ Nicotine: MessageUser
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">username</span>
-    2.  **string** <span class="underline">message</span>
+    1.  **string** <ins>username</ins>
+    2.  **string** <ins>message</ins>
   - Receive
-    1.  **int** <span class="underline">ID</span>
-    2.  **int** <span class="underline">timestamp</span>
-    3.  **string** <span class="underline">username</span>
-    4.  **string** <span class="underline">message</span>
+    1.  **int** <ins>ID</ins>
+    2.  **int** <ins>timestamp</ins>
+    3.  **string** <ins>username</ins>
+    4.  **string** <ins>message</ins>
 
 ### Server Code 23
 
@@ -540,7 +534,7 @@ timestamps to account for server-time bugginess)
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">message ID</span>
+    1.  **int** <ins>message ID</ins>
   - Receive
       - *No Message*
 
@@ -557,12 +551,12 @@ the search results.
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">ticket</span>
-    2.  **string** <span class="underline">search query</span>
+    1.  **int** <ins>ticket</ins>
+    2.  **string** <ins>search query</ins>
   - Receive *search request from another user*
-    1.  **string** <span class="underline">username</span>
-    2.  **int** <span class="underline">ticket</span>
-    3.  **string** <span class="underline">search query</span>
+    1.  **string** <ins>username</ins>
+    2.  **int** <ins>ticket</ins>
+    3.  **string** <ins>search query</ins>
 
 ### Server Code 28
 
@@ -581,7 +575,7 @@ and 2 = Online*
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">status</span>
+    1.  **int** <ins>status</ins>
   - Receive
       - *No Message*
 
@@ -621,8 +615,8 @@ Nicotine: SendSpeed
 #### Data Order
 
   - Send *average transfer speed*
-    1.  **string** <span class="underline">username</span>
-    2.  **int** <span class="underline">speed</span>
+    1.  **string** <ins>username</ins>
+    2.  **int** <ins>speed</ins>
   - Receive
       - *No Message*
 
@@ -640,8 +634,8 @@ Nicotine: SharedFoldersFiles
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">dirs</span>
-    2.  **int** <span class="underline">files</span>
+    1.  **int** <ins>dirs</ins>
+    2.  **int** <ins>files</ins>
   - Receive
       - *No Message*
 
@@ -653,13 +647,13 @@ Nicotine: GetUserStats
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">username</span>
+    1.  **string** <ins>username</ins>
   - Receive
-    1.  **string** <span class="underline">username</span>
-    2.  **int** <span class="underline">avgspeed</span>
-    3.  **off\_t** <span class="underline">downloadnum</span>
-    4.  **int** <span class="underline">files</span>
-    5.  **int** <span class="underline">dirs</span>
+    1.  **string** <ins>username</ins>
+    2.  **int** <ins>avgspeed</ins>
+    3.  **off\_t** <ins>downloadnum</ins>
+    4.  **int** <ins>files</ins>
+    5.  **int** <ins>dirs</ins>
 
 ### Server Code 40
 
@@ -679,8 +673,8 @@ Nicotine: QueuedDownloads
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">username</span>
-    2.  **bool** <span class="underline">slotsfree</span> *Can
+    1.  **string** <ins>username</ins>
+    2.  **bool** <ins>slotsfree</ins> *Can
         immediately download*
 
 ### Server Code 41
@@ -723,9 +717,9 @@ Search a specific user's shares
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">username</span>
-    2.  **int** <span class="underline">ticket</span>
-    3.  **string** <span class="underline">search query</span>
+    1.  **string** <ins>username</ins>
+    2.  **int** <ins>ticket</ins>
+    3.  **string** <ins>search query</ins>
   - Receive
       - *No Message*
 
@@ -743,7 +737,7 @@ Nicotine: **AddThingILike**
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">item</span>
+    1.  **string** <ins>item</ins>
   - Receive
       - *No Message*
 
@@ -761,7 +755,7 @@ Nicotine: **RemoveThingILike**
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">item</span>
+    1.  **string** <ins>item</ins>
   - Receive
       - *No Message*
 
@@ -783,20 +777,20 @@ List of recommendations and a number for each
   - Send
       - Empty Message
   - Receive
-    1.  **int** <span class="underline">number of total
-        recommendations</span>
-    2.  Iterate for <span class="underline">number of total
-        recommendations</span>
-        1.  **string** <span class="underline">recommendation</span>
-        2.  **int** <span class="underline">number of recommendations
-            this recommendation has</span>
-    3.  **int** <span class="underline">number of total
-        unrecommendations</span>
-    4.  Iterate for <span class="underline">number of total
-        unrecommendations</span>
-        1.  **string** <span class="underline">unrecommendation</span>
-        2.  **int** <span class="underline">number of unrecommendations
-            this unrecommendation has (negative)</span>
+    1.  **int** <ins>number of total
+        recommendations</ins>
+    2.  Iterate for <ins>number of total
+        recommendations</ins>
+        1.  **string** <ins>recommendation</ins>
+        2.  **int** <ins>number of recommendations
+            this recommendation has</ins>
+    3.  **int** <ins>number of total
+        unrecommendations</ins>
+    4.  Iterate for <ins>number of total
+        unrecommendations</ins>
+        1.  **string** <ins>unrecommendation</ins>
+        2.  **int** <ins>number of unrecommendations
+            this unrecommendation has (negative)</ins>
 
 ### Server Code 56
 
@@ -816,20 +810,20 @@ List of recommendations and a number for each
   - Send
       - Empty Message
   - Receive
-    1.  **int** <span class="underline">number of total
-        recommendations</span>
-    2.  Iterate for <span class="underline">number of total
-        recommendations</span>
-        1.  **string** <span class="underline">recommendation</span>
-        2.  **int** <span class="underline">number of recommendations
-            this recommendation has</span>
-    3.  **int** <span class="underline">number of total
-        unrecommendations</span>
-    4.  Iterate for <span class="underline">number of total
-        unrecommendations</span>
-        1.  **string** <span class="underline">unrecommendation</span>
-        2.  **int** <span class="underline">number of unrecommendations
-            this unrecommendation has (negative)</span>
+    1.  **int** <ins>number of total
+        recommendations</ins>
+    2.  Iterate for <ins>number of total
+        recommendations</ins>
+        1.  **string** <ins>recommendation</ins>
+        2.  **int** <ins>number of recommendations
+            this recommendation has</ins>
+    3.  **int** <ins>number of total
+        unrecommendations</ins>
+    4.  Iterate for <ins>number of total
+        unrecommendations</ins>
+        1.  **string** <ins>unrecommendation</ins>
+        2.  **int** <ins>number of unrecommendations
+            this unrecommendation has (negative)</ins>
 
 ### Server Code 57
 
@@ -847,17 +841,17 @@ Get a User's Liked and Hated Interests
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">username</span>
+    1.  **string** <ins>username</ins>
   - Receive
-    1.  **string** <span class="underline">username</span>
-    2.  **int** <span class="underline">number of liked interests</span>
-    3.  Iterate for <span class="underline">number of liked
-        interests</span>
-        1.  **string** <span class="underline">interest</span>
-    4.  **int** <span class="underline">number of hated interests</span>
-    5.  Iterate for <span class="underline">number of hated
-        interests</span>
-        1.  **string** <span class="underline">interest</span>
+    1.  **string** <ins>username</ins>
+    2.  **int** <ins>number of liked interests</ins>
+    3.  Iterate for <ins>number of liked
+        interests</ins>
+        1.  **string** <ins>interest</ins>
+    4.  **int** <ins>number of hated interests</ins>
+    5.  Iterate for <ins>number of hated
+        interests</ins>
+        1.  **string** <ins>interest</ins>
 
 ### Server Code 64
 
@@ -879,14 +873,14 @@ will download all rooms.
   - Send
       - Empty Message
   - Receive
-    1.  **int** <span class="underline">number of rooms</span>
-    2.  Iterate for <span class="underline">number of rooms</span>
-        1.  **string** <span class="underline">room</span>
-    3.  **int** <span class="underline">number of rooms</span> (unused
+    1.  **int** <ins>number of rooms</ins>
+    2.  Iterate for <ins>number of rooms</ins>
+        1.  **string** <ins>room</ins>
+    3.  **int** <ins>number of rooms</ins> (unused
         in museekd)
-    4.  Iterate for <span class="underline">number of rooms</span>
-        1.  **int** <span class="underline">number of users in
-            room</span>
+    4.  Iterate for <ins>number of rooms</ins>
+        1.  **int** <ins>number of users in
+            room</ins>
 
 ### Server Code 65
 
@@ -906,12 +900,12 @@ SEEMS BROKEN (no results even with official client)
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">username</span>
-    2.  **uint32** <span class="underline">ticket</span>
-    3.  **string** <span class="underline">filename</span>
-    4.  **string** <span class="underline">path</span>
-    5.  **off\_t** <span class="underline">filesize</span>
-    6.  **uint32** <span class="underline">checkum</span>
+    1.  **string** <ins>username</ins>
+    2.  **uint32** <ins>ticket</ins>
+    3.  **string** <ins>filename</ins>
+    4.  **string** <ins>path</ins>
+    5.  **off\_t** <ins>filesize</ins>
+    6.  **uint32** <ins>checkum</ins>
 
 ### Server Code 66
 
@@ -931,7 +925,7 @@ Admins send this message to all users
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">message</span>
+    1.  **string** <ins>message</ins>
 
 ### Server Code 69
 
@@ -951,9 +945,9 @@ List of privileged users
   - Send
       - *No Message*
   - Receive
-    1.  **int** <span class="underline">number of users</span>
-    2.  Iterate <span class="underline">number of users</span>
-        1.  **string** <span class="underline">user</span>
+    1.  **int** <ins>number of users</ins>
+    2.  Iterate <ins>number of users</ins>
+        1.  **string** <ins>user</ins>
 
 ### Server Code 71
 
@@ -969,7 +963,7 @@ Nicotine: HaveNoParent
 #### Data Order
 
   - Send
-    1.  **bool** <span class="underline">have\_parents</span> (is a
+    1.  **bool** <ins>have\_parents</ins> (is a
         boolean internal to museekd)
   - Receive
       - *No Message*
@@ -989,7 +983,7 @@ Send our parent's IP to the server
 #### Data Order
 
   - Send
-    1.  **ip** <span class="underline">ip</span>
+    1.  **ip** <ins>ip</ins>
   - Receive
       - *No Message*
 
@@ -1006,7 +1000,7 @@ Unknown Purpose
   - Send
       - *No Message*
   - Receive
-    1.  **int** <span class="underline">number</span>
+    1.  **int** <ins>number</ins>
 
 ### Server Code 84
 
@@ -1021,7 +1015,7 @@ Unknown Purpose. Number was 0x0a before 157c. Now 0x64 since 157 NS 13c.
   - Send
       - *No Message*
   - Receive
-    1.  **int** <span class="underline">number</span>
+    1.  **int** <ins>number</ins>
 
 ### Server Code 86
 
@@ -1043,7 +1037,7 @@ Nicotine: ParentInactivityTimeout
   - Send
       - *No Message*
   - Receive
-    1.  **int** <span class="underline">number</span>
+    1.  **int** <ins>number</ins>
 
 ### Server Code 87
 
@@ -1065,7 +1059,7 @@ Nicotine: SearchInactivityTimeout
   - Send
       - *No Message*
   - Receive
-    1.  **int** <span class="underline">number</span>
+    1.  **int** <ins>number</ins>
 
 ### Server Code 88
 
@@ -1087,7 +1081,7 @@ Nicotine: MinParentsInCache
   - Send
       - *No Message*
   - Receive
-    1.  **int** <span class="underline">number</span>
+    1.  **int** <ins>number</ins>
 
 ### Server Code 90
 
@@ -1109,7 +1103,7 @@ Nicotine: DistribAliveInterval
   - Send
       - *No Message*
   - Receive
-    1.  **int** <span class="underline">number</span>
+    1.  **int** <ins>number</ins>
 
 ### Server Code 91
 
@@ -1129,7 +1123,7 @@ Add a new privileged user to your list of global privileged users
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">user</span>
+    1.  **string** <ins>user</ins>
 
 ### Server Code 92
 
@@ -1147,7 +1141,7 @@ Nicotine: CheckPrivileges
   - Send
       - Empty Message
   - Receive
-    1.  **int** <span class="underline">time\_left</span>
+    1.  **int** <ins>time\_left</ins>
 
 ### Server Code 93
 
@@ -1166,12 +1160,12 @@ Museekd: SSearchRequest
   - Send
       - No Message
   - Receive
-    1.  **uint8** <span class="underline">distributed code
-        (DSearchRequest)</span>
-    2.  **int** <span class="underline">unknown</span>
-    3.  **string** <span class="underline">username</span>
-    4.  **int** <span class="underline">token</span>
-    5.  **string** <span class="underline">query</span>
+    1.  **uint8** <ins>distributed code
+        (DSearchRequest)</ins>
+    2.  **int** <ins>unknown</ins>
+    3.  **string** <ins>username</ins>
+    4.  **int** <ins>token</ins>
+    5.  **string** <ins>query</ins>
 
 ### Server Code 100
 
@@ -1188,7 +1182,7 @@ Museekd: SAcceptChildren
 #### Data Order
 
   - Send
-    1.  **bool** <span class="underline">accept</span>
+    1.  **bool** <ins>accept</ins>
   - Receive
       - No Message
 
@@ -1208,11 +1202,11 @@ Nicotine: NetInfo
   - Send
       - Empty Message
   - Receive *list of search parents*
-    1.  **int** <span class="underline">number of parents</span>
-    2.  Iterate for <span class="underline">number of parents</span>
-        1.  **string** <span class="underline">user</span>
-        2.  **IP** <span class="underline">IP address</span>
-        3.  **int** <span class="underline">port</span>
+    1.  **int** <ins>number of parents</ins>
+    2.  Iterate for <ins>number of parents</ins>
+        1.  **string** <ins>user</ins>
+        2.  **IP** <ins>IP address</ins>
+        3.  **int** <ins>port</ins>
 
 ### Server Code 103
 
@@ -1228,8 +1222,8 @@ Nicotine: WishlistSearch
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">ticket</span>
-    2.  **string** <span class="underline">search query</span>
+    1.  **int** <ins>ticket</ins>
+    2.  **string** <ins>search query</ins>
   - Receive
       - *No Message*
 
@@ -1249,7 +1243,7 @@ Nicotine: WishlistInterval
   - Send
       - *No Message*
   - Receive
-    1.  **int** <span class="underline">interval</span>
+    1.  **int** <ins>interval</ins>
 
 ### Server Code 110
 
@@ -1267,10 +1261,10 @@ Nicotine: SimilarUsers
   - Send
       - Empty Message
   - Receive
-    1.  **int** <span class="underline">number of users</span>
-    2.  Iterate for <span class="underline">number of user</span>
-        1.  **string** <span class="underline">user</span>
-        2.  **int** <span class="underline">status</span>
+    1.  **int** <ins>number of users</ins>
+    2.  Iterate for <ins>number of user</ins>
+        1.  **string** <ins>user</ins>
+        2.  **int** <ins>status</ins>
 
 ### Server Code 111
 
@@ -1286,16 +1280,16 @@ Nicotine: ItemRecommendations
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">item</span>
+    1.  **string** <ins>item</ins>
   - Receive
-    1.  **string** <span class="underline">item</span>
-    2.  **int** <span class="underline">number of
-        recommendations</span><span class="underline"> </span>
-    3.  Iterate for <span class="underline">number of
-        recommendations</span><span class="underline"> </span>
-        1.  **string** <span class="underline">recommendation</span>
-        2.  **int** <span class="underline">number of recommendations
-            for this recommendation (can be negative)</span>
+    1.  **string** <ins>item</ins>
+    2.  **int** <ins>number of
+        recommendations</ins><ins> </ins>
+    3.  Iterate for <ins>number of
+        recommendations</ins><ins> </ins>
+        1.  **string** <ins>recommendation</ins>
+        2.  **int** <ins>number of recommendations
+            for this recommendation (can be negative)</ins>
 
 ### Server Code 112
 
@@ -1311,12 +1305,12 @@ Nicotine: ItemSimilarUsers
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">item</span>
+    1.  **string** <ins>item</ins>
   - Receive
-    1.  **string** <span class="underline">item</span>
-    2.  **int** <span class="underline">number of users</span>
-    3.  Iterate for <span class="underline">number of user</span>
-        1.  **string** <span class="underline">user</span>
+    1.  **string** <ins>item</ins>
+    2.  **int** <ins>number of users</ins>
+    3.  Iterate for <ins>number of user</ins>
+        1.  **string** <ins>user</ins>
         2.  **int** 0
 
 ### Server Code 113
@@ -1335,11 +1329,11 @@ Nicotine: RoomTickerState
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **int** <span class="underline">number of users</span>
-    3.  Iterate for <span class="underline">number of user</span>
-        1.  **string** <span class="underline">user</span>
-        2.  **string** <span class="underline">tickers</span>
+    1.  **string** <ins>room</ins>
+    2.  **int** <ins>number of users</ins>
+    3.  Iterate for <ins>number of user</ins>
+        1.  **string** <ins>user</ins>
+        2.  **string** <ins>tickers</ins>
 
 ### Server Code 114
 
@@ -1357,9 +1351,9 @@ Nicotine: RoomTickerAdd
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">user</span>
-    3.  **string** <span class="underline">ticker</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>user</ins>
+    3.  **string** <ins>ticker</ins>
 
 ### Server Code 115
 
@@ -1377,8 +1371,8 @@ Nicotine: RoomTickerRemove
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">user</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>user</ins>
 
 ### Server Code 116
 
@@ -1394,8 +1388,8 @@ Nicotine: RoomTickerSet
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">ticker</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>ticker</ins>
   - Receive
       - *No Message*
 
@@ -1413,7 +1407,7 @@ Nicotine: AddThingIHate
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">item</span>
+    1.  **string** <ins>item</ins>
   - Receive
       - *No Message*
 
@@ -1431,7 +1425,7 @@ Nicotine: RemoveThingIHate
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">item</span>
+    1.  **string** <ins>item</ins>
   - Receive
       - *No Message*
 
@@ -1449,9 +1443,9 @@ Nicotine: RoomSearch
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">ticket</span>
-    3.  **string** <span class="underline">search query</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>ticket</ins>
+    3.  **string** <ins>search query</ins>
   - Receive
       - *No Message*
 
@@ -1469,7 +1463,7 @@ Nicotine: SendUploadSpeed
 #### Data Order
 
   - Send *average upload transfer speed*
-    1.  **int** <span class="underline">speed</span>
+    1.  **int** <ins>speed</ins>
   - Receive
       - *No Message*
 
@@ -1487,10 +1481,10 @@ Nicotine: Not implemented
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">user</span>
+    1.  **string** <ins>user</ins>
   - Receive
-    1.  **string** <span class="underline">user</span>
-    2.  **char** <span class="underline">privileged</span> (boolean
+    1.  **string** <ins>user</ins>
+    2.  **char** <ins>privileged</ins> (boolean
         internal to museekd)
 
 ### Server Code 123
@@ -1507,8 +1501,8 @@ Nicotine: GivePrivileges
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">user</span>
-    2.  **int** <span class="underline">days</span>
+    1.  **string** <ins>user</ins>
+    2.  **int** <ins>days</ins>
   - Receive
       - *No Message*
 
@@ -1525,8 +1519,8 @@ Nicotine: NotifyPrivileges
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">token</span>
-    2.  **string** <span class="underline">user</span>
+    1.  **int** <ins>token</ins>
+    2.  **string** <ins>user</ins>
   - Receive
       - *No Message*
 
@@ -1545,7 +1539,7 @@ Nicotine: AckNotifyPrivileges
   - Send
       - *No Message*
   - Receive
-    1.  **int** <span class="underline">token</span>
+    1.  **int** <ins>token</ins>
 
 ### Server Code 126
 
@@ -1562,7 +1556,7 @@ Museekd: **SBranchLevel**
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">branch\_level</span>
+    1.  **int** <ins>branch\_level</ins>
   - Receive
       - *No Message*
 
@@ -1581,7 +1575,7 @@ Museekd: **SBranchRoot**
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">branch\_root</span>
+    1.  **string** <ins>branch\_root</ins>
   - Receive
       - *No Message*
 
@@ -1600,7 +1594,7 @@ Museekd: **SChildDepth**
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">child\_depth</span>
+    1.  **int** <ins>child\_depth</ins>
   - Receive
       - *No Message*
 
@@ -1622,10 +1616,10 @@ Nicotine: PrivateRoomUsers
   - Send
     1.  *No Message*
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **int** <span class="underline">number of users</span>
-    3.  Iterate for <span class="underline">number of users</span>
-        1.  **string** <span class="underline">users</span>
+    1.  **string** <ins>room</ins>
+    2.  **int** <ins>number of users</ins>
+    3.  Iterate for <ins>number of users</ins>
+        1.  **string** <ins>users</ins>
 
 ### Server Code 134
 
@@ -1643,11 +1637,11 @@ Nicotine: PrivateRoomAddUser
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">user</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>user</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">user</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>user</ins>
 
 ### Server Code 135
 
@@ -1665,11 +1659,11 @@ Nicotine: PrivateRoomRemoveUser
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">user</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>user</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
-    2.  **string** <span class="underline">user</span>
+    1.  **string** <ins>room</ins>
+    2.  **string** <ins>user</ins>
 
 ### Server Code 136
 
@@ -1687,9 +1681,9 @@ Nicotine: PrivateRoomDismember
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 137
 
@@ -1707,9 +1701,9 @@ Nicotine: PrivateRoomDisown
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 138
 
@@ -1727,9 +1721,9 @@ Nicotine: PrivateRoomSomething
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 139
 
@@ -1747,9 +1741,9 @@ Nicotine: PrivateRoomAdded
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 140
 
@@ -1767,9 +1761,9 @@ Nicotine: PrivateRoomRemoved
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 141
 
@@ -1788,9 +1782,9 @@ Nicotine: PrivateRoomToggle
 #### Data Order
 
   - Send
-    1.  **bool** <span class="underline">enable</span>
+    1.  **bool** <ins>enable</ins>
   - Receive
-    1.  **bool** <span class="underline">enable</span>
+    1.  **bool** <ins>enable</ins>
 
 ### Server Code 143
 
@@ -1808,9 +1802,9 @@ Nicotine: PrivateRoomAddOperator
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 144
 
@@ -1828,9 +1822,9 @@ Nicotine: PrivateRoomRemoveOperator
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 145
 
@@ -1848,9 +1842,9 @@ Nicotine: PrivateRoomOperatorAdded
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 146
 
@@ -1868,9 +1862,9 @@ Nicotine: PrivateRoomOperatorRemoved
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 148
 
@@ -1888,9 +1882,9 @@ Nicotine: PrivateRoomOwned
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
   - Receive
-    1.  **string** <span class="underline">room</span>
+    1.  **string** <ins>room</ins>
 
 ### Server Code 1001
 
@@ -1909,19 +1903,14 @@ Order](/wiki/SoulseekProtocol#PeerConnectionMessageOrder)
 #### Data Order
 
   - Send *to the Server if we cannot connect to a peer.*
-    1.  **int** <span class="underline">token</span>
-    2.  **string** <span class="underline">user</span>
+    1.  **int** <ins>token</ins>
+    2.  **string** <ins>user</ins>
   - Receive *this response means we are both firewalled or otherwise
     unable to connect to each other.*
-    1.  **int** <span class="underline">token</span>
-    2.  **string** <span class="underline">user</span>
+    1.  **int** <ins>token</ins>
+    2.  **string** <ins>user</ins>
 
 # Peer Messages
-
-[Server Messages](/wiki/SoulseekProtocol#ServerMessages) [Peer
-Messages](/wiki/SoulseekProtocol#PeerMessages) [Distributed
-Messages](/wiki/SoulseekProtocol#DistributedMessages) [Museek Data
-Types](/wiki/SoulseekProtocol#MuseekDataTypes)
 
 | Send         | Receive           |
 | ------------ | ----------------- |
@@ -1938,21 +1927,21 @@ Museek/PeerConnection.cc and defined in Museek/PeerMessages.hh
 
 #### Peer Init Message Index
 
-| Code | Message                                             |
-| ---- | --------------------------------------------------- |
-| 0    | [Pierce Firewall](/wiki/SoulseekProtocol#PeerCode0) |
-| 1    | [Peer Init](/wiki/SoulseekProtocol#PeerCode1)       |
+| Code | Message                         |
+| ---- | ------------------------------- |
+| 0    | [Pierce Firewall](#peer-code-0) |
+| 1    | [Peer Init](#peer-code-1)       |
 
 ### Peer Connection Message Order
 
-1.  User A sends a [Peer Init](/wiki/SoulseekProtocol#PeerCode1) to User
+1.  User A sends a [Peer Init](#peer-code-1) to User
     B (Fails: socket cannot connect)
 2.  User A sends [ConnectToPeer](#server-code-18) to
     the Server with a unique token
 3.  The Server sends a
     [ConnectToPeer](#server-code-18) response to
     User B with the same token
-4.  User B sends a [Pierce Firewall](/wiki/SoulseekProtocol#PeerCode0)
+4.  User B sends a [Pierce Firewall](#peer-code-0)
     to User A with the same token (if this fails connections are doomed)
 5.  User B sends a [Cannot
     Connect](#server-code-1001) to the Server
@@ -1968,14 +1957,14 @@ Museek/PeerConnection.cc and defined in Museek/PeerMessages.hh
 #### Description
 
 See also: [Peer Connection Message
-Order](/wiki/SoulseekProtocol#PeerConnectionMessageOrder)
+Order](#peer-connection-message-order)
 
 #### Data Order
 
   - Send
-      - **uint32** <span class="underline">token</span> *Unique Number*
+      - **uint32** <ins>token</ins> *Unique Number*
   - Receive
-      - **uint32** <span class="underline">token</span> *Unique Number*
+      - **uint32** <ins>token</ins> *Unique Number*
 
 ### Peer Code 1
 
@@ -1986,20 +1975,20 @@ Order](/wiki/SoulseekProtocol#PeerConnectionMessageOrder)
 #### Description
 
 See also: [Peer Connection Message
-Order](/wiki/SoulseekProtocol#PeerConnectionMessageOrder)
+Order](#peer-connection-message-order)
 
 #### Data Order
 
   - Send
-      - **string** <span class="underline">user</span> *Local Username*
-      - **string** <span class="underline">type</span> *Connection Type
+      - **string** <ins>user</ins> *Local Username*
+      - **string** <ins>type</ins> *Connection Type
         (P, F or D)*
-      - **uint32** <span class="underline">token</span> *Unique Number*
+      - **uint32** <ins>token</ins> *Unique Number*
   - Receive
-      - **string** <span class="underline">user</span> *Remote Username*
-      - **string** <span class="underline">type</span> *Connection Type
+      - **string** <ins>user</ins> *Remote Username*
+      - **string** <ins>type</ins> *Connection Type
         (P, F or D)*
-      - **uint32** <span class="underline">token</span> *Unique Number*
+      - **uint32** <ins>token</ins> *Unique Number*
 
 #### The Message format
 
@@ -2009,27 +1998,27 @@ Order](/wiki/SoulseekProtocol#PeerConnectionMessageOrder)
 
 #### Message Index
 
-| Code | Message                                                        |
-| ---- | -------------------------------------------------------------- |
-| 4    | [Shares Request](/wiki/SoulseekProtocol#PeerCode4)             |
-| 5    | [Shares Reply](/wiki/SoulseekProtocol#PeerCode5)               |
-| 8    | [Search Request](/wiki/SoulseekProtocol#PeerCode8)             |
-| 9    | [Search Reply](/wiki/SoulseekProtocol#PeerCode9)               |
-| 15   | [Info Request](/wiki/SoulseekProtocol#PeerCode15)              |
-| 16   | [Info Reply](/wiki/SoulseekProtocol#PeerCode16)                |
-| 36   | [Folder Contents Request](/wiki/SoulseekProtocol#PeerCode36)   |
-| 37   | [Folder Contents Reply](/wiki/SoulseekProtocol#PeerCode37)     |
-| 40   | [Transfer Request](/wiki/SoulseekProtocol#PeerCode40)          |
-| 41   | [Upload Reply](/wiki/SoulseekProtocol#PeerCode41a)             |
-| 41   | [Download Reply](/wiki/SoulseekProtocol#PeerCode41b)           |
-| 41   | [Transfer Reply](/wiki/SoulseekProtocol#PeerCode41c)           |
-| 42   | [Upload Placehold](/wiki/SoulseekProtocol#PeerCode42)          |
-| 43   | [Queue Download](/wiki/SoulseekProtocol#PeerCode43)            |
-| 44   | [Upload Queue Notification](/wiki/SoulseekProtocol#PeerCode44) |
-| 46   | [Upload Failed](/wiki/SoulseekProtocol#PeerCode46)             |
-| 50   | [Queue Failed](/wiki/SoulseekProtocol#PeerCode50)              |
-| 51   | [Place In Queue Request](/wiki/SoulseekProtocol#PeerCode51)    |
-| 52   | [Upload Queue Notification](/wiki/SoulseekProtocol#PeerCode52) |
+| Code | Message                                    |
+| ---- | ------------------------------------------ |
+| 4    | [Shares Request](#peer-code-4)             |
+| 5    | [Shares Reply](#peer-code-5)               |
+| 8    | [Search Request](#peer-code-8)             |
+| 9    | [Search Reply](#peer-code-9)               |
+| 15   | [Info Request](#peer-code-15)              |
+| 16   | [Info Reply](#peer-code-16)                |
+| 36   | [Folder Contents Request](#peer-code-36)   |
+| 37   | [Folder Contents Reply](#peer-code-37)     |
+| 40   | [Transfer Request](#peer-code-40)          |
+| 41   | [Upload Reply](#peer-code-41a)             |
+| 41   | [Download Reply](#peer-code-41b)           |
+| 41   | [Transfer Reply](#peer-code-41c)           |
+| 42   | [Upload Placehold](#peer-code-42)          |
+| 43   | [Queue Download](#peer-code-43)            |
+| 44   | [Upload Queue Notification](#peer-code-44) |
+| 46   | [Upload Failed](#peer-code-46)             |
+| 50   | [Queue Failed](#peer-code-50)              |
+| 51   | [Place In Queue Request](#peer-code-51)    |
+| 52   | [Upload Queue Notification](#peer-code-52) |
 
 ### Peer Code 4
 
@@ -2067,24 +2056,24 @@ Nicotine: SharedFileList
         1.  **data**
   - Receive *shares database*
     1.  decompress
-    2.  **int** <span class="underline">number of directories</span>
-    3.  Iterate <span class="underline">number of directories</span>
-        1.  **string** <span class="underline">directory</span>
-        2.  **int** <span class="underline">number of files</span>
-        3.  Iterate <span class="underline">number of files</span>
+    2.  **int** <ins>number of directories</ins>
+    3.  Iterate <ins>number of directories</ins>
+        1.  **string** <ins>directory</ins>
+        2.  **int** <ins>number of files</ins>
+        3.  Iterate <ins>number of files</ins>
             1.  **char** ??? (unused)
-            2.  **string** <span class="underline">filename</span>
-            3.  **off\_t** <span class="underline">size</span> *File
+            2.  **string** <ins>filename</ins>
+            3.  **off\_t** <ins>size</ins> *File
                 size*
-            4.  **string** <span class="underline">ext</span>
+            4.  **string** <ins>ext</ins>
                 *Extentsion*
-            5.  **int** <span class="underline">number of
-                attributes</span>
-            6.  Iterate <span class="underline">number of
-                attributes</span>
-                1.  **int** <span class="underline">place in
-                    attributes</span> (unused by museekd)
-                2.  **int** <span class="underline">attribute</span>
+            5.  **int** <ins>number of
+                attributes</ins>
+            6.  Iterate <ins>number of
+                attributes</ins>
+                1.  **int** <ins>place in
+                    attributes</ins> (unused by museekd)
+                2.  **int** <ins>attribute</ins>
 
 ### Peer Code 8
 
@@ -2100,11 +2089,11 @@ Nicotine: FileSearchRequest
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">ticket</span>
-    2.  **string** <span class="underline">query</span>
+    1.  **int** <ins>ticket</ins>
+    2.  **string** <ins>query</ins>
   - Receive
-    1.  **int** <span class="underline">ticket</span>
-    2.  **string** <span class="underline">query</span>
+    1.  **int** <ins>ticket</ins>
+    2.  **string** <ins>query</ins>
 
 ### Peer Code 9
 
@@ -2120,35 +2109,35 @@ Nicotine: FileSearchResult
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">user</span>
-    2.  **int** <span class="underline">ticket</span>
-    3.  **int** <span class="underline">results size</span> *number of
+    1.  **string** <ins>user</ins>
+    2.  **int** <ins>ticket</ins>
+    3.  **int** <ins>results size</ins> *number of
         results*
     4.  Iterate for number of results
         1.  **uchar** 1
-        2.  **string** <span class="underline">filename</span>
-        3.  **int** <span class="underline">size</span>
-        4.  **string** <span class="underline">ext</span>
-        5.  **int** <span class="underline">attribute size</span>
-        6.  Iterate <span class="underline">number of attributes</span>
-            1.  **int** <span class="underline">place in
-                attributes</span>
-            2.  **int** <span class="underline">attribute</span>
+        2.  **string** <ins>filename</ins>
+        3.  **int** <ins>size</ins>
+        4.  **string** <ins>ext</ins>
+        5.  **int** <ins>attribute size</ins>
+        6.  Iterate <ins>number of attributes</ins>
+            1.  **int** <ins>place in
+                attributes</ins>
+            2.  **int** <ins>attribute</ins>
   - Receive
-    1.  **string** <span class="underline">user</span>
-    2.  **int** <span class="underline">ticket</span>
-    3.  **int** <span class="underline">results size</span>
-        <span class="underline">number of results</span>
-    4.  Iterate for <span class="underline">number of results</span>
+    1.  **string** <ins>user</ins>
+    2.  **int** <ins>ticket</ins>
+    3.  **int** <ins>results size</ins>
+        <ins>number of results</ins>
+    4.  Iterate for <ins>number of results</ins>
         museekd pop buffer
-        1.  **string** <span class="underline">filename</span>
-        2.  **off\_t** <span class="underline">size</span>
-        3.  **string** <span class="underline">ext</span>
-        4.  **int** <span class="underline">number of attributes</span>
-        5.  Iterate <span class="underline">number of attributes</span>
-            1.  **int** <span class="underline">place in
-                attributes</span>
-            2.  **int** <span class="underline">attribute</span>
+        1.  **string** <ins>filename</ins>
+        2.  **off\_t** <ins>size</ins>
+        3.  **string** <ins>ext</ins>
+        4.  **int** <ins>number of attributes</ins>
+        5.  Iterate <ins>number of attributes</ins>
+            1.  **int** <ins>place in
+                attributes</ins>
+            2.  **int** <ins>attribute</ins>
 
 ### Peer Code 15
 
@@ -2182,26 +2171,26 @@ Nicotine: UserInfoReply
 #### Data Order
 
   - Send description, picture, totalupl, queuesize, slotfree
-    1.  **string** <span class="underline">description</span>
-    2.  Check contents of <span class="underline">picture</span>
-          - If <span class="underline">picture</span> is not empty
-            1.  **bool** <span class="underline">has\_picture</span> 1
-            2.  **string** <span class="underline">picture</span>
-          - If <span class="underline">picture</span> is empty
-            1.  **bool** <span class="underline">has\_picture</span> 0
-    3.  **uint** <span class="underline">totalupl</span>
-    4.  **uint** <span class="underline">queuesize</span>
-    5.  **bool** <span class="underline">slotsfree</span> *Can
+    1.  **string** <ins>description</ins>
+    2.  Check contents of <ins>picture</ins>
+          - If <ins>picture</ins> is not empty
+            1.  **bool** <ins>has\_picture</ins> 1
+            2.  **string** <ins>picture</ins>
+          - If <ins>picture</ins> is empty
+            1.  **bool** <ins>has\_picture</ins> 0
+    3.  **uint** <ins>totalupl</ins>
+    4.  **uint** <ins>queuesize</ins>
+    5.  **bool** <ins>slotsfree</ins> *Can
         immediately upload*
   - Receive
-    1.  **string** <span class="underline">description</span>
-    2.  **char** <span class="underline">has\_picture</span>
-    3.  Check contents of <span class="underline">has\_picture</span>
-        1.  If <span class="underline">has\_picture</span> is not empty
-            1.  **string** <span class="underline">picture</span>
-    4.  **int** <span class="underline">totalupl</span>
-    5.  **int** <span class="underline">queuesize</span>
-    6.  **bool** <span class="underline">slotsfree</span> *Can
+    1.  **string** <ins>description</ins>
+    2.  **char** <ins>has\_picture</ins>
+    3.  Check contents of <ins>has\_picture</ins>
+        1.  If <ins>has\_picture</ins> is not empty
+            1.  **string** <ins>picture</ins>
+    4.  **int** <ins>totalupl</ins>
+    5.  **int** <ins>queuesize</ins>
+    6.  **bool** <ins>slotsfree</ins> *Can
         immediately download*
 
 ### Peer Code 36
@@ -2218,17 +2207,17 @@ Nicotine: FolderContentsRequest
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">number of files in
-        directory</span>
-    2.  Iterate <span class="underline">number of files in
-        directory</span>
-        1.  **string** <span class="underline">file</span>
+    1.  **int** <ins>number of files in
+        directory</ins>
+    2.  Iterate <ins>number of files in
+        directory</ins>
+        1.  **string** <ins>file</ins>
   - Receive
-    1.  **int** <span class="underline">number of files in
-        directory</span>
-    2.  Iterate <span class="underline">number of files in
-        directory</span>
-        1.  **string** <span class="underline">file</span>
+    1.  **int** <ins>number of files in
+        directory</ins>
+    2.  Iterate <ins>number of files in
+        directory</ins>
+        1.  **string** <ins>file</ins>
 
 ### Peer Code 37
 
@@ -2244,35 +2233,35 @@ Nicotine: FolderContentsResponse
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">number of folders</span>
-    2.  Iterate for <span class="underline">number of folders</span>
-        1.  **string** <span class="underline">dir</span>
-        2.  **int** <span class="underline">number of files</span>
-        3.  Iterate <span class="underline">number of files</span>
-            1.  **char** <span class="underline">true</span>
-            2.  **string** <span class="underline">file</span>
-            3.  **off\_t** <span class="underline">size</span>
-            4.  **string** <span class="underline">ext</span> Extension
-            5.  **int** <span class="underline">number of
-                attributes</span>
-                1.  **int** <span class="underline">attribute
-                    number</span>
-                2.  **int** <span class="underline">attribute</span>
+    1.  **int** <ins>number of folders</ins>
+    2.  Iterate for <ins>number of folders</ins>
+        1.  **string** <ins>dir</ins>
+        2.  **int** <ins>number of files</ins>
+        3.  Iterate <ins>number of files</ins>
+            1.  **char** <ins>true</ins>
+            2.  **string** <ins>file</ins>
+            3.  **off\_t** <ins>size</ins>
+            4.  **string** <ins>ext</ins> Extension
+            5.  **int** <ins>number of
+                attributes</ins>
+                1.  **int** <ins>attribute
+                    number</ins>
+                2.  **int** <ins>attribute</ins>
   - Receive
-    1.  **int** <span class="underline">number of folders</span>
-    2.  Iterate for <span class="underline">number of folders</span>
-        1.  **string** <span class="underline">dir</span>
-        2.  **int** <span class="underline">number of files</span>
-        3.  Iterate <span class="underline">number of files</span>
-            1.  **char** <span class="underline">???</span> (unused)
-            2.  **string** <span class="underline">file</span>
-            3.  **off\_t** <span class="underline">size</span>
-            4.  **string** <span class="underline">ext</span> Extension
-            5.  **int** <span class="underline">number of
-                attributes</span>
-                1.  **int** <span class="underline">attribute
-                    number</span>
-                2.  **int** <span class="underline">attribute</span>
+    1.  **int** <ins>number of folders</ins>
+    2.  Iterate for <ins>number of folders</ins>
+        1.  **string** <ins>dir</ins>
+        2.  **int** <ins>number of files</ins>
+        3.  Iterate <ins>number of files</ins>
+            1.  **char** <ins>???</ins> (unused)
+            2.  **string** <ins>file</ins>
+            3.  **off\_t** <ins>size</ins>
+            4.  **string** <ins>ext</ins> Extension
+            5.  **int** <ins>number of
+                attributes</ins>
+                1.  **int** <ins>attribute
+                    number</ins>
+                2.  **int** <ins>attribute</ins>
 
 ### Peer Code 40
 
@@ -2288,18 +2277,18 @@ Nicotine: TransferRequest
 #### Data Order
 
   - Send
-    1.  **int** <span class="underline">direction</span>
-    2.  **int** <span class="underline">ticket</span>
-    3.  **string** <span class="underline">filename</span>
-    4.  Check contents of <span class="underline">direction</span>
-          - **off\_t** <span class="underline">filesize</span> *if
+    1.  **int** <ins>direction</ins>
+    2.  **int** <ins>ticket</ins>
+    3.  **string** <ins>filename</ins>
+    4.  Check contents of <ins>direction</ins>
+          - **off\_t** <ins>filesize</ins> *if
             direction == 1*
   - Receive
-    1.  **int** <span class="underline">direction</span>
-    2.  **int** <span class="underline">ticket</span>
-    3.  **string** <span class="underline">filename</span>
-    4.  Check contents of <span class="underline">direction</span>
-          - **off\_t** <span class="underline">filesize</span> *if
+    1.  **int** <ins>direction</ins>
+    2.  **int** <ins>ticket</ins>
+    3.  **string** <ins>filename</ins>
+    4.  Check contents of <ins>direction</ins>
+          - **off\_t** <ins>filesize</ins> *if
             direction == 1*
 
 ### Peer Code 41 a
@@ -2316,12 +2305,12 @@ Nicotine: TransferResponse
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">ticket</span>
-    2.  **uchar** <span class="underline">allowed</span>
-    3.  Check contents of <span class="underline">allowed</span>
-          - **off\_t** <span class="underline">filesize</span> *if
+    1.  **string** <ins>ticket</ins>
+    2.  **uchar** <ins>allowed</ins>
+    3.  Check contents of <ins>allowed</ins>
+          - **off\_t** <ins>filesize</ins> *if
             allowed == 1*
-          - **string** <span class="underline">reason</span> *if allowed
+          - **string** <ins>reason</ins> *if allowed
             == 0*
   - Receive
       - *No Message*
@@ -2340,10 +2329,10 @@ Nicotine: TransferResponse
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">ticket</span>
-    2.  **uchar** <span class="underline">allowed</span>
-    3.  Check contents of <span class="underline">allowed</span>
-          - **string** <span class="underline">reason</span> *if allowed
+    1.  **string** <ins>ticket</ins>
+    2.  **uchar** <ins>allowed</ins>
+    3.  Check contents of <ins>allowed</ins>
+          - **string** <ins>reason</ins> *if allowed
             == 0*
   - Receive
       - *No Message*
@@ -2364,12 +2353,12 @@ Nicotine: TransferResponse
   - Send
       - *No Message*
   - Receive
-    1.  **string** <span class="underline">ticket</span>
-    2.  **char** <span class="underline">allowed</span> == 1
-    3.  Check contents of <span class="underline">allowed</span>
-          - **off\_t** <span class="underline">filesize</span> *if
+    1.  **string** <ins>ticket</ins>
+    2.  **char** <ins>allowed</ins> == 1
+    3.  Check contents of <ins>allowed</ins>
+          - **off\_t** <ins>filesize</ins> *if
             allowed == 1*
-          - **string** <span class="underline">reason</span> *if allowed
+          - **string** <ins>reason</ins> *if allowed
             == 0*
 
 ### Peer Code 42
@@ -2388,9 +2377,9 @@ Nicotine: PlaceholdUpload
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">filename</span>
+    1.  **string** <ins>filename</ins>
   - Receive
-    1.  **string** <span class="underline">filename</span>
+    1.  **string** <ins>filename</ins>
 
 ### Peer Code 43
 
@@ -2406,9 +2395,9 @@ Nicotine: QueueUpload
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">filename</span>
+    1.  **string** <ins>filename</ins>
   - Receive
-    1.  **string** <span class="underline">filename</span>
+    1.  **string** <ins>filename</ins>
 
 ### Peer Code 44
 
@@ -2424,11 +2413,11 @@ Nicotine: PlaceInQueue
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">filename</span>
-    2.  **string** <span class="underline">place</span>
+    1.  **string** <ins>filename</ins>
+    2.  **string** <ins>place</ins>
   - Receive
-    1.  **string** <span class="underline">filename</span>
-    2.  **string** <span class="underline">place</span>
+    1.  **string** <ins>filename</ins>
+    2.  **string** <ins>place</ins>
 
 ### Peer Code 46
 
@@ -2444,9 +2433,9 @@ Nicotine: UploadFailed
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">filename</span>
+    1.  **string** <ins>filename</ins>
   - Receive
-    1.  **string** <span class="underline">filename</span>
+    1.  **string** <ins>filename</ins>
 
 ### Peer Code 50
 
@@ -2462,11 +2451,11 @@ Nicotine: QueueFailed
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">filename</span>
-    2.  **string** <span class="underline">reason</span>
+    1.  **string** <ins>filename</ins>
+    2.  **string** <ins>reason</ins>
   - Receive
-    1.  **string** <span class="underline">filename</span>
-    2.  **string** <span class="underline">reason</span>
+    1.  **string** <ins>filename</ins>
+    2.  **string** <ins>reason</ins>
 
 ### Peer Code 51
 
@@ -2482,9 +2471,9 @@ Nicotine: PlaceInQueueRequest
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">filename</span>
+    1.  **string** <ins>filename</ins>
   - Receive
-    1.  **string** <span class="underline">filename</span>
+    1.  **string** <ins>filename</ins>
 
 ### Peer Code 52
 
@@ -2506,11 +2495,6 @@ Nicotine: **Not implemented**
 
 ## Distributed Messages
 
-[Server Messages](/wiki/SoulseekProtocol#ServerMessages) [Peer
-Messages](/wiki/SoulseekProtocol#PeerMessages) [Distributed
-Messages](/wiki/SoulseekProtocol#DistributedMessages) [Museek Data
-Types](/wiki/SoulseekProtocol#MuseekDataTypes)
-
 | Send    | Send to Node      |
 | ------- | ----------------- |
 | Receive | Receive from Node |
@@ -2526,13 +2510,13 @@ Museek/DistribConnection.cc and defined in Museek/DistribMessages.hh
 
 #### Message Index
 
-| Code | Message                                                   |
-| ---- | --------------------------------------------------------- |
-| 0    | [Ping](/wiki/SoulseekProtocol#DistributedCode0)           |
-| 3    | [Search Request](/wiki/SoulseekProtocol#DistributedCode3) |
-| 4    | [Branch Level](/wiki/SoulseekProtocol#DistributedCode4)   |
-| 5    | [Branch Root](/wiki/SoulseekProtocol#DistributedCode5)    |
-| 7    | [Child Depth](/wiki/SoulseekProtocol#DistributedCode7)    |
+| Code | Message                               |
+| ---- | ------------------------------------- |
+| 0    | [Ping](#distributed-code-0)           |
+| 3    | [Search Request](#distributed-code-3) |
+| 4    | [Branch Level](#distributed-code-4)   |
+| 5    | [Branch Root](#distributed-code-5)    |
+| 7    | [Child Depth](#distributed-code-7)    |
 
 ### Distributed Code 0
 
@@ -2552,7 +2536,7 @@ Nicotine: DistribAlive
   - Send
       - *Empty Message*
   - Receive
-    1.  **uint32** <span class="underline">unknown</span>
+    1.  **uint32** <ins>unknown</ins>
 
 ### Distributed Code 3
 
@@ -2572,15 +2556,15 @@ Nicotine: DistribSearch
 #### Data Order
 
   - Send
-    1.  **uint32** <span class="underline">unknown</span>
-    2.  **string** <span class="underline">user</span>
-    3.  **uint32** <span class="underline">ticket</span>
-    4.  **string** <span class="underline">query</span>
+    1.  **uint32** <ins>unknown</ins>
+    2.  **string** <ins>user</ins>
+    3.  **uint32** <ins>ticket</ins>
+    4.  **string** <ins>query</ins>
   - Receive
-    1.  **uint32** <span class="underline">unknown</span>
-    2.  **string** <span class="underline">user</span>
-    3.  **uint32** <span class="underline">ticket</span>
-    4.  **string** <span class="underline">query</span>
+    1.  **uint32** <ins>unknown</ins>
+    2.  **string** <ins>user</ins>
+    3.  **uint32** <ins>ticket</ins>
+    4.  **string** <ins>query</ins>
 
 ### Distributed Code 4
 
@@ -2598,9 +2582,9 @@ Nicotine: DistribUnknown
 #### Data Order
 
   - Send
-    1.  **uint32** <span class="underline">branch\_level</span>
+    1.  **uint32** <ins>branch\_level</ins>
   - Receive
-    1.  **uint32** <span class="underline">branch\_level</span>
+    1.  **uint32** <ins>branch\_level</ins>
 
 ### Distributed Code 5
 
@@ -2617,9 +2601,9 @@ Museekd: **DBranchRoot**
 #### Data Order
 
   - Send
-    1.  **string** <span class="underline">branch\_root</span>
+    1.  **string** <ins>branch\_root</ins>
   - Receive
-    1.  **string** <span class="underline">branch\_root</span>
+    1.  **string** <ins>branch\_root</ins>
 
 ### Distributed Code 7
 
@@ -2636,16 +2620,11 @@ Museekd: **DChildDepth**
 #### Data Order
 
   - Send
-    1.  **uint32** <span class="underline">child\_depth</span>
+    1.  **uint32** <ins>child\_depth</ins>
   - Receive
-    1.  **uint32** <span class="underline">child\_depth</span>
+    1.  **uint32** <ins>child\_depth</ins>
 
 ## Museek Data Types
-
-[Server Messages](/wiki/SoulseekProtocol#ServerMessages) [Peer
-Messages](/wiki/SoulseekProtocol#PeerMessages) [Distributed
-Messages](/wiki/SoulseekProtocol#DistributedMessages) [Museek Data
-Types](/wiki/SoulseekProtocol#MuseekDataTypes)
 
 ### StringMap
 
@@ -2673,13 +2652,13 @@ Types](/wiki/SoulseekProtocol#MuseekDataTypes)
 
 ### UserData
 
-1.  **uint32** <span class="underline">status</span> *Online Status*
-2.  **uint32** <span class="underline">avgspeed</span> *Average Speed*
-3.  **uint32** <span class="underline">downloadnum</span> *Number of
+1.  **uint32** <ins>status</ins> *Online Status*
+2.  **uint32** <ins>avgspeed</ins> *Average Speed*
+3.  **uint32** <ins>downloadnum</ins> *Number of
     downloaded files*
-4.  **uint32** <span class="underline">files</span> *Files shared*
-5.  **uint32** <span class="underline">dirs</span> *Directories shared*
-6.  **bool** <span class="underline">slotsfree</span> *Slots free*
+4.  **uint32** <ins>files</ins> *Files shared*
+5.  **uint32** <ins>dirs</ins> *Directories shared*
+6.  **bool** <ins>slotsfree</ins> *Slots free*
 
 ### RoomData
 
