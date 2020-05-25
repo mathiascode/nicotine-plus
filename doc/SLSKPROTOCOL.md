@@ -1,5 +1,11 @@
 # The Soulseek Protocol
 
+- [Packing](#packing)
+- [Server Messages](#server-messages)
+- [Peer Messages](#peer-messages)
+- [Distributed Messages](#distributed-messages)
+- [Museek Data Types](#museek-data-types)
+
 ## Packing
 
 String
@@ -28,10 +34,11 @@ Bool
 
 # Server Messages
 
-[Server Messages](/wiki/SoulseekProtocol#ServerMessages) [Peer
-Messages](/wiki/SoulseekProtocol#PeerMessages) [Distributed
-Messages](/wiki/SoulseekProtocol#DistributedMessages) [Museek Data
-Types](/wiki/SoulseekProtocol#MuseekDataTypes)
+- [Packing](#packing)
+- [Server Messages](#server-messages)
+- [Peer Messages](#peer-messages)
+- [Distributed Messages](#distributed-messages)
+- [Museek Data Types](#museek-data-types)
 
 | Send           | Receive             |
 | -------------- | ------------------- |
@@ -60,8 +67,8 @@ and callbacks for the messages are set in pynicotine.py.
 
 #### Message Index
 
-| Code | Message                                                               |
-| ---- | --------------------------------------------------------------------- |
+| Code | Message                                           |
+| ---- | ------------------------------------------------- |
 | 1    | [Login](#server-code-1)                           |
 | 2    | [Set Listen Port](#server-code-2)                 |
 | 3    | [Get Peer Address](#server-code-3)                |
@@ -178,7 +185,7 @@ Send your username, password, and client version.
 #### Data Order
 
   - Send Login
-    1.  **string** <span class="underline">username</span>
+    1.  **string** <ins>username</ins>
     2.  **string** <span class="underline">password</span> **A non-empty
         string is required**
     3.  **uint32** <span class="underline">version number</span> *182*
