@@ -375,7 +375,7 @@ Nicotine: JoinRoom
         1.  **int** <ins>status</ins>
     6.  **int** <ins>number of userdata</ins>
     7.  Iterate the userdata **vector of userdata** (and add unpacked
-        data to [User Data](/wiki/SoulseekProtocol#UserData))
+        data to [User Data](#user-data))
         1.  **int** <ins>avgspeed</ins>
         2.  **off\_t** <ins>downloadnum</ins>
         3.  **int** <ins>files</ins>
@@ -393,7 +393,7 @@ ServerMessages.hh then Iterates thru
 <ins>userdata</ins> and
 <ins>users</ins> (For passing message to daemon)
 
-  - Add data to [RoomData](/wiki/SoulseekProtocol#RoomData)
+  - Add data to [RoomData](#room-data)
     users\[**string** username \] = **data**
 
 ### Server Code 15
@@ -476,7 +476,7 @@ Nicotine: ConnectToPeer
 A message you send to the server to notify a client that you want to
 connect to it, after direct connection has failed. See also: [Peer
 Connection Message
-Order](/wiki/SoulseekProtocol#PeerConnectionMessageOrder)
+Order](#peer-connection-message-order)
 
 #### Data Order
 
@@ -1898,7 +1898,7 @@ Nicotine: CantConnectToPeer
 #### Description
 
 See also: [Peer Connection Message
-Order](/wiki/SoulseekProtocol#PeerConnectionMessageOrder)
+Order](#peer-connection-message-order)
 
 #### Data Order
 
