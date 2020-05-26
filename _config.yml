@@ -11,7 +11,7 @@ relative_links:
 
 exclude:
   - files/README
-  - files/win32/upnpc
+  - files/win32/upnpc/upnpc-static.exe
   - img/README
   - plugins/README
 
