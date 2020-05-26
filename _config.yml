@@ -11,6 +11,7 @@ relative_links:
 
 exclude:
   - files/README
+  - files/win32
   - img/README
   - plugins/README
 
