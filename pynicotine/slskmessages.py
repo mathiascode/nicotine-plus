@@ -1789,10 +1789,10 @@ class FileSearchResult(PeerMessage):
         self.pos, self.inqueue = self.getObject(message, int, self.pos)
 
     def makeNetworkMessage(self):
-        filelist = []
+        filelist = set()
         for i in self.list:
             try:
-                filelist.append(self.fileindex[str(i)])
+                filelist.add(self.fileindex[str(i)])
             except Exception:
                 pass
 

@@ -596,8 +596,6 @@ class Search:
 
         # Build the window
         builder = gtk.Builder()
-
-        builder.set_translation_domain('nicotine')
         builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "search.ui"))
 
         self.SearchTab = builder.get_object("SearchTab")
@@ -1476,7 +1474,8 @@ class Search:
 
     def CellDataFunc(self, column, cellrenderer, model, iter, dummy="dummy"):
 
-        status = model.get_value(iter, 17)
+        pass
+        """status = model.get_value(iter, 17)
         imdl = model.get_value(iter, 6)
         color = imdl == "Y" and "search" or "searchq"
         colour = None
@@ -1491,7 +1490,7 @@ class Search:
             colour = self.frame.np.config.sections["ui"][color] or None
             cellrenderer.set_property("background", None)
 
-        cellrenderer.set_property("foreground", colour)
+        cellrenderer.set_property("foreground", colour)"""
 
     def MetaBox(self, title="Meta Data", message="", data=None, modal=True):
 

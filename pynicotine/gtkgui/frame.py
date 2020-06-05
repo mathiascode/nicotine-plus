@@ -95,8 +95,6 @@ class roomlist:
         self.frame = frame
 
         builder = gtk.Builder()
-
-        builder.set_translation_domain('nicotine')
         builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "roomlist.ui"))
 
         self.RoomList = builder.get_object("RoomList")
@@ -229,6 +227,7 @@ class NicotineFrame:
         self.got_focus = False
         self.notify = None
         self.gsound = None
+        #breakpoint()
 
         try:
             # Tray icon support
@@ -293,7 +292,7 @@ class NicotineFrame:
 
         pynicotine.utils.log = self.logMessage
 
-        log.addlistener(self.logCallback)
+        #log.addlistener(self.logCallback)
 
         self.LoadIcons()
 
@@ -302,8 +301,6 @@ class NicotineFrame:
 
         # Import GtkBuilder widgets
         builder = gtk.Builder()
-
-        builder.set_translation_domain('nicotine')
         builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "mainwindow.ui"))
 
         for i in builder.get_objects():
@@ -347,6 +344,7 @@ class NicotineFrame:
             self.MainWindow.maximize()
 
         self.MainWindow.show()
+        #breakpoint()
 
         # Initialize these windows/dialogs later when necessary
         self.fastconfigure = None
@@ -1545,7 +1543,9 @@ class NicotineFrame:
         gobject.idle_add(self.updateLog, msg, level, priority=gobject.PRIORITY_DEFAULT)
 
     def logMessage(self, msg, debugLevel=0):
-        log.add(msg, debugLevel)
+        #print("hit")
+        #log.add(msg, debugLevel)
+        pass
 
     def updateLog(self, msg, debugLevel=None):
         '''For information about debug levels see
@@ -1975,44 +1975,7 @@ class NicotineFrame:
 
     def UpdateBandwidth(self):
 
-        def _calc(line):
-            bandwidth = 0.0
-            users = 0  # noqa: F841
-            line = [i for i in line if i.conn is not None]  # noqa: E741
-            for i in line:
-                if i.speed is not None:
-                    bandwidth = bandwidth + i.speed
-            return len(line), bandwidth
-
-        def _num_users(line):
-            users = []
-
-            for i in line:
-                if i.user not in users:
-                    users.append(i.user)
-            return len(users), len(line)
-
-        if self.np.transfers is not None:
-            usersdown, down = _calc(self.np.transfers.downloads)
-            usersup, up = _calc(self.np.transfers.uploads)
-            total_usersdown, filesdown = _num_users(self.np.transfers.downloads)
-            total_usersup, filesup = _num_users(self.np.transfers.uploads)
-        else:
-            down = up = 0.0
-            filesup = filesdown = total_usersdown = total_usersup = usersdown = usersup = 0
-
-        self.DownloadUsers.set_text(_("Users: %s") % total_usersdown)
-        self.UploadUsers.set_text(_("Users: %s") % total_usersup)
-        self.DownloadFiles.set_text(_("Files: %s") % filesdown)
-        self.UploadFiles.set_text(_("Files: %s") % filesup)
-
-        self.DownStatus.pop(self.down_context_id)
-        self.UpStatus.pop(self.up_context_id)
-        self.DownStatus.push(self.down_context_id, _("Down: %(num)i users, %(speed).1f KB/s") % {'num': usersdown, 'speed': down})
-        self.UpStatus.push(self.up_context_id, _("Up: %(num)i users, %(speed).1f KB/s") % {'num': usersup, 'speed': up})
-
-        if self.appindicator:
-            self.TrayApp.SetToolTip(_("Nicotine+ Transfers: %(speeddown).1f KB/s Down, %(speedup).1f KB/s Up") % {'speeddown': down, 'speedup': up})
+        pass
 
     def BanUser(self, user):
         if self.np.transfers is not None:
@@ -2746,6 +2709,7 @@ class NicotineFrame:
         self.userlist = UserList(self)
 
         if tab:
+
             self.BuddiesTabLabel = ImageLabel(_("Buddy List"), self.images["empty"])
             self.BuddiesTabLabel.show()
 
@@ -2760,6 +2724,7 @@ class NicotineFrame:
             self.np.config.sections["ui"]["buddylistinchatrooms"] = 0
 
         if chatrooms:
+
             self.vpaned3.show()
             if self.userlist.userlistvbox not in self.vpaned3.get_children():
                 self.vpaned3.pack1(self.userlist.userlistvbox, True, True)
@@ -2768,6 +2733,7 @@ class NicotineFrame:
             self.np.config.sections["ui"]["buddylistinchatrooms"] = 1
 
         if always:
+
             self.vpanedm.show()
             if self.userlist.userlistvbox not in self.vpanedm.get_children():
                 self.vpanedm.pack2(self.userlist.userlistvbox, True, True)

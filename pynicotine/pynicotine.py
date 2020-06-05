@@ -119,7 +119,7 @@ class NetworkEventProcessor:
         self.port = port
         self.config.frame = frame
         self.config.readConfig()
-        self.peerconns = []
+        self.peerconns = set()
         self.watchedusers = []
         self.ipblock_requested = {}
         self.ipignore_requested = {}
@@ -367,7 +367,7 @@ class NetworkEventProcessor:
                 self.queue.put(slskmessages.ConnectToPeer(token, user, type))
 
             conn = PeerConnection(addr=addr, username=user, msgs=[message], token=token, init=init)
-            self.peerconns.append(conn)
+            self.peerconns.add(conn)
 
             if token is not None:
                 timeout = 120.0
@@ -457,7 +457,7 @@ class NetworkEventProcessor:
 
         elif msg.connobj.__class__ is slskmessages.OutConn:
 
-            for i in self.peerconns[:]:
+            for i in self.peerconns:
 
                 if i.addr == msg.connobj.addr and i.conn is None:
 
@@ -536,7 +536,7 @@ class NetworkEventProcessor:
             self.queue.put(slskmessages.SetWaitPort(self.waitport))
 
     def PeerInit(self, msg):
-        self.peerconns.append(
+        self.peerconns.add(
             PeerConnection(
                 addr=msg.conn.addr,
                 username=msg.user,
@@ -550,7 +550,6 @@ class NetworkEventProcessor:
         self.ClosedConnection(msg.conn, msg.addr)
 
     def ClosedConnection(self, conn, addr):
-
         if conn == self.serverconn:
 
             self.setStatus(
@@ -581,7 +580,7 @@ class NetworkEventProcessor:
             self.frame.pluginhandler.ServerDisconnectNotification(userchoice)
 
         else:
-            for i in self.peerconns[:]:
+            for i in self.peerconns:
                 if i.conn == conn:
                     self.logMessage(_("Connection closed by peer: %s") % vars(i), debugLevel=3)
 
@@ -1089,7 +1088,6 @@ class NetworkEventProcessor:
         self.logMessage("%s %s" % (msg.__class__, vars(msg)), 4)
 
     def GetPeerAddress(self, msg):
-
         for i in self.peerconns:
             if i.username == msg.user and i.addr is None:
                 if msg.port != 0 or i.tryaddr == 10:
@@ -1248,10 +1246,11 @@ class NetworkEventProcessor:
         self.logMessage("%s %s" % (msg.__class__, vars(msg)), 3)
 
     def ConnectToPeer(self, msg):
+        print(msg)
         init = slskmessages.PeerInit(None, msg.user, msg.type, 0)
 
         self.queue.put(slskmessages.OutConn(None, (msg.ip, msg.port), init))
-        self.peerconns.append(
+        self.peerconns.add(
             PeerConnection(
                 addr=(msg.ip, msg.port),
                 username=msg.user,
@@ -1325,16 +1324,16 @@ class NetworkEventProcessor:
         return 0
 
     def ClosePeerConnection(self, peerconn):
-
-        if peerconn is None:
+        pass
+        """if peerconn is None:
             return
 
-        for i in self.peerconns[:]:
+        for i in self.peerconns:
             if i.conn == peerconn:
                 if not self.protothread.socketStillActive(i.conn):
                     self.queue.put(slskmessages.ConnClose(i.conn))
                     self.peerconns.remove(i)
-                break
+                break"""
 
     def UserInfoReply(self, msg):
         for i in self.peerconns:
@@ -1448,24 +1447,22 @@ class NetworkEventProcessor:
                     self.userbrowse.ShowInfo(i.username, msg)
 
     def FileSearchResult(self, msg):
-        for i in self.peerconns:
+        if self.search is not None:
 
-            if i.conn is msg.conn.conn and self.search is not None:
-
-                if self.geoip:
-                    if i.addr:
-                        country = self.geoip.country_code_by_addr(i.addr[0])
-                    else:
-                        country = ""
+            if self.geoip:
+                if msg.conn.addr:
+                    country = self.geoip.country_code_by_addr(msg.conn.addr[0])
                 else:
                     country = ""
+            else:
+                country = ""
 
-                if country is None:
-                    country = ""
+            if country is None:
+                country = ""
 
-                self.search.ShowResult(msg, i.username, country)
+            self.search.ShowResult(msg, msg.user, country)
 
-                self.ClosePeerConnection(i.conn)
+            self.ClosePeerConnection(msg.conn.conn)
 
         self.logMessage("%s %s" % (msg.__class__, vars(msg)), 4)
 
@@ -1506,7 +1503,7 @@ class NetworkEventProcessor:
 
     def CantConnectToPeer(self, msg):
 
-        for i in self.peerconns[:]:
+        for i in self.peerconns:
 
             if i.token == msg.token:
 
@@ -1526,7 +1523,7 @@ class NetworkEventProcessor:
 
     def ConnectToPeerTimeout(self, msg):
 
-        for i in self.peerconns[:]:
+        for i in self.peerconns:
 
             if i == msg.conn:
 

@@ -66,8 +66,6 @@ class buildFrame:
 
         # Build the frame
         builder = gtk.Builder()
-
-        builder.set_translation_domain('nicotine')
         builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "settingswindow_" + window + ".ui"))
 
         self.__dict__[window] = builder.get_object(window)
@@ -3019,8 +3017,6 @@ class buildDialog(gtk.Dialog):
 
         # Build the window
         builder = gtk.Builder()
-
-        builder.set_translation_domain('nicotine')
         builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "settingswindow_PluginProperties.ui"))
 
         self.PluginProperties = builder.get_object(window)
@@ -3347,8 +3343,6 @@ class SettingsWindow:
 
         # Build the window
         builder = gtk.Builder()
-
-        builder.set_translation_domain('nicotine')
         builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "settingswindow_TreeView.ui"))
 
         self.SettingsWindow = builder.get_object("SettingsWindow")

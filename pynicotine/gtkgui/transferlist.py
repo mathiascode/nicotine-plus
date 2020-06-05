@@ -71,7 +71,7 @@ class TransferList:
         self.frame = frame
         self.widget = widget
         self.type = type
-        self.transfers = []
+        self.transfers = set()
         self.list = None
         self.selected_transfers = []
         self.selected_users = []
@@ -148,12 +148,12 @@ class TransferList:
         self.frame.ChangeListFont(self.widget, self.frame.np.config.sections["ui"]["transfersfont"])
 
     def CellDataFunc(self, column, cellrenderer, model, iter, dummy="dummy"):
-
-        colour = self.frame.np.config.sections["ui"]["search"]
+        pass
+        """colour = self.frame.np.config.sections["ui"]["search"]
         if colour == "":
             colour = None
 
-        cellrenderer.set_property("foreground", colour)
+        cellrenderer.set_property("foreground", colour)"""
 
     def get_status_index(self, val):
 
@@ -204,7 +204,7 @@ class TransferList:
         self.list = None
         self.Clear()
         self.transfersmodel.clear()
-        self.transfers = []
+        self.transfers = set()
         self.users.clear()
         self.selected_transfers = []
         self.selected_users = []
@@ -248,55 +248,6 @@ class TransferList:
 
                 if user not in self.selected_users:
                     self.selected_users.append(user)
-
-    def TranslateStatus(self, status):
-
-        if status == "Waiting for download":
-            newstatus = _("Waiting for download")
-        elif status == "Waiting for upload":
-            newstatus = _("Waiting for upload")
-        elif status == "Requesting file":
-            newstatus = _("Requesting file")
-        elif status == "Initializing transfer":
-            newstatus = _("Initializing transfer")
-        elif status == "Cannot connect":
-            newstatus = _("Cannot connect")
-        elif status == "Waiting for peer to connect":
-            newstatus = _("Waiting for peer to connect")
-        elif status == "Connecting":
-            newstatus = _("Connecting")
-        elif status == "Getting address":
-            newstatus = _("Getting address")
-        elif status == "Getting status":
-            newstatus = _("Getting status")
-        elif status == "Queued":
-            newstatus = _("Queued")
-        elif status == "User logged off":
-            newstatus = _("User logged off")
-        elif status == "Aborted":
-            newstatus = _("Aborted")
-        elif status == "Finished":
-            newstatus = _("Finished")
-        elif status == "Paused":
-            newstatus = _("Paused")
-        elif status == "Transferring":
-            newstatus = _("Transferring")
-        elif status == "Filtered":
-            newstatus = _("Filtered")
-        elif status == "Connection closed by peer":
-            newstatus = _("Connection closed by peer")
-        elif status == "File not shared":
-            newstatus = _("File not shared")
-        elif status == "Establishing connection":
-            newstatus = _("Establishing connection")
-        elif status == "Download directory error":
-            newstatus = _("Download directory error")
-        elif status == "Local file error":
-            newstatus = _("Local file error")
-        else:
-            newstatus = status
-
-        return newstatus
 
     def finalupdate(self, func):
 
@@ -345,9 +296,7 @@ class TransferList:
             self.update_specific(transfer)
         elif self.list is not None:
 
-            # This seems to me to be O(n^2), perhaps constructing a temp. dict
-            # from self.list would be better?
-            for i in self.transfers[:]:
+            for i in self.transfers:
                 for j in self.list:
                     if [j.user, j.filename] == i[0]:
                         break
@@ -476,7 +425,8 @@ class TransferList:
 
         key = [user, fn]
 
-        status = HumanSize(self.TranslateStatus(transfer.status))
+        status = transfer.status
+        #status = _(transfer.status)
         istatus = self.get_status_index(transfer.status)
 
         try:
@@ -484,7 +434,8 @@ class TransferList:
         except TypeError:
             size = 0
 
-        hsize = "%s / %s" % (HumanSize(currentbytes), HumanSize(size))
+        hsize = "%s / %s" % (currentbytes, size)
+        #hsize = "%s / %s" % (HumanSize(currentbytes), HumanSize(size))
 
         if transfer.modifier:
             hsize += " (%s)" % transfer.modifier
@@ -521,33 +472,6 @@ class TransferList:
             icurrentbytes = 0
             percent = 0
 
-        # Modify old transfer
-        for i in self.transfers:
-
-            if i[0] != key:
-                continue
-
-            if i[2] != transfer:
-                continue
-
-            self.transfersmodel.set(
-                i[1],
-                1, shortfn,
-                2, status,
-                3, str(place),
-                4, percent,
-                5, str(hsize),
-                6, HumanSpeed(speed),
-                7, elap,
-                8, left,
-                9, transfer.path,
-                11, istatus,
-                12, size,
-                13, currentbytes,
-                15, str(speed)
-            )
-
-            break
         else:
             newparent = False
             if self.TreeUsers:
@@ -567,7 +491,7 @@ class TransferList:
             # Add a new transfer
             path = transfer.path
 
-            iter = self.transfersmodel.append(
+            """iter = self.transfersmodel.append(
                 parent,
                 [user, shortfn, status, str(place), percent, str(hsize), HumanSpeed(speed), elap, left, path, fn, istatus, size, icurrentbytes, True, str(speed)]
             )
@@ -577,7 +501,7 @@ class TransferList:
             self.transfers.append([key, iter, transfer])
 
             if newparent:
-                self.expandcollapse(self.transfersmodel.get_path(parent))
+                self.expandcollapse(self.transfersmodel.get_path(parent))"""
 
     def Clear(self):
         self.users.clear()
