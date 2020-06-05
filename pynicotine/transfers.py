@@ -324,9 +324,9 @@ class Transfers:
     def gettingAddress(self, req):
 
         for i in self.downloads:
-            #if i.req == req:
-            i.status = "Getting address"
-            self.downloadspanel.update(i)
+            if i.req == req:
+                i.status = "Getting address"
+                self.downloadspanel.update(i)
 
         for i in self.uploads:
             if i.req == req:

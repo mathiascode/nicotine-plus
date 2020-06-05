@@ -148,12 +148,11 @@ class TransferList:
         self.frame.ChangeListFont(self.widget, self.frame.np.config.sections["ui"]["transfersfont"])
 
     def CellDataFunc(self, column, cellrenderer, model, iter, dummy="dummy"):
-        pass
-        """colour = self.frame.np.config.sections["ui"]["search"]
+        colour = self.frame.np.config.sections["ui"]["search"]
         if colour == "":
             colour = None
 
-        cellrenderer.set_property("foreground", colour)"""
+        cellrenderer.set_property("foreground", colour)
 
     def get_status_index(self, val):
 
@@ -472,6 +471,33 @@ class TransferList:
             icurrentbytes = 0
             percent = 0
 
+        # Modify old transfer
+        for i in self.transfers:
+
+            if i[0] != key:
+                continue
+
+            if i[2] != transfer:
+                continue
+
+            self.transfersmodel.set(
+                i[1],
+                1, shortfn,
+                2, status,
+                3, str(place),
+                4, percent,
+                5, str(hsize),
+                6, HumanSpeed(speed),
+                7, elap,
+                8, left,
+                9, transfer.path,
+                11, istatus,
+                12, size,
+                13, currentbytes,
+                15, str(speed)
+            )
+
+            break
         else:
             newparent = False
             if self.TreeUsers:

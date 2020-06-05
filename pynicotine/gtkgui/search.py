@@ -1474,8 +1474,7 @@ class Search:
 
     def CellDataFunc(self, column, cellrenderer, model, iter, dummy="dummy"):
 
-        pass
-        """status = model.get_value(iter, 17)
+        status = model.get_value(iter, 17)
         imdl = model.get_value(iter, 6)
         color = imdl == "Y" and "search" or "searchq"
         colour = None
@@ -1490,7 +1489,7 @@ class Search:
             colour = self.frame.np.config.sections["ui"][color] or None
             cellrenderer.set_property("background", None)
 
-        cellrenderer.set_property("foreground", colour)"""
+        cellrenderer.set_property("foreground", colour)
 
     def MetaBox(self, title="Meta Data", message="", data=None, modal=True):
 

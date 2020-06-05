@@ -1324,8 +1324,7 @@ class NetworkEventProcessor:
         return 0
 
     def ClosePeerConnection(self, peerconn):
-        pass
-        """if peerconn is None:
+        if peerconn is None:
             return
 
         for i in self.peerconns:
@@ -1333,7 +1332,7 @@ class NetworkEventProcessor:
                 if not self.protothread.socketStillActive(i.conn):
                     self.queue.put(slskmessages.ConnClose(i.conn))
                     self.peerconns.remove(i)
-                break"""
+                break
 
     def UserInfoReply(self, msg):
         for i in self.peerconns:
