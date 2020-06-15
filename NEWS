@@ -4,7 +4,7 @@ News
     As per GCS § 6.7, this file contains a list of user-visible noteworthy
     changes. Note that this is not the same as a changelog.
 
-Version 2.0.0 (unreleased)
+Version 2.0.0 (<insert date here>)
 -----------------------------
 
 Changes
@@ -25,9 +25,11 @@ Changes
 
 Bugs closed in GitHub
  * Columns Position Not Being Maintained (#8)
+ * Show network drives when adding a shared directory. (#52)
  * send to player does not work. (#53)
  * Segfault When Getting User Info (#57)
  * Segmentation fault on Ubuntu Gnome 17.04 (#60)
+ * filenames with ? in them get stuck on uploads list (#61)
  * Nicotine+ Windows 8.1 (64-bit) mutagen attempts to handle non-video files (#62)
  * Nicotine+ 1.4.1, windows 8.1 (64-bit) errors when using UPNP (#63)
  * Nicotine+ 1.4.1, windows 8.1 (64-bit) Spurious error messages (#64)
@@ -43,6 +45,7 @@ Bugs closed in GitHub
  * New Commits - Is Development Back? (#90)
  * Filter doesn't include directory path (#91)
  * XDG Base Directory Support (#94)
+ * Port to python3 (#99)
  * Nicotine+ 1.4.2, Debian 9 (64-bit) Downloading file size >2GB appears as negative numbers, files near 4GB download 0 byte. (#100)
  * Nicotine+ 1.4.1 don't handle invalid characters in Windows (#101)
  * Random crash on Raspbian (#103)
@@ -88,7 +91,7 @@ Version 1.4.3 (unstable)
 
 * Rolling development release in preparation for 2.0.0
 
-Version 1.4.2 (February 17, 2018)
+Version 1.4.2 (17 February 2018)
 -----------------------------
 
 Bugs closed on Github
