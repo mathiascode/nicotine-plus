@@ -1961,7 +1961,6 @@ class Transfers:
 
     def AbortTransfer(self, transfer, remove=0):
 
-        transfer.req = None
         transfer.speed = 0
         transfer.timeleft = ""
 
@@ -1971,6 +1970,8 @@ class Transfers:
         if transfer.conn is not None:
             self.eventprocessor.ProcessRequestToPeer(transfer.user, slskmessages.TransferResponse(None, 1, reason="Cancelled", req=transfer.req))
             transfer.conn = None
+
+        transfer.req = None
 
         if transfer.transfertimer is not None:
             transfer.transfertimer.cancel()
