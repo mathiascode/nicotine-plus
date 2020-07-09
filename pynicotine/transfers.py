@@ -1969,6 +1969,7 @@ class Transfers:
             self.eventprocessor.ProcessRequestToPeer(transfer.user, slskmessages.QueueFailed(None, file=transfer.filename, reason="Aborted"))
 
         if transfer.conn is not None:
+            self.eventprocessor.ProcessRequestToPeer(transfer.user, slskmessages.TransferResponse(None, 1, reason="Cancelled", req=transfer.req))
             transfer.conn = None
 
         if transfer.transfertimer is not None:
