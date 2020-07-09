@@ -512,7 +512,7 @@ class Transfers:
                     path = self.eventprocessor.config.sections["transfers"]["uploaddir"] + os.sep + user + os.sep + parentdir
 
                 transfer = Transfer(
-                    user=user, conn=conn, filename=msg.file, path=path,
+                    user=user, filename=msg.file, path=path,
                     status="Getting status", size=msg.filesize, req=msg.req
                 )
                 self.downloads.append(transfer)
@@ -585,7 +585,7 @@ class Transfers:
 
             response = slskmessages.TransferResponse(conn, 0, reason="Queued", req=msg.req)
             newupload = Transfer(
-                user=user, conn=conn, filename=msg.file, realfilename=realpath,
+                user=user, filename=msg.file, realfilename=realpath,
                 path=os.path.dirname(realpath), status="Queued",
                 timequeued=time.time(), size=self.getFileSize(realpath),
                 place=len(self.uploads)
@@ -601,7 +601,7 @@ class Transfers:
 
         transfertimeout = TransferTimeout(msg.req, self.eventprocessor.frame.callback)
         transferobj = Transfer(
-            user=user, conn=conn, realfilename=realpath, filename=msg.file,
+            user=user, realfilename=realpath, filename=msg.file,
             path=os.path.dirname(realpath), status="Waiting for upload",
             req=msg.req, size=size, place=len(self.uploads)
         )
@@ -698,7 +698,7 @@ class Transfers:
 
             elif self.fileIsShared(user, msg.file, realpath):
                 newupload = Transfer(
-                    user=user, conn=msg.conn.conn, filename=msg.file, realfilename=realpath,
+                    user=user, filename=msg.file, realfilename=realpath,
                     path=os.path.dirname(realpath), status="Queued",
                     timequeued=time.time(), size=self.getFileSize(realpath)
                 )
@@ -1969,8 +1969,6 @@ class Transfers:
             self.eventprocessor.ProcessRequestToPeer(transfer.user, slskmessages.QueueFailed(None, file=transfer.filename, reason="Aborted"))
 
         if transfer.conn is not None:
-            slskmessages.TransferResponse(transfer.conn, 0, reason="Cancelled", req=transfer.req)
-            #self.queue.put(slskmessages.ConnClose(transfer.conn))
             transfer.conn = None
 
         if transfer.transfertimer is not None:
