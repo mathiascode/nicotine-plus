@@ -28,6 +28,9 @@ $ sudo apt update
 $ sudo apt install nicotine
 ```
 
+### Flathub
+[![Download on Flathub](https://flathub.org/assets/badges/flathub-badge-en.png)](https://flathub.org/apps/details/org.nicotine_plus.Nicotine)
+
 ### Other Distributions
 Package maintainers, please insert instructions for users to install pre-compiled packages from your respective repositories here.
 
