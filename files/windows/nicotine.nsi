@@ -32,22 +32,14 @@ ShowInstDetails show
 ShowUnInstDetails show
 ManifestDPIAware true
 
-Section "" SecUninstallPrevious
-  Call UninstallPrevious
-SectionEnd
+Section -Pre
+  ReadRegStr $R0 HKLM "${PRODUCT_DIR_REGKEY}" "InstallDir"
 
-Function UninstallPrevious
-    ReadRegStr $R0 HKLM "${HKLM_REG_KEY}" "InstallDir"
-
-    ${If} $R0 == ""        
-        Goto Done
-    ${EndIf}
-
+  ${If} $R0 != ""        
     DetailPrint "Removing previous installation."
     ExecWait '"$R0\uninst.exe /S"'
-
-    Done:
-FunctionEnd
+  ${EndIf}
+SectionEnd
 
 Section "Core" Core
   SectionIn RO
