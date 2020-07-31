@@ -32,8 +32,21 @@ ShowInstDetails show
 ShowUnInstDetails show
 ManifestDPIAware true
 
+Function .onInit
+  ${IfNot} ${AtLeastWin7}
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Nicotine+ requires Windows 7 or later."
+    Quit
+  ${EndIf}
+
+  ${If} ${ARCH} == "i686"
+    StrCpy $InstDir "$PROGRAMFILES\Nicotine+"
+  ${Else}
+    StrCpy $InstDir "$PROGRAMFILES64\Nicotine+"
+  ${EndIf}
+FunctionEnd
+
 Section -Pre
-  ReadRegStr $R0 HKLM "${PRODUCT_DIR_REGKEY}" "InstallDir"
+  ReadRegStr $R0 HKLM "${PRODUCT_DIR_REGKEY}" ""
 
   ${If} $R0 != ""        
     DetailPrint "Removing previous installation."
@@ -58,19 +71,6 @@ Section -Post
   CreateShortCut "$SMPROGRAMS\Nicotine+.lnk" "$INSTDIR\Nicotine+.exe"
   CreateShortCut "$DESKTOP\Nicotine+.lnk" "$INSTDIR\Nicotine+.exe"
 SectionEnd
-
-Function .onInit
-  ${IfNot} ${AtLeastWin7}
-    MessageBox MB_OK|MB_ICONEXCLAMATION "Nicotine+ requires Windows 7 or later."
-    Quit
-  ${EndIf}
-
-  ${If} ${ARCH} == "i686"
-    StrCpy $InstDir "$PROGRAMFILES\Nicotine+"
-  ${Else}
-    StrCpy $InstDir "$PROGRAMFILES64\Nicotine+"
-  ${EndIf}
-FunctionEnd
 
 Function un.onUninstSuccess
   HideWindow
