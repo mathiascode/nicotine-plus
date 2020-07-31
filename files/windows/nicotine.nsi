@@ -32,6 +32,8 @@ ShowInstDetails show
 ShowUnInstDetails show
 ManifestDPIAware true
 
+; Installer
+
 Function .onInit
   ${IfNot} ${AtLeastWin7}
     MessageBox MB_OK|MB_ICONEXCLAMATION "Nicotine+ requires Windows 7 or later."
@@ -46,11 +48,11 @@ Function .onInit
 FunctionEnd
 
 Section -Pre
-  ReadRegStr $R0 HKLM "${PRODUCT_DIR_REGKEY}" ""
+  ReadRegStr $R0 ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString"
 
   ${If} $R0 != ""        
     DetailPrint "Removing previous installation."
-    ExecWait '"$R0\uninst.exe /S"'
+    ExecWait '"$R0 /S"'
   ${EndIf}
 SectionEnd
 
@@ -71,6 +73,8 @@ Section -Post
   CreateShortCut "$SMPROGRAMS\Nicotine+.lnk" "$INSTDIR\Nicotine+.exe"
   CreateShortCut "$DESKTOP\Nicotine+.lnk" "$INSTDIR\Nicotine+.exe"
 SectionEnd
+
+; Uninstaller
 
 Function un.onUninstSuccess
   HideWindow
