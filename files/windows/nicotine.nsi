@@ -52,7 +52,7 @@ Section -Pre
 
   ${If} $R0 != ""        
     DetailPrint "Removing previous installation."
-    ExecWait '"$R0 /S"'
+    ExecWait '$R0 /S _?=$INSTDIR'
   ${EndIf}
 SectionEnd
 
