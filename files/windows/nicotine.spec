@@ -15,6 +15,9 @@ added_files = [
     # About icon
     ('../org.nicotine_plus.Nicotine.svg', 'share/icons/hicolor/scalable/apps'),
 
+    # win32 theme
+    ('settings.ini', 'etc/gtk-3.0'),
+
     # GTK Builder files, plugins, geoip database
     ('../../pynicotine', 'pynicotine'),
 
