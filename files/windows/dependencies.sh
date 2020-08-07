@@ -3,6 +3,7 @@
 pacman --noconfirm -S --needed \
   git \
   upx \
+  mingw-w64-$ARCH-ca-certificates \
   mingw-w64-$ARCH-cython \
   mingw-w64-$ARCH-gcc \
   mingw-w64-$ARCH-gspell \
