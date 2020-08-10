@@ -3,6 +3,7 @@
 block_cipher = None
 
 import sys
+from PyInstaller.utils.hooks import collect_data_files
 sys.modules['FixTk'] = None
 sys.modules['lib2to3'] = None
 
@@ -24,6 +25,11 @@ added_files = [
     # Translation files
     ('../../languages', 'share/locale'),
 ]
+
+# Get the cacert.pem for the update checker
+datas.append(
+    collect_data_files('requests')
+)
 
 a = Analysis(['../../nicotine'],
              pathex=['.'],
