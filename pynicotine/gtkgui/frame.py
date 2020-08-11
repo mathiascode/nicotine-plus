@@ -33,6 +33,7 @@ from urllib.parse import urlencode
 import gi
 from gi.repository import Gdk
 from gi.repository import GdkPixbuf
+from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import GObject as gobject
 from gi.repository import Gtk as gtk
@@ -189,8 +190,6 @@ class NicotineFrame:
 
         if maximized == "True":
             self.MainWindow.maximize()
-
-        self.MainWindow.show()
 
         # Initialize these windows/dialogs later when necessary
         self.fastconfigure = None
@@ -927,8 +926,6 @@ class NicotineFrame:
 
             self.MainWindow.destroy()
 
-            gtk.main_quit()
-
         elif response == gtk.ResponseType.CANCEL:
             pass
 
@@ -1391,9 +1388,6 @@ class NicotineFrame:
             "bfileindex", "bsharedmtimes"
         ]:
             self.np.config.sections["transfers"][db].close()
-
-        # Exiting GTK
-        gtk.main_quit()
 
     def OnConnect(self, widget):
 
@@ -3145,10 +3139,16 @@ class NicotineFrame:
         self.ChangeMainPage(widget, "userlist")
 
 
-class MainApp:
-
+class MainApp(gtk.Application):
     def __init__(self, data_dir, config, plugins, trayicon, start_hidden, bindip, port):
-        self.frame = NicotineFrame(data_dir, config, plugins, trayicon, start_hidden, bindip, port)
+        gtk.Application.__init__(self, application_id="org.nicotine_plus.Nicotine",
+                                 flags=Gio.ApplicationFlags.FLAGS_NONE)
 
-    def MainLoop(self):
-        gtk.main()
+        self.connect("activate", self.OnActivate, data_dir, config, plugins, trayicon, start_hidden, bindip, port)
+
+    def OnActivate(self, data, data_dir, config, plugins, trayicon, start_hidden, bindip, port):
+        if not self.get_windows():
+            self.frame = NicotineFrame(data_dir, config, plugins, trayicon, start_hidden, bindip, port)
+            self.add_window(self.frame.MainWindow)
+
+        self.frame.MainWindow.show()
