@@ -329,17 +329,17 @@ class Shares:
         length = 0
 
         for i in terms:
-            if i in wordindex:
-                length += 1
+            try:
+                if i in wordindex:
+                    length += 1
+            except ValueError
+                # DB is closed, perhaps when rescanning share or closing Nicotine+
+                return
 
         if length == 0 or length != len(terms):
             return
 
-        try:
-            list = [wordindex[i] for i in terms if i in wordindex]
-        except ValueError:
-            # Shelf is probably closed, perhaps when rescanning share
-            return
+        list = [wordindex[i] for i in terms if i in wordindex]
 
         shortest = min(list, key=len)
         list.remove(shortest)
