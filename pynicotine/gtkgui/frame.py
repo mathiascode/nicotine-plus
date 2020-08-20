@@ -1980,8 +1980,6 @@ class NicotineFrame:
         if self.settingswindow is not None and self.settingswindow.SettingsWindow.get_property("visible"):
             return
 
-        self.fastconfigure.show()
-
     def OnSettings(self, widget, page=None):
         if self.settingswindow is None:
             self.settingswindow = SettingsWindow(self)
@@ -3151,3 +3149,6 @@ class MainApp(gtk.Application):
 
         if not start_hidden:
             self.frame.MainWindow.show()
+
+            if self.frame.fastconfigure is not None:
+                self.frame.fastconfigure.show()
