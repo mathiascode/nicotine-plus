@@ -447,6 +447,8 @@ class Transfers:
 
         user = response = None
 
+        msg.file = msg.file.replace('\\', os.sep)
+
         if msg.conn is not None:
             for i in self.peerconns:
                 if i.conn is msg.conn.conn:
@@ -504,7 +506,7 @@ class Transfers:
             if self.CanUpload(user) and user in self.RequestedUploadQueue:
                 path = ""
                 if self.eventprocessor.config.sections["transfers"]["uploadsinsubdirs"]:
-                    parentdir = msg.file.split("\\")[-2]
+                    parentdir = msg.file.split(os.sep)[-2]
                     path = self.eventprocessor.config.sections["transfers"]["uploaddir"] + os.sep + user + os.sep + parentdir
 
                 transfer = Transfer(
@@ -788,10 +790,11 @@ class Transfers:
     def fileIsShared(self, user, virtualfilename, realfilename):
 
         realfilename = realfilename.replace("\\", os.sep)
+
         if not os.access(realfilename, os.R_OK):
             return False
 
-        (dir, sep, file) = virtualfilename.rpartition('\\')
+        (dir, sep, file) = virtualfilename.rpartition(os.sep)
 
         if self.eventprocessor.config.sections["transfers"]["enablebuddyshares"]:
             if user in [i[0] for i in self.eventprocessor.config.sections["server"]["userlist"]]:
@@ -860,7 +863,7 @@ class Transfers:
     def getFileSize(self, filename):
 
         try:
-            size = os.path.getsize(filename.replace("\\", os.sep))
+            size = os.path.getsize(filename)
         except Exception:
             # file doesn't exist (remote files are always this)
             size = 0
@@ -994,8 +997,8 @@ class Transfers:
 
     def _FileRequestDownload(self, msg, i):
 
-        downloaddir = self.eventprocessor.config.sections["transfers"]["downloaddir"]
-        incompletedir = self.eventprocessor.config.sections["transfers"]["incompletedir"]
+        downloaddir = self.eventprocessor.config.sections["transfers"]["downloaddir"].replace('\\', os.sep)
+        incompletedir = self.eventprocessor.config.sections["transfers"]["incompletedir"].replace('\\', os.sep)
         needupdate = True
 
         if i.conn is None and i.size is not None:
@@ -1026,7 +1029,7 @@ class Transfers:
 
             else:
                 # also check for a windows-style incomplete transfer
-                basename = CleanFile(i.filename.split('\\')[-1])
+                basename = CleanFile(i.filename.split(os.sep)[-1])
                 winfname = os.path.join(incompletedir, "INCOMPLETE~" + basename)
                 pyfname = os.path.join(incompletedir, "INCOMPLETE" + basename)
 
@@ -1108,7 +1111,7 @@ class Transfers:
 
             try:
                 # Open File
-                filename = i.realfilename.replace("\\", os.sep)
+                filename = i.realfilename
 
                 f = open(filename, "rb")
                 self.queue.put(slskmessages.UploadFile(i.conn, file=f, size=i.size))
@@ -1232,9 +1235,9 @@ class Transfers:
         file.close()
         i.file = None
 
-        basename = CleanFile(i.filename.split('\\')[-1])
+        basename = CleanFile(i.filename.split(os.sep)[-1])
         config = self.eventprocessor.config.sections
-        downloaddir = config["transfers"]["downloaddir"]
+        downloaddir = config["transfers"]["downloaddir"].replace('\\', os.sep)
 
         if i.path and i.path[0] == '/':
             folder = utils.CleanPath(i.path)
@@ -1870,26 +1873,15 @@ class Transfers:
                         size = file[2]
                         h_bitrate, bitrate, h_length = GetResultBitrateLength(size, file[4])
 
-                        if directory[-1] == '\\':
-                            self.getFile(
-                                username,
-                                directory + file[1],
-                                self.FolderDestination(username, directory),
-                                size=size,
-                                bitrate=h_bitrate,
-                                length=h_length,
-                                checkduplicate=True
-                            )
-                        else:
-                            self.getFile(
-                                username,
-                                directory + '\\' + file[1],
-                                self.FolderDestination(username, directory),
-                                size=size,
-                                bitrate=h_bitrate,
-                                length=h_length,
-                                checkduplicate=True
-                            )
+                        self.getFile(
+                            username,
+                            os.path.join(directory, file[1]),
+                            self.FolderDestination(username, directory),
+                            size=size,
+                            bitrate=h_bitrate,
+                            length=h_length,
+                            checkduplicate=True
+                        )
 
     def FolderDestination(self, user, directory):
 
@@ -1899,16 +1891,18 @@ class Transfers:
             if directory in self.eventprocessor.requestedFolders[user]:
                 destination += self.eventprocessor.requestedFolders[user][directory]
 
-        if directory[-1] == '\\':
-            parent = directory.split('\\')[-2]
+        if directory[-1] == os.sep:
+            parent = directory.split(os.sep)[-2]
         else:
-            parent = directory.split('\\')[-1]
+            parent = directory.split(os.sep)[-1]
 
+        print(destination)
         destination = os.path.join(destination, parent)
+        print(destination)
 
-        if destination[0] != '/':
+        if destination[0] != os.sep:
             destination = os.path.join(
-                self.eventprocessor.config.sections["transfers"]["downloaddir"],
+                self.eventprocessor.config.sections["transfers"]["downloaddir"].replace('\\', os.sep),
                 destination
             )
 
@@ -1954,6 +1948,7 @@ class Transfers:
         if transfer.file is not None:
             try:
                 transfer.file.close()
+
                 if remove:
                     os.remove(transfer.file.name)
             except Exception:

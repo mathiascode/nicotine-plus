@@ -80,6 +80,7 @@ def CleanPath(path, absolute=False):
         # Path can never end with a period on Windows machines
         path = path.rstrip('.')
 
+    path = path.replace('\\', os.sep)
     return path
 
 

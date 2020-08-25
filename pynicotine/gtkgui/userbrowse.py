@@ -402,7 +402,6 @@ class UserBrowse:
     def BrowseGetDirs(self):
 
         directory = ""
-        dirseparator = '\\'
 
         # If there is no share
 
@@ -449,7 +448,7 @@ class UserBrowse:
                     current_path = subdir
                 else:
                     # Other sudirs futher down the path are attached to their parent
-                    current_path = dirseparator.join([path, subdir])
+                    current_path = '\\'.join([path, subdir])
 
                 self.directories[current_path] = self.DirStore.append(parent, [subdir, current_path])
 
@@ -463,7 +462,7 @@ class UserBrowse:
         for dirshares, f in self.shares:
 
             # Split the path
-            s = dirshares.split(dirseparator)
+            s = dirshares.split("\\")
 
             # and build a hierarchical dictionnary containing raw subdir
             if len(s) >= 1:
@@ -654,10 +653,12 @@ class UserBrowse:
         if dir is None:
             return
 
-        ldir = prefix + dir.split("\\")[-1]
+        ldir = prefix + dir.split('\\')[-1]
+        print(ldir)
 
         # Check if folder already exists on system
         ldir = self.frame.np.transfers.FolderDestination(self.user, ldir)
+        print(ldir)
 
         for d, f in self.shares:
 
@@ -688,7 +689,7 @@ class UserBrowse:
 
             for file in priorityfiles + normalfiles:
 
-                path = "\\".join([dir, file[1]])
+                path = os.path.join(dir.replace('\\', os.sep), file[1])
                 size = file[2]
                 h_bitrate, bitrate, h_length = GetResultBitrateLength(size, file[4])
 
@@ -725,12 +726,20 @@ class UserBrowse:
                 if file[1] not in self.selected_files:
                     continue
 
-                path = "\\".join([dir, file[1]])
+                path = os.path.join(dir.replace('\\', os.sep), file[1])
                 size = file[2]
                 h_bitrate, bitrate, h_length = GetResultBitrateLength(size, file[4])
 
                 # Get the file
-                self.frame.np.transfers.getFile(self.user, path, prefix, size=size, bitrate=h_bitrate, length=h_length, checkduplicate=True)
+                self.frame.np.transfers.getFile(
+                    self.user,
+                    path,
+                    prefix,
+                    size=size,
+                    bitrate=h_bitrate,
+                    length=h_length,
+                    checkduplicate=True
+                )
 
             # We have found the wanted directory: we can break out of the loop
             break
@@ -738,7 +747,7 @@ class UserBrowse:
     def OnDownloadFilesTo(self, widget):
 
         try:
-            _, dir = self.selected_folder.rsplit("\\", 1)
+            _, dir = self.selected_folder.rsplit('\\', 1)
         except ValueError:
             dir = self.selected_folder
 
@@ -791,8 +800,8 @@ class UserBrowse:
         if dir == "" or dir is None or user is None or user == "":
             return
 
-        realpath = self.frame.np.shares.virtual2real(dir)
-        ldir = dir.split("\\")[-1]
+        realpath = self.frame.np.shares.virtual2real(dir.replace('\\', os.sep))
+        ldir = dir.split('\\')[-1]
 
         for d, f in self.shares:
 
@@ -801,8 +810,8 @@ class UserBrowse:
                 continue
 
             for file in f:
-                filename = "\\".join([dir, file[1]])
-                realfilename = "\\".join([realpath, file[1]])
+                filename = os.path.join(dir.replace('\\', os.sep), file[1])
+                realfilename = os.path.join(realpath, file[1])
                 size = file[2]
                 self.frame.np.transfers.pushFile(user, filename, realfilename, ldir, size=size)
                 self.frame.np.transfers.checkUploadQueue()
@@ -816,7 +825,7 @@ class UserBrowse:
 
     def OnUploadFiles(self, widget, prefix=""):
 
-        dir = self.selected_folder
+        dir = self.selected_folder.replace('\\', os.sep)
         realpath = self.frame.np.shares.virtual2real(dir)
 
         users = []
@@ -838,7 +847,7 @@ class UserBrowse:
         self.frame.np.ProcessRequestToPeer(user, slskmessages.UploadQueueNotification(None))
 
         for fn in self.selected_files:
-            self.frame.np.transfers.pushFile(user, "\\".join([dir, fn]), "\\".join([realpath, fn]), prefix)
+            self.frame.np.transfers.pushFile(user, os.path.join(dir, fn), os.path.join(realpath, fn), prefix)
             self.frame.np.transfers.checkUploadQueue()
 
     def OnPlayFiles(self, widget, prefix=""):
@@ -853,7 +862,7 @@ class UserBrowse:
             return
 
         for fn in self.selected_files:
-            file = os.sep.join([path, fn])
+            file = os.path.join(path, fn)
             if os.path.exists(file):
                 executeCommand(executable, file, background=False)
 
@@ -938,7 +947,7 @@ class UserBrowse:
     def OnCopyURL(self, widget):
 
         if self.selected_files != [] and self.selected_files is not None:
-            path = "\\".join([self.selected_folder, self.selected_files[0]])
+            path = os.path.join(self.selected_folder, self.selected_files[0])
             self.frame.SetClipboardURL(self.user, path)
 
     def OnCopyDirURL(self, widget):
@@ -946,9 +955,7 @@ class UserBrowse:
         if self.selected_folder is None:
             return
 
-        path = self.selected_folder
-        if path[:-1] != "/":
-            path += "/"
+        path = self.selected_folder + os.sep
 
         self.frame.SetClipboardURL(self.user, path)
 

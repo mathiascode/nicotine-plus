@@ -59,7 +59,7 @@ class Shares:
             if path == real:
                 return virtual
             if path.startswith(real + os.sep):
-                virtualpath = virtual + '\\' + path[len(real + os.sep):].replace(os.sep, '\\')
+                virtualpath = os.path.join(virtual, path[len(real + os.sep):])
                 return virtualpath
         return "__INTERNAL_ERROR__" + path
 
@@ -71,8 +71,8 @@ class Shares:
 
             if path == virtual:
                 return real
-            if path.startswith(virtual + '\\'):
-                realpath = real + path[len(virtual):].replace('\\', os.sep)
+            if path.startswith(virtual + os.sep):
+                realpath = os.path.join(real, path[len(virtual + os.sep):])
                 return realpath
         return "__INTERNAL_ERROR__" + path
 
@@ -284,15 +284,15 @@ class Shares:
         if checkuser:
             if msg.dir in shares:
                 self.queue.put(slskmessages.FolderContentsResponse(msg.conn.conn, msg.dir, shares[msg.dir]))
-            elif msg.dir.rstrip('\\') in shares:
-                self.queue.put(slskmessages.FolderContentsResponse(msg.conn.conn, msg.dir, shares[msg.dir.rstrip('\\')]))
+            elif msg.dir.rstrip(os.sep) in shares:
+                self.queue.put(slskmessages.FolderContentsResponse(msg.conn.conn, msg.dir, shares[msg.dir.rstrip(os.sep)]))
             else:
                 if checkuser == 2:
                     shares = self.config.sections["transfers"]["sharedfiles"]
                     if msg.dir in shares:
                         self.queue.put(slskmessages.FolderContentsResponse(msg.conn.conn, msg.dir, shares[msg.dir]))
-                    elif msg.dir.rstrip("\\") in shares:
-                        self.queue.put(slskmessages.FolderContentsResponse(msg.conn.conn, msg.dir, shares[msg.dir.rstrip("\\")]))
+                    elif msg.dir.rstrip(os.sep) in shares:
+                        self.queue.put(slskmessages.FolderContentsResponse(msg.conn.conn, msg.dir, shares[msg.dir.rstrip(os.sep)]))
 
         self.logMessage("%s %s" % (msg.__class__, vars(msg)), 4)
 
@@ -695,7 +695,7 @@ class Shares:
 
             for j in newsharedfiles[virtualdir]:
                 file = j[0]
-                fileindex.append((virtualdir + '\\' + file,) + j[1:])
+                fileindex.append((os.path.join(virtualdir, file),) + j[1:])
 
                 # Collect words from filenames for Search index
                 for k in (virtualdir + " " + file).lower().translate(self.translatepunctuation).split():

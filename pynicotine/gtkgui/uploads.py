@@ -106,8 +106,8 @@ class Uploads(TransferList):
 
     def OnOpenDirectory(self, widget):
 
-        downloaddir = self.frame.np.config.sections["transfers"]["downloaddir"]
-        incompletedir = self.frame.np.config.sections["transfers"]["incompletedir"]
+        downloaddir = self.frame.np.config.sections["transfers"]["downloaddir"].replace('\\', os.sep)
+        incompletedir = self.frame.np.config.sections["transfers"]["incompletedir"].replace('\\', os.sep)
 
         if incompletedir == "":
             incompletedir = downloaddir

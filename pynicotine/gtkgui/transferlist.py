@@ -22,6 +22,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 from gettext import gettext as _
 from math import ceil
 from sys import maxsize
@@ -163,7 +165,7 @@ class TransferList:
     def OnFileSearch(self, widget):
 
         for transfer in self.selected_transfers:
-            self.frame.SearchEntry.set_text(transfer.filename.rsplit("\\", 1)[1])
+            self.frame.SearchEntry.set_text(transfer.filename.rsplit(os.sep, 1)[1])
             self.frame.ChangeMainPage(None, "search")
             break
 
@@ -418,7 +420,7 @@ class TransferList:
 
         fn = transfer.filename
         user = transfer.user
-        shortfn = fn.split("\\")[-1]
+        shortfn = fn.split(os.sep)[-1]
         currentbytes = transfer.currentbytes
         place = transfer.place
 
@@ -472,7 +474,7 @@ class TransferList:
                 # Group by folder, path not visible
                 path = None
             else:
-                path = '/'.join(reversed(transfer.path.split('/')))
+                path = os.sep.join(reversed(transfer.path.split(os.sep)))
 
             self.transfersmodel.set(
                 transfer.iter,
@@ -513,7 +515,7 @@ class TransferList:
                     don't add files to the wrong user in the TreeView """
                     path = transfer.path
                     user_path = user + path
-                    reverse_path = '/'.join(reversed(path.split('/')))
+                    reverse_path = os.sep.join(reversed(path.split(os.sep)))
 
                     if user_path not in self.paths:
                         self.paths[user_path] = self.transfersmodel.append(
@@ -536,7 +538,7 @@ class TransferList:
                 # Group by folder, path not visible
                 path = None
             else:
-                path = '/'.join(reversed(transfer.path.split('/')))
+                path = os.sep.join(reversed(transfer.path.split(os.sep)))
 
             iter = self.transfersmodel.append(
                 parent,
@@ -651,10 +653,7 @@ class TransferList:
     def OnCopyDirURL(self, widget):
 
         i = next(iter(self.selected_transfers))
-        path = "\\".join(i.filename.split("\\")[:-1])
-
-        if path[:-1] != "/":
-            path += "/"
+        path = os.sep.join(i.filename.split(os.sep)[:-1]) + os.sep
 
         self.frame.SetClipboardURL(i.user, path)
 

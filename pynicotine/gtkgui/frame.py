@@ -2506,9 +2506,9 @@ class NicotineFrame:
         try:
             user, file = urllib.request.url2pathname(url[7:]).split("/", 1)
             if file[-1] == "/":
-                self.np.ProcessRequestToPeer(user, slskmessages.FolderContentsRequest(None, file[:-1].replace("/", "\\")))
+                self.np.ProcessRequestToPeer(user, slskmessages.FolderContentsRequest(None, file[:-1]))
             else:
-                self.np.transfers.getFile(user, file.replace("/", "\\"), "")
+                self.np.transfers.getFile(user, file, "")
         except Exception:
             self.logMessage(_("Invalid SoulSeek meta-url: %s") % url)
 

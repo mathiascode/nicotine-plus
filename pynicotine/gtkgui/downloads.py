@@ -176,7 +176,7 @@ class Downloads(TransferList):
         else:
             return
 
-        directory = fullname.rsplit("\\", 1)[0]
+        directory = fullname.rsplit(os.sep, 1)[0]
 
         data[len(data)] = {
             "user": user,
@@ -206,8 +206,8 @@ class Downloads(TransferList):
 
     def OnOpenDirectory(self, widget):
 
-        downloaddir = self.frame.np.config.sections["transfers"]["downloaddir"]
-        incompletedir = self.frame.np.config.sections["transfers"]["incompletedir"]
+        downloaddir = self.frame.np.config.sections["transfers"]["downloaddir"].replace('\\', os.sep)
+        incompletedir = self.frame.np.config.sections["transfers"]["incompletedir"].replace('\\', os.sep)
 
         if incompletedir == "":
             incompletedir = downloaddir
@@ -260,7 +260,7 @@ class Downloads(TransferList):
     def _OnPlayFiles(self, widget, prefix=""):
 
         executable = self.frame.np.config.sections["players"]["default"]
-        downloaddir = self.frame.np.config.sections["transfers"]["downloaddir"]
+        downloaddir = self.frame.np.config.sections["transfers"]["downloaddir"].replace('\\', os.sep)
 
         if "$" not in executable:
             return
@@ -274,8 +274,8 @@ class Downloads(TransferList):
             else:
                 # If this file doesn't exist anymore, it may have finished downloading and have been renamed
                 # try looking in the download directory and match the original filename.
-                basename = str.split(fn.filename, '\\')[-1]
-                path = os.sep.join([downloaddir, basename])
+                basename = str.split(fn.filename, os.sep)[-1]
+                path = os.path.join(downloaddir, basename)
 
                 if os.path.exists(path):
                     playfile = path

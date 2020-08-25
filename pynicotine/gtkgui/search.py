@@ -697,7 +697,7 @@ class Search:
             if counter > self.Searches.maxstoredresults:
                 break
 
-            fullpath = result[1]
+            fullpath = result[1].replace('\\', os.sep)
 
             if any(word in fullpath.lower() for word in self.searchterm_words_ignore):
                 """ Filter out results with filtered words (e.g. nicotine -music) """
@@ -709,8 +709,9 @@ class Search:
                 log.add(_("Filtered out inexact or incorrect search result " + fullpath + " from user " + user), 2)
                 continue
 
-            name = fullpath.split('\\')[-1]
-            directory = '\\'.join(reversed(fullpath[:-len(name)].split('\\')))[1:]
+            fullpath_list = fullpath.split(os.sep)
+            name = fullpath_list[-1]
+            directory = os.sep.join(reversed(fullpath_list[:-1]))
 
             size = result[2]
             h_size = HumanSize(size)
@@ -1193,7 +1194,7 @@ class Search:
         for i in self.selected_results:
 
             user = i[0]
-            directory = '\\'.join(reversed(i[5].split('\\')))
+            directory = os.sep.join(reversed(i[5].split(os.sep)))
 
             self.frame.np.ProcessRequestToPeer(user, slskmessages.FolderContentsRequest(None, directory))
 
@@ -1209,7 +1210,7 @@ class Search:
         for i in self.selected_results:
 
             user = i[0]
-            dir = '\\'.join(reversed(i[5].split('\\')))
+            dir = os.sep.join(reversed(i[5].split(os.sep)))
 
             if user not in self.frame.np.requestedFolders:
                 self.frame.np.requestedFolders[user] = {}
@@ -1218,16 +1219,13 @@ class Search:
             self.frame.np.ProcessRequestToPeer(user, slskmessages.FolderContentsRequest(None, dir))
 
     def OnCopyURL(self, widget):
-        user, path = self.selected_results[0][:2]
+        user, path = next(iter(self.selected_results))[:2]
         self.frame.SetClipboardURL(user, path)
 
     def OnCopyDirURL(self, widget):
 
-        user, path = self.selected_results[0][:2]
-        path = "\\".join(path.split("\\")[:-1]) + "\\"
-
-        if path[:-1] != "/":
-            path += "/"
+        user, path = next(iter(self.selected_results))[:2]
+        path = os.sep.join(path.split(os.sep)[:-1]) + os.sep
 
         self.frame.SetClipboardURL(user, path)
 
