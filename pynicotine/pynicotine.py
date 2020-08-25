@@ -456,49 +456,47 @@ class NetworkEventProcessor:
 
         elif msg.connobj.__class__ is slskmessages.OutConn:
 
-            for i in self.peerconns[:]:
+            i = next((i for i in self.peerconns if i.addr == msg.connobj.addr and i.conn is None), None)
 
-                if i.addr == msg.connobj.addr and i.conn is None:
+            if i is not None:
+                if i.token is None:
 
-                    if i.token is None:
+                    i.token = newId()
+                    self.queue.put(slskmessages.ConnectToPeer(i.token, i.username, i.init.type))
 
-                        i.token = newId()
-                        self.queue.put(slskmessages.ConnectToPeer(i.token, i.username, i.init.type))
+                    if i.username in self.users:
+                        self.users[i.username].behindfw = "yes"
 
-                        if i.username in self.users:
-                            self.users[i.username].behindfw = "yes"
+                    for j in i.msgs:
+                        if j.__class__ is slskmessages.TransferRequest and self.transfers is not None:
+                            self.transfers.gotConnectError(j.req)
 
-                        for j in i.msgs:
-                            if j.__class__ is slskmessages.TransferRequest and self.transfers is not None:
-                                self.transfers.gotConnectError(j.req)
+                    conntimeout = ConnectToPeerTimeout(i, self.callback)
+                    timer = threading.Timer(120.0, conntimeout.timeout)
+                    timer.setDaemon(True)
+                    timer.start()
 
-                        conntimeout = ConnectToPeerTimeout(i, self.callback)
-                        timer = threading.Timer(120.0, conntimeout.timeout)
-                        timer.setDaemon(True)
-                        timer.start()
+                    if i.conntimer is not None:
+                        i.conntimer.cancel()
 
-                        if i.conntimer is not None:
-                            i.conntimer.cancel()
+                    i.conntimer = timer
 
-                        i.conntimer = timer
+                else:
+                    for j in i.msgs:
+                        if j.__class__ in [slskmessages.TransferRequest, slskmessages.FileRequest] and self.transfers is not None:
+                            self.transfers.gotCantConnect(j.req)
 
-                    else:
-                        for j in i.msgs:
-                            if j.__class__ in [slskmessages.TransferRequest, slskmessages.FileRequest] and self.transfers is not None:
-                                self.transfers.gotCantConnect(j.req)
+                    self.logMessage(
+                        _("Can't connect to %s, sending notification via the server") % (i.username),
+                        3
+                    )
+                    self.queue.put(slskmessages.CantConnectToPeer(i.token, i.username))
 
-                        self.logMessage(
-                            _("Can't connect to %s, sending notification via the server") % (i.username),
-                            3
-                        )
-                        self.queue.put(slskmessages.CantConnectToPeer(i.token, i.username))
+                    if i.conntimer is not None:
+                        i.conntimer.cancel()
 
-                        if i.conntimer is not None:
-                            i.conntimer.cancel()
+                    self.peerconns.remove(i)
 
-                        self.peerconns.remove(i)
-
-                    break
             else:
                 self.logMessage("%s %s %s" % (msg.err, msg.__class__, vars(msg)), 4)
 
@@ -590,21 +588,21 @@ class NetworkEventProcessor:
             self.frame.pluginhandler.ServerDisconnectNotification(userchoice)
 
         else:
-            for i in self.peerconns[:]:
-                if i.conn == conn:
-                    self.logMessage(_("Connection closed by peer: %s") % vars(i), debugLevel=3)
+            i = next((i for i in self.peerconns if i.conn == conn), None)
 
-                    if i.conntimer is not None:
-                        i.conntimer.cancel()
+            if i is not None:
+                self.logMessage(_("Connection closed by peer: %s") % vars(i), debugLevel=3)
 
-                    if self.transfers is not None:
-                        self.transfers.ConnClose(conn, addr, i.username, error)
+                if i.conntimer is not None:
+                    i.conntimer.cancel()
 
-                    if i == self.GetParentConn():
-                        self.ParentConnClosed()
+                if self.transfers is not None:
+                    self.transfers.ConnClose(conn, addr, i.username, error)
 
-                    self.peerconns.remove(i)
-                    break
+                if i == self.GetParentConn():
+                    self.ParentConnClosed()
+
+                self.peerconns.remove(i)
             else:
                 self.logMessage(
                     _("Removed connection closed by peer: %(conn_obj)s %(address)s") % {
@@ -1462,24 +1460,22 @@ class NetworkEventProcessor:
 
     def CantConnectToPeer(self, msg):
 
-        for i in self.peerconns[:]:
+        i = next((i for i in self.peerconns if i.token == msg.token), None)
 
-            if i.token == msg.token:
+        if i is not None:
+            if i.conntimer is not None:
+                i.conntimer.cancel()
 
-                if i.conntimer is not None:
-                    i.conntimer.cancel()
+            if i == self.GetParentConn():
+                self.ParentConnClosed()
 
-                if i == self.GetParentConn():
-                    self.ParentConnClosed()
+            self.peerconns.remove(i)
 
-                self.peerconns.remove(i)
+            self.logMessage(_("Can't connect to %s (either way), giving up") % (i.username), 3)
 
-                self.logMessage(_("Can't connect to %s (either way), giving up") % (i.username), 3)
-
-                for j in i.msgs:
-                    if j.__class__ in [slskmessages.TransferRequest, slskmessages.FileRequest] and self.transfers is not None:
-                        self.transfers.gotCantConnect(j.req)
-                break
+            for j in i.msgs:
+                if j.__class__ in [slskmessages.TransferRequest, slskmessages.FileRequest] and self.transfers is not None:
+                    self.transfers.gotCantConnect(j.req)
 
     def ConnectToPeerTimeout(self, msg):
         conn = msg.conn
