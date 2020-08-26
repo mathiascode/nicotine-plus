@@ -28,7 +28,7 @@ $ sudo apt update
 $ sudo apt install nicotine
 ```
 
-### Arch Linux/Parabola (Stable)
+### Arch Linux/Manjaro/Parabola (Stable)
 Nicotine+ is available in the community repository of Arch Linux and Parabola. To install, run the following:
 
 ```console
