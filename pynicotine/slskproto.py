@@ -696,6 +696,7 @@ class SlskProtoThread(threading.Thread):
                 """ We save resources by not sending data back to the UI every time
                 a part of a file is transferred """
 
+                print("callback")
                 self._ui_callback([DownloadFile(conn.conn, addedbyteslen, conn.filedown.file)])
                 self.last_file_update = time.time()
 

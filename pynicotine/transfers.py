@@ -1337,6 +1337,7 @@ class Transfers:
         """ A file upload is in progress """
 
         needupdate = True
+        print("upload")
 
         for i in self.uploads:
 
