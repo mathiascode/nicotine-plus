@@ -18,13 +18,8 @@ pacman --noconfirm -S --needed \
 
 # pip should not pick up our setup.cfg
 cd ..
-pip install plyer semidbm
-
-# pyinstaller
-wget https://github.com/pyinstaller/pyinstaller/releases/download/v3.6/PyInstaller-3.6.tar.gz
-tar -zxvf PyInstaller-3.6.tar.gz
-cd PyInstaller-3.6/
-python setup.py install
+pip uninstall setuptools
+pip install plyer pyinstaller=3.6 semidbm
 
 # pytaglib
 wget https://github.com/supermihi/pytaglib/archive/v1.4.6.tar.gz
