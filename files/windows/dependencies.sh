@@ -18,7 +18,7 @@ pacman --noconfirm -S --needed \
 
 # pip should not pick up our setup.cfg
 cd ..
-pip uninstall setuptools
+pip uninstall -y setuptools
 pip install plyer pyinstaller==3.6 semidbm
 
 # pytaglib
