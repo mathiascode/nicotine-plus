@@ -19,7 +19,7 @@ pacman --noconfirm -S --needed \
 # pip should not pick up our setup.cfg
 cd ..
 pip uninstall setuptools
-pip install plyer pyinstaller=3.6 semidbm
+pip install plyer pyinstaller==3.6 semidbm
 
 # pytaglib
 wget https://github.com/supermihi/pytaglib/archive/v1.4.6.tar.gz
