@@ -21,7 +21,10 @@ cd ..
 pip install plyer semidbm
 
 # pyinstaller
-pip install https://github.com/pyinstaller/pyinstaller/releases/download/v4.0/PyInstaller-4.0.tar.gz
+wget https://github.com/pyinstaller/pyinstaller/releases/download/v4.0/PyInstaller-4.0.tar.gz
+tar -zxvf PyInstaller-4.0.tar.gz
+cd PyInstaller-4.0/
+python setup.py install
 
 # pytaglib
 wget https://github.com/supermihi/pytaglib/archive/v1.4.6.tar.gz
