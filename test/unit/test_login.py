@@ -76,6 +76,9 @@ def test_server_conn(config, monkeypatch) -> None:
     assert mock_socket.bind.call_count == 1
     assert mock_socket.connect_ex.call_count == 1
     assert mock_socket.listen.call_count == 1
+
+    sleep(SLSKPROTO_RUN_TIME)
+
     assert mock_socket.close.call_count == 1
 
 

@@ -981,14 +981,10 @@ class SlskProtoThread(threading.Thread):
                             connsinprogress[server_socket] = PeerConnectionInProgress(server_socket, msgObj)
                             selector.register(server_socket, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
-                            try:
-                                selector.register(p, selectors.EVENT_READ)
-                            except KeyError:
-                                pass
-
                             numsockets += 1
 
                         except socket.error as err:
+
                             self._ui_callback([ConnectError(msgObj, err)])
                             server_socket.close()
 
@@ -1164,6 +1160,8 @@ class SlskProtoThread(threading.Thread):
         selector = selectors.DefaultSelector()
         timeout = -1
 
+        selector.register(p, selectors.EVENT_READ)
+
         while not self._want_abort:
 
             if not queue.empty():
@@ -1210,11 +1208,6 @@ class SlskProtoThread(threading.Thread):
 
                     message = _("Major Socket Error: Networking terminated! %s" % str(error))
                     log.addwarning(message)
-
-            except TypeError:
-                # Windows-specific error if we don't have fds to do select on
-                input = set()
-                output = set()
 
             except ValueError:
                 # Possibly opened too many sockets
@@ -1340,25 +1333,26 @@ class SlskProtoThread(threading.Thread):
                         self.close_connection(conns, connection, selector)
                         continue
 
+                if len(conn_obj.ibuf) > 0:
                     if connection is server_socket:
                         msgs, conns[server_socket].ibuf = self.process_server_input(conns[server_socket].ibuf)
                         self._ui_callback(msgs)
 
                     else:
+                        if conn_obj.init is None or conn_obj.init.type not in ['F', 'D']:
+                            msgs, conns[connection] = self.process_peer_input(conn_obj, conn_obj.ibuf)
+                            self._ui_callback(msgs)
+
                         if conn_obj.init is not None and conn_obj.init.type == 'F':
-                            msgs, conn_obj = self.process_file_input(conn_obj, conn_obj.ibuf)
+                            msgs, conns[connection] = self.process_file_input(conn_obj, conn_obj.ibuf)
                             self._ui_callback(msgs)
 
-                        elif conn_obj.init is not None and conn_obj.init.type == 'D':
-                            msgs, conn_obj = self.process_distrib_input(conn_obj, conn_obj.ibuf)
-                            self._ui_callback(msgs)
-
-                        elif conn_obj.init is not None:
-                            msgs, conn_obj = self.process_peer_input(conn_obj, conn_obj.ibuf)
+                        if conn_obj.init is not None and conn_obj.init.type == 'D':
+                            msgs, conns[connection] = self.process_distrib_input(conn_obj, conn_obj.ibuf)
                             self._ui_callback(msgs)
 
                         if conn_obj.conn is None:
-                            self.close_connection(conns, connection, selector)
+                            del conns[connection]
 
             # Don't exhaust the CPU
             time.sleep(0.3)
