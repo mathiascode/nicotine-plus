@@ -804,8 +804,14 @@ class Transfers:
 
         for i in self.downloads:
             if i.user == user and i.filename == msg.file and i.status not in ["Aborted", "Paused"]:
-                i.status = msg.reason
-                self.downloadspanel.update(i)
+                reason = msg.reason
+
+                if i.status == "Transferring":
+                    self.AbortTransfer(i, reason=reason)
+                else:
+                    i.status = reason
+                    self.downloadspanel.update(i)
+
                 break
 
     def fileIsShared(self, user, virtualfilename, realfilename):
@@ -1490,6 +1496,37 @@ class Transfers:
             if upload.status == "Queued":
                 self.eventprocessor.ProcessRequestToPeer(user, slskmessages.QueueFailed(None, file=upload.filename, reason=banmsg))
             else:
+                self.AbortTransfer(upload, reason=banmsg)
+
+        if self.uploadspanel is not None:
+            self.uploadspanel.ClearByUser(user)
+        if user not in self.eventprocessor.config.sections["server"]["banlist"]:
+            self.eventprocessor.config.sections["server"]["banlist"].append(user)
+            self.eventprocessor.config.writeConfiguration()
+            self.eventprocessor.config.writeDownloadQueue()
+
+
+    def BanIP(self, ban_message=None):
+        """
+        Ban an IP address, cancel all the user's uploads, send a 'Banned'
+        message via the transfers, and clear the transfers from the
+        uploads list.
+        """
+
+        if ban_message:
+            banmsg = _("Banned (%s)") % ban_message
+        elif self.eventprocessor.config.sections["transfers"]["usecustomban"]:
+            banmsg = _("Banned (%s)") % self.eventprocessor.config.sections["transfers"]["customban"]
+        else:
+            banmsg = _("Banned")
+
+        for upload in self.uploads:
+            if upload.user != user:
+                continue
+
+            if upload.status == "Queued":
+                self.eventprocessor.ProcessRequestToPeer(user, slskmessages.QueueFailed(None, file=upload.filename, reason=banmsg))
+            else:
                 self.AbortTransfer(upload)
 
         if self.uploadspanel is not None:
@@ -1972,14 +2009,14 @@ class Transfers:
                 self.AbortTransfer(i)
                 i.status = "Old"
 
-    def AbortTransfer(self, transfer, remove=0):
+    def AbortTransfer(self, transfer, remove=0, reason="Aborted"):
 
         transfer.req = None
         transfer.speed = 0
         transfer.timeleft = ""
 
         if transfer in self.uploads:
-            self.eventprocessor.ProcessRequestToPeer(transfer.user, slskmessages.QueueFailed(None, file=transfer.filename, reason="Aborted"))
+            self.eventprocessor.ProcessRequestToPeer(transfer.user, slskmessages.QueueFailed(None, file=transfer.filename, reason=reason))
 
         if transfer.conn is not None:
             self.queue.put(slskmessages.ConnClose(transfer.conn))
