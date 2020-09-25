@@ -958,7 +958,6 @@ class SlskProtoThread(threading.Thread):
                     if msgObj.__class__ not in [PeerInit, PierceFireWall, FileSearchResult]:
                         message = _("Can't send the message over the closed connection: %(type)s %(msg_obj)s") % {'type': msgObj.__class__, 'msg_obj': vars(msgObj)}
                         log.add(message, 3)
-                        queue.put(msgObj)
 
             elif issubclass(msgObj.__class__, InternalMessage):
                 if msgObj.__class__ is ServerConn:
