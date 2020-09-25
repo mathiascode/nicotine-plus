@@ -311,15 +311,17 @@ class NetworkEventProcessor:
 
         conn = None
 
-        if message.__class__ is not slskmessages.FileRequest:
-            for i in self.peerconns:
-                if i.username == user and i.init.type == 'P':
-                    conn = i
-                    break
+        #if message.__class__ is not slskmessages.FileRequest:
+        for i in self.peerconns:
+            if i.username == user: #and i.init.type == 'P':
+                conn = i
+                break
 
         if conn is not None and conn.conn is not None:
 
             message.conn = conn.conn
+            print(message.__class__)
+            print("up")
 
             self.queue.put(message)
 
@@ -459,7 +461,7 @@ class NetworkEventProcessor:
 
             for i in self.peerconns:
 
-                if i.addr == msg.connobj.addr and i.conn is None:
+                if i.addr == msg.connobj.addr:
                     print(i.username)
                     print(i.token)
                     if i.token is None:
