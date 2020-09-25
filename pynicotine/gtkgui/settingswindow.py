@@ -94,7 +94,6 @@ class ServerFrame(buildFrame):
                 "login": self.Login,
                 "passw": self.Password,
                 "portrange": None,
-                "firewalled": self.DirectConnection,
                 "upnp": self.UseUPnP,
                 "ctcpmsgs": self.ctcptogglebutton
             }
@@ -130,9 +129,6 @@ class ServerFrame(buildFrame):
         if server["portrange"] is not None:
             self.FirstPort.set_value(server["portrange"][0])
             self.LastPort.set_value(server["portrange"][1])
-
-        if server["firewalled"] is not None:
-            self.DirectConnection.set_active(not server["firewalled"])
 
         if server["ctcpmsgs"] is not None:
             self.ctcptogglebutton.set_active(not server["ctcpmsgs"])
@@ -204,15 +200,12 @@ class ServerFrame(buildFrame):
             dlg.destroy()
             raise UserWarning
 
-        firewalled = not self.DirectConnection.get_active()
-
         return {
             "server": {
                 "server": server,
                 "login": self.Login.get_text(),
                 "passw": self.Password.get_text(),
                 "portrange": portrange,
-                "firewalled": firewalled,
                 "upnp": self.UseUPnP.get_active(),
                 "ctcpmsgs": not self.ctcptogglebutton.get_active(),
             }

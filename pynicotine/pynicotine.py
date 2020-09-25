@@ -341,7 +341,6 @@ class NetworkEventProcessor:
                 type = 'P'
 
             init = slskmessages.PeerInit(None, self.config.sections["server"]["login"], type, 0)
-            firewalled = self.config.sections["server"]["firewalled"]
             addr = None
             behindfw = None
             token = None
@@ -353,19 +352,15 @@ class NetworkEventProcessor:
                 self.users[user] = UserAddr(status=-1, addr=address)
                 addr = address
 
-            if firewalled:
-                if addr is None:
-                    if user not in self.user_addr_requested:
-                        self.queue.put(slskmessages.GetPeerAddress(user))
-                        self.user_addr_requested.add(user)
-                elif behindfw is None:
-                    self.queue.put(slskmessages.OutConn(None, addr))
-                else:
-                    firewalled = 0
-
-            if not firewalled:
+            if addr is None:
+                if user not in self.user_addr_requested:
+                    self.queue.put(slskmessages.GetPeerAddress(user))
+                    self.user_addr_requested.add(user)
+            elif behindfw is None:
+                self.queue.put(slskmessages.OutConn(None, addr))  # Direct connection
+            elif behindfw == "yes":
                 token = newId()
-                self.queue.put(slskmessages.ConnectToPeer(token, user, type))
+                self.queue.put(slskmessages.ConnectToPeer(token, user, type))  # Indirect connection
 
             conn = PeerConnection(addr=addr, username=user, msgs=[message], token=token, init=init)
             self.peerconns.append(conn)
@@ -459,7 +454,7 @@ class NetworkEventProcessor:
 
             self.frame.ConnectError(msg)
 
-        elif msg.connobj.__class__ is slskmessages.OutConn:
+        elif msg.connobj.__class__ is slskmessages.OutConn or msg.connobj.__class__ is slskproto.PeerConnection:
 
             for i in self.peerconns:
 
@@ -468,7 +463,7 @@ class NetworkEventProcessor:
                     if i.token is None:
 
                         i.token = newId()
-                        self.queue.put(slskmessages.ConnectToPeer(i.token, i.username, i.init.type))
+                        self.queue.put(slskmessages.ConnectToPeer(i.token, i.username, i.init.type))  # Indirect connection
 
                         if i.username in self.users:
                             self.users[i.username].behindfw = "yes"
@@ -1091,7 +1086,7 @@ class NetworkEventProcessor:
                     i.addr = (msg.ip, msg.port)
                     i.tryaddr = None
 
-                    self.queue.put(slskmessages.OutConn(None, i.addr))
+                    self.queue.put(slskmessages.OutConn(None, i.addr))  # Direct connection
 
                     for j in i.msgs:
                         if j.__class__ is slskmessages.TransferRequest and self.transfers is not None:

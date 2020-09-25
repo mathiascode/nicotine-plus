@@ -138,11 +138,6 @@ class FastConfigureAssistant(object):
             self.config.sections["server"]["passw"]
         )
 
-        if self.config.sections["server"]["firewalled"]:
-            self.kids['portclosed'].set_active(True)
-        else:
-            self.kids['portopen'].set_active(True)
-
         self.kids['lowerport'].set_value(
             self.config.sections["server"]["portrange"][0]
         )
@@ -194,7 +189,6 @@ class FastConfigureAssistant(object):
             self.kids['lowerport'].get_value_as_int(),
             self.kids['upperport'].get_value_as_int()
         )
-        self.config.sections['server']['firewalled'] = not self.kids['portopen'].get_active()
 
         # sharepage
         self.config.sections['transfers']['downloaddir'] = self.kids['downloaddir'].get_file().get_path()
@@ -251,9 +245,7 @@ class FastConfigureAssistant(object):
                 complete = True
 
         elif name == 'portpage':
-            if self.kids['portopen'].get_active() or \
-               self.kids['portclosed'].get_active():
-                complete = True
+            complete = True
 
         elif name == 'sharepage':
             if exists(self.kids['downloaddir'].get_filename()):
@@ -262,14 +254,6 @@ class FastConfigureAssistant(object):
         elif name == 'summarypage':
 
             complete = True
-            showcpwarning = (
-                self.kids['portclosed'].get_active()
-            )
-
-            if showcpwarning:
-                self.kids['labelclosedport'].show()
-            else:
-                self.kids['labelclosedport'].hide()
 
             shownfwarning = (
                 self.kids['onlysharewithfriends'].get_active() or
