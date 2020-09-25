@@ -474,41 +474,31 @@ class SlskProtoThread(threading.Thread):
             return i.readbytes2 / elapsed
 
     def _calcUploadLimitByTransfer(self, conns, i):
-        max = self._uploadlimit[1] * 1024.0
-        limit = max - self._calcUploadSpeed(i) + 1024
-
-        if limit < 1024.0:
-            return int(0)
+        limit = self._uploadlimit[1] * 1000.0
 
         return int(limit)
 
     def _calcUploadLimitByTotal(self, conns, i):
-        max = self._uploadlimit[1] * 1024.0
+        max = self._uploadlimit[1] * 1000.0
         bw = 0.0
 
-        for j in conns.values():
+        for j in conns:
             if self._isUpload(j):
                 bw += self._calcUploadSpeed(j)
 
-        limit = max - bw + 1024
-
-        if limit < 1024.0:
-            return int(0)
+        limit = max - bw
 
         return int(limit)
 
     def _calcDownloadLimitByTotal(self, conns, i):
-        max = self._downloadlimit[1] * 1024.0
+        max = self._downloadlimit[1] * 1000.0
         bw = 0.0
 
         for j in conns:
             if self._isDownload(j):
                 bw += self._calcDownloadSpeed(j)
 
-        limit = max - bw + 1023
-
-        if limit < 1024.0:
-            return int(0)
+        limit = max - bw
 
         return int(limit)
 
@@ -1176,7 +1166,7 @@ class SlskProtoThread(threading.Thread):
                             limit = self._uploadlimit[0](conns, conn)
 
                             if limit is None or limit > 0:
-                                self._ulimits[i] = limit
+                                self._ulimits[i] = int(limit * 0.2)  # limit is per second, we loop 5 times a second
                                 event_masks |= selectors.EVENT_WRITE
 
                         else:
