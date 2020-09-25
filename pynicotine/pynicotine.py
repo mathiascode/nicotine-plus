@@ -358,9 +358,10 @@ class NetworkEventProcessor:
                     self.user_addr_requested.add(user)
             elif behindfw is None:
                 self.queue.put(slskmessages.OutConn(None, addr))  # Direct connection
-            elif behindfw == "yes":
-                token = newId()
-                self.queue.put(slskmessages.ConnectToPeer(token, user, type))  # Indirect connection
+            #elif behindfw == "yes":
+
+            token = newId()
+            self.queue.put(slskmessages.ConnectToPeer(token, user, type))  # Indirect connection
 
             conn = PeerConnection(addr=addr, username=user, msgs=[message], token=token, init=init)
             self.peerconns.append(conn)
