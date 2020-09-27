@@ -88,6 +88,12 @@ for file in a.datas[:]:
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
+
+enable_upx = True
+if sys.platform == 'win32' and sys.maxsize < 2**32:
+    # Disable UPX on 32-bit Windows, otherwise Nicotine+ won't start
+    enable_upx = False
+
 exe = EXE(pyz,
           a.scripts,
           [],
@@ -95,7 +101,7 @@ exe = EXE(pyz,
           name='Nicotine+',
           debug=False,
           strip=False,
-          upx=True,
+          upx=enable_upx,
           console=False,
           icon='nicotine-plus.ico')
 coll = COLLECT(exe,
