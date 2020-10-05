@@ -91,10 +91,6 @@ class ConnectToPeerTimeout(Timeout):
         self.callback = callback
 
 
-class RespondToDistributedSearchesTimeout(Timeout):
-    pass
-
-
 class NetworkEventProcessor:
     """ This class contains handlers for various messages from the networking thread """
 
@@ -178,12 +174,6 @@ class NetworkEventProcessor:
         self.requested_folders = {}
         self.speed = 0
 
-        self.respond_distributed = True
-        responddistributedtimeout = RespondToDistributedSearchesTimeout(self.network_callback)
-        self.respond_distributed_timer = threading.Timer(60, responddistributedtimeout.timeout)
-        self.respond_distributed_timer.setDaemon(True)
-        self.respond_distributed_timer.start()
-
         # Callback handlers for messages
         self.events = {
             slskmessages.ConnectToServer: self.connect_to_server,
@@ -265,7 +255,6 @@ class NetworkEventProcessor:
             slskmessages.DistribSearch: self.distrib_search,
             slskmessages.DistribServerSearch: self.distrib_search,
             ConnectToPeerTimeout: self.connect_to_peer_timeout,
-            RespondToDistributedSearchesTimeout: self.toggle_respond_distributed,
             transfers.TransferTimeout: self.transfer_timeout,
             str: self.notify,
             slskmessages.PopupMessage: self.popup_message,
@@ -408,9 +397,6 @@ class NetworkEventProcessor:
 
         if self.servertimer is not None:
             self.servertimer.cancel()
-
-        if self.respond_distributed_timer is not None:
-            self.respond_distributed_timer.cancel()
 
         if self.transfers is not None:
             self.transfers.abort_transfers()
@@ -570,9 +556,6 @@ class NetworkEventProcessor:
                 self.set_server_timer()
             else:
                 self.manualdisconnect = False
-
-            if self.respond_distributed_timer is not None:
-                self.respond_distributed_timer.cancel()
 
             self.active_server_conn = None
             self.watchedusers = []
@@ -1736,125 +1719,6 @@ class NetworkEventProcessor:
         else:
             log.add_msg_contents(_("Unknown tunneled message: %s"), (vars(msg)))
 
-    def file_search_request(self, msg):
-        """ Peer code: 8 """
-
-        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
-        for i in self.peerconns:
-            if i.conn == msg.conn.conn:
-                user = i.username
-                self.shares.process_search_request(msg.searchterm, user, msg.searchid, direct=1)
-                break
-
-    def search_request(self, msg):
-        """ Server code: 93 """
-
-        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
-        self.shares.process_search_request(msg.searchterm, msg.user, msg.searchid, direct=0)
-        self.pluginhandler.search_request_notification(msg.searchterm, msg.user, msg.searchid)
-
-    def room_search_request(self, msg):
-        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
-        self.shares.process_search_request(msg.searchterm, msg.room, msg.searchid, direct=0)
-
-    def toggle_respond_distributed(self, msg, settings=False):
-        """
-        Toggle responding to distributed search each (default: 60sec)
-        interval
-        """
-
-        if not self.config.sections["searches"]["search_results"]:
-            # Don't return _any_ results when this option is disabled
-            if self.respond_distributed_timer is not None:
-                self.respond_distributed_timer.cancel()
-            self.respond_distributed = False
-            return
-
-        if self.respond_distributed_timer is not None:
-            self.respond_distributed_timer.cancel()
-
-        if self.config.sections["searches"]["distrib_timer"]:
-
-            if not settings:
-                # Don't toggle when just changing the settings
-                self.respond_distributed = not self.respond_distributed
-
-            responddistributedtimeout = RespondToDistributedSearchesTimeout(self.network_callback)
-            self.respond_distributed_timer = threading.Timer(self.config.sections["searches"]["distrib_ignore"], responddistributedtimeout.timeout)
-            self.respond_distributed_timer.setDaemon(True)
-            self.respond_distributed_timer.start()
-        else:
-            # Always respond
-            self.respond_distributed = True
-
-    def distrib_search(self, msg):
-        """ Distrib code: 3 """
-
-        if self.respond_distributed:  # set in ToggleRespondDistributed
-            self.shares.process_search_request(msg.searchterm, msg.user, msg.searchid, 0)
-        self.pluginhandler.distrib_search_notification(msg.searchterm, msg.user, msg.searchid)
-
-    def possible_parents(self, msg):
-        """ Server code: 102 """
-
-        """ Server sent a list of 10 potential parents, whose purpose is to forward us search requests.
-        We attempt to connect to them all at once, since connection errors are fairly common. """
-
-        potential_parents = msg.list
-
-        if potential_parents:
-
-            for user in potential_parents:
-                addr = potential_parents[user]
-
-                self.process_request_to_peer(user, slskmessages.DistribConn(), None, addr)
-
-        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
-
-    def get_parent_conn(self):
-        for i in self.peerconns:
-            if i.init.type == 'D':
-                return i
-
-        return None
-
-    def parent_conn_closed(self):
-        """ Tell the server it needs to send us a NetInfo message with a new list of
-        potential parents. """
-
-        self.has_parent = False
-        self.queue.put(slskmessages.HaveNoParent(1))
-
-    def distrib_branch_level(self, msg):
-        """ Distrib code: 4 """
-
-        """ This message is received when we have a successful connection with a potential
-        parent. Tell the server who our parent is, and stop requesting new potential parents. """
-
-        if not self.has_parent:
-
-            for i in self.peerconns[:]:
-                if i.init.type == 'D':
-                    """ We previously attempted to connect to all potential parents. Since we now
-                    have a parent, stop connecting to the others. """
-
-                    if i.conn != msg.conn.conn:
-                        if i.conn is not None:
-                            self.queue.put(slskmessages.ConnClose(i.conn))
-
-                        self.peerconns.remove(i)
-
-            parent = self.get_parent_conn()
-
-            if parent is not None:
-                self.queue.put(slskmessages.HaveNoParent(0))
-                self.queue.put(slskmessages.SearchParent(msg.conn.addr[0]))
-                self.has_parent = True
-            else:
-                self.parent_conn_closed()
-
-        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
-
     def global_recommendations(self, msg):
         """ Server code: 56 """
 
@@ -1909,6 +1773,96 @@ class NetworkEventProcessor:
         log.set_log_to_file(should_log)
         log.set_folder(log_folder)
         log.set_timestamp_format(timestamp_format)
+
+    """ Searches """
+
+    def search_request(self, msg):
+        """ Server code: 93 """
+
+        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
+        self.shares.process_search_request(msg.searchterm, msg.user, msg.searchid, direct=0)
+        self.pluginhandler.search_request_notification(msg.searchterm, msg.user, msg.searchid)
+
+    def room_search_request(self, msg):
+        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
+        self.shares.process_search_request(msg.searchterm, msg.room, msg.searchid, direct=0)
+
+    def file_search_request(self, msg):
+        """ Peer code: 8 """
+
+        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
+        for i in self.peerconns:
+            if i.conn == msg.conn.conn:
+                user = i.username
+                self.shares.process_search_request(msg.searchterm, user, msg.searchid, direct=1)
+                break
+
+    def possible_parents(self, msg):
+        """ Server code: 102 """
+
+        """ Server sent a list of 10 potential parents, whose purpose is to forward us search requests.
+        We attempt to connect to them all at once, since connection errors are fairly common. """
+
+        potential_parents = msg.list
+
+        if potential_parents:
+
+            for user in potential_parents:
+                addr = potential_parents[user]
+
+                self.process_request_to_peer(user, slskmessages.DistribConn(is_parent=True), None, addr)
+
+        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
+
+    def get_parent_conn(self):
+        for i in self.peerconns:
+            if i.init.type == 'D':
+                return i
+
+        return None
+
+    def parent_conn_closed(self):
+        """ Tell the server it needs to send us a NetInfo message with a new list of
+        potential parents. """
+
+        self.has_parent = False
+        self.queue.put(slskmessages.HaveNoParent(1))
+
+    def distrib_search(self, msg):
+        """ Distrib code: 3 """
+
+        self.shares.process_search_request(msg.searchterm, msg.user, msg.searchid, 0)
+        self.pluginhandler.distrib_search_notification(msg.searchterm, msg.user, msg.searchid)
+
+    def distrib_branch_level(self, msg):
+        """ Distrib code: 4 """
+
+        """ This message is received when we have a successful connection with a potential
+        parent. Tell the server who our parent is, and stop requesting new potential parents. """
+
+        if not self.has_parent:
+
+            for i in self.peerconns[:]:
+                if i.init.type == 'D':
+                    """ We previously attempted to connect to all potential parents. Since we now
+                    have a parent, stop connecting to the others. """
+
+                    if i.conn != msg.conn.conn:
+                        if i.conn is not None:
+                            self.queue.put(slskmessages.ConnClose(i.conn))
+
+                        self.peerconns.remove(i)
+
+            parent = self.get_parent_conn()
+
+            if parent is not None:
+                self.queue.put(slskmessages.HaveNoParent(0))
+                self.queue.put(slskmessages.SearchParent(msg.conn.addr[0]))
+                self.has_parent = True
+            else:
+                self.parent_conn_closed()
+
+        log.add_msg_contents("%s %s", (msg.__class__, vars(msg)))
 
 
 class UserAddr:

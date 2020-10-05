@@ -320,25 +320,10 @@ class Shares:
 
         log.add(_("%(num)s folders found before rescan, rebuilding..."), {"num": num_folders})
 
-        newmtimes = self.get_dirs_mtimes(shared_directories)
+        all_shared_folders = self.get_all_shared_folders(shared_directories)
+        self.get_files_list(sharestype, all_shared_folders, rebuild)
 
-        # Get list of files
-        # returns dict in format { Directory : { File : metadata, ... }, ... }
-        newsharedfiles = self.get_files_list(sharestype, newmtimes, oldmtimes, oldfiles, rebuild)
-
-        # Pack shares data
-        # returns dict in format { Directory : hex string of files+metadata, ... }
-        newsharedfilesstreams = self.get_files_streams(newmtimes, oldmtimes, sharedfilesstreams, newsharedfiles, rebuild)
-
-        # Save data to shelves
-        self.set_shares(sharestype=sharestype, files=newsharedfiles, streams=newsharedfilesstreams, mtimes=newmtimes)
-
-        # Update Search Index
-        # wordindex is a dict in format {word: [num, num, ..], ... } with num matching keys in newfileindex
-        # fileindex is a dict in format { num: (path, size, (bitrate, vbr), length), ... }
-        self.get_files_index(sharestype, newsharedfiles)
-
-        log.add(_("%(num)s folders found after rescan"), {"num": len(newsharedfiles)})
+        log.add(_("%(num)s folders found after rescan"), {"num": len(all_shared_folders)})
 
     def is_hidden(self, folder, filename=None):
         """ Stop sharing any dot/hidden directories/files """
@@ -459,86 +444,70 @@ class Shares:
             bsharedmtimes[vdir] = os.path.getmtime(rdir)
             self.newbuddyshares = True
 
-    def get_dirs_mtimes(self, dirs):
-        """ Get Modification Times """
-
-        mtimes = {}
+    def get_all_shared_folders(self, dirs):
+        folders = []
 
         for folder in dirs:
-
             try:
                 if self.is_hidden(folder):
                     continue
 
-                mtime = os.path.getmtime(folder)
-                mtimes[folder] = mtime
+                folders.append(folder)
 
                 for entry in os.scandir(folder):
                     if entry.is_dir():
-
-                        path = entry.path
-
-                        try:
-                            mtime = entry.stat().st_mtime
-                        except OSError as errtuple:
-                            log.add(_("Error while scanning %(path)s: %(error)s"), {
-                                'path': path,
-                                'error': errtuple
-                            })
-                            continue
-
-                        mtimes[path] = mtime
-                        dircontents = self.get_dirs_mtimes([path])
-                        for k in dircontents:
-                            mtimes[k] = dircontents[k]
+                        folders += self.get_all_shared_folders([entry.path])
 
             except OSError as errtuple:
                 log.add(_("Error while scanning folder %(path)s: %(error)s"), {'path': folder, 'error': errtuple})
                 continue
 
-        return mtimes
+        return folders
 
-    def get_files_list(self, sharestype, mtimes, oldmtimes, oldfiles, rebuild=False):
+    def get_files_list(self, sharestype, sharedfolders, rebuild=False):
         """ Get a list of files with their filelength, bitrate and track length in seconds """
 
-        files = {}
+        """self.config.sections["transfers"]["sharedfiles"].close()
+
+        files = self.config.sections["transfers"]["sharedfiles"] = \
+            shelve.open(os.path.join(self.config.data_dir, "files.db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)"""
+
+        self.config.sections["transfers"]["sharedfilesstreams"].close()
+
+        streams = self.config.sections["transfers"]["sharedfilesstreams"] = \
+            shelve.open(os.path.join(self.config.data_dir, "streams.db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)
+
+        self.config.sections["transfers"]["fileindex"].close()
+
+        fileindex = self.config.sections["transfers"]["fileindex"] = \
+            shelve.open(os.path.join(self.config.data_dir, "fileindex.db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)
+
+        wordindex = {}
+
         count = 0
+        file_index = 0
         lastpercent = 0.0
 
-        for folder in mtimes:
+        for folder in sharedfolders:
+
+            count += 1
+            if self.ui_callback:
+                # Truncate the percentage to two decimal places to avoid sending data to the GUI thread too often
+                percent = float("%.2f" % (float(count) / len(sharedfolders)))
+
+                if percent > lastpercent and percent <= 1.0:
+                    self.ui_callback.set_scan_progress(sharestype, percent)
+                    lastpercent = percent
+
+            virtualdir = self.real2virtual(folder)
+
+            #fileinfos = []
+            message = slskmessages.SlskMessage()
+            stream = bytearray()
+            stream.extend(message.pack_object(len(folder)))
 
             try:
-                count += 1
-
-                if self.ui_callback:
-                    # Truncate the percentage to two decimal places to avoid sending data to the GUI thread too often
-                    percent = float("%.2f" % (float(count) / len(mtimes) * 0.75))
-
-                    if percent > lastpercent and percent <= 1.0:
-                        self.ui_callback.set_scan_progress(sharestype, percent)
-                        lastpercent = percent
-
-                if not rebuild and folder in oldmtimes:
-                    if mtimes[folder] == oldmtimes[folder]:
-                        if os.path.exists(folder):
-                            try:
-                                virtualdir = self.real2virtual(folder)
-                                files[virtualdir] = oldfiles[virtualdir]
-                                continue
-                            except KeyError:
-                                log.add_debug(_("Inconsistent cache for '%(vdir)s', rebuilding '%(dir)s'"), {
-                                    'vdir': virtualdir,
-                                    'dir': folder
-                                })
-                        else:
-                            log.add_debug(_("Dropping missing folder %(dir)s"), {'dir': folder})
-                            continue
-
-                virtualdir = self.real2virtual(folder)
-                files[virtualdir] = []
-
                 for entry in os.scandir(folder):
-
                     if entry.is_file():
                         filename = entry.name
 
@@ -546,26 +515,59 @@ class Shares:
                             continue
 
                         # Get the metadata of the file
-                        data = self.get_file_info(filename, entry.path)
-                        if data is not None:
-                            files[virtualdir].append(data)
+                        fileinfo = self.get_file_info(filename, entry)
+                        #fileinfos.append(fileinfo)
+
+                        stream.extend(bytes([1]))
+                        stream.extend(message.pack_object(fileinfo[0]))
+                        stream.extend(message.pack_object(fileinfo[1], unsignedlonglong=True))
+
+                        if fileinfo[2] is not None:
+                            try:
+                                stream.extend(message.pack_object('mp3'))
+                                stream.extend(message.pack_object(3))
+
+                                stream.extend(message.pack_object(0))
+                                stream.extend(message.pack_object(fileinfo[2][0]))
+                                stream.extend(message.pack_object(1))
+                                stream.extend(message.pack_object(fileinfo[3]))
+                                stream.extend(message.pack_object(2))
+                                stream.extend(message.pack_object(fileinfo[2][1]))
+                            except Exception:
+                                log.add(_("Found meta data that couldn't be encoded, possible corrupt file: '%(file)s' has a bitrate of %(bitrate)s kbs, a length of %(length)s seconds and a VBR of %(vbr)s"), {
+                                    'file': fileinfo[0],
+                                    'bitrate': fileinfo[2][0],
+                                    'length': fileinfo[3],
+                                    'vbr': fileinfo[2][1]
+                                })
+                                stream.extend(message.pack_object(''))
+                                stream.extend(message.pack_object(0))
+                        else:
+                            stream.extend(message.pack_object(''))
+                            stream.extend(message.pack_object(0))
+
+                        self.add_file_to_index(file_index, filename, virtualdir, fileinfo, wordindex, fileindex)
+                        file_index += 1
+
+                #files[virtualdir] = fileinfos
+                streams[virtualdir] = stream
 
             except OSError as errtuple:
                 log.add(_("Error while scanning folder %(path)s: %(error)s"), {'path': folder, 'error': errtuple})
                 continue
 
-        return files
+        self.set_shares(sharestype, wordindex=wordindex)
 
-    def get_file_info(self, name, pathname):
+    def get_file_info(self, name, file):
         """ Get metadata via taglib """
 
         try:
             audio = None
-            size = os.stat(pathname).st_size
+            size = file.stat().st_size
 
             if size > 0:
                 try:
-                    audio = taglib.File(pathname)
+                    audio = taglib.File(file.path)
                 except IOError:
                     pass
 
@@ -579,114 +581,6 @@ class Shares:
 
         except Exception as errtuple:
             log.add(_("Error while scanning file %(path)s: %(error)s"), {'path': pathname, 'error': errtuple})
-
-    def get_files_streams(self, mtimes, oldmtimes, oldstreams, newsharedfiles, rebuild=False):
-        """ Get streams of files """
-
-        streams = {}
-
-        for folder in mtimes:
-
-            virtualdir = self.real2virtual(folder)
-
-            if not rebuild and folder in oldmtimes:
-
-                if mtimes[folder] == oldmtimes[folder]:
-                    if os.path.exists(folder):
-                        # No change
-                        try:
-                            streams[virtualdir] = oldstreams[virtualdir]
-                            continue
-                        except KeyError:
-                            log.add_debug(_("Inconsistent cache for '%(vdir)s', rebuilding '%(dir)s'"), {
-                                'vdir': virtualdir,
-                                'dir': folder
-                            })
-                    else:
-                        log.add_debug(_("Dropping missing folder %(dir)s"), {'dir': folder})
-                        continue
-
-            streams[virtualdir] = self.get_dir_stream(newsharedfiles[virtualdir])
-
-        return streams
-
-    def get_dir_stream(self, folder):
-        """ Pack all files and metadata in directory """
-
-        message = slskmessages.SlskMessage()
-        stream = bytearray()
-        stream.extend(message.pack_object(len(folder)))
-
-        for fileinfo in folder:
-            stream.extend(bytes([1]))
-            stream.extend(message.pack_object(fileinfo[0]))
-            stream.extend(message.pack_object(fileinfo[1], unsignedlonglong=True))
-
-            if fileinfo[2] is not None:
-                try:
-                    stream.extend(message.pack_object('mp3'))
-                    stream.extend(message.pack_object(3))
-
-                    stream.extend(message.pack_object(0))
-                    stream.extend(message.pack_object(fileinfo[2][0]))
-                    stream.extend(message.pack_object(1))
-                    stream.extend(message.pack_object(fileinfo[3]))
-                    stream.extend(message.pack_object(2))
-                    stream.extend(message.pack_object(fileinfo[2][1]))
-                except Exception:
-                    log.add(_("Found meta data that couldn't be encoded, possible corrupt file: '%(file)s' has a bitrate of %(bitrate)s kbs, a length of %(length)s seconds and a VBR of %(vbr)s"), {
-                        'file': fileinfo[0],
-                        'bitrate': fileinfo[2][0],
-                        'length': fileinfo[3],
-                        'vbr': fileinfo[2][1]
-                    })
-                    stream.extend(message.pack_object(''))
-                    stream.extend(message.pack_object(0))
-            else:
-                stream.extend(message.pack_object(''))
-                stream.extend(message.pack_object(0))
-
-        return stream
-
-    def get_files_index(self, sharestype, sharedfiles):
-        """ Update Search index with new files """
-
-        """ We dump data directly into the file index shelf to save memory """
-        if sharestype == "normal":
-            section = target = "fileindex"
-        else:
-            section = "bfileindex"
-            target = "buddyfileindex"
-
-        self.config.sections["transfers"][section].close()
-
-        fileindex = self.config.sections["transfers"][section] = \
-            shelve.open(os.path.join(self.config.data_dir, target + ".db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)
-
-        """ For the word index, we can't use the same approach as above, as we need
-        to access dict elements frequently. This would take too long on a shelf. """
-        wordindex = {}
-
-        index = 0
-        count = len(sharedfiles)
-        lastpercent = 0.0
-
-        for folder in sharedfiles:
-            count += 1
-
-            if self.ui_callback:
-                # Truncate the percentage to two decimal places to avoid sending data to the GUI thread too often
-                percent = float("%.2f" % (float(count) / len(sharedfiles) * 0.75))
-
-                if percent > lastpercent and percent <= 1.0:
-                    self.ui_callback.set_scan_progress(sharestype, percent)
-                    lastpercent = percent
-
-            for fileinfo in sharedfiles[folder]:
-                self.add_file_to_index(index, fileinfo[0], folder, fileinfo, wordindex, fileindex)
-                index += 1
-
-        self.set_shares(sharestype=sharestype, wordindex=wordindex)
 
     """ Search request processing """
 

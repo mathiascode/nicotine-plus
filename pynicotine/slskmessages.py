@@ -63,7 +63,9 @@ class Conn(InternalMessage):
 
 
 class DistribConn(InternalMessage):
-    pass
+    def __init__(self, is_parent=True, is_child=False):
+        self.is_parent = is_parent
+        self.is_child = is_child
 
 
 class OutConn(Conn):

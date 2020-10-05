@@ -2258,8 +2258,6 @@ class SearchFrame(BuildFrame):
                 "enablefilters": self.EnableFilters,
                 "re_filter": self.RegexpFilters,
                 "defilter": None,
-                "distrib_timer": self.ToggleDistributed,
-                "distrib_ignore": self.ToggleDistributedInterval,
                 "reopen_tabs": self.ReopenTabs,
                 "search_results": self.ToggleResults,
                 "max_displayed_results": self.MaxDisplayedResults,
@@ -2302,8 +2300,6 @@ class SearchFrame(BuildFrame):
                     self.FilterFree.get_active(),
                     self.FilterCC.get_text()
                 ],
-                "distrib_timer": self.ToggleDistributed.get_active(),
-                "distrib_ignore": self.ToggleDistributedInterval.get_value_as_int(),
                 "reopen_tabs": self.ReopenTabs.get_active(),
                 "search_results": self.ToggleResults.get_active(),
                 "max_displayed_results": self.MaxDisplayedResults.get_value_as_int(),
@@ -2321,8 +2317,7 @@ class SearchFrame(BuildFrame):
     def on_enable_search_results(self, widget):
         active = widget.get_active()
         for w in self.MinSearchCharsL1, self.MinSearchChars, self.MinSearchCharsL2, \
-                self.MaxResults, self.MaxResultsL1, self.MaxResultsL2, \
-                self.ToggleDistributed, self.ToggleDistributedInterval, self.secondsLabel:
+                self.MaxResults, self.MaxResultsL1, self.MaxResultsL2:
             w.set_sensitive(active)
 
 
