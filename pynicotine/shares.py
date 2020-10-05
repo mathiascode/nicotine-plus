@@ -327,6 +327,8 @@ class Shares:
     def add_file_to_index(self, index, vfilepath, fileinfo, wordindex, fileindex):
         """ Add a file to the file index database """
 
+        fileindex[repr(index)] = fileinfo
+
         # Collect words from filenames for Search index
         # Use set to prevent duplicates
         for word in set(vfilepath.lower().translate(self.translatepunctuation).split()):
@@ -334,8 +336,6 @@ class Shares:
                 wordindex[word].append(index)
             except KeyError:
                 wordindex[word] = [index]
-
-        fileindex[repr(index)] = fileinfo
 
     def add_file_to_shared(self, name):
         """ Add a file to the normal shares database """
