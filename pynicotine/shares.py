@@ -58,16 +58,12 @@ class Shares:
         self.convert_shares()
         self.load_shares(
             [
-                ("sharedfiles", os.path.join(self.config.data_dir, "files.db")),
-                ("bsharedfiles", os.path.join(self.config.data_dir, "buddyfiles.db")),
-                ("sharedfilesstreams", os.path.join(self.config.data_dir, "streams.db")),
-                ("bsharedfilesstreams", os.path.join(self.config.data_dir, "buddystreams.db")),
+                ("streams", os.path.join(self.config.data_dir, "streams.db")),
+                ("bstreams", os.path.join(self.config.data_dir, "buddystreams.db")),
                 ("wordindex", os.path.join(self.config.data_dir, "wordindex.db")),
                 ("bwordindex", os.path.join(self.config.data_dir, "buddywordindex.db")),
                 ("fileindex", os.path.join(self.config.data_dir, "fileindex.db")),
-                ("bfileindex", os.path.join(self.config.data_dir, "buddyfileindex.db")),
-                ("sharedmtimes", os.path.join(self.config.data_dir, "mtimes.db")),
-                ("bsharedmtimes", os.path.join(self.config.data_dir, "buddymtimes.db"))
+                ("bfileindex", os.path.join(self.config.data_dir, "buddyfileindex.db"))
             ]
         )
 
@@ -146,21 +142,17 @@ class Shares:
 
             log.add_warning(_("Shared files database seems to be corrupted, rescan your shares"))
 
-    def set_shares(self, sharestype="normal", files=None, streams=None, mtimes=None, wordindex=None, fileindex=None):
+    def set_shares(self, sharestype="normal", streams=None, wordindex=None, fileindex=None):
 
         if sharestype == "normal":
             storable_objects = [
-                (files, "sharedfiles", "files.db"),
-                (streams, "sharedfilesstreams", "streams.db"),
-                (mtimes, "sharedmtimes", "mtimes.db"),
+                (streams, "streams", "streams.db"),
                 (wordindex, "wordindex", "wordindex.db"),
                 (fileindex, "fileindex", "fileindex.db")
             ]
         else:
             storable_objects = [
-                (files, "bsharedfiles", "buddyfiles.db"),
-                (streams, "bsharedfilesstreams", "buddystreams.db"),
-                (mtimes, "bsharedmtimes", "buddymtimes.db"),
+                (streams, "bstreams", "buddystreams.db"),
                 (wordindex, "bwordindex", "buddywordindex.db"),
                 (fileindex, "bfileindex", "buddyfileindex.db")
             ]
@@ -178,15 +170,15 @@ class Shares:
 
     def clear_shares(self):
 
-        self.set_shares(sharestype="normal", files={}, streams={}, mtimes={}, wordindex={}, fileindex={})
-        self.set_shares(sharestype="buddy", files={}, streams={}, mtimes={}, wordindex={}, fileindex={})
+        self.set_shares(sharestype="normal", streams={}, wordindex={}, fileindex={})
+        self.set_shares(sharestype="buddy", streams={}, wordindex={}, fileindex={})
 
     def compress_shares(self, sharestype):
 
         if sharestype == "normal":
-            streams = self.config.sections["transfers"]["sharedfilesstreams"]
+            streams = self.config.sections["transfers"]["streams"]
         elif sharestype == "buddy":
-            streams = self.config.sections["transfers"]["bsharedfilesstreams"]
+            streams = self.config.sections["transfers"]["bstreams"]
 
         if streams is None:
             log.add_warning(_("ERROR: No %(type)s shares database available") % {"type": sharestype})
@@ -202,10 +194,8 @@ class Shares:
 
     def close_shares(self):
         for db in [
-            "sharedfiles", "sharedfilesstreams", "wordindex",
-            "fileindex", "sharedmtimes",
-            "bsharedfiles", "bsharedfilesstreams", "bwordindex",
-            "bfileindex", "bsharedmtimes"
+            "streams", "wordindex", "fileindex",
+            "bstreams", "bwordindex", "bfileindex"
         ]:
             self.config.sections["transfers"][db].close()
 
@@ -218,10 +208,10 @@ class Shares:
         config = self.config.sections
 
         if config["transfers"]["enablebuddyshares"] and config["transfers"]["friendsonly"]:
-            shared_db = "bsharedfiles"
+            shared_db = "bstreams"
             index_db = "bfileindex"
         else:
-            shared_db = "sharedfiles"
+            shared_db = "streams"
             index_db = "fileindex"
 
         try:
@@ -253,10 +243,7 @@ class Shares:
         if sharestype == "normal":
             log.add(_("Rescanning normal shares..."))
 
-            mtimes = self.config.sections["transfers"]["sharedmtimes"]
-            files = self.config.sections["transfers"]["sharedfiles"]
-            filesstreams = self.config.sections["transfers"]["sharedfilesstreams"]
-
+            filesstreams = self.config.sections["transfers"]["streams"]
             shared_folders = self.config.sections["transfers"]["shared"][:]
 
             if self.config.sections["transfers"]["sharedownloaddir"]:
@@ -265,10 +252,7 @@ class Shares:
         else:
             log.add(_("Rescanning buddy shares..."))
 
-            mtimes = self.config.sections["transfers"]["bsharedmtimes"]
-            files = self.config.sections["transfers"]["bsharedfiles"]
-            filesstreams = self.config.sections["transfers"]["bsharedfilesstreams"]
-
+            filesstreams = self.config.sections["transfers"]["bstreams"]
             shared_folders = self.config.sections["transfers"]["buddyshared"][:] + self.config.sections["transfers"]["shared"][:]
 
             if self.config.sections["transfers"]["sharedownloaddir"]:
@@ -282,8 +266,6 @@ class Shares:
             self.rescan_dirs(
                 sharestype,
                 shared_folders,
-                mtimes,
-                files,
                 filesstreams,
                 rebuild=rebuild
             )
@@ -304,23 +286,16 @@ class Shares:
 
             raise
 
-    def rescan_dirs(self, sharestype, shared, oldmtimes, oldfiles, sharedfilesstreams, rebuild=False):
-        """
-        Check for modified or new files via OS's last mtime on a directory,
-        or, if rebuild is True, all directories
-        """
-
-        # returns dict in format:  { Directory : mtime, ... }
-        shared_directories = [x[1] for x in shared]
+    def rescan_dirs(self, sharestype, shared, streams, rebuild=False):
 
         try:
-            num_folders = len(oldmtimes)
+            num_folders = len(streams)
         except TypeError:
-            num_folders = len(list(oldmtimes))
+            num_folders = len(list(streams))
 
         log.add(_("%(num)s folders found before rescan, rebuilding..."), {"num": num_folders})
 
-        all_shared_folders = self.get_all_shared_folders(shared_directories)
+        all_shared_folders = self.get_all_shared_folders((x[1] for x in shared))
         self.get_files_list(sharestype, all_shared_folders, rebuild)
 
         log.add(_("%(num)s folders found after rescan"), {"num": len(all_shared_folders)})
@@ -331,9 +306,10 @@ class Shares:
         subfolders = folder.split(os.sep)
 
         # If any part of the directory structure start with a dot we exclude it
-        for part in subfolders:
-            if part.startswith("."):
-                return True
+        if filename is None:
+            for part in subfolders:
+                if part.startswith("."):
+                    return True
 
         # If we're asked to check a file we exclude it if it start with a dot
         if filename is not None and filename.startswith("."):
@@ -348,18 +324,18 @@ class Shares:
 
         return False
 
-    def add_file_to_index(self, index, filename, folder, fileinfo, wordindex, fileindex):
+    def add_file_to_index(self, index, vfilepath, fileinfo, wordindex, fileindex):
         """ Add a file to the file index database """
-
-        fileindex[repr(index)] = (folder + '\\' + filename, *fileinfo[1:])
 
         # Collect words from filenames for Search index
         # Use set to prevent duplicates
-        for k in set((folder + " " + filename).lower().translate(self.translatepunctuation).split()):
+        for word in set(vfilepath.lower().translate(self.translatepunctuation).split()):
             try:
-                wordindex[k].append(index)
+                wordindex[word].append(index)
             except KeyError:
-                wordindex[k] = [index]
+                wordindex[word] = [index]
+
+        fileindex[repr(index)] = fileinfo
 
     def add_file_to_shared(self, name):
         """ Add a file to the normal shares database """
@@ -464,23 +440,49 @@ class Shares:
 
         return folders
 
+    def get_file_info(self, vfilepath, file):
+        """ Get metadata via taglib """
+
+        try:
+            audio = None
+            size = file.stat().st_size
+
+            if size > 0:
+                try:
+                    audio = taglib.File(file.path)
+                except IOError:
+                    pass
+
+            if audio is not None:
+                bitrateinfo = (int(audio.bitrate), int(False))  # Second argument used to be VBR (variable bitrate)
+                fileinfo = (vfilepath, size, bitrateinfo, int(audio.length))
+            else:
+                fileinfo = (vfilepath, size, None, None)
+
+            return fileinfo
+
+        except Exception as errtuple:
+            log.add(_("Error while scanning file %(path)s: %(error)s"), {'path': pathname, 'error': errtuple})
+
     def get_files_list(self, sharestype, sharedfolders, rebuild=False):
         """ Get a list of files with their filelength, bitrate and track length in seconds """
 
-        """self.config.sections["transfers"]["sharedfiles"].close()
+        streams_name = streams_db = "streams"
+        fileindex_name = fileindex_db = "fileindex"
 
-        files = self.config.sections["transfers"]["sharedfiles"] = \
-            shelve.open(os.path.join(self.config.data_dir, "files.db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)"""
+        if sharestype == "buddy":
+            streams_name = "bstreams"
+            streams_db = "buddystreams"
+            fileindex_name = "bfileindex"
+            fileindex_db = "buddyfileindex"
 
-        self.config.sections["transfers"]["sharedfilesstreams"].close()
+        self.config.sections["transfers"][streams_name].close()
+        streams = self.config.sections["transfers"][streams_name] = \
+            shelve.open(os.path.join(self.config.data_dir, streams_db + ".db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)
 
-        streams = self.config.sections["transfers"]["sharedfilesstreams"] = \
-            shelve.open(os.path.join(self.config.data_dir, "streams.db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)
-
-        self.config.sections["transfers"]["fileindex"].close()
-
-        fileindex = self.config.sections["transfers"]["fileindex"] = \
-            shelve.open(os.path.join(self.config.data_dir, "fileindex.db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)
+        self.config.sections["transfers"][fileindex_name].close()
+        fileindex = self.config.sections["transfers"][fileindex_name] = \
+            shelve.open(os.path.join(self.config.data_dir, fileindex_db + ".db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)
 
         wordindex = {}
 
@@ -501,7 +503,6 @@ class Shares:
 
             virtualdir = self.real2virtual(folder)
 
-            #fileinfos = []
             message = slskmessages.SlskMessage()
             stream = bytearray()
             stream.extend(message.pack_object(len(folder)))
@@ -510,16 +511,16 @@ class Shares:
                 for entry in os.scandir(folder):
                     if entry.is_file():
                         filename = entry.name
+                        vfilepath = virtualdir + '\\' + filename
 
                         if self.is_hidden(folder, filename):
                             continue
 
                         # Get the metadata of the file
-                        fileinfo = self.get_file_info(filename, entry)
-                        #fileinfos.append(fileinfo)
+                        fileinfo = self.get_file_info(vfilepath, entry)
 
                         stream.extend(bytes([1]))
-                        stream.extend(message.pack_object(fileinfo[0]))
+                        stream.extend(message.pack_object(filename))
                         stream.extend(message.pack_object(fileinfo[1], unsignedlonglong=True))
 
                         if fileinfo[2] is not None:
@@ -533,6 +534,7 @@ class Shares:
                                 stream.extend(message.pack_object(fileinfo[3]))
                                 stream.extend(message.pack_object(2))
                                 stream.extend(message.pack_object(fileinfo[2][1]))
+
                             except Exception:
                                 log.add(_("Found meta data that couldn't be encoded, possible corrupt file: '%(file)s' has a bitrate of %(bitrate)s kbs, a length of %(length)s seconds and a VBR of %(vbr)s"), {
                                     'file': fileinfo[0],
@@ -546,10 +548,9 @@ class Shares:
                             stream.extend(message.pack_object(''))
                             stream.extend(message.pack_object(0))
 
-                        self.add_file_to_index(file_index, filename, virtualdir, fileinfo, wordindex, fileindex)
+                        self.add_file_to_index(file_index, vfilepath, fileinfo, wordindex, fileindex)
                         file_index += 1
 
-                #files[virtualdir] = fileinfos
                 streams[virtualdir] = stream
 
             except OSError as errtuple:
@@ -557,30 +558,6 @@ class Shares:
                 continue
 
         self.set_shares(sharestype, wordindex=wordindex)
-
-    def get_file_info(self, name, file):
-        """ Get metadata via taglib """
-
-        try:
-            audio = None
-            size = file.stat().st_size
-
-            if size > 0:
-                try:
-                    audio = taglib.File(file.path)
-                except IOError:
-                    pass
-
-            if audio is not None:
-                bitrateinfo = (int(audio.bitrate), int(False))  # Second argument used to be VBR (variable bitrate)
-                fileinfo = (name, size, bitrateinfo, int(audio.length))
-            else:
-                fileinfo = (name, size, None, None)
-
-            return fileinfo
-
-        except Exception as errtuple:
-            log.add(_("Error while scanning file %(path)s: %(error)s"), {'path': pathname, 'error': errtuple})
 
     """ Search request processing """
 

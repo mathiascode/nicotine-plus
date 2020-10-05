@@ -1017,7 +1017,7 @@ class NicotineFrame:
         if self.np.config.sections["transfers"]["friendsonly"]:
             m = slskmessages.SharedFileList(None, {})
         else:
-            m = slskmessages.SharedFileList(None, self.np.config.sections["transfers"]["sharedfilesstreams"])
+            m = slskmessages.SharedFileList(None, self.np.config.sections["transfers"]["streams"])
 
         m.parse_network_message(m.make_network_message(nozlib=1), nozlib=1)
         self.userbrowse.show_info(login, m)
@@ -1029,9 +1029,9 @@ class NicotineFrame:
 
         # Show public shares if we don't have specific shares for buddies
         if not self.np.config.sections["transfers"]["enablebuddyshares"]:
-            m = slskmessages.SharedFileList(None, self.np.config.sections["transfers"]["sharedfilesstreams"])
+            m = slskmessages.SharedFileList(None, self.np.config.sections["transfers"]["streams"])
         else:
-            m = slskmessages.SharedFileList(None, self.np.config.sections["transfers"]["bsharedfilesstreams"])
+            m = slskmessages.SharedFileList(None, self.np.config.sections["transfers"]["bstreams"])
 
         m.parse_network_message(m.make_network_message(nozlib=1), nozlib=1)
         self.userbrowse.show_info(login, m)

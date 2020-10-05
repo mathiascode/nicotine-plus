@@ -142,17 +142,13 @@ class Config:
                 "autoclear_downloads": False,
                 "autoclear_uploads": False,
                 "downloads": [],
-                "sharedfiles": {},
-                "sharedfilesstreams": {},
+                "streams": {},
                 "uploadsinsubdirs": True,
                 "wordindex": {},
                 "fileindex": {},
-                "sharedmtimes": {},
-                "bsharedfiles": {},
-                "bsharedfilesstreams": {},
+                "bstreams": {},
                 "bwordindex": {},
                 "bfileindex": {},
-                "bsharedmtimes": {},
                 "rescanonstartup": 0,
                 "enablefilters": True,
                 "downloadregexp": "",
@@ -669,9 +665,8 @@ class Config:
     def write_configuration(self):
 
         external_sections = [
-            "sharedfiles", "sharedfilesstreams", "wordindex", "fileindex",
-            "sharedmtimes", "bsharedfiles", "bsharedfilesstreams",
-            "bwordindex", "bfileindex", "bsharedmtimes", "downloads"
+            "streams", "wordindex", "fileindex",
+            "bstreams", "bwordindex", "bfileindex", "downloads"
         ]
 
         for i in self.sections:

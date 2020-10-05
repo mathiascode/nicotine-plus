@@ -818,18 +818,21 @@ class Transfers:
             return False
 
         (dir, sep, file) = virtualfilename.rpartition('\\')
+        print(virtualfilename)
 
         if self.eventprocessor.config.sections["transfers"]["enablebuddyshares"]:
             if user in [i[0] for i in self.eventprocessor.config.sections["server"]["userlist"]]:
-                bshared = self.eventprocessor.config.sections["transfers"]["bsharedfiles"]
-                for i in bshared.get(str(dir), ''):
-                    if file == i[0]:
+                bshared = self.eventprocessor.config.sections["transfers"]["bfileindex"]
+                print(list(bshared))
+
+                for i in bshared:
+                    if virtualfilename == i:
                         return True
 
-        shared = self.eventprocessor.config.sections["transfers"]["sharedfiles"]
+        shared = self.eventprocessor.config.sections["transfers"]["fileindex"]
 
-        for i in shared.get(str(dir), ''):
-            if file == i[0]:
+        for i in shared:
+            if virtualfilename == i:
                 return True
 
         return False
