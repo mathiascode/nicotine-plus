@@ -23,6 +23,7 @@
 # Install most dependencies from the main Homebrew repos
 brew install \
   adwaita-icon-theme \
+  coreutils \
   create-dmg \
   flake8 \
   gdk-pixbuf \

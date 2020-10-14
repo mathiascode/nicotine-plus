@@ -115,7 +115,7 @@ class NicotineFrame:
         except (ImportError, ValueError):
             self.gspell = False
 
-        self.np = NetworkEventProcessor(
+        self.npa = NetworkEventProcessor(
             self,
             self.network_callback,
             self.set_status_text,

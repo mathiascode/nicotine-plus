@@ -68,6 +68,15 @@ jobs:
         run: |
           pytest
 
+      - name: Launch test
+        run: |
+          timeout 5s python3 nicotine
+
+          if [ $? -eq 124 ]; then
+            echo "Success, still running!"
+            exit 0
+          fi
+
   macos:
     runs-on: macos-latest
     steps:
@@ -88,3 +97,12 @@ jobs:
         run: |
           # Disable version test due to macOS machines hitting GitHub's rate limits
           pytest -v -k 'not version'
+
+      - name: Launch test
+        run: |
+          gtimeout 5s python3 nicotine
+
+          if [ $? -eq 124 ]; then
+            echo "Success, still running!"
+            exit 0
+          fi
