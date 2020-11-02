@@ -349,6 +349,7 @@ class NetworkEventProcessor:
 
         init = slskmessages.PeerInit(None, self.config.sections["server"]["login"], message_type, 0)
         addr = None
+        direction = None
 
         if user in self.users:
             addr = self.users[user].addr
@@ -366,12 +367,16 @@ class NetworkEventProcessor:
         else:
             self.queue.put(slskmessages.OutConn(None, addr))
 
+        if message.__class__ is slskmessages.FileRequest:
+            direction = message.direction
+
         self.peerconns.append(
             PeerConnection(
                 addr=addr,
                 username=user,
                 msgs=[message],
-                init=init
+                init=init,
+                direction=direction
             )
         )
         print(self.peerconns)
