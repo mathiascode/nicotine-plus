@@ -308,6 +308,7 @@ class NetworkEventProcessor:
         if message.__class__ is not slskmessages.FileRequest:
             for i in self.peerconns:
                 if i.username == user and i.type == 'P':
+                    print("got %s" % message.__class__)
                     conn = i
                     break
 
@@ -358,7 +359,7 @@ class NetworkEventProcessor:
             self.queue.put(slskmessages.OutConn(None, addr))
 
         else:
-            print("HIT")
+            # This should not be reached
             return
 
         conn = PeerConnection(addr=addr, username=user, msgs=[message], init=init)
@@ -368,7 +369,6 @@ class NetworkEventProcessor:
 
             if conn.addr is None:
                 self.transfers.getting_address(message.req, message.direction)
-
             else:
                 self.transfers.got_address(message.req, message.direction)
 
@@ -477,7 +477,7 @@ class NetworkEventProcessor:
         })
 
     def inc_conn(self, msg):
-        log.add_conn("%s %s", (msg.__class__, self.contents(msg)))
+        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
 
     def out_conn(self, msg):
 
@@ -516,18 +516,13 @@ class NetworkEventProcessor:
                 i.msgs = []
                 break
 
-        log.add_conn("%s %s", (msg.__class__, self.contents(msg)))
+        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
 
     def connect_to_peer(self, msg):
 
         user = msg.user
         ip = msg.ip
         port = msg.port
-
-        for i in self.peerconns:
-            if i.user == user:
-                # Already have a connection
-                return
 
         init = slskmessages.PeerInit(None, user, msg.type, 0)
 
@@ -542,7 +537,7 @@ class NetworkEventProcessor:
             )
         )
 
-        log.add_conn("%s %s", (msg.__class__, self.contents(msg)))
+        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
 
     def peer_init(self, msg):
 
@@ -556,7 +551,7 @@ class NetworkEventProcessor:
             )
         )
         
-        log.add_conn("%s %s", (msg.__class__, self.contents(msg)))
+        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
 
     def set_server_timer(self):
 
@@ -648,7 +643,7 @@ class NetworkEventProcessor:
                                 self.transfers.got_connect_error(j.req, j.direction)
 
                         conntimeout = ConnectToPeerTimeout(i, self.network_callback)
-                        timer = threading.Timer(120.0, conntimeout.timeout)
+                        timer = threading.Timer(20.0, conntimeout.timeout)
                         timer.setDaemon(True)
                         timer.start()
 
@@ -671,13 +666,11 @@ class NetworkEventProcessor:
                         self.peerconns.remove(i)
 
                     break
-            else:
-                log.add_msg_contents("%s %s %s", (msg.err, msg.__class__, self.contents(msg)))
 
         else:
-            log.add_msg_contents("%s %s %s", (msg.err, msg.__class__, self.contents(msg)))
-
             self.closed_connection(msg.connobj.conn, msg.connobj.addr, msg.err)
+
+        log.add_msg_contents("%s %s %s", (msg.err, msg.__class__, self.contents(msg)))
 
     def inc_port(self, msg):
         self.waitport = msg.port
@@ -1443,7 +1436,7 @@ class NetworkEventProcessor:
                 i.msgs = []
                 break
 
-        log.add_conn("%s %s", (msg.__class__, self.contents(msg)))
+        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
 
     def cant_connect_to_peer(self, msg):
         token = msg.token
@@ -1478,7 +1471,10 @@ class NetworkEventProcessor:
         except ValueError:
             pass
 
-        log.add_conn(_("User %s does not respond to connect request, giving up"), conn.username)
+        if conn.username in self.users:
+            self.users[conn.username].behindfw = None
+
+        log.add(_("User %s does not respond to connect request, giving up"), conn.username)
 
         for i in conn.msgs:
             if i.__class__ in [slskmessages.TransferRequest, slskmessages.FileRequest] and self.transfers is not None:
