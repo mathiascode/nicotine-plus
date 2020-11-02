@@ -301,14 +301,13 @@ class NetworkEventProcessor:
         """ Sends message to a peer. Used primarily when we know the username of a peer,
         but don't have an active connection. """
 
-        # Check if there's already an active connection for the specified username
         conn = None
 
-        if message.__class__ is not slskmessages.FileRequest:
-            for i in self.peerconns:
-                if i.username == user and i.type == 'P':
-                    conn = i
-                    break
+        # Check if there's already a connection object for the specified username
+        for i in self.peerconns:
+            if i.username == user:
+                conn = i
+                break
 
         if conn is not None and conn.conn is not None:
             """ We have initiated a connection previously, and it's ready """
@@ -317,7 +316,7 @@ class NetworkEventProcessor:
             self.queue.put(message)
 
         elif conn is not None:
-            """ Connection exists but is not ready yet, add new messages """
+            """ Connection exists but is not ready yet, add new messages to it """
 
             conn.msgs.append(message)
 
