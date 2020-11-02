@@ -358,6 +358,9 @@ class NetworkEventProcessor:
             self.users[user] = UserAddr(status=-1, addr=address)
             addr = address
 
+        if message.__class__ is slskmessages.FileRequest:
+            direction = message.direction
+
         if addr is None:
             self.queue.put(slskmessages.GetPeerAddress(user))
                 
@@ -366,9 +369,6 @@ class NetworkEventProcessor:
 
         else:
             self.queue.put(slskmessages.OutConn(None, addr))
-
-        if message.__class__ is slskmessages.FileRequest:
-            direction = message.direction
 
         self.peerconns.append(
             PeerConnection(
