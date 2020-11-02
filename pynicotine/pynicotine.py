@@ -135,7 +135,6 @@ class NetworkEventProcessor:
         self.ip_requested = set()
         self.private_message_queue = {}
         self.users = {}
-        self.user_addr_requested = set()
 
         self.queue = queue.Queue(0)
         self.shares = Shares(self, self.config, self.queue, self.ui_callback)
@@ -340,33 +339,31 @@ class NetworkEventProcessor:
 
         init = slskmessages.PeerInit(None, self.config.sections["server"]["login"], message_type, 0)
         addr = None
-        behindfw = None
 
         if user in self.users:
             addr = self.users[user].addr
-            behindfw = self.users[user].behindfw
 
         elif address is not None:
             self.users[user] = UserAddr(status=-1, addr=address)
             addr = address
 
         if addr is None:
-            if user not in self.user_addr_requested:
-                self.queue.put(slskmessages.GetPeerAddress(user))
-                self.user_addr_requested.add(user)
+            self.queue.put(slskmessages.GetPeerAddress(user))
                 
             if message.__class__ is slskmessages.TransferRequest and self.transfers is not None:
                 self.transfers.getting_address(message.req, message.direction)
 
-        elif behindfw is None:
+        else:
             self.queue.put(slskmessages.OutConn(None, addr))
 
-        else:
-            # This should not be reached
-            return
-
-        conn = PeerConnection(addr=addr, username=user, msgs=[message], init=init)
-        self.peerconns.append(conn)
+        self.peerconns.append(
+            PeerConnection(
+                addr=addr,
+                username=user,
+                msgs=[message],
+                init=init
+            )
+        )
 
     def get_peer_address(self, msg):
 
@@ -389,9 +386,6 @@ class NetworkEventProcessor:
                                 'tries': i.tryaddr
                             }
                         )
-
-                    if user in self.user_addr_requested:
-                        self.user_addr_requested.remove(user)
 
                     i.addr = (msg.ip, msg.port)
                     i.tryaddr = None
@@ -608,9 +602,6 @@ class NetworkEventProcessor:
         except ValueError:
             pass
 
-        if conn.username in self.users:
-            self.users[conn.username].behindfw = None
-
         log.add(_("User %s does not respond to connect request, giving up"), conn.username)
 
         for i in conn.msgs:
@@ -702,9 +693,6 @@ class NetworkEventProcessor:
 
                         i.token = new_id()
                         self.queue.put(slskmessages.ConnectToPeer(i.token, i.username, i.type))
-
-                        if i.username in self.users:
-                            self.users[i.username].behindfw = "yes"
 
                         for j in i.msgs:
                             if j.__class__ is slskmessages.TransferRequest and self.transfers is not None:
@@ -1901,7 +1889,6 @@ class NetworkEventProcessor:
 
 class UserAddr:
 
-    def __init__(self, addr=None, behindfw=None, status=None):
+    def __init__(self, addr=None, status=None):
         self.addr = addr
-        self.behindfw = behindfw
         self.status = status
