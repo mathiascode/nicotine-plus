@@ -303,10 +303,17 @@ class NetworkEventProcessor:
         conn = None
 
         # Check if there's already a connection object for the specified username
-        for i in self.peerconns:
-            if i.username == user and i.type == 'P':
-                conn = i
-                break
+        if message.__class__ is slskmessages.FileRequest:
+            for i in self.peerconns:
+                if i.username == user and i.type == "F":
+                    conn = i
+                    break
+           
+        else:
+            for i in self.peerconns:
+                if i.username == user and i.type == "P":
+                    conn = i
+                    break
 
         if conn is not None and conn.conn is not None:
             """ We have initiated a connection previously, and it's ready """
@@ -322,6 +329,8 @@ class NetworkEventProcessor:
         else:
             """ This is a new peer, initiate a connection """
 
+            print("hit")
+            print(user)
             self.initiate_connection_to_peer(user, message, address)
 
     def initiate_connection_to_peer(self, user, message, address=None):
@@ -364,6 +373,7 @@ class NetworkEventProcessor:
                 init=init
             )
         )
+        print(self.peerconns)
 
     def get_peer_address(self, msg):
 
