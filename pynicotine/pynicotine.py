@@ -298,8 +298,8 @@ class NetworkEventProcessor:
 
     def send_message_to_peer(self, user, message, address=None):
 
-        """ Sends message to a peer. Used when  we know the username of a peer,
-        but don't have a connection set up yet. """
+        """ Sends message to a peer. Used primarily when we know the username of a peer,
+        but don't have an active connection. """
 
         # Check if there's already an active connection for the specified username
         conn = None
@@ -311,16 +311,22 @@ class NetworkEventProcessor:
                     break
 
         if conn is not None and conn.conn is not None:
-            """ We have established a connection previously, use it """
+            """ We have initiated a connection previously, and it's ready """
 
             message.conn = conn.conn
             self.queue.put(message)
 
-        else:
-            """ This is a new peer, establish a connection to it """
-            self.establish_connection_to_peer(user, message, address)
+        elif conn is not None:
+            """ Connection exists but is not ready yet, add new messages """
 
-    def establish_connection_to_peer(self, user, message, address=None):
+            conn.msgs.append(message)
+
+        else:
+            """ This is a new peer, initiate a connection """
+
+            self.initiate_connection_to_peer(user, message, address)
+
+    def initiate_connection_to_peer(self, user, message, address=None):
         
         """ Initiates a connection with a peer """
 

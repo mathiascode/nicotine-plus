@@ -471,13 +471,11 @@ class Transfers:
             for i in self.peerconns:
                 if i.conn is msg.conn.conn:
                     user = i.username
-                    conn = msg.conn.conn
                     addr = msg.conn.addr[0]
                     break
 
         elif msg.tunneleduser is not None:  # Deprecated
             user = msg.tunneleduser
-            conn = None
             addr = "127.0.0.1"
 
         if user is None:
@@ -485,13 +483,13 @@ class Transfers:
             return
 
         if msg.direction == 1:
-            response = self.transfer_request_downloads(msg, user, conn, addr)
+            response = self.transfer_request_downloads(msg, user, addr)
         else:
-            response = self.transfer_request_uploads(msg, user, conn, addr)
+            response = self.transfer_request_uploads(msg, user, addr)
 
         self.eventprocessor.send_message_to_peer(user, response)
 
-    def transfer_request_downloads(self, msg, user, conn, addr):
+    def transfer_request_downloads(self, msg, user, addr):
 
         for i in self.downloads:
             if i.filename == msg.file and user == i.user and i.status not in ["Aborted", "Paused"]:
@@ -501,6 +499,7 @@ class Transfers:
                 send a malformed file size (0 bytes) in the TransferRequest response.
                 In that case, we rely on the cached, correct file size we received when
                 we initially added the download. """
+
                 if msg.filesize > 0:
                     i.size = msg.filesize
 
@@ -546,20 +545,20 @@ class Transfers:
                 })
         return response
 
-    def transfer_request_uploads(self, msg, user, conn, addr):
+    def transfer_request_uploads(self, msg, user, addr):
         """
         Remote peer is requesting to download a file through
         your Upload queue
         """
 
-        response = self._transfer_request_uploads(msg, user, conn, addr)
+        response = self._transfer_request_uploads(msg, user, addr)
         log.add_transfer(_("Upload request: %(req)s Response: %(resp)s"), {
             'req': str(vars(msg)),
             'resp': response
         })
         return response
 
-    def _transfer_request_uploads(self, msg, user, conn, addr):
+    def _transfer_request_uploads(self, msg, user, addr):
 
         # Is user allowed to download?
         checkuser, reason = self.eventprocessor.check_user(user, addr)
