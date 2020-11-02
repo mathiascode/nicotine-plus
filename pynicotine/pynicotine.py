@@ -304,7 +304,7 @@ class NetworkEventProcessor:
 
         # Check if there's already a connection object for the specified username
         for i in self.peerconns:
-            if i.username == user:
+            if i.username == user and i.type == 'P':
                 conn = i
                 break
 
