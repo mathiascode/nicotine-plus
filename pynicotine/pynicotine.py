@@ -60,9 +60,9 @@ class PeerConnection:
     slskmessages docstrings for explanation of these)
     """
 
-    __slots__ = "addr", "username", "conn", "msgs", "token", "init", "type", "conntimer", "tryaddr"
+    __slots__ = "addr", "username", "conn", "msgs", "token", "init", "type", "conntimer", "tryaddr", "direction"
 
-    def __init__(self, addr=None, username=None, conn=None, msgs=None, token=None, init=None, conntimer=None, tryaddr=None):
+    def __init__(self, addr=None, username=None, conn=None, msgs=None, token=None, init=None, conntimer=None, tryaddr=None, direction=None):
         self.addr = addr
         self.username = username
         self.conn = conn
@@ -72,6 +72,7 @@ class PeerConnection:
         self.type = init.type
         self.conntimer = conntimer
         self.tryaddr = tryaddr
+        self.direction = direction
 
 
 class Timeout:
@@ -305,10 +306,10 @@ class NetworkEventProcessor:
         # Check if there's already a connection object for the specified username
         if message.__class__ is slskmessages.FileRequest:
             for i in self.peerconns:
-                if i.username == user and i.type == "F":
+                if i.username == user and i.direction == message.direction:
                     conn = i
                     break
-           
+
         else:
             for i in self.peerconns:
                 if i.username == user and i.type == "P":
