@@ -298,17 +298,15 @@ class NetworkEventProcessor:
 
     def send_message_to_peer(self, user, message, address=None):
 
-        """ Sends message to a peer and possibly sets up a window to display the result. """
-        """ This function is used when we know the username of a peer, but don't have a
-        connection set up yet. """
+        """ Sends message to a peer. Used when  we know the username of a peer,
+        but don't have a connection set up yet. """
 
-        # Check if there's already a connection for the specified username
+        # Check if there's already an active connection for the specified username
         conn = None
 
         if message.__class__ is not slskmessages.FileRequest:
             for i in self.peerconns:
                 if i.username == user and i.type == 'P':
-                    print("got %s" % message.__class__)
                     conn = i
                     break
 
@@ -317,9 +315,6 @@ class NetworkEventProcessor:
 
             message.conn = conn.conn
             self.queue.put(message)
-
-            if message.__class__ is slskmessages.TransferRequest and self.transfers is not None:
-                self.transfers.got_connect(message.req, conn.conn, message.direction)
 
         else:
             """ This is a new peer, establish a connection to it """
@@ -354,6 +349,9 @@ class NetworkEventProcessor:
             if user not in self.user_addr_requested:
                 self.queue.put(slskmessages.GetPeerAddress(user))
                 self.user_addr_requested.add(user)
+                
+            if message.__class__ is slskmessages.TransferRequest and self.transfers is not None:
+                self.transfers.getting_address(message.req, message.direction)
 
         elif behindfw is None:
             self.queue.put(slskmessages.OutConn(None, addr))
@@ -364,13 +362,6 @@ class NetworkEventProcessor:
 
         conn = PeerConnection(addr=addr, username=user, msgs=[message], init=init)
         self.peerconns.append(conn)
-
-        if message.__class__ is slskmessages.TransferRequest and self.transfers is not None:
-
-            if conn.addr is None:
-                self.transfers.getting_address(message.req, message.direction)
-            else:
-                self.transfers.got_address(message.req, message.direction)
 
     def get_peer_address(self, msg):
 
@@ -476,47 +467,53 @@ class NetworkEventProcessor:
             'country': country
         })
 
+    def process_conn_messages(self, peerconn, conn):
+
+        for j in peerconn.msgs:
+
+            if j.__class__ is slskmessages.UserInfoRequest and self.userinfo is not None:
+                self.userinfo.show_user(peerconn.username, conn=conn)
+
+            if j.__class__ is slskmessages.GetSharedFileList and self.userbrowse is not None:
+                self.userbrowse.show_user(peerconn.username, conn=conn)
+
+            if j.__class__ is slskmessages.FileRequest and self.transfers is not None:
+                self.transfers.got_file_connect(j.req, conn)
+
+            if j.__class__ is slskmessages.TransferRequest and self.transfers is not None:
+                self.transfers.got_connect(j.req, conn, j.direction)
+
+            j.conn = conn
+            self.queue.put(j)
+
+        peerconn.msgs = []
+
     def inc_conn(self, msg):
-        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
 
     def out_conn(self, msg):
 
         addr = msg.addr
 
         for i in self.peerconns:
-
             if i.addr == addr and i.conn is None:
                 conn = msg.conn
 
                 if i.token is None:
                     i.init.conn = conn
                     self.queue.put(i.init)
+
                 else:
                     self.queue.put(slskmessages.PierceFireWall(conn, i.token))
 
                 i.conn = conn
 
-                for j in i.msgs:
+                # Update UI with contents from messages
+                self.process_conn_messages(i, conn)
 
-                    if j.__class__ is slskmessages.UserInfoRequest and self.userinfo is not None:
-                        self.userinfo.show_user(i.username, conn=conn)
-
-                    if j.__class__ is slskmessages.GetSharedFileList and self.userbrowse is not None:
-                        self.userbrowse.show_user(i.username, conn=conn)
-
-                    if j.__class__ is slskmessages.FileRequest and self.transfers is not None:
-                        self.transfers.got_file_connect(j.req, conn)
-
-                    if j.__class__ is slskmessages.TransferRequest and self.transfers is not None:
-                        self.transfers.got_connect(j.req, conn, j.direction)
-
-                    j.conn = conn
-                    self.queue.put(j)
-
-                i.msgs = []
                 break
 
-        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
 
     def connect_to_peer(self, msg):
 
@@ -537,7 +534,7 @@ class NetworkEventProcessor:
             )
         )
 
-        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
 
     def peer_init(self, msg):
 
@@ -551,59 +548,125 @@ class NetworkEventProcessor:
             )
         )
         
-        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
 
-    def set_server_timer(self):
-
-        if self.server_timeout_value == -1:
-            self.server_timeout_value = 15
-        elif 0 < self.server_timeout_value < 600:
-            self.server_timeout_value = self.server_timeout_value * 2
-
-        self.servertimer = threading.Timer(self.server_timeout_value, self.server_timeout)
-        self.servertimer.setDaemon(True)
-        self.servertimer.start()
-
-        self.set_status(_("The server seems to be down or not responding, retrying in %i seconds"), (self.server_timeout_value))
-
-    def server_timeout(self):
-        if self.config.need_config() <= 1:
-            self.network_callback([slskmessages.ConnectToServer()])
-
-    def stop_timers(self):
+    def pierce_fire_wall(self, msg):
+        token = msg.token
 
         for i in self.peerconns:
-            if i.conntimer is not None:
-                i.conntimer.cancel()
+            if i.token == token and i.conn is None:
+                conn = msg.conn.conn
 
-        if self.servertimer is not None:
-            self.servertimer.cancel()
+                if i.conntimer is not None:
+                    i.conntimer.cancel()
 
-        if self.transfers is not None:
-            self.transfers.abort_transfers()
+                i.init.conn = conn
+                self.queue.put(i.init)
+                i.conn = conn
 
-    def connect_to_server(self, msg):
-        self.ui_callback.on_connect(None)
+                # Update UI with contents from messages
+                self.process_conn_messages(i, conn)
 
-    # notify user of error when recieving or sending a message
-    # @param self NetworkEventProcessor (Class)
-    # @param string a string containing an error message
-    def notify(self, string):
-        log.add_msg_contents("%s", string)
+                break
 
-    def contents(self, obj):
-        """ Returns variables for object, for debug output """
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
+
+    def cant_connect_to_peer(self, msg):
+        token = msg.token
+
+        for i in self.peerconns:
+            if i.token == token:
+
+                if i.conntimer is not None:
+                    i.conntimer.cancel()
+
+                if i == self.get_parent_conn():
+                    self.parent_conn_closed()
+
+                self.peerconns.remove(i)
+
+                log.add_conn(_("Can't connect to %s (either way), giving up"), i.username)
+
+                for j in i.msgs:
+                    if j.__class__ in [slskmessages.TransferRequest, slskmessages.FileRequest] and self.transfers is not None:
+                        self.transfers.got_cant_connect(j.req)
+                break
+
+    def connect_to_peer_timeout(self, msg):
+        conn = msg.conn
+
+        if conn == self.get_parent_conn():
+            self.parent_conn_closed()
+
         try:
-            return {s: getattr(obj, s) for s in obj.__slots__ if hasattr(obj, s)}
-        except AttributeError:
-            return vars(obj)
+            self.peerconns.remove(conn)
+        except ValueError:
+            pass
 
-    def popup_message(self, msg):
-        self.set_status(_(msg.title))
-        self.ui_callback.popup_message(msg)
+        if conn.username in self.users:
+            self.users[conn.username].behindfw = None
 
-    def set_current_connection_count(self, msg):
-        self.ui_callback.set_socket_status(msg.msg)
+        log.add(_("User %s does not respond to connect request, giving up"), conn.username)
+
+        for i in conn.msgs:
+            if i.__class__ in [slskmessages.TransferRequest, slskmessages.FileRequest] and self.transfers is not None:
+                self.transfers.got_cant_connect(i.req)
+
+    def closed_connection(self, conn, addr, error=None):
+
+        if conn == self.active_server_conn:
+
+            self.set_status(
+                _("Disconnected from server %(host)s:%(port)s"), {
+                    'host': addr[0],
+                    'port': addr[1]
+                }
+            )
+            userchoice = self.manualdisconnect
+
+            if not self.manualdisconnect:
+                self.set_server_timer()
+            else:
+                self.manualdisconnect = False
+
+            self.active_server_conn = None
+            self.watchedusers.clear()
+            self.shares.set_connected(False)
+
+            if self.transfers is not None:
+                self.transfers.abort_transfers()
+                self.transfers.save_downloads()
+
+            self.privatechat = self.chatrooms = self.userinfo = self.userbrowse = self.search = self.transfers = self.userlist = None
+            self.ui_callback.conn_close(conn, addr)
+            self.pluginhandler.server_disconnect_notification(userchoice)
+
+        else:
+            for i in self.peerconns:
+                if i.conn == conn:
+                    log.add_conn(self.conn_close_template, self.contents(i))
+
+                    if i.conntimer is not None:
+                        i.conntimer.cancel()
+
+                    if self.transfers is not None:
+                        self.transfers.conn_close(conn, addr, i.username, error)
+
+                    if i == self.get_parent_conn():
+                        self.parent_conn_closed()
+
+                    self.peerconns.remove(i)
+                    break
+            else:
+                log.add_conn(
+                    self.conn_remove_template, {
+                        'conn_obj': conn,
+                        'address': addr
+                    }
+                )
+
+    def conn_close(self, msg):
+        self.closed_connection(msg.conn, msg.addr)
 
     def connect_error(self, msg):
 
@@ -672,6 +735,58 @@ class NetworkEventProcessor:
 
         log.add_msg_contents("%s %s %s", (msg.err, msg.__class__, self.contents(msg)))
 
+    def set_server_timer(self):
+
+        if self.server_timeout_value == -1:
+            self.server_timeout_value = 15
+        elif 0 < self.server_timeout_value < 600:
+            self.server_timeout_value = self.server_timeout_value * 2
+
+        self.servertimer = threading.Timer(self.server_timeout_value, self.server_timeout)
+        self.servertimer.setDaemon(True)
+        self.servertimer.start()
+
+        self.set_status(_("The server seems to be down or not responding, retrying in %i seconds"), (self.server_timeout_value))
+
+    def server_timeout(self):
+        if self.config.need_config() <= 1:
+            self.network_callback([slskmessages.ConnectToServer()])
+
+    def stop_timers(self):
+
+        for i in self.peerconns:
+            if i.conntimer is not None:
+                i.conntimer.cancel()
+
+        if self.servertimer is not None:
+            self.servertimer.cancel()
+
+        if self.transfers is not None:
+            self.transfers.abort_transfers()
+
+    def connect_to_server(self, msg):
+        self.ui_callback.on_connect(None)
+
+    # notify user of error when recieving or sending a message
+    # @param self NetworkEventProcessor (Class)
+    # @param string a string containing an error message
+    def notify(self, string):
+        log.add_msg_contents("%s", string)
+
+    def contents(self, obj):
+        """ Returns variables for object, for debug output """
+        try:
+            return {s: getattr(obj, s) for s in obj.__slots__ if hasattr(obj, s)}
+        except AttributeError:
+            return vars(obj)
+
+    def popup_message(self, msg):
+        self.set_status(_(msg.title))
+        self.ui_callback.popup_message(msg)
+
+    def set_current_connection_count(self, msg):
+        self.ui_callback.set_socket_status(msg.msg)
+
     def inc_port(self, msg):
         self.waitport = msg.port
         self.set_status(_("Listening on port %i"), msg.port)
@@ -705,62 +820,6 @@ class NetworkEventProcessor:
         )
         if self.waitport is not None:
             self.queue.put(slskmessages.SetWaitPort(self.waitport))
-
-    def conn_close(self, msg):
-        self.closed_connection(msg.conn, msg.addr)
-
-    def closed_connection(self, conn, addr, error=None):
-
-        if conn == self.active_server_conn:
-
-            self.set_status(
-                _("Disconnected from server %(host)s:%(port)s"), {
-                    'host': addr[0],
-                    'port': addr[1]
-                }
-            )
-            userchoice = self.manualdisconnect
-
-            if not self.manualdisconnect:
-                self.set_server_timer()
-            else:
-                self.manualdisconnect = False
-
-            self.active_server_conn = None
-            self.watchedusers.clear()
-            self.shares.set_connected(False)
-
-            if self.transfers is not None:
-                self.transfers.abort_transfers()
-                self.transfers.save_downloads()
-
-            self.privatechat = self.chatrooms = self.userinfo = self.userbrowse = self.search = self.transfers = self.userlist = None
-            self.ui_callback.conn_close(conn, addr)
-            self.pluginhandler.server_disconnect_notification(userchoice)
-
-        else:
-            for i in self.peerconns:
-                if i.conn == conn:
-                    log.add_conn(self.conn_close_template, self.contents(i))
-
-                    if i.conntimer is not None:
-                        i.conntimer.cancel()
-
-                    if self.transfers is not None:
-                        self.transfers.conn_close(conn, addr, i.username, error)
-
-                    if i == self.get_parent_conn():
-                        self.parent_conn_closed()
-
-                    self.peerconns.remove(i)
-                    break
-            else:
-                log.add_conn(
-                    self.conn_remove_template, {
-                        'conn_obj': conn,
-                        'address': addr
-                    }
-                )
 
     def login(self, msg):
 
@@ -1400,85 +1459,6 @@ class NetworkEventProcessor:
             self.close_peer_connection(conn)
 
         log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
-
-    def pierce_fire_wall(self, msg):
-        token = msg.token
-
-        for i in self.peerconns:
-
-            if i.token == token and i.conn is None:
-                conn = msg.conn.conn
-
-                if i.conntimer is not None:
-                    i.conntimer.cancel()
-
-                i.init.conn = conn
-                self.queue.put(i.init)
-                i.conn = conn
-
-                for j in i.msgs:
-
-                    if j.__class__ is slskmessages.UserInfoRequest and self.userinfo is not None:
-                        self.userinfo.show_user(i.username, conn=conn)
-
-                    if j.__class__ is slskmessages.GetSharedFileList and self.userbrowse is not None:
-                        self.userbrowse.show_user(i.username, conn=conn)
-
-                    if j.__class__ is slskmessages.FileRequest and self.transfers is not None:
-                        self.transfers.got_file_connect(j.req, conn)
-
-                    if j.__class__ is slskmessages.TransferRequest and self.transfers is not None:
-                        self.transfers.got_connect(j.req, conn, j.direction)
-
-                    j.conn = conn
-                    self.queue.put(j)
-
-                i.msgs = []
-                break
-
-        log.add_msg("%s %s", (msg.__class__, self.contents(msg)))
-
-    def cant_connect_to_peer(self, msg):
-        token = msg.token
-
-        for i in self.peerconns:
-
-            if i.token == token:
-
-                if i.conntimer is not None:
-                    i.conntimer.cancel()
-
-                if i == self.get_parent_conn():
-                    self.parent_conn_closed()
-
-                self.peerconns.remove(i)
-
-                log.add_conn(_("Can't connect to %s (either way), giving up"), i.username)
-
-                for j in i.msgs:
-                    if j.__class__ in [slskmessages.TransferRequest, slskmessages.FileRequest] and self.transfers is not None:
-                        self.transfers.got_cant_connect(j.req)
-                break
-
-    def connect_to_peer_timeout(self, msg):
-        conn = msg.conn
-
-        if conn == self.get_parent_conn():
-            self.parent_conn_closed()
-
-        try:
-            self.peerconns.remove(conn)
-        except ValueError:
-            pass
-
-        if conn.username in self.users:
-            self.users[conn.username].behindfw = None
-
-        log.add(_("User %s does not respond to connect request, giving up"), conn.username)
-
-        for i in conn.msgs:
-            if i.__class__ in [slskmessages.TransferRequest, slskmessages.FileRequest] and self.transfers is not None:
-                self.transfers.got_cant_connect(i.req)
 
     def transfer_timeout(self, msg):
         if self.transfers is not None:
