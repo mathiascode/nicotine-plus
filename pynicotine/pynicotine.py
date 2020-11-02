@@ -340,7 +340,6 @@ class NetworkEventProcessor:
         init = slskmessages.PeerInit(None, self.config.sections["server"]["login"], message_type, 0)
         addr = None
         behindfw = None
-        token = None
 
         if user in self.users:
             addr = self.users[user].addr
@@ -359,30 +358,19 @@ class NetworkEventProcessor:
             self.queue.put(slskmessages.OutConn(None, addr))
 
         else:
-            token = new_id()
-            self.queue.put(slskmessages.ConnectToPeer(token, user, message_type))
+            print("HIT")
+            return
 
-        conn = PeerConnection(addr=addr, username=user, msgs=[message], token=token, init=init)
+        conn = PeerConnection(addr=addr, username=user, msgs=[message], init=init)
         self.peerconns.append(conn)
-
-        if token is not None:
-            timeout = 120.0
-            conntimeout = ConnectToPeerTimeout(self.peerconns[-1], self.network_callback)
-            timer = threading.Timer(timeout, conntimeout.timeout)
-            timer.setDaemon(True)
-            self.peerconns[-1].conntimer = timer
-            timer.start()
 
         if message.__class__ is slskmessages.TransferRequest and self.transfers is not None:
 
             if conn.addr is None:
                 self.transfers.getting_address(message.req, message.direction)
 
-            elif conn.token is None:
-                self.transfers.got_address(message.req, message.direction)
-
             else:
-                self.transfers.got_connect_error(message.req, message.direction)
+                self.transfers.got_address(message.req, message.direction)
 
     def get_peer_address(self, msg):
 
@@ -646,9 +634,7 @@ class NetworkEventProcessor:
             addr = msg.connobj.addr
 
             for i in self.peerconns:
-
                 if i.addr == addr and i.conn is None:
-
                     if i.token is None:
 
                         i.token = new_id()
