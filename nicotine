@@ -34,6 +34,15 @@ from pynicotine.utils import apply_translation
 from pynicotine.utils import get_user_directories
 
 
+if sys.platform == "win32" and importlib.util.find_spec("certifi"):
+    """ Set CA bundle location on Windows, otherwise we get SSL errors
+    in our frozen Python app. """
+
+    import certifi
+    import os
+    os.environ['SSL_CERT_FILE'] = certifi.where()
+
+
 def usage():
     print(_("""Nicotine+ is a Soulseek client.
 Usage: nicotine [OPTION]...

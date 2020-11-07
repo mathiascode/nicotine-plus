@@ -18,28 +18,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-block_cipher = None
+# Provide access to the pynicotine module
+import sys
+sys.path.append('.')
 
 import glob
 import os
-import sys
+import pynicotine.plugins
 
 from pkgutil import walk_packages
-from PyInstaller.utils.hooks import get_gi_typelibs
+from PyInstaller.utils.hooks import collect_data_files
 
-# Provide access to the pynicotine module
-sys.path.append('.')
-
-import pynicotine.plugins
+block_cipher = None
 
 # Disable unnecessary modules
 sys.modules['FixTk'] = None
 sys.modules['lib2to3'] = None
 
-datas = hiddenimports = []
-
-# Include CA bundle for update checker
-hiddenimports.append('certifi')
+hiddenimports = []
 
 if sys.platform == 'win32':
     # Notification support on Windows
@@ -65,6 +61,9 @@ added_files = [
     ('../../pynicotine', 'pynicotine')
 ]
 
+# Include CA bundle for update checker
+added_files += collect_data_files('certifi')
+
 # Translation
 for po_file in glob.glob("po/*.po"):
 
@@ -80,19 +79,16 @@ for po_file in glob.glob("po/*.po"):
 
     targetpath = "share/locale/" + lang + "/LC_MESSAGES"
 
-    datas.append(
+    added_files.append(
         (
             "../../" + mo_file,
             targetpath
         )
     )
 
-datas += added_files
-
 a = Analysis(['../../nicotine'],
-             pathex=['.'],
              binaries=[],
-             datas=datas,
+             datas=added_files,
              hiddenimports=hiddenimports,
              hookspath=[],
              runtime_hooks=[],
@@ -120,6 +116,12 @@ icon = 'nicotine.ico'
 if sys.platform == 'darwin':
     icon = 'nicotine.icns'
 
+enable_upx = True
+
+if sys.platform == 'win32' and os.environ['ARCH'] == 'i686':
+    # Disable UPX on 32-bit Windows, otherwise Nicotine+ won't start
+    enable_upx = False
+
 exe = EXE(pyz,
           a.scripts,
           [],
@@ -127,7 +129,7 @@ exe = EXE(pyz,
           name=name,
           debug=True,
           strip=False,
-          upx=True,
+          upx=enable_upx,
           console=True,
           icon=icon)
 
@@ -136,7 +138,7 @@ coll = COLLECT(exe,
                a.zipfiles,
                a.datas,
                strip=False,
-               upx=True,
+               upx=enable_upx,
                name=name)
 
 if sys.platform == 'darwin':
