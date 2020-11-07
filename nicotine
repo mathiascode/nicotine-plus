@@ -34,9 +34,9 @@ from pynicotine.utils import apply_translation
 from pynicotine.utils import get_user_directories
 
 
-if sys.platform == "win32" and importlib.util.find_spec("certifi"):
-    """ Set CA bundle location on Windows, otherwise we get SSL errors
-    in our frozen Python app. """
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    """ Set CA bundle location if we're running in a PyInstaller bundle
+    (Windows and macOS), otherwise we get SSL errors. """
 
     import certifi
     import os

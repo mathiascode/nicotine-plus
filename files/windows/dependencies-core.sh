@@ -26,6 +26,7 @@ pacman --noconfirm -S --needed \
   mingw-w64-$ARCH-cython \
   mingw-w64-$ARCH-gcc \
   mingw-w64-$ARCH-python \
+  mingw-w64-$ARCH-python-certifi \
   mingw-w64-$ARCH-python-flake8 \
   mingw-w64-$ARCH-python-pip \
   mingw-w64-$ARCH-python-pytest \

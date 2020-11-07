@@ -28,6 +28,7 @@ brew install \
 
 # Install dependencies with pip
 pip3 install \
+  certifi \
   pep8-naming \
   pytaglib \
   pytest
