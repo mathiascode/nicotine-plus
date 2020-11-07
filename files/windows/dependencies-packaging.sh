@@ -32,4 +32,4 @@ pacman --noconfirm -S --needed \
 # Install dependencies with pip
 pip3 install \
   plyer \
-  pyinstaller==3.6
+  https://github.com/pyinstaller/pyinstaller/archive/04bb446f97e4c8ef32327d26a9c22c618cf79958.zip  # Development version

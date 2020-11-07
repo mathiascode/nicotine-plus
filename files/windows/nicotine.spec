@@ -36,9 +36,7 @@ import pynicotine.plugins
 sys.modules['FixTk'] = None
 sys.modules['lib2to3'] = None
 
-# HarfBuzz has seemingly been added as a dependency for GTK on Windows (and perhaps MacOS?) recently
-# TODO: investigate why this is the case, and potentially check with PyInstaller devs (30 August 2020)
-binaries, datas, hiddenimports = get_gi_typelibs('HarfBuzz', '0.0')
+datas = hiddenimports = []
 
 # Include CA bundle for update checker
 hiddenimports.append('certifi')
@@ -93,7 +91,7 @@ datas += added_files
 
 a = Analysis(['../../nicotine'],
              pathex=['.'],
-             binaries=binaries,
+             binaries=[],
              datas=datas,
              hiddenimports=hiddenimports,
              hookspath=[],
@@ -127,10 +125,10 @@ exe = EXE(pyz,
           [],
           exclude_binaries=True,
           name=name,
-          debug=False,
+          debug=True,
           strip=False,
           upx=True,
-          console=False,
+          console=True,
           icon=icon)
 
 coll = COLLECT(exe,
