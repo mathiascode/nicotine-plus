@@ -34,13 +34,14 @@ from pynicotine.utils import apply_translation
 from pynicotine.utils import get_user_directories
 
 
-if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS') and \
+        importlib.util.find_spec("certifi"):
+
     """ Set CA bundle location if we're running in a PyInstaller bundle
     (Windows and macOS), otherwise we get SSL errors. """
 
-    import certifi
     import os
-    os.environ['SSL_CERT_FILE'] = certifi.where()
+    os.environ['SSL_CERT_FILE'] = os.path.join(sys._MEIPASS, 'certifi', 'cacert.pem')
 
 
 def usage():
