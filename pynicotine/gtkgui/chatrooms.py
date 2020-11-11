@@ -1047,7 +1047,7 @@ class ChatRoom:
         self.menu_block_user.set_sensitive(not me)
         self.menu_ignore_ip.set_active(self.frame.user_ip_is_ignored(user))
         self.menu_ignore_ip.set_sensitive(not me)
-        self.menu_private_rooms.set_sensitive(not me)
+        self.menu_private_rooms.set_sensitive(not me and self.roomsctrl.private_rooms)
 
         self.popup_menu.editing = False
         self.popup_menu.popup(None, None, None, None, event.button, event.time)
@@ -1395,6 +1395,7 @@ class ChatRoom:
 
             if text[:2] == "//":
                 text = text[1:]
+            print(text)
 
             event = self.frame.np.pluginhandler.outgoing_public_chat_event(self.room, text)
             if event is not None:

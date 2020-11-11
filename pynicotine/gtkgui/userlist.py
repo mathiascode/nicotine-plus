@@ -310,8 +310,9 @@ class UserList:
             self.menu_browse_user.set_sensitive(status)
             self.menu_give_privileges.set_sensitive(status)
             self.menu_private_rooms.set_sensitive(
-                status or
-                self.popup_menu.user != self.frame.np.config.sections["server"]["login"]
+                status and
+                self.popup_menu.user != self.frame.np.config.sections["server"]["login"] and
+                self.frame.chatrooms.roomsctrl.private_rooms
             )
 
             self.menu_ban_user.set_active(user in self.frame.np.config.sections["server"]["banlist"])
