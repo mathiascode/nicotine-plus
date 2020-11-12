@@ -35,8 +35,7 @@ class UPnPPortMapping:
         # List of existing port mappings
         self.existingportsmappings = []
 
-        # Initial value that determine if a port mapping already exist to the
-        # client
+        # Initial value that determine if a port mapping already exist to the client
         self.foundexistingmapping = False
 
     def add_port_mapping(self, np):
@@ -93,7 +92,6 @@ class UPnPPortMapping:
 
         if not router:
             raise RuntimeError('UPnP does not work on this network')
-            return
 
         # Create a UDP socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
