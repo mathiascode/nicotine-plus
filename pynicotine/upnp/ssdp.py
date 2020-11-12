@@ -92,7 +92,7 @@ class SSDP:
         }
 
         wan_ip_sent = False
-        wan_ip = SSDP._create_msearch_request('upnp:rootdevice', headers=headers)
+        wan_ip = SSDP._create_msearch_request('urn:schemas-upnp-org:service:WANIPConnection:1', headers=headers)
 
         inputs = [sock]
         outputs = [sock]
