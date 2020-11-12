@@ -88,17 +88,14 @@ class SSDP:
         headers = {
             'HOST': "{}:{}".format(SSDP.multicast_host, SSDP.multicast_port),
             'MAN': '"ssdp:discover"',
-            'MX': str(SSDP.response_time_secs),
-            'USER-AGENT': '{}/1.0 UPnP/1.1 Nicotine/1.0'.format(sys.platform)
+            'MX': str(SSDP.response_time_secs)
         }
 
         wan_ip1_sent = False
         wan_ip1 = SSDP._create_msearch_request('urn:schemas-upnp-org:service:WANIPConnection:1', headers=headers)
-        log.add_debug('UPnP: M-SEARCH request 1: \n%s', wan_ip1)
 
         wan_ip2_sent = False
         wan_ip2 = SSDP._create_msearch_request('urn:schemas-upnp-org:service:WANIPConnection:2', headers=headers)
-        log.add_debug('UPnP: M-SEARCH request 2: \n%s', wan_ip2)
 
         inputs = [sock]
         outputs = [sock]
@@ -125,11 +122,13 @@ class SSDP:
             for _sock in writable:
                 if not wan_ip1_sent:
                     wan_ip1.sendto(_sock, (SSDP.multicast_host, SSDP.multicast_port))
+                    log.add_debug('UPnP: Sent M-SEARCH request 1')
                     time_end = time.time() + SSDP.response_time_secs
                     wan_ip1_sent = True
 
                 if not wan_ip2_sent:
                     wan_ip2.sendto(_sock, (SSDP.multicast_host, SSDP.multicast_port))
+                    log.add_debug('UPnP: Sent M-SEARCH request 2')
                     time_end = time.time() + SSDP.response_time_secs
                     wan_ip2_sent = True
 
@@ -268,6 +267,7 @@ class SSDPRequest(SSDPMessage):
     @classmethod
     def parse(cls, msg):
         """ Parse message string to request object """
+
         lines = msg.splitlines()
         method, uri, version = lines[0].split()
         headers = cls.parse_headers('\r\n'.join(lines[1:]))
@@ -284,10 +284,12 @@ class SSDPRequest(SSDPMessage):
                 IP address and port pair to send the message to.
         """
         msg = bytes(self) + b'\r\n'
+        log.add_debug('UPnP: SSDP request: %s', msg)
         transport.sendto(msg, addr)
 
     def __str__(self):
         """ Return complete SSDP request """
+
         lines = list()
         lines.append(' '.join(
             [self.method, self.uri, self.version]
