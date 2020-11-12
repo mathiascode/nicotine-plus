@@ -136,7 +136,8 @@ class UPnPPortMapping:
                 public_port=self.externalwanport,
                 private_ip=self.internalipaddress,
                 private_port=self.internallanport,
-                mapping_description='Nicotine+'
+                mapping_description='Nicotine+',
+                lease_duration=86400  # Expires in 24 hours
             )
 
         except Exception as e:
