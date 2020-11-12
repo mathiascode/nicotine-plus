@@ -71,7 +71,7 @@ class SSDP:
     multicast_host = '239.255.255.250'
     multicast_port = 1900
     buffer_size = 4096
-    response_time_secs = 2
+    response_time_secs = 8
 
     @classmethod
     def list(cls, refresh=False):
@@ -107,8 +107,10 @@ class SSDP:
         time_end = time.time() + SSDP.response_time_secs
 
         while time.time() < time_end:
-            _timeout = 1
+            _timeout = 6
             readable, writable, _ = select.select(inputs, outputs, inputs, _timeout)
+            print(readable)
+            print(writable)
 
             for _sock in readable:
                 msg, sender = _sock.recvfrom(SSDP.buffer_size)
