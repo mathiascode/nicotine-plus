@@ -92,7 +92,7 @@ class UPnPPortMapping:
         router = UPnp.find_router()
 
         if not router:
-            log.add_debug('UPnP does not work on this network')
+            raise RuntimeError('UPnP does not work on this network')
             return
 
         # Create a UDP socket
