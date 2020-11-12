@@ -92,13 +92,13 @@ class SSDP:
             'USER-AGENT': '{}/1.0 UPnP/1.1 Nicotine/1.0'.format(sys.platform)
         }
 
-        log.add_debug('UPnP: Headers: %s', headers)
-
         wan_ip1_sent = False
         wan_ip1 = SSDP._create_msearch_request('urn:schemas-upnp-org:service:WANIPConnection:1', headers=headers)
+        log.add_debug('UPnP: M-SEARCH request 1: \n%s', wan_ip1)
 
         wan_ip2_sent = False
         wan_ip2 = SSDP._create_msearch_request('urn:schemas-upnp-org:service:WANIPConnection:2', headers=headers)
+        log.add_debug('UPnP: M-SEARCH request 2: \n%s', wan_ip2)
 
         inputs = [sock]
         outputs = [sock]
