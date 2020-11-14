@@ -25,8 +25,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.msystem }}
-          update: true
-
+          update: false
       - name: Install build dependencies
         run: |
           export ARCH=${{ matrix.arch }}
