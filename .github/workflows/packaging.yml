@@ -74,6 +74,7 @@ jobs:
       - name: Generate .dmg
         run: |
           files/macos/create-dmg.sh
+          codesign -s - dmg/Nicotine+.dmg
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v1
