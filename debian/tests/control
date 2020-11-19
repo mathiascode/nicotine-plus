@@ -6,6 +6,12 @@ Depends: @
 Restrictions: isolation-container, superficial
 Features: test-name=test-version
 
+# Lint check...
+Test-Command: flake8
+Depends: @, python3-flake8
+Restrictions: isolation-container
+Features: test-name=lint-check
+
 # Perform local in-tree unit tests...
 Test-Command: py.test-3
 Depends: @, python3-pytest
