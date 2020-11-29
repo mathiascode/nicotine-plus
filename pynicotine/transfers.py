@@ -998,6 +998,11 @@ class Transfers:
                     self.uploads.remove(i)
                     self.uploadsview.remove_specific(i, True)
 
+                elif msg.reason == "Complete":
+
+                    # Edge case, don't know why this message is sent to us 
+                    self.upload_finished(None, i)
+
                 elif msg.reason == "Cancelled":
 
                     self.auto_clear_upload(i)
@@ -1497,8 +1502,11 @@ class Transfers:
             self.eventprocessor.speed = speedbytes
             self.queue.put(slskmessages.SendUploadSpeed(speedbytes))
 
-        file.close()
+        if file is not None:
+            file.close()
+
         i.status = "Finished"
+        i.currentbytes = i.size
         i.speed = 0
         i.timeleft = ""
 

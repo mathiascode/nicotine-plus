@@ -3228,11 +3228,13 @@ class BuildDialog(Gtk.Dialog):
                 self.tw["box%d" % c].pack_start(self.tw["label%d" % c], False, False, 0)
 
                 self.tw[name] = Gtk.TextView()
+                self.tw[name].set_hexpand(True)
                 self.settings.set_widget(self.tw[name], self.settings.frame.np.config.sections["plugins"][plugin][name])
 
                 self.tw["scrolledwindow%d" % c] = Gtk.ScrolledWindow()
-                self.tw["scrolledwindow%d" % c].set_min_content_height(100)
-                self.tw["scrolledwindow%d" % c].set_min_content_width(400)
+                self.tw["scrolledwindow%d" % c].set_hexpand(True)
+                self.tw["scrolledwindow%d" % c].set_min_content_height(200)
+                self.tw["scrolledwindow%d" % c].set_min_content_width(600)
                 self.tw["scrolledwindow%d" % c].set_shadow_type(Gtk.ShadowType.IN)
                 self.tw["scrolledwindow%d" % c].add(self.tw[name])
 

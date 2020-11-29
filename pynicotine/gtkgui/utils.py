@@ -501,7 +501,7 @@ def append_line(textview, line, tag=None, timestamp=None, showstamp=True, timest
         # scrolledwindow may have disappeared already while Nicotine+ was shutting down
         return
 
-    bottom = (va.get_value() + va.get_page_size()) >= va.get_upper()
+    bottom = (va.get_value() + va.get_page_size()) >= (va.get_upper() - 30)
 
     buffer = textview.get_buffer()
     text_iter_start, text_iter_end = buffer.get_bounds()
