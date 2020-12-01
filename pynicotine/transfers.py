@@ -120,7 +120,7 @@ class Transfers:
     PRE_TRANSFER = ["Queued"]
     TRANSFER = ["Requesting file", "Initializing transfer", "Transferring"]
 
-    def __init__(self, peerconns, queue, eventprocessor, users, network_callback, notifications=None, pluginhandler=None):
+    def __init__(self, peerconns, queue, eventprocessor, users, ui_callback, pluginhandler=None):
 
         self.peerconns = peerconns
         self.queue = queue
@@ -176,8 +176,7 @@ class Transfers:
                 self.queue.put(slskmessages.AddUser(i))
 
         self.users = users
-        self.network_callback = network_callback
-        self.notifications = notifications
+        self.ui_callback = ui_callback
         self.pluginhandler = pluginhandler
         self.downloadsview = None
         self.uploadsview = None
@@ -220,7 +219,7 @@ class Transfers:
                 else:
                     if i.status not in ["Aborted", "Filtered"]:
                         i.status = "User logged off"
-                        self.downloadsview.update(i)
+                        self.ui_callback([slskmessages.UpdateDownload(i)])
 
         for i in self.uploads[:]:
             if msg.user == i.user and i.status != "Finished":
@@ -228,7 +227,7 @@ class Transfers:
                     if i.transfertimer is not None:
                         i.transfertimer.cancel()
                     self.uploads.remove(i)
-                    self.uploadsview.remove_specific(i, True)
+                    self.ui_callback([slskmessages.RemoveUpload(i)])
 
         if msg.status == 0:
             self.check_upload_queue()
@@ -323,9 +322,9 @@ class Transfers:
 
         if shouldupdate:
             if direction == 0:
-                self.downloadsview.update(transfer)
+                self.ui_callback([slskmessages.UpdateDownload(transfer)])
             else:
-                self.uploadsview.update(transfer)
+                self.ui_callback([slskmessages.UpdateUpload(transfer)])
 
     def upload_failed(self, msg):
 
@@ -355,7 +354,7 @@ class Transfers:
             for i in self.downloads:
                 if i.req == req:
                     i.status = "Getting address"
-                    self.downloadsview.update(i)
+                    self.ui_callback([slskmessages.UpdateDownload(i)])
                     break
 
         elif direction == 1:
@@ -363,7 +362,7 @@ class Transfers:
             for i in self.uploads:
                 if i.req == req:
                     i.status = "Getting address"
-                    self.uploadsview.update(i)
+                    self.ui_callback([slskmessages.UpdateUpload(i)])
                     break
 
     def got_address(self, req, direction):
@@ -374,7 +373,7 @@ class Transfers:
             for i in self.downloads:
                 if i.req == req:
                     i.status = "Connecting"
-                    self.downloadsview.update(i)
+                    self.ui_callback([slskmessages.UpdateDownload(i)])
                     break
 
         elif direction == 1:
@@ -382,7 +381,7 @@ class Transfers:
             for i in self.uploads:
                 if i.req == req:
                     i.status = "Connecting"
-                    self.uploadsview.update(i)
+                    self.ui_callback([slskmessages.UpdateUpload(i)])
                     break
 
     def got_connect_error(self, req, direction):
@@ -394,7 +393,7 @@ class Transfers:
             for i in self.downloads:
                 if i.req == req:
                     i.status = "Waiting for peer to connect"
-                    self.downloadsview.update(i)
+                    self.ui_callback([slskmessages.UpdateDownload(i)])
                     break
 
         elif direction == 1:
@@ -402,7 +401,7 @@ class Transfers:
             for i in self.uploads:
                 if i.req == req:
                     i.status = "Waiting for peer to connect"
-                    self.uploadsview.update(i)
+                    self.ui_callback([slskmessages.UpdateUpload(i)])
                     break
 
     def got_cant_connect(self, req):
@@ -422,7 +421,7 @@ class Transfers:
 
         i.status = "Cannot connect"
         i.req = None
-        self.downloadsview.update(i)
+        self.ui_callback([slskmessages.UpdateDownload(i)])
 
         if i.user not in self.eventprocessor.watchedusers:
             self.queue.put(slskmessages.AddUser(i.user))
@@ -437,7 +436,7 @@ class Transfers:
             if j.user == i.user:
                 j.timequeued = curtime
 
-        self.uploadsview.update(i)
+        self.ui_callback([slskmessages.UpdateUpload(i)])
 
         if i.user not in self.eventprocessor.watchedusers:
             self.queue.put(slskmessages.AddUser(i.user))
@@ -451,13 +450,13 @@ class Transfers:
         for i in self.downloads:
             if i.req == req:
                 i.status = "Initializing transfer"
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
                 break
 
         for i in self.uploads:
             if i.req == req:
                 i.status = "Initializing transfer"
-                self.uploadsview.update(i)
+                self.ui_callback([slskmessages.UpdateUpload(i)])
                 break
 
     def got_connect(self, req, conn, direction):
@@ -469,7 +468,7 @@ class Transfers:
                 if i.req == req:
                     i.status = "Requesting file"
                     i.requestconn = conn
-                    self.downloadsview.update(i)
+                    self.ui_callback([slskmessages.UpdateDownload(i)])
                     break
 
         elif direction == 1:
@@ -478,7 +477,7 @@ class Transfers:
                 if i.req == req:
                     i.status = "Requesting file"
                     i.requestconn = conn
-                    self.uploadsview.update(i)
+                    self.ui_callback([slskmessages.UpdateUpload(i)])
                     break
 
     def transfer_request(self, msg):
@@ -550,7 +549,7 @@ class Transfers:
 
                 i.req = msg.req
                 i.status = "Waiting for download"
-                transfertimeout = TransferTimeout(i.req, self.network_callback)
+                transfertimeout = TransferTimeout(i.req, self.ui_callback)
 
                 if i.transfertimer is not None:
                     i.transfertimer.cancel()
@@ -561,7 +560,7 @@ class Transfers:
                 i.transfertimer.start()
 
                 response = slskmessages.TransferResponse(None, 1, req=i.req)
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
                 break
         else:
             # If this file is not in your download queue, then it must be
@@ -582,7 +581,7 @@ class Transfers:
                     self.queue.put(slskmessages.AddUser(user))
 
                 response = slskmessages.TransferResponse(None, 0, reason="Queued", req=transfer.req)
-                self.downloadsview.update(transfer)
+                self.ui_callback([slskmessages.UpdateDownload(transfer)])
             else:
                 response = slskmessages.TransferResponse(None, 0, reason="Cancelled", req=msg.req)
                 log.add_transfer(_("Denied file request: User %(user)s, %(msg)s"), {
@@ -655,7 +654,7 @@ class Transfers:
                 place=len(self.uploads)
             )
             self._append_upload(user, msg.file, newupload)
-            self.uploadsview.update(newupload)
+            self.ui_callback([slskmessages.UpdateUpload(newupload)])
             self.add_queued(user, realpath)
             return response
 
@@ -663,7 +662,7 @@ class Transfers:
         size = self.get_file_size(realpath)
         response = slskmessages.TransferResponse(None, 1, req=msg.req, filesize=size)
 
-        transfertimeout = TransferTimeout(msg.req, self.network_callback)
+        transfertimeout = TransferTimeout(msg.req, self.ui_callback)
         transferobj = Transfer(
             user=user, realfilename=realpath, filename=msg.file,
             path=os.path.dirname(realpath), status="Waiting for upload",
@@ -676,7 +675,7 @@ class Transfers:
         transferobj.transfertimer.setDaemon(True)
         transferobj.transfertimer.start()
 
-        self.uploadsview.update(transferobj)
+        self.ui_callback([slskmessages.UpdateUpload(transferobj)])
         return response
 
     def _append_upload(self, user, filename, transferobj):
@@ -684,7 +683,7 @@ class Transfers:
         for i in self.uploads:
             if i.user == user and i.filename == filename:
                 self.uploads.remove(i)
-                self.uploadsview.remove_specific(i, True)
+                self.ui_callback([slskmessages.RemoveUpload(i)])
                 break
 
         self.uploads.append(transferobj)
@@ -772,7 +771,7 @@ class Transfers:
                     timequeued=time.time(), size=self.get_file_size(realpath), place=len(self.uploads)
                 )
                 self._append_upload(user, msg.file, newupload)
-                self.uploadsview.update(newupload)
+                self.ui_callback([slskmessages.UpdateUpload(newupload)])
                 self.add_queued(user, msg.file)
 
                 if self.pluginhandler:
@@ -860,7 +859,7 @@ class Transfers:
                     self.abort_transfer(i, reason=msg.reason)
 
                 i.status = msg.reason
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
 
                 break
 
@@ -972,7 +971,7 @@ class Transfers:
 
                 i.status = msg.reason
                 i.req = None
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
 
                 if msg.reason == "Queued":
 
@@ -992,7 +991,7 @@ class Transfers:
 
                 i.status = msg.reason
                 i.req = None
-                self.uploadsview.update(i)
+                self.ui_callback([slskmessages.UpdateUpload(i)])
 
                 if msg.reason == "Queued":
 
@@ -1004,7 +1003,7 @@ class Transfers:
                         i.transfertimer.cancel()
 
                     self.uploads.remove(i)
-                    self.uploadsview.remove_specific(i, True)
+                    self.ui_callback([slskmessages.RemoveUpload(i)])
 
                 elif msg.reason == "Complete":
 
@@ -1030,7 +1029,7 @@ class Transfers:
                 i.status = "Establishing connection"
                 # Have to establish 'F' connection here
                 self.eventprocessor.send_message_to_peer(i.user, slskmessages.FileRequest(None, msg.req))
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
                 break
         else:
             for i in self.uploads:
@@ -1040,7 +1039,7 @@ class Transfers:
 
                 i.status = "Establishing connection"
                 self.eventprocessor.send_message_to_peer(i.user, slskmessages.FileRequest(None, msg.req))
-                self.uploadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
                 self.check_upload_queue()
                 break
             else:
@@ -1074,9 +1073,9 @@ class Transfers:
                 self.queue.put(slskmessages.AddUser(i.user))
 
             if i in self.downloads:
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
             elif i in self.uploads:
-                self.uploadsview.update(i)
+                self.ui_callback([slskmessages.UpdateUpload(i)])
 
             break
 
@@ -1139,8 +1138,12 @@ class Transfers:
                 i.conn = None
                 self.queue.put(slskmessages.ConnClose(msg.conn))
 
-                if self.notifications:
-                    self.notifications.new_notification(_("OS error: %s") % strerror, title=_("Folder download error"))
+                self.ui_callback([
+                    slskmessages.PopupNotification(
+                        _("Folder download error"),
+                        _("OS error: %s") % strerror
+                    )
+                ])
 
             else:
                 # also check for a windows-style incomplete transfer
@@ -1202,10 +1205,10 @@ class Transfers:
                         self.download_finished(f, i)
                         needupdate = False
 
-            self.downloadsview.new_transfer_notification()
+            self.ui_callback([slskmessages.DownloadNotification()])
 
             if needupdate:
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
 
         else:
             log.add_warning(_("Download error formally known as 'Unknown file request': %(req)s (%(user)s: %(file)s)"), {
@@ -1254,8 +1257,7 @@ class Transfers:
                 i.conn = None
                 self.queue.put(slskmessages.ConnClose(msg.conn))
 
-            self.uploadsview.new_transfer_notification()
-            self.uploadsview.update(i)
+            self.ui_callback([slskmessages.UploadNotification(), slskmessages.UpdateUpload(i)])
 
             if i.size == 0:
                 # If filesize is 0, we will not receive a UploadFile message later. Finish now.
@@ -1331,7 +1333,7 @@ class Transfers:
                 self.queue.put(slskmessages.ConnClose(msg.conn))
 
             if needupdate:
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
 
             break
 
@@ -1391,20 +1393,22 @@ class Transfers:
         self.add_to_shared(newname)
         self.eventprocessor.shares.send_num_shared_folders_files()
 
-        if self.notifications and config["notifications"]["notification_popup_file"]:
-            self.notifications.new_notification(
-                _("%(file)s downloaded from %(user)s") % {
-                    'user': i.user,
-                    'file': newname.rsplit(os.sep, 1)[1]
-                },
-                title=_("File downloaded")
-            )
+        if config["notifications"]["notification_popup_file"]:
+            self.ui_callback([
+                slskmessages.PopupNotification(
+                    _("File downloaded"),
+                    _("%(file)s downloaded from %(user)s") % {
+                        'user': i.user,
+                        'file': newname.rsplit(os.sep, 1)[1]
+                    }
+                )
+            ])
 
         self.save_downloads()
 
         # Attempt to autoclear this download, if configured
         if not self.auto_clear_download(i):
-            self.downloadsview.update(i)
+            self.ui_callback([slskmessages.UpdateDownload(i)])
 
         if config["transfers"]["afterfinish"]:
             if not execute_command(config["transfers"]["afterfinish"], newname):
@@ -1419,14 +1423,17 @@ class Transfers:
                 if ia.status not in ["Finished", "Aborted", "Paused", "Filtered"] and ia.path and ia.path == i.path:
                     break
             else:
-                if self.notifications and config["notifications"]["notification_popup_folder"]:
-                    self.notifications.new_notification(
-                        _("%(folder)s downloaded from %(user)s") % {
-                            'user': i.user,
-                            'folder': folder
-                        },
-                        title=_("Folder downloaded")
-                    )
+                if config["notifications"]["notification_popup_folder"]:
+                    self.ui_callback([
+                        slskmessages.PopupNotification(
+                            _("Folder downloaded"),
+                            _("%(folder)s downloaded from %(user)s") % {
+                                'user': i.user,
+                                'folder': folder
+                            }
+                        )
+                    ])
+
                 if config["transfers"]["afterfolder"]:
                     if not execute_command(config["transfers"]["afterfolder"], folder):
                         log.add(_("Trouble executing on folder: %s"), config["transfers"]["afterfolder"])
@@ -1502,7 +1509,7 @@ class Transfers:
                 needupdate = False
 
             if needupdate:
-                self.uploadsview.update(i)
+                self.ui_callback([slskmessages.UpdateUpload(i)])
 
             break
 
@@ -1533,7 +1540,7 @@ class Transfers:
         )
 
         self.check_upload_queue()
-        self.uploadsview.update(i)
+        self.ui_callback([slskmessages.UpdateUpload(i)])
 
         # Autoclear this upload
         self.auto_clear_upload(i)
@@ -1541,7 +1548,7 @@ class Transfers:
     def auto_clear_download(self, transfer):
         if self.eventprocessor.config.sections["transfers"]["autoclear_downloads"]:
             self.downloads.remove(transfer)
-            self.downloadsview.remove_specific(transfer, True)
+            self.ui_callback([slskmessages.RemoveDownload(transfer)])
             return True
 
         return False
@@ -1549,7 +1556,7 @@ class Transfers:
     def auto_clear_upload(self, transfer):
         if self.eventprocessor.config.sections["transfers"]["autoclear_uploads"]:
             self.uploads.remove(transfer)
-            self.uploadsview.remove_specific(transfer, True)
+            self.ui_callback([slskmessages.RemoveUpload(transfer)])
             self.calc_upload_queue_sizes()
             self.check_upload_queue()
 
@@ -1576,8 +1583,7 @@ class Transfers:
             else:
                 self.abort_transfer(upload, reason=banmsg)
 
-        if self.uploadsview is not None:
-            self.uploadsview.clear_by_user(user)
+        self.ui_callback([slskmessages.ClearUploadsByUser(user)])
 
         if user not in self.eventprocessor.config.sections["server"]["banlist"]:
             self.eventprocessor.config.sections["server"]["banlist"].append(user)
@@ -1886,9 +1892,9 @@ class Transfers:
                 j.timequeued = curtime
 
         if type == "download":
-            self.downloadsview.update(i)
+            self.ui_callback([slskmessages.UpdateDownload(i)])
         elif type == "upload":
-            self.uploadsview.update(i)
+            self.ui_callback([slskmessages.UpdateUpload(i)])
 
         self.check_upload_queue()
 
@@ -1924,7 +1930,7 @@ class Transfers:
         for i in self.downloads:
             if i.user == username and i.filename == filename:
                 i.place = msg.place
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
                 return
 
     def file_error(self, msg):
@@ -1947,9 +1953,9 @@ class Transfers:
             log.add(_("I/O error: %s"), msg.strerror)
 
             if i in self.downloads:
-                self.downloadsview.update(i)
+                self.ui_callback([slskmessages.UpdateDownload(i)])
             elif i in self.uploads:
-                self.uploadsview.update(i)
+                self.ui_callback([slskmessages.UpdateUpload(i)])
 
             self.check_upload_queue()
 

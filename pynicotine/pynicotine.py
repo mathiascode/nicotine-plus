@@ -218,7 +218,14 @@ class NetworkEventProcessor:
             slskmessages.Relogged: self.relogged,
             slskmessages.PeerInit: self.peer_init,
             slskmessages.DownloadFile: self.file_download,
+            slskmessages.UpdateDownload: self.update_download,
+            slskmessages.RemoveDownload: self.remove_download,
+            slskmessages.DownloadNotification: self.download_notification,
             slskmessages.UploadFile: self.file_upload,
+            slskmessages.UpdateUpload: self.update_upload,
+            slskmessages.RemoveUpload: self.remove_upload,
+            slskmessages.ClearUploadsByUser: self.clear_uploads_by_user,
+            slskmessages.UploadNotification: self.upload_notification,
             slskmessages.FileRequest: self.file_request,
             slskmessages.TransferRequest: self.transfer_request,
             slskmessages.TransferResponse: self.transfer_response,
@@ -269,6 +276,7 @@ class NetworkEventProcessor:
             transfers.TransferTimeout: self.transfer_timeout,
             str: self.notify,
             slskmessages.PopupMessage: self.popup_message,
+            slskmessages.PopupNotification: self.popup_notification,
             slskmessages.SetCurrentConnectionCount: self.set_current_connection_count,
             slskmessages.GlobalRecommendations: self.global_recommendations,
             slskmessages.Recommendations: self.recommendations,
@@ -1000,6 +1008,10 @@ class NetworkEventProcessor:
         self.set_status(_(msg.title))
         self.ui_callback.popup_message(msg)
 
+    def popup_notification(self, msg):
+        if self.ui_callback.notifications:
+            self.ui_callback.notifications.new_notification(msg.message, title=msg.title)
+
     def set_current_connection_count(self, msg):
         self.ui_callback.set_socket_status(msg.msg)
 
@@ -1046,7 +1058,7 @@ class NetworkEventProcessor:
         if msg.success:
 
             self.transfers = transfers.Transfers(self.peerconns, self.queue, self, self.users,
-                                                 self.network_callback, self.ui_callback.notifications, self.pluginhandler)
+                                                 self.network_callback, self.pluginhandler)
             self.shares.set_connected(True)
 
             if msg.ip is not None:
@@ -1716,12 +1728,61 @@ class NetworkEventProcessor:
         if self.transfers is not None:
             self.transfers.file_download(msg)
 
+    def update_download(self, msg):
+
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
+
+        if self.transfers is not None:
+            self.transfers.downloadsview.update(msg.transfer)
+
+    def remove_download(self, msg):
+
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
+
+        if self.transfers is not None:
+            self.transfers.downloadsview.remove_specific(msg.transfer)
+
+    def download_notification(self, msg):
+
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
+
+        if self.transfers is not None:
+            self.transfers.downloadsview.new_transfer_notification()
+
     def file_upload(self, msg):
 
         log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
 
         if self.transfers is not None:
             self.transfers.file_upload(msg)
+
+    def update_upload(self, msg):
+
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
+
+        if self.transfers is not None:
+            self.transfers.uploadsview.update(msg.transfer)
+
+    def remove_upload(self, msg):
+
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
+
+        if self.transfers is not None:
+            self.transfers.uploadsview.remove_specific(msg.transfer)
+
+    def clear_uploads_by_user(self, msg):
+
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
+
+        if self.transfers is not None:
+            self.transfers.uploadsview.clear_by_user(msg.user)
+
+    def upload_notification(self, msg):
+
+        log.add_msg_contents("%s %s", (msg.__class__, self.contents(msg)))
+
+        if self.transfers is not None:
+            self.transfers.uploadsview.new_transfer_notification()
 
     def file_request(self, msg):
 

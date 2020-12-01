@@ -1273,6 +1273,16 @@ class Search:
             self.expand.set_from_icon_name("list-remove-symbolic", Gtk.IconSize.BUTTON)
         else:
             collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
+            collapse_treeview(self.ResultsList, self.ResultGrouping.get_active())
             self.expand.set_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
 
         self.frame.np.config.sections["searches"]["expand_searches"] = active

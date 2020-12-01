@@ -142,6 +142,33 @@ class DownloadFile(InternalMessage):
         self.filesize = filesize
 
 
+class UpdateDownload(InternalMessage):
+    """ Send download changes from the transfer backend to the UI. """
+
+    __slots__ = "transfer"
+
+    def __init__(self, transfer=None):
+        self.transfer = transfer
+
+
+class RemoveDownload(InternalMessage):
+    """ Inform the UI that a download has been removed from the transfer
+    backend. """
+
+    __slots__ = "transfer"
+
+    def __init__(self, transfer=None):
+        self.transfer = transfer
+
+
+class DownloadNotification(InternalMessage):
+    """ Inform the UI that an upload has changed in the transfer backend,
+    and an indicator should be shown to the user. Shows up as a tab
+    notification hilite. """
+
+    pass
+
+
 class UploadFile(InternalMessage):
 
     __slots__ = "conn", "file", "size", "sentbytes", "offset"
@@ -152,6 +179,42 @@ class UploadFile(InternalMessage):
         self.size = size
         self.sentbytes = sentbytes
         self.offset = offset
+
+
+class UpdateUpload(InternalMessage):
+    """ Send upload changes from the transfer backend to the UI. """
+
+    __slots__ = "transfer"
+
+    def __init__(self, transfer=None):
+        self.transfer = transfer
+
+
+class RemoveUpload(InternalMessage):
+    """ Inform the UI that an upload has been removed from the transfer
+    backend. """
+
+    __slots__ = "transfer"
+
+    def __init__(self, transfer=None):
+        self.transfer = transfer
+
+
+class ClearUploadsByUser(InternalMessage):
+    """ Inform the UI that every upload for a specific user should be removed. """
+
+    __slots__ = "user"
+
+    def __init__(self, user=None):
+        self.user = user
+
+
+class UploadNotification(InternalMessage):
+    """ Inform the UI that an upload has changed in the transfer backend,
+    and an indicator should be shown to the user. Shows up as a tab
+    notification hilite. """
+
+    pass
 
 
 class FileError(InternalMessage):
@@ -195,6 +258,15 @@ class SetCurrentConnectionCount(InternalMessage):
 class PopupMessage:
     """ For messages that should be shown to the user prominently, for example
     through a popup. Should be used sparsely. """
+
+    def __init__(self, title, message):
+        self.title = title
+        self.message = message
+
+
+class PopupNotification:
+    """ For messages that should be shown to the user, but don't require any
+    action, e.g. desktop notification bubbles. """
 
     def __init__(self, title, message):
         self.title = title
@@ -494,7 +566,8 @@ class JoinRoom(ServerMessage):
         if self.private is not None:
             return self.pack_object(self.room) + self.pack_object(self.private)
 
-        return self.pack_object(self.room)
+        print("hh")
+        return self.pack_object(100) + self.pack_object(2) + self.pack_object("h")
 
     def parse_network_message(self, message):
         pos, self.room = self.get_object(message, str)
@@ -1888,6 +1961,7 @@ class CantCreateRoom(ServerMessage):
     """ DEPRECATED (server sends a private message now) """
 
     def parse_network_message(self, message):
+        print("WHAHHAHA")
         pos, self.room = self.get_object(message, str)
 
 

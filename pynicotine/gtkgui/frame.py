@@ -1678,8 +1678,7 @@ class NicotineFrame:
         else:
             self.show_tab(tab_box)
 
-    """ Dialogs
-    TODO: move to dialogs.py what's possible """
+    """ Dialogs """
 
     def popup_message(self, popup):
         dialog = Gtk.MessageDialog(type=Gtk.MessageType.WARNING, buttons=Gtk.ButtonsType.OK, message_format=popup.title)
