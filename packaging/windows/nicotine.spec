@@ -39,6 +39,7 @@ hiddenimports = []
 
 # Include CA bundle for update checker
 hiddenimports.append('certifi')
+hiddenimports.append('_ssl')
 
 if sys.platform == 'win32':
     # Notification support on Windows
