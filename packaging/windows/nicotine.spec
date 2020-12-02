@@ -129,10 +129,10 @@ exe = EXE(pyz,
           [],
           exclude_binaries=True,
           name=name,
-          debug=False,
+          debug=True,
           strip=False,
           upx=enable_upx,
-          console=False,
+          console=True,
           icon=icon)
 
 coll = COLLECT(exe,
