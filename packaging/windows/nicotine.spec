@@ -38,7 +38,6 @@ sys.modules['lib2to3'] = None
 hiddenimports = []
 
 # Include CA bundle for update checker
-hiddenimports.append('certifi')
 hiddenimports.append('_ssl')
 
 if sys.platform == 'win32':
