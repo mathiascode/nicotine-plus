@@ -2173,7 +2173,9 @@ class LogFrame(BuildFrame):
             "logging": {
                 "privatechat": self.LogPrivate,
                 "privatelogsdir": self.PrivateLogDir,
+                "users": self.PrivateLogList,
                 "chatrooms": self.LogRooms,
+                "rooms": self.ChatroomLogList,
                 "roomlogsdir": self.RoomLogDir,
                 "transfers": self.LogTransfers,
                 "transferslogsdir": self.TransfersLogDir,
@@ -2192,8 +2194,22 @@ class LogFrame(BuildFrame):
             }
         }
 
+        self.logged_rooms_model = Gtk.ListStore(str)
+        column = Gtk.TreeViewColumn(_("Logged Chat Rooms"), Gtk.CellRendererText(), text=0)
+        self.ChatroomLogList.append_column(column)
+        self.ChatroomLogList.set_model(self.logged_rooms_model)
+        self.ChatroomLogList.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
+
+        self.logged_private_model = Gtk.ListStore(str)
+        column = Gtk.TreeViewColumn(_("Logged Private Chats"), Gtk.CellRendererText(), text=0)
+        self.PrivateLogList.append_column(column)
+        self.PrivateLogList.set_model(self.logged_private_model)
+        self.PrivateLogList.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
+
     def set_settings(self, config):
 
+        self.logged_rooms_model.clear()
+        self.logged_private_model.clear()
         self.p.set_widgets_data(config, self.options)
 
         roomlogsdir = config["logging"]["roomlogsdir"]
@@ -2224,13 +2240,78 @@ class LogFrame(BuildFrame):
 
             self.DebugLogDir.set_current_folder(debuglogsdir)
 
+    def _append_item(self, model, path, iterator, line):
+        line.append(iterator)
+
+    def on_add_logged_room(self, widget):
+
+        room = entry_dialog(
+            self.Main.get_toplevel(),
+            _("Ban user..."),
+            _("User:")
+        )
+
+        if room and room not in self.logged_rooms_model:
+            self.logged_rooms_model.append([room])
+
+    def on_remove_logged_room(self, widget):
+
+        iters = []
+        self.ChatroomLogList.get_selection().selected_foreach(self._append_item, iters)
+
+        for iterator in iters:
+            user = self.logged_rooms_model.get_value(iterator, 0)
+            self.logged_rooms_model.remove(iterator)
+
+    def on_clear_logged_rooms(self, widget):
+        self.logged_rooms_model.clear()
+
+    def on_add_logged_private(self, widget):
+
+        user = entry_dialog(
+            self.Main.get_toplevel(),
+            _("Ban user..."),
+            _("User:")
+        )
+
+        if user and user not in self.logged_private_model:
+            self.logged_private_model.append([user])
+
+    def on_remove_logged_private(self, widget):
+
+        iters = []
+        self.PrivateLogList.get_selection().selected_foreach(self._append_item, iters)
+
+        for iterator in iters:
+            user = self.logged_private_model.get_value(iterator, 0)
+            self.logged_private_model.remove(iterator)
+
+    def on_clear_logged_private(self, widget):
+        self.logged_private_model.clear()
+
     def get_settings(self):
+
+        rooms = []
+        iterator = self.logged_rooms_model.get_iter_first()
+
+        while iterator is not None:
+            rooms.append(self.logged_rooms_model.get_value(iterator, 0))
+            iterator = self.logged_rooms_model.iter_next(iterator)
+
+        users = []
+        iterator = self.logged_private_model.get_iter_first()
+
+        while iterator is not None:
+            users.append(self.logged_private_model.get_value(iterator, 0))
+            iterator = self.logged_private_model.iter_next(iterator)
 
         return {
             "logging": {
                 "privatechat": self.LogPrivate.get_active(),
                 "privatelogsdir": self.PrivateLogDir.get_file().get_path(),
+                "users": users,
                 "chatrooms": self.LogRooms.get_active(),
+                "rooms": rooms,
                 "roomlogsdir": self.RoomLogDir.get_file().get_path(),
                 "transfers": self.LogTransfers.get_active(),
                 "transferslogsdir": self.TransfersLogDir.get_file().get_path(),

@@ -200,8 +200,8 @@ class Config:
                 "private_timestamp": "%Y-%m-%d %H:%M:%S",
                 "log_timestamp": "%Y-%m-%d %H:%M:%S",
                 "timestamps": True,
-                "privatechat": False,
-                "chatrooms": False,
+                "privatechat": True,
+                "chatrooms": True,
                 "transfers": False,
                 "debug_file_output": False,
                 "roomlogsdir": os.path.join(log_dir, "rooms"),
@@ -209,7 +209,8 @@ class Config:
                 "readroomlogs": True,
                 "readroomlines": 15,
                 "readprivatelines": 15,
-                "rooms": []
+                "rooms": [],
+                "users": []
             },
 
             "privatechat": {

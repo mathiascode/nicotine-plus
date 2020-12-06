@@ -384,7 +384,11 @@ class PrivateChat:
         completion.set_match_func(self.frame.entry_completion_find_match, self.ChatLine)
         completion.connect("match-selected", self.frame.entry_completion_found_match, self.ChatLine)
 
-        self.Log.set_active(self.frame.np.config.sections["logging"]["privatechat"])
+        if self.frame.np.config.sections["logging"]["privatechat"]:
+            if user not in self.frame.np.config.sections["privatechat"]["users"] and \
+                    user not in self.frame.np.config.sections["logging"]["users"]:
+                # Logging enabled by default, remember user
+                self.frame.np.config.sections["logging"]["users"].append(user)
 
         self.popup_menu_user = popup = PopupMenu(self.frame, False)
         popup.setup(
@@ -558,7 +562,7 @@ class PrivateChat:
         else:
             append_line(self.ChatScroll, line, tag, timestamp_format=timestamp_format, username=self.user, usertag=self.tag_username)
 
-        if self.Log.get_active():
+        if self.user in self.frame.np.config.sections["logging"]["users"]:
             timestamp_format = self.frame.np.config.sections["logging"]["log_timestamp"]
             write_log(self.frame.np.config.sections["logging"]["privatelogsdir"], self.user, line, timestamp_format)
 
@@ -601,7 +605,7 @@ class PrivateChat:
         timestamp_format = self.frame.np.config.sections["logging"]["private_timestamp"]
         append_line(self.ChatScroll, line, tag, timestamp_format=timestamp_format, username=my_username, usertag=usertag)
 
-        if self.Log.get_active():
+        if self.user in self.frame.np.config.sections["logging"]["users"]:
             timestamp_format = self.frame.np.config.sections["logging"]["log_timestamp"]
             write_log(self.frame.np.config.sections["logging"]["privatelogsdir"], self.user, line, timestamp_format)
 

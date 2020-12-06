@@ -792,9 +792,10 @@ class ChatRoom:
         completion.set_match_func(self.frame.entry_completion_find_match, self.ChatEntry)
         completion.connect("match-selected", self.frame.entry_completion_found_match, self.ChatEntry)
 
-        self.Log.set_active(config["logging"]["chatrooms"])
-        if not self.Log.get_active():
-            self.Log.set_active((self.room in config["logging"]["rooms"]))
+        if config["logging"]["chatrooms"] and \
+                room not in config["logging"]["rooms"]:
+            # Logging enabled by default, remember room
+            config["logging"]["rooms"].append(room)
 
         if room in config["server"]["autojoin"]:
             self.AutoJoin.set_active(True)
@@ -1172,7 +1173,7 @@ class ChatRoom:
             speech = text
 
         line = "\n-- ".join(line.split("\n"))
-        if self.Log.get_active():
+        if self.room in self.frame.np.config.sections["logging"]["rooms"]:
             timestamp_format = self.frame.np.config.sections["logging"]["log_timestamp"]
             write_log(self.frame.np.config.sections["logging"]["roomlogsdir"], self.room, line, timestamp_format)
 
@@ -1923,16 +1924,6 @@ class ChatRoom:
 
     def on_tooltip(self, widget, x, y, keyboard_mode, tooltip):
         return show_country_tooltip(widget, x, y, tooltip, 8)
-
-    def on_log_toggled(self, widget):
-
-        if not widget.get_active():
-            if self.room in self.frame.np.config.sections["logging"]["rooms"]:
-                self.frame.np.config.sections["logging"]["rooms"].remove(self.room)
-
-        elif widget.get_active():
-            if self.room not in self.frame.np.config.sections["logging"]["rooms"]:
-                self.frame.np.config.sections["logging"]["rooms"].append(self.room)
 
     def on_popup_chat_room_menu(self, widget, event):
 
