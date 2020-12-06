@@ -116,6 +116,7 @@ class Shares:
         return "__INTERNAL_ERROR__" + path
 
     def virtual2real(self, path):
+
         path = path.replace('/', os.sep).replace('\\', os.sep)
 
         for (virtual, real, *unused) in self._virtualmapping():
