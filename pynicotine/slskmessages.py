@@ -278,11 +278,7 @@ class SlskMessage:
             return struct.pack("<i", len(object)) + object
 
         elif isinstance(object, str):
-            try:
-                # Try to encode in latin-1 first for older clients (Soulseek NS)
-                encoded = object.encode("latin-1")
-            except Exception:
-                encoded = object.encode("utf-8", "replace")
+            encoded = object.encode("utf-8", "replace")
 
             return struct.pack("<i", len(encoded)) + encoded
 
