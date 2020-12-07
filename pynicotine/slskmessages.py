@@ -243,15 +243,7 @@ class SlskMessage:
                 length = struct.unpack("<I", message[start:start + intsize].ljust(intsize, b'\0'))[0]
                 string = message[start + intsize:start + length + intsize]
 
-                try:
-                    string = string.decode("utf-8")
-                except Exception:
-                    # Older clients (Soulseek NS)
-
-                    try:
-                        string = string.decode("latin-1")
-                    except Exception as error:
-                        log.add_warning("Error trying to decode string '%s': %s", (string, error))
+                string = string.decode("utf-8", "replace")
 
                 return length + intsize + start, string
 
