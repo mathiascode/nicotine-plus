@@ -24,6 +24,7 @@ trayicon_msg.png
 ---
 
 Created by daelstorm (released under GPLv2+ and upgraded to GPLv3+)
+
 away.png  
 offline.png  
 online.png

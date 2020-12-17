@@ -224,7 +224,7 @@ class Tray:
             local_icon_path = os.path.join(sys.prefix, "share", "icons", "hicolor", "scalable", "apps")
         else:
             # Git folder
-            local_icon_path = os.path.abspath(os.path.join(self.frame.gui_dir, "..", "..", "files", "icons", "tray"))
+            local_icon_path = os.path.abspath(os.path.join(self.frame.gui_dir, "..", "..", "data", "icons", "tray"))
 
         for icon_name in ("away", "connect", "disconnect", "msg"):
 

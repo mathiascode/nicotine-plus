@@ -576,7 +576,7 @@ class NicotineFrame:
             icon_path = os.path.join(sys.prefix, "share", "icons", "hicolor", "scalable", "apps")
         else:
             # Git folder
-            icon_path = os.path.abspath(os.path.join(self.gui_dir, "..", "..", "files"))
+            icon_path = os.path.abspath(os.path.join(self.gui_dir, "..", "..", "data"))
 
         log.add_debug("Loading local icons, using path %s", icon_path)
 
@@ -601,7 +601,7 @@ class NicotineFrame:
             pass
 
         # Tray icons
-        if icon_path.endswith("files"):
+        if icon_path.endswith("data"):
             icon_path = os.path.join(icon_path, "icons", "tray")
 
         for name in ("away", "connect", "disconnect", "msg"):

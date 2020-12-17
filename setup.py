@@ -46,19 +46,19 @@ data_files = []
 data_files.append(
     (
         "share/icons/hicolor/scalable/apps",
-        ["files/org.nicotine_plus.Nicotine.svg"]
+        ["data/org.nicotine_plus.Nicotine.svg"]
     )
 )
 
 data_files.append(
     (
         "share/icons/hicolor/symbolic/apps",
-        ["files/org.nicotine_plus.Nicotine-symbolic.svg"]
+        ["data/org.nicotine_plus.Nicotine-symbolic.svg"]
     )
 )
 
 # Tray icons
-tray_icons = glob.glob(os.path.join("files", "icons", "tray", "*"))
+tray_icons = glob.glob(os.path.join("data", "icons", "tray", "*"))
 
 for icon_name in tray_icons:
     data_files.append(
@@ -72,7 +72,7 @@ for icon_name in tray_icons:
 data_files.append(
     (
         "share/applications",
-        ["files/org.nicotine_plus.Nicotine.desktop"]
+        ["data/org.nicotine_plus.Nicotine.desktop"]
     )
 )
 
@@ -80,7 +80,7 @@ data_files.append(
 data_files.append(
     (
         "share/metainfo",
-        ["files/org.nicotine_plus.Nicotine.metainfo.xml"]
+        ["data/org.nicotine_plus.Nicotine.metainfo.xml"]
     )
 )
 
@@ -98,7 +98,7 @@ for doc in doc_files:
 data_files.append(
     (
         "share/doc/nicotine",
-        ["files/icons/CREDITS.md"]
+        ["data/icons/CREDITS.md"]
     )
 )
 
