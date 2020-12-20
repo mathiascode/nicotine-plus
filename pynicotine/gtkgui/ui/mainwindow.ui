@@ -1316,13 +1316,12 @@
                 <property name="visible">1</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkBox" id="debugButtonsBox">
+                  <object class="GtkFlowBox" id="debugButtonsBox">
                     <property name="visible">1</property>
-                    <property name="margin-start">6</property>
-                    <property name="margin-end">6</property>
-                    <property name="margin-top">6</property>
-                    <property name="margin-bottom">6</property>
-                    <property name="spacing">5</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <property name="column-spacing">5</property>
+                    <property name="selection-mode">none</property>
                     <child>
                       <object class="GtkLabel" id="debugLabel">
                         <property name="visible">1</property>
@@ -1536,7 +1535,7 @@
               <object class="GtkStatusbar" id="UserStatus">
                 <property name="visible">1</property>
                 <property name="margin-left">10</property>
-                <property name="margin-right">5</property>
+                <property name="margin-right">6</property>
                 <property name="margin-top">0</property>
                 <property name="margin-bottom">0</property>
               </object>
