@@ -1133,7 +1133,7 @@ class NicotineFrame:
                 self.MainNotebook.child_set_property(self.userlist.userlistvbox, "tab-fill", False)
                 self.MainNotebook.set_tab_reorderable(self.userlist.userlistvbox, self.np.config.sections["ui"]["tab_reorderable"])
 
-            self.userlist.BuddiesLabel.hide()
+            self.userlist.BuddiesToolbar.hide()
             self.userlist.UserLabel.show()
 
         if chatrooms:
@@ -1141,7 +1141,7 @@ class NicotineFrame:
             if self.userlist.userlistvbox not in self.vpaned3.get_children():
                 self.vpaned3.pack1(self.userlist.userlistvbox, True, True)
 
-            self.userlist.BuddiesLabel.show()
+            self.userlist.BuddiesToolbar.show()
             self.userlist.UserLabel.hide()
 
         if always:
@@ -1149,7 +1149,7 @@ class NicotineFrame:
             if self.userlist.userlistvbox not in self.vpanedm.get_children():
                 self.vpanedm.pack2(self.userlist.userlistvbox, True, True)
 
-            self.userlist.BuddiesLabel.show()
+            self.userlist.BuddiesToolbar.show()
             self.userlist.UserLabel.hide()
 
         else:
@@ -1431,6 +1431,9 @@ class NicotineFrame:
 
         elif tab_label == self.UserBrowseTabLabel:
             self.MainWindow.set_titlebar(self.HeaderUserBrowse)
+
+        elif tab_label == self.buddies_tab_label:
+            self.MainWindow.set_titlebar(self.HeaderUserList)
 
         else:
             self.MainWindow.set_titlebar(self.HeaderDefault)
@@ -2076,6 +2079,9 @@ class NicotineFrame:
                 self.awaytimerid = None
 
     """ User Actions """
+
+    def on_add_user(self, widget):
+        self.userlist.on_add_user(widget, headerbar=True)
 
     def on_settings_ban_ignore(self, widget):
         self.on_settings(page='Ban List')
