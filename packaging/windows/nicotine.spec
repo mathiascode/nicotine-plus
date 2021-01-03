@@ -145,8 +145,6 @@ coll = COLLECT(exe,
 if sys.platform == 'darwin':
 
     info_plist = {
-        "CFBundleIdentifier": "org.nicotine_plus.Nicotine",
-        "CFBundleName": name,
         "CFBundleDisplayName": name,
         "NSHighResolutionCapable": True,
     }
