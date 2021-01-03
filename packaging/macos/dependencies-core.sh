@@ -24,6 +24,7 @@
 # Install dependencies from the main Homebrew repos
 brew install \
   flake8
+  openssl
 
 # Install dependencies with pip
 pip3 install \
