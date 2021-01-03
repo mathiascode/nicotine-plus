@@ -32,4 +32,4 @@ brew install \
 # Install dependencies with pip
 pip3 install \
   pygobject \
-  pyinstaller==4.1
+  git+https://github.com/danyeaw/pyinstaller.git@fix-gtk-macos-signing
