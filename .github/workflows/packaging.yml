@@ -70,6 +70,7 @@ jobs:
         run: |
           pyinstaller packaging/macos/nicotine.spec
           rm -rf dist/Nicotine+/
+          codesign --deep -s - -o runtime dist/Nicotine+.app/
 
       - name: Generate .dmg
         run: |
