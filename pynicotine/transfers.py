@@ -1352,8 +1352,11 @@ class Transfers:
                 if curtime > i.starttime and \
                         i.currentbytes > i.lastbytes:
 
+                    bytedifference = (i.currentbytes - i.lastbytes)
+                    self.eventprocessor.statistics.append_downloaded_size(bytedifference)
+
                     try:
-                        i.speed = max(0, (i.currentbytes - i.lastbytes) / (curtime - i.lasttime))
+                        i.speed = max(0, bytedifference / (curtime - i.lasttime))
                     except ZeroDivisionError:
                         i.speed = 0
                     if i.speed <= 0.0:
@@ -1441,6 +1444,8 @@ class Transfers:
         self.add_to_shared(newname)
         self.eventprocessor.shares.send_num_shared_folders_files()
 
+        self.eventprocessor.statistics.append_downloaded_files()
+
         if self.notifications and config["notifications"]["notification_popup_file"]:
             self.notifications.new_notification(
                 _("%(file)s downloaded from %(user)s") % {
@@ -1517,6 +1522,9 @@ class Transfers:
             if curtime > i.starttime and \
                     i.currentbytes > i.lastbytes:
 
+                bytedifference = (i.currentbytes - i.lastbytes)
+                self.eventprocessor.statistics.append_uploaded_size(bytedifference)
+
                 try:
                     i.speed = max(0, (i.currentbytes - i.lastbytes) / (curtime - i.lasttime))
                 except ZeroDivisionError:
@@ -1581,6 +1589,8 @@ class Transfers:
                 'file': i.filename
             }
         )
+
+        self.eventprocessor.statistics.append_uploaded_files()
 
         self.check_upload_queue()
         self.uploadsview.update(i)
@@ -2177,3 +2187,62 @@ class Transfers:
 
         except Exception as inst:
             log.add_warning(_("Something went wrong while writing your transfer list: %(error)s"), {'error': str(inst)})
+
+
+class Statistics:
+
+    def __init__(self, config, ui_callback=None):
+
+        self.config = config
+        self.ui_callback = ui_callback
+
+        self.downloaded_files = 0
+        self.downloaded_size = 0
+        self.uploaded_files = 0
+        self.uploaded_size = 0
+
+    def append_downloaded_files(self):
+        self.downloaded_files += 1
+        self.config.sections["statistics"]["downloaded_files"] += 1
+
+        if self.ui_callback:
+            self.ui_callback.append_downloaded_files(self.downloaded_files)
+
+    def append_downloaded_size(self, value):
+        self.downloaded_size += value
+        self.config.sections["statistics"]["downloaded_size"] += value
+
+        if self.ui_callback:
+            self.ui_callback.append_downloaded_size(self.downloaded_size)
+
+    def append_uploaded_files(self):
+        self.uploaded_files += 1
+        self.config.sections["statistics"]["uploaded_files"] += 1
+
+        if self.ui_callback:
+            self.ui_callback.append_uploaded_files(self.uploaded_files)
+
+    def append_uploaded_size(self, value):
+        self.uploaded_size += value
+        self.config.sections["statistics"]["uploaded_size"] += value
+
+        if self.ui_callback:
+            self.ui_callback.append_uploaded_size(self.uploaded_size)
+
+    def clear_stats(self):
+
+        self.downloaded_files = 0
+        self.downloaded_size = 0
+        self.uploaded_files = 0
+        self.uploaded_size = 0
+
+        self.config.sections["statistics"]["downloaded_files"] = 0
+        self.config.sections["statistics"]["downloaded_size"] = 0
+        self.config.sections["statistics"]["uploaded_files"] = 0
+        self.config.sections["statistics"]["uploaded_size"] = 0
+
+        if self.ui_callback:
+            self.ui_callback.append_downloaded_files(self.downloaded_files)
+            self.ui_callback.append_downloaded_size(self.downloaded_size)
+            self.ui_callback.append_uploaded_files(self.uploaded_files)
+            self.ui_callback.append_uploaded_size(self.uploaded_size)
