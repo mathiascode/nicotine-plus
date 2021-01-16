@@ -187,8 +187,8 @@ class Uploads(TransferList):
         users = len(self.selected_users) > 0
         files = len(self.selected_transfers) > 0
 
-        items = self.popup_menu.get_items()
-        items[_("User(s)")].set_sensitive(users)  # Users Menu
+        actions = self.popup_menu.get_actions()
+        actions[_("User(s)")].set_enabled(users)  # Users Menu
 
         if files:
             act = True
@@ -199,7 +199,7 @@ class Uploads(TransferList):
 
         for i in (_("Send to _Player"), _("_Open Folder"), _("Copy _File Path"),
                   _("Copy _URL"), _("Copy Folder URL"), _("_Search")):
-            items[i].set_sensitive(act)
+            actions[i].set_enabled(act)
 
         if users and files:
             act = True
@@ -209,7 +209,7 @@ class Uploads(TransferList):
             act = False
 
         for i in (_("_Retry"), _("Abor_t"), _("_Clear")):
-            items[i].set_sensitive(act)
+            actions[i].set_enabled(act)
 
         self.popup_menu.popup()
         return True

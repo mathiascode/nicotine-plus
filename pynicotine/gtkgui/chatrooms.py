@@ -307,13 +307,13 @@ class RoomsControl:
         self.popup_room = room
         prooms_enabled = True
 
-        items = self.popup_menu.get_items()
+        actions = self.popup_menu.get_actions()
 
-        items[_("Join Room")].set_sensitive(act[0])
-        items[_("Leave Room")].set_sensitive(act[1])
+        actions[_("Join Room")].set_enabled(act[0])
+        actions[_("Leave Room")].set_enabled(act[1])
 
-        items[_("Disown Private Room")].set_sensitive(self.is_private_room_owned(self.popup_room))
-        items[_("Cancel Room Membership")].set_sensitive((prooms_enabled and self.is_private_room_member(self.popup_room)))
+        actions[_("Disown Private Room")].set_enabled(self.is_private_room_owned(self.popup_room))
+        actions[_("Cancel Room Membership")].set_enabled((prooms_enabled and self.is_private_room_member(self.popup_room)))
 
         self.popup_menu.popup()
         return True
@@ -1033,7 +1033,7 @@ class ChatRoom:
         self.popup_menu.toggle_user_items()
 
         me = (self.popup_menu.user is None or self.popup_menu.user == self.frame.np.config.sections["server"]["login"])
-        self.popup_menu.get_items()[_("Private Rooms")].set_sensitive(not me)
+        self.popup_menu.get_actions()[_("Private Rooms")].set_enabled(not me)
 
         self.popup_menu.popup()
         return True
@@ -1583,7 +1583,7 @@ class ChatRoom:
             self.popup_menu.toggle_user_items()
 
             me = (self.popup_menu.user is None or self.popup_menu.user == self.frame.np.config.sections["server"]["login"])
-            self.popup_menu.get_items()[_("Private Rooms")].set_sensitive(not me)
+            self.popup_menu.get_actions()[_("Private Rooms")].set_enabled(not me)
 
             self.popup_menu.popup(button=event.button.button)
 

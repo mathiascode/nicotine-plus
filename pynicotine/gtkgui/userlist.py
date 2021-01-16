@@ -171,7 +171,7 @@ class UserList:
         self.popup_menu_private_rooms = PopupMenu(self.frame, False)
         self.popup_menu = popup = PopupMenu(frame)
         popup.setup_user_menu()
-        popup.get_items()[_("_Add User To List")].set_visible(False)
+        #popup.get_items()[_("_Add User To List")].set_visible(False)
 
         popup.append_item(("", None))
         popup.append_item(("$" + _("_Online Notify"), self.on_notify))
@@ -329,16 +329,16 @@ class UserList:
         self.popup_menu.set_user(username)
         self.popup_menu.toggle_user_items()
 
-        items = self.popup_menu.get_items()
+        items = self.popup_menu.get_actions()
 
-        items[_("Private Rooms")].set_sensitive(
+        items[_("Private Rooms")].set_enabled(
             status or
             self.popup_menu.user != self.frame.np.config.sections["server"]["login"]
         )
 
-        items[_("_Online Notify")].set_active(notify)
-        items[_("_Privileged")].set_active(privileged)
-        items[_("_Trusted")].set_active(trusted)
+        items[_("_Online Notify")].set_state(GLib.Variant.new_boolean(notify))
+        items[_("_Privileged")].set_state(GLib.Variant.new_boolean(privileged))
+        items[_("_Trusted")].set_state(GLib.Variant.new_boolean(trusted))
 
         self.popup_menu.popup()
         return True

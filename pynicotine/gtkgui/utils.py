@@ -22,7 +22,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import random
 import re
+import string
 import sys
 import time
 
@@ -1072,99 +1074,115 @@ class InfoBar:
         self.set_visible(True)
 
 
-class PopupMenu(Gtk.Menu):
+class PopupMenu(Gio.Menu):
 
     def __init__(self, frame=None, shouldattach=True):
 
-        Gtk.Menu.__init__(self)
+        Gio.Menu.__init__(self)
 
         self.frame = frame
+        self.application = frame.application
         self.user = None
         self.useritem = None
-        self.handlers = {}
+        self.actions = {}
         self.items = {}
+        self.count = int(random.random() * (2 ** 31 - 1))
         self.editing = False
-
-        # If the menu is not a submenu, it needs to be attached
-        # to the main window, otherwise it has no parent
-        if shouldattach and hasattr(self.frame, 'MainWindow'):
-            self.attach_to_widget(self.frame.MainWindow, None)
+        self.shouldattach = shouldattach
+        self.section_menu = None
 
     def create_item(self, item):
 
+        self.count += 1
+        stateful = False
+
         if item[0] == "":
-            label = "separator"
-            menuitem = Gtk.SeparatorMenuItem()
+            menuitem = Gio.MenuItem.new_section(None, self.section_menu)
+            return menuitem
 
-        elif item[0] == "USER":
-
+        elif item[0] == "USER" or item[0] == "USERMENU" or item[0] == 1:
             label = item[1]
-            menuitem = Gtk.MenuItem.new_with_label(label)
+
+        elif item[0][0] == "$" or item[0][0] == "#":
+            label = item[0][1:]
+            stateful = True
+
+        else:
+            label = item[0]
+
+        if not label:
+            label = "dummy"
+
+        action_id = label.replace(" ", "").lower().translate(str.maketrans(dict.fromkeys(string.punctuation))) + str(self.count)
+
+        if not stateful:
+            action = Gio.SimpleAction.new(action_id, None)
+        else:
+            action = Gio.SimpleAction.new_stateful(action_id, None, GLib.Variant.new_boolean(False))
+
+        self.application.add_action(action)
+
+        menuitem = Gio.MenuItem.new(label, "app." + action_id)
+
+        if item[0] == "USER":
             self.useritem = menuitem
 
             if len(item) >= 3:
-                self.handlers[menuitem] = menuitem.connect("activate", item[2])
+                action.connect("activate", item[2])
+
             else:
-                menuitem.set_sensitive(False)
+                action.set_enabled(False)
 
         elif item[0] == 1:
-
-            label = item[1]
-            menuitem = Gtk.MenuItem.new_with_label(label)
             menuitem.set_submenu(item[2])
 
             if len(item) == 5 and item[4] is not None and item[3] is not None:
-                self.handlers[menuitem] = menuitem.connect("activate", item[3], item[4])
+                action.connect("activate", item[3], item[4])
+
             elif item[3] is not None:
-                self.handlers[menuitem] = menuitem.connect("activate", item[3])
+                action.connect("activate", item[3])
 
         elif item[0] == "USERMENU":
-
-            label = item[1]
-            menuitem = Gtk.MenuItem.new_with_label(label)
             menuitem.set_submenu(item[2])
 
             if item[3] is not None:
-                self.handlers[menuitem] = menuitem.connect("activate", item[3])
+                action.connect("activate", item[3])
 
             self.useritem = menuitem
 
         else:
-
-            if item[0][0] == "$":
-                label = item[0][1:]
-                menuitem = Gtk.CheckMenuItem.new_with_label(label)
-
-            elif item[0][0] == "#":
-                label = item[0][1:]
-                menuitem = Gtk.MenuItem.new_with_label(label)
-
-            else:
-                label = item[0]
-                menuitem = Gtk.MenuItem.new_with_label(label)
-
             if len(item) >= 3 and item[2] is not None and item[1] is not None:
-                self.handlers[menuitem] = menuitem.connect("activate", item[1], item[2])
+                action.connect("change-state", item[1], item[2])
+
             elif item[1] is not None:
-                self.handlers[menuitem] = menuitem.connect("activate", item[1])
-
-        if item[0] != "":
-            menuitem.set_use_underline(True)
-
-        menuitem.show()
+                action.connect("change-state", item[1])
 
         self.items[label] = menuitem
+        self.actions[label] = action
+
         return menuitem
 
     def append_item(self, item):
 
-        menuitem = self.create_item(item)
-        self.append(menuitem)
+        if not self.section_menu or item[0] == "":
+            # Create new section
 
+            self.section_menu = Gio.Menu.new()
+            menuitem = self.create_item(("", None))
+            Gio.Menu.append_item(self, menuitem)
+
+            if item[0] == "":
+                return menuitem
+            
+        menuitem = self.create_item(item)
+        self.section_menu.append_item(menuitem)
         return menuitem
 
     def get_items(self):
         return self.items
+
+    def get_actions(self):
+        return self.actions
 
     def setup(self, *items):
         for item in items:
@@ -1197,44 +1215,58 @@ class PopupMenu(Gtk.Menu):
 
         self.editing = True
 
-        self.items[_("_Add User To List")].set_active(self.user in (i[0] for i in self.frame.np.config.sections["server"]["userlist"]))
-        self.items[_("_Ban User")].set_active(self.user in self.frame.np.config.sections["server"]["banlist"])
-        self.items[_("_Ignore User")].set_active(self.user in self.frame.np.config.sections["server"]["ignorelist"])
-        self.items[_("B_lock User's IP Address")].set_active(self.frame.user_ip_is_blocked(self.user))
-        self.items[_("Ignore User's IP Address")].set_active(self.frame.user_ip_is_ignored(self.user))
+        self.actions[_("_Add User To List")].set_state(
+            GLib.Variant.new_boolean(
+                self.user in (i[0] for i in self.frame.np.config.sections["server"]["userlist"])
+            )
+        )
+        self.actions[_("_Ban User")].set_state(
+            GLib.Variant.new_boolean(self.user in self.frame.np.config.sections["server"]["banlist"])
+        )
+        self.actions[_("_Ignore User")].set_state(
+            GLib.Variant.new_boolean(self.user in self.frame.np.config.sections["server"]["ignorelist"])
+        )
+        self.actions[_("B_lock User's IP Address")].set_state(
+            GLib.Variant.new_boolean(self.frame.user_ip_is_blocked(self.user))
+        )
+        self.actions[_("Ignore User's IP Address")].set_state(
+            GLib.Variant.new_boolean(self.frame.user_ip_is_ignored(self.user))
+        )
 
         self.editing = False
 
     def clear(self):
 
-        for (w, widget) in self.handlers.items():
-            w.disconnect(widget)
+        self.actions.clear()
+        self.items.clear()
+        self.remove_all()
 
-        self.handlers.clear()
-
-        for widget in self.get_children():
-            self.remove(widget)
-            widget.destroy()
-
-        if self.useritem is not None:
-            self.useritem.destroy()
-            self.useritem = None
+        self.section_menu = None
+        self.useritem = None
 
     def popup(self, button=3):
 
+        menu = Gtk.Menu.new_from_model(self)
+
         try:
-            self.popup_at_pointer()
+            menu.popup_at_pointer()
 
         except AttributeError:
+
+            # If the menu is not a submenu, it needs to be attached
+            # to the main window, otherwise it has no parent
+            if self.shouldattach and hasattr(self.frame, 'MainWindow'):
+                self.attach_to_widget(self.frame.MainWindow, None)
+
             time = Gtk.get_current_event_time()
-            self.popup_at_device(None, None, None, None, button, time)
+            menu.popup_at_device(None, None, None, None, button, time)
 
     def set_user(self, user):
 
         self.user = user
 
         if self.useritem:
-            self.useritem.get_child().set_text(user)
+            self.useritem.set_label(user)
 
     def get_user(self):
         return self.user

@@ -919,7 +919,7 @@ class Search:
                 popup.append_item(("", None))
                 popup.append_item(("#" + _("Select User's Transfers"), self.on_select_user_results))
 
-                items.append((1, user, popup, self.on_popup_menu_user, popup))
+                self.popup_menu_users.append_item((1, user, popup, self.on_popup_menu_user, popup))
 
             self.popup_menu_users.setup(*items)
 
@@ -1026,19 +1026,19 @@ class Search:
 
         self.select_results()
 
-        items = self.popup_menu.get_items()
+        actions = self.popup_menu.get_actions()
         users = len(self.selected_users) > 0
         files = len(self.selected_results) > 0
 
         for i in (_("_Download File(s)"), _("Download File(s) _To..."), _("File _Properties"),
                   _("Copy _URL")):
-            items[i].set_sensitive(False)
+            actions[i].set_enabled(False)
 
         for i in (_("Download _Folder(s)"), _("Download F_older(s) To..."), _("_Browse Folder"),
                   _("Copy _File Path"), _("Copy Folder U_RL")):
-            items[i].set_sensitive(files)
+            actions[i].set_enabled(files)
 
-        items[_("User(s)")].set_sensitive(users)
+        actions[_("User(s)")].set_enabled(users)
 
         for result in self.selected_results:
             if not result[1].endswith('\\'):
@@ -1046,7 +1046,7 @@ class Search:
 
                 for i in (_("_Download File(s)"), _("Download File(s) _To..."), _("File _Properties"),
                           _("Copy _URL")):
-                    items[i].set_sensitive(True)
+                    actions[i].set_enabled(True)
 
                 break
 

@@ -305,9 +305,13 @@ class UserInfo:
         if item is None:
             return False
 
-        items = self.likes_popup_menu.get_items()
-        items[_("I _Like This")].set_active(item in self.frame.np.config.sections["interests"]["likes"])
-        items[_("I _Dislike This")].set_active(item in self.frame.np.config.sections["interests"]["dislikes"])
+        actions = self.likes_popup_menu.get_actions()
+        actions[_("I _Like This")].set_state(
+            GLib.Variant.new_boolean(item in self.frame.np.config.sections["interests"]["likes"])
+        )
+        actions[_("I _Dislike This")].set_state(
+            GLib.Variant.new_boolean(item in self.frame.np.config.sections["interests"]["dislikes"])
+        )
 
         self.likes_popup_menu.popup()
         return True
@@ -326,9 +330,13 @@ class UserInfo:
         if item is None:
             return False
 
-        items = self.hates_popup_menu.get_items()
-        items[_("I _Like This")].set_active(item in self.frame.np.config.sections["interests"]["likes"])
-        items[_("I _Dislike This")].set_active(item in self.frame.np.config.sections["interests"]["dislikes"])
+        actions = self.hates_popup_menu.get_actions()
+        actions[_("I _Like This")].set_state(
+            GLib.Variant.new_boolean(item in self.frame.np.config.sections["interests"]["likes"])
+        )
+        actions[_("I _Dislike This")].set_state(
+            GLib.Variant.new_boolean(item in self.frame.np.config.sections["interests"]["dislikes"])
+        )
 
         self.hates_popup_menu.popup()
         return True
@@ -511,9 +519,9 @@ class UserInfo:
         if self.image is None or self.image_pixbuf is None:
             act = False
 
-        items = self.image_menu.get_items()
-        for (item_id, item) in items.items():
-            item.set_sensitive(act)
+        actions = self.image_menu.get_actions()
+        for (action_id, action) in actions.items():
+            action.set_enabled(act)
 
         self.image_menu.popup()
         return True
