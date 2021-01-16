@@ -27,10 +27,10 @@ brew install \
   gdk-pixbuf \
   gtk+3 \
   librsvg \
+  pygobject3 \
+  pyinstaller \
   upx
 
 # Install dependencies with pip
 pip3 install \
-  certifi \
-  pygobject \
-  pyinstaller==4.2
+  certifi
