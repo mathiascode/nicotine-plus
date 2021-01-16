@@ -682,42 +682,28 @@ class Config:
 
         self.create_config_folder()
 
+        # Back up old config to config.old
+        try:
+            from shutil import copy2
+            copy2(self.filename, self.filename + ".old")
+
+            # A paranoid precaution since config contains the password
+            os.chmod(self.filename + ".old", 0o600)
+
+        except Exception as error:
+            log.add_warning(_("Can't back config file up, error: %s"), error)
+
+        # Save new config to file
         oldumask = os.umask(0o077)
 
         try:
-            with open(self.filename + ".new", "w", encoding="utf-8") as f:
+            with open(self.filename, "w", encoding="utf-8") as f:
                 self.parser.write(f)
 
-        except IOError as e:
+        except Exception as e:
             log.add_warning(_("Can't save config file, I/O error: %s"), e)
-            return
 
         os.umask(oldumask)
-
-        # A paranoid precaution since config contains the password
-        try:
-            os.chmod(self.filename, 0o600)
-        except Exception:
-            pass
-
-        try:
-            if os.path.exists(self.filename + ".old"):
-                os.remove(self.filename + ".old")
-
-        except OSError:
-            log.add_warning(_("Can't remove %s", self.filename + ".old"))
-
-        try:
-            os.rename(self.filename, self.filename + ".old")
-
-        except OSError as error:
-            log.add_warning(_("Can't back config file up, error: %s"), error)
-
-        try:
-            os.rename(self.filename + ".new", self.filename)
-
-        except OSError as error:
-            log.add_warning(_("Can't rename config file, error: %s"), error)
 
     def write_config_backup(self, filename):
 
