@@ -37,6 +37,7 @@ from gi.repository import Pango
 from pynicotine import slskmessages
 from pynicotine.gtkgui.chatrooms import get_completion
 from pynicotine.gtkgui.dialogs import option_dialog
+from pynicotine.gtkgui.utils import add_alias
 from pynicotine.gtkgui.utils import append_line
 from pynicotine.gtkgui.utils import expand_alias
 from pynicotine.gtkgui.utils import IconNotebook
@@ -48,6 +49,7 @@ from pynicotine.gtkgui.utils import TextSearchBar
 from pynicotine.gtkgui.utils import set_widget_color
 from pynicotine.gtkgui.utils import set_widget_font
 from pynicotine.gtkgui.utils import triggers_context_menu
+from pynicotine.gtkgui.utils import unalias
 from pynicotine.gtkgui.utils import update_widget_visuals
 from pynicotine.logfacility import log
 from pynicotine.utils import clean_file
@@ -316,7 +318,7 @@ class PrivateChats(IconNotebook):
             clist += [i[0] for i in self.frame.np.config.sections["server"]["userlist"]]
 
         if config["aliases"]:
-            clist += ["/" + k for k in list(self.frame.np.config.aliases.keys())]
+            clist += ["/" + k for k in list(self.frame.np.config.sections["server"]["command_aliases"].keys())]
 
         if config["commands"]:
             clist += self.CMDS
@@ -609,7 +611,7 @@ class PrivateChat:
 
     def thread_alias(self, alias):
 
-        text = expand_alias(self.frame.np.config.aliases, alias)
+        text = expand_alias(alias)
         if not text:
             log.add(_('Alias "%s" returned nothing'), alias)
             return
@@ -627,7 +629,7 @@ class PrivateChat:
             widget.set_text("")
             return
 
-        if is_alias(self.frame.np.config.aliases, text):
+        if is_alias(text):
             import _thread
             _thread.start_new_thread(self.thread_alias, (text,))
             widget.set_text("")
@@ -643,14 +645,14 @@ class PrivateChat:
 
         if cmd in ("/alias", "/al"):
 
-            append_line(self.ChatScroll, self.frame.np.config.add_alias(realargs), None, "")
+            append_line(self.ChatScroll, add_alias(realargs), None, "")
             if self.frame.np.config.sections["words"]["aliases"]:
                 self.frame.chatrooms.roomsctrl.update_completions()
                 self.frame.privatechats.update_completions()
 
         elif cmd in ("/unalias", "/un"):
 
-            append_line(self.ChatScroll, self.frame.np.config.unalias(realargs), None, "")
+            append_line(self.ChatScroll, unalias(realargs), None, "")
             if self.frame.np.config.sections["words"]["aliases"]:
                 self.frame.chatrooms.roomsctrl.update_completions()
                 self.frame.privatechats.update_completions()
