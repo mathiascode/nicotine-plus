@@ -1971,7 +1971,7 @@ class NicotineFrame:
 
         if user is not None:
             if user == login:
-                if not self.np.config.sections["transfers"]["friendsonly"]:
+                if not self.np.config.sections["transfers"]["enablebuddyshares"]:
                     self.on_browse_public_shares(folder=folder)
                 else:
                     self.on_browse_buddy_shares(folder=folder)
@@ -2001,6 +2001,7 @@ class NicotineFrame:
         widget.set_text("")
 
     def on_load_from_disk(self, widget):
+
         sharesdir = os.path.join(self.data_dir, "usershares")
         try:
             if not os.path.exists(sharesdir):
@@ -2013,11 +2014,19 @@ class NicotineFrame:
             return
         for share in shares:
             try:
-                import bz2
+                try:
+                    # Try legacy format first
+                    import bz2
 
-                sharefile = bz2.BZ2File(share)
-                mylist = RestrictedUnpickler(sharefile, encoding='utf-8').load()
-                sharefile.close()
+                    with bz2.BZ2File(share) as sharefile:
+                        mylist = RestrictedUnpickler(sharefile, encoding='utf-8').load()
+
+                except Exception:
+                    # Try new format
+
+                    with open(share, encoding="utf-8") as sharefile:
+                        import json
+                        mylist = json.load(sharefile)
 
                 if not isinstance(mylist, (list, dict)):
                     raise TypeError("Bad data in file %(sharesdb)s" % {'sharesdb': share})
