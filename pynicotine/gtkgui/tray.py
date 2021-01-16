@@ -22,6 +22,7 @@ import sys
 
 from gi.repository import Gdk
 from gi.repository import GLib
+from gi.repository import Gtk
 
 from pynicotine import slskmessages
 from pynicotine.gtkgui.dialogs import combo_box_dialog
@@ -66,16 +67,16 @@ class Tray:
     def create_menu(self):
 
         try:
-            self.tray_popup_menu_server = popup0 = PopupMenu(self, False)
-            popup0.setup(
+            self.tray_popup_menu_server_model = PopupMenu(self.frame, False)
+            self.tray_popup_menu_server_model.setup(
                 ("#" + _("Connect"), self.frame.on_connect),
                 ("#" + _("Disconnect"), self.frame.on_disconnect)
             )
 
-            self.tray_popup_menu = popup = PopupMenu(self, False)
+            self.tray_popup_menu_model = popup = PopupMenu(self.frame, False)
             popup.setup(
                 ("#" + _("Hide / Show Nicotine+"), self.on_hide_unhide_window),
-                (1, _("Server"), self.tray_popup_menu_server, None),
+                (1, _("Server"), self.tray_popup_menu_server_model, None),
                 ("#" + _("Downloads"), self.on_downloads),
                 ("#" + _("Uploads"), self.on_uploads),
                 ("#" + _("Send Message"), self.on_open_private_chat),
@@ -86,6 +87,8 @@ class Tray:
                 ("#" + _("Preferences"), self.frame.on_settings),
                 ("#" + _("Quit"), self.frame.on_quit)
             )
+            self.tray_popup_menu = Gtk.Menu.new_from_model(popup)
+
         except Exception as e:
             log.add_warning(_('ERROR: tray menu, %(error)s'), {'error': e})
 
@@ -258,7 +261,7 @@ class Tray:
                 trayicon.set_menu(self.tray_popup_menu)
 
                 # Action to hide/unhide main window when middle clicking the tray icon
-                hide_unhide_item = self.tray_popup_menu.get_items()[_("Hide / Show Nicotine+")]
+                hide_unhide_item = self.tray_popup_menu.get_children()[0]
                 trayicon.set_secondary_activate_target(hide_unhide_item)
 
             else:
@@ -366,12 +369,10 @@ class Tray:
         self.set_image()
 
         # Toggle away checkbox in tray menu
-        away_item = self.tray_popup_menu.get_items()[_("Away")]
-        handler_id = self.tray_popup_menu.handlers[away_item]
-
-        with away_item.handler_block(handler_id):
-            # Temporarily disable handler, we only want to change the visual checkbox appearance
-            away_item.set_active(enable)
+        away_item = self.tray_popup_menu_model.get_actions()[_("Away")]
+        away_item.set_enabled(False)
+        away_item.set_state(GLib.Variant.new_boolean(enable))
+        away_item.set_enabled(True)
 
     def set_connected(self, enable):
 
@@ -384,25 +385,25 @@ class Tray:
 
     def set_server_actions_sensitive(self, status):
 
-        items = self.tray_popup_menu.get_items()
+        items = self.tray_popup_menu_model.get_actions()
 
         for i in (_("Send Message"), _("Lookup a User's IP"), _("Lookup a User's Info"),
                   _("Lookup a User's Shares"), _("Away")):
 
             """ Disable menu items when disconnected from server """
-            items[i].set_sensitive(status)
+            items[i].set_enabled(status)
 
-        items = self.tray_popup_menu_server.get_items()
+        items = self.tray_popup_menu_server_model.get_actions()
 
-        items[_("Connect")].set_sensitive(not status)
-        items[_("Disconnect")].set_sensitive(status)
+        items[_("Connect")].set_enabled(not status)
+        items[_("Disconnect")].set_enabled(status)
 
     def set_transfer_status(self, download, upload):
 
         if self.trayicon is None:
             return
 
-        items = self.tray_popup_menu.get_items()
+        items = self.tray_popup_menu_model.get_items()
 
         items[_("Downloads")].set_label(download)
         items[_("Uploads")].set_label(upload)

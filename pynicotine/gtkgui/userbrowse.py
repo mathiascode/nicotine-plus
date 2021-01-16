@@ -327,18 +327,18 @@ class UserBrowse:
         else:
             files = False
 
-        items = self.file_popup_menu.get_items()
+        actions = self.file_popup_menu.get_actions()
 
         if self.user == self.frame.np.config.sections["server"]["login"]:
             for i in (_("Download"), _("Upload"), _("Send to _Player"), _("File _Properties"),
                       _("Copy _File Path"), _("Copy _URL")):
-                items[i].set_sensitive(files)
+                actions[i].set_enabled(files)
         else:
             for i in (_("Download"), _("File _Properties"), _("Copy _File Path"), _("Copy _URL")):
-                items[i].set_sensitive(files)
+                actions[i].set_enabled(files)
 
-        items["selected_files"].set_sensitive(False)
-        items["selected_files"].set_label(_("%s File(s) Selected") % num_selected_files)
+        actions["selected_files"].set_sensitive(False)
+        actions["selected_files"].set_label(_("%s File(s) Selected") % num_selected_files)
 
         self.file_popup_menu.popup()
         return True

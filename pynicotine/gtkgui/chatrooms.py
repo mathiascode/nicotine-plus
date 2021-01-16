@@ -800,7 +800,7 @@ class ChatRoom:
         self.popup_menu.toggle_user_items()
 
         me = (self.popup_menu.user is None or self.popup_menu.user == self.frame.np.config.sections["server"]["login"])
-        self.popup_menu.get_items()[_("Private Rooms")].set_sensitive(not me)
+        self.popup_menu.get_actions()[_("Private Rooms")].set_enabled(not me)
 
         self.popup_menu.popup()
         return True
@@ -1324,7 +1324,7 @@ class ChatRoom:
             self.popup_menu.toggle_user_items()
 
             me = (self.popup_menu.user is None or self.popup_menu.user == self.frame.np.config.sections["server"]["login"])
-            self.popup_menu.get_items()[_("Private Rooms")].set_sensitive(not me)
+            self.popup_menu.get_actions()[_("Private Rooms")].set_enabled(not me)
 
             self.popup_menu.popup(button=event.button.button)
 

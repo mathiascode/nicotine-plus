@@ -356,8 +356,8 @@ class Downloads(TransferList):
         users = len(self.selected_users) > 0
         files = num_selected_transfers > 0
 
-        items = self.popup_menu.get_items()
-        items[_("User(s)")].set_sensitive(users)  # Users Menu
+        actions = self.popup_menu.get_actions()
+        actions[_("User(s)")].set_enabled(users)  # Users Menu
 
         if files:
             act = True
@@ -368,7 +368,7 @@ class Downloads(TransferList):
 
         for i in (_("Send to _Player"), _("_Open Folder"), _("File P_roperties"),
                   _("Copy _File Path"), _("Copy _URL"), _("Copy Folder URL"), _("_Search")):
-            items[i].set_sensitive(act)
+            actions[i].set_enabled(act)
 
         if not users or not files:
             # Disable options
@@ -378,10 +378,10 @@ class Downloads(TransferList):
             act = True
 
         for i in (_("_Retry"), _("Abor_t"), _("_Clear")):
-            items[i].set_sensitive(act)
+            actions[i].set_enabled(act)
 
-        items["selected_files"].set_sensitive(False)
-        items["selected_files"].set_label(_("%s File(s) Selected") % num_selected_transfers)
+        actions["selected_files"].set_sensitive(False)
+        actions["selected_files"].set_label(_("%s File(s) Selected") % num_selected_transfers)
 
         self.popup_menu.popup()
         return True
