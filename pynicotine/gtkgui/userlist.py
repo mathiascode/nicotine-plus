@@ -330,8 +330,8 @@ class UserList:
         items = self.popup_menu.get_items()
 
         items[_("Private Rooms")].set_sensitive(
-            status or
-            self.popup_menu.user != self.frame.np.config.sections["server"]["login"]
+            status
+            or self.popup_menu.user != self.frame.np.config.sections["server"]["login"]
         )
 
         items[_("_Online Notify")].set_active(notify)

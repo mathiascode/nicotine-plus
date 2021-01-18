@@ -461,9 +461,12 @@ class SlskProtoThread(threading.Thread):
             short_message = _("Could not bind to a local port, aborting connection")
             long_message = _(
                 "The range you specified for client connection ports was "
-                "{}-{}, but none of these were usable. Increase and/or ".format(portrange[0], portrange[1]) +
+                "%(start)s - %(end)s, but none of these were usable. Increase and/or "
                 "move the range and restart Nicotine+."
-            )
+            ) % {
+                "start": portrange[0],
+                "end": portrange[1]
+            }
             if portrange[0] < 1024:
                 long_message += "\n\n" + _(
                     "Note that part of your range lies below 1024, this is usually not allowed on"
@@ -737,9 +740,11 @@ class SlskProtoThread(threading.Thread):
 
                 elif conn.piercefw is None:
                     msgs.append(_(
-                        "Unknown peer init code: {}, message contents ".format(msg_buffer[4]) +
-                        "{}".format(msg_buffer[5:msgsize + 4].__repr__())
-                    ))
+                        "Unknown peer init code: %(code)s, message contents %(contents)s"
+                    ) % {
+                        "code": msg_buffer[4],
+                        "contents": msg_buffer[5:msgsize + 4].__repr__()
+                    })
 
                     self._ui_callback([ConnClose(conn.conn, conn.addr)])
                     conn.conn.close()
