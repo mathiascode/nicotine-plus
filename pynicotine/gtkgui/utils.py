@@ -424,7 +424,8 @@ def open_file_path(file_path, command=None):
         execute_command(command, file_path)
     else:
         try:
-            Gio.AppInfo.launch_default_for_uri("file:///" + file_path)
+            print(file_path)
+            Gio.AppInfo.launch_default_for_uri("file:///" + file_path.lstrip("/"))
         except GLib.Error as error:
             log.add_warning(_("Failed to open folder: %s"), str(error))
 
