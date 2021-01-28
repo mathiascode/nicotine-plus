@@ -193,11 +193,14 @@ class ChatRooms(IconNotebook):
             return
 
         for name, room in self.joinedrooms.items():
-            if room.Main == page:
-                GLib.idle_add(room.ChatEntry.grab_focus)
+            if room.Main != page:
+                continue
 
-                # Remove hilite
-                self.frame.notifications.clear("rooms", None, name)
+            # Using timeout_add to force focus grab
+            GLib.timeout_add(0, room.ChatEntry.grab_focus)
+
+            # Remove hilite
+            self.frame.notifications.clear("rooms", None, name)
 
     def enable_tab_switch(self):
         # Room tabs will be opened when joining rooms

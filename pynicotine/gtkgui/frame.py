@@ -660,18 +660,18 @@ class NicotineFrame:
         self.UserBrowseCombo.set_sensitive(status)
 
         if self.current_tab_label == self.UserBrowseTabLabel:
-            GLib.idle_add(self.UserBrowseEntry.grab_focus)
+            self.UserBrowseEntry.grab_focus()
 
         self.UserInfoCombo.set_sensitive(status)
 
         if self.current_tab_label == self.UserInfoTabLabel:
-            GLib.idle_add(self.UserInfoEntry.grab_focus)
+            self.UserInfoEntry.grab_focus()
 
         self.UserSearchCombo.set_sensitive(status)
         self.SearchCombo.set_sensitive(status)
 
         if self.current_tab_label == self.SearchTabLabel:
-            GLib.idle_add(self.SearchEntry.grab_focus)
+            self.SearchEntry.grab_focus()
 
         self.interests.SimilarUsersButton.set_sensitive(status)
         self.interests.GlobalRecommendationsButton.set_sensitive(status)
@@ -1415,7 +1415,9 @@ class NicotineFrame:
 
     def on_switch_page(self, notebook, page, page_num):
 
-        GLib.idle_add(notebook.grab_focus)
+        # Let the notebook grab focus if a toolbar containing a text entry
+        # is the first widget on the tab page
+        GLib.timeout_add(0, notebook.grab_focus)
 
         tab_label = notebook.get_tab_label(page)
         self.current_tab_label = tab_label
@@ -1449,7 +1451,9 @@ class NicotineFrame:
 
         elif tab_label == self.SearchTabLabel:
             self.set_active_header_bar("Search")
-            GLib.idle_add(self.SearchEntry.grab_focus)
+
+            # Using timeout_add to force focus grab
+            GLib.timeout_add(0, self.SearchEntry.grab_focus)
 
         elif tab_label == self.UserInfoTabLabel:
             self.set_active_header_bar("UserInfo")

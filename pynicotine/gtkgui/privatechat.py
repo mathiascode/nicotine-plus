@@ -101,11 +101,15 @@ class PrivateChats(IconNotebook):
             return
 
         for user, tab in list(self.users.items()):
-            if tab.Main == page:
-                GLib.idle_add(tab.ChatLine.grab_focus)
-                # Remove hilite if selected tab belongs to a user in the hilite list
-                if user in self.frame.hilites["private"]:
-                    self.frame.notifications.clear("private", tab.user)
+            if tab.Main != page:
+                continue
+
+            # Using timeout_add to force focus grab
+            GLib.timeout_add(0, tab.ChatLine.grab_focus)
+
+            # Remove hilite if selected tab belongs to a user in the hilite list
+            if user in self.frame.hilites["private"]:
+                self.frame.notifications.clear("private", tab.user)
 
     def clear_notifications(self):
 
