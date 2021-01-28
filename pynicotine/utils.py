@@ -458,8 +458,9 @@ class RestrictedUnpickler(pickle.Unpickler):
 
     def find_class(self, module, name):
         # Forbid all globals
-        raise pickle.UnpicklingError("global '%s.%s' is forbidden" %
-                                     (module, name))
+        if not (module == "builtins" and name == "bytearray"):
+            raise pickle.UnpicklingError("global '%s.%s' is forbidden" %
+                                         (module, name))
 
 
 """ Debugging """

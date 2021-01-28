@@ -29,7 +29,7 @@ import string
 import sys
 import _thread
 
-from collections import MutableMapping
+from collections.abc import MutableMapping
 from io import BytesIO
 
 from pynicotine import slskmessages
