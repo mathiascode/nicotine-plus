@@ -471,9 +471,11 @@ class Shares:
     def __init__(self, np, config, queue, ui_callback=None, connected=False):
 
         try:
+            # Support for frozen Windows and macOS binaries
+            multiprocessing.freeze_support()
             multiprocessing.set_start_method("spawn")
         except RuntimeError:
-            # Start method already set
+            # Already set
             pass
 
         self.np = np
