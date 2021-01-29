@@ -470,14 +470,6 @@ class Shares:
 
     def __init__(self, np, config, queue, ui_callback=None, connected=False):
 
-        try:
-            # Support for frozen Windows and macOS binaries
-            multiprocessing.freeze_support()
-            multiprocessing.set_start_method("spawn")
-        except RuntimeError:
-            # Already set
-            pass
-
         self.np = np
         self.ui_callback = ui_callback
         self.config = config
