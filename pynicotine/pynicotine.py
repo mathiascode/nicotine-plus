@@ -107,7 +107,7 @@ class ConnectToPeerTimeout(Timeout):
 class NetworkEventProcessor:
     """ This class contains handlers for various messages from the networking thread """
 
-    def __init__(self, ui_callback, network_callback, setstatus, bindip, port, data_dir, config):
+    def __init__(self, ui_callback, network_callback, setstatus, bindip, interface, port, data_dir, config):
 
         self.ui_callback = ui_callback
         self.network_callback = network_callback
@@ -127,6 +127,7 @@ class NetworkEventProcessor:
             self.network_callback([slskmessages.PopupMessage(short, long)])
 
         self.bindip = bindip
+        self.interface = interface or self.config.sections["server"]["interface"]
         self.port = port
 
         log.set_log_levels(self.config.sections["logging"]["debugmodes"])
@@ -152,7 +153,7 @@ class NetworkEventProcessor:
         # Give the logger information about log folder
         self.update_debug_log_options()
 
-        self.protothread = slskproto.SlskProtoThread(self.network_callback, self.queue, self.bindip, self.port, self.config, self)
+        self.protothread = slskproto.SlskProtoThread(self.network_callback, self.queue, self.bindip, self.interface, self.port, self.config, self)
 
         # UPnP
         self.upnp_interval = self.config.sections["server"]["upnp_interval"]

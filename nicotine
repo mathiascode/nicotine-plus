@@ -43,6 +43,7 @@ Usage: nicotine [OPTION]...
   -d,      --disable-trayicon Disable the tray icon
   -h,      --help             Show help and exit
   -s,      --hidden           Start the program hidden so only the tray icon is shown
+  -i name, --interface=name   Bind sockets to the given network interface (useful for VPN)
   -b ip,   --bindip=ip        Bind sockets to the given IP (useful for VPN)
   -l port, --port=port        Listen on the given port. Overrides the portrange configuration
   -v,      --version          Display version and exit"""))
@@ -180,7 +181,7 @@ def run():
     import os.path
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                                   "hc:p:tdrvswb:",
+                                   "hc:p:tdrvsi:wb:",
                                    [
                                        "help",
                                        "rescan",
@@ -191,6 +192,7 @@ def run():
                                        "disable-trayicon",
                                        "version",
                                        "hidden",
+                                       "interface=",
                                        "bindip=",
                                        "port="
         ]
@@ -208,6 +210,7 @@ def run():
     trayicon = True
     rescan = False
     hidden = False
+    interface = None
     bindip = None
     port = None
 
@@ -221,6 +224,9 @@ def run():
 
         if o in ("-p", "--plugins"):
             plugins = a
+
+        if o in ("-i", "--interface"):
+            interface = a
 
         if o in ("-b", "--bindip"):
             bindip = a
@@ -257,7 +263,7 @@ def run():
             return
 
         from pynicotine.gtkgui import frame
-        app = frame.MainApp(data_dir, config, plugins, trayicon, hidden, bindip, port)
+        app = frame.MainApp(data_dir, config, plugins, trayicon, hidden, bindip, interface, port)
 
         if profile:
 

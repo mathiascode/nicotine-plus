@@ -171,6 +171,17 @@
                 <property name="visible">1</property>
                 <property name="can-focus">0</property>
                 <child>
+                  <object class="GtkBox">
+                    <property name="visible">1</property>
+                    <property name="spacing">10</property>
+                    <child>
+                      <object class="GtkSwitch" id="FilterFreeSlots">
+                        <property name="visible">1</property>
+                        <property name="can-focus">1</property>
+                        <signal name="activate" handler="on_refilter" swapped="no"/>
+                      </object>
+                    </child>
+                <child>
                   <object class="GtkComboBoxText" id="FilterIn">
                     <property name="visible">1</property>
                     <property name="has-entry">1</property>
@@ -192,6 +203,8 @@
                       </object>
                     </child>
                   </object>
+                </child>
+                </object>
                 </child>
               </object>
             </child>

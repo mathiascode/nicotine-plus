@@ -402,7 +402,7 @@ class SlskProtoThread(threading.Thread):
     CONNECTION_MAX_IDLE = 60
     CONNCOUNT_UI_INTERVAL = 0.5
 
-    def __init__(self, ui_callback, queue, bindip, port, config, eventprocessor):
+    def __init__(self, ui_callback, queue, bindip, interface, port, config, eventprocessor):
         """ ui_callback is a UI callback function to be called with messages
         list as a parameter. queue is Queue object that holds messages from UI
         thread.
@@ -416,6 +416,7 @@ class SlskProtoThread(threading.Thread):
         self._want_abort = False
         self._server_disconnect = True
         self._bindip = bindip
+        self._interface = interface
         self._config = config
         self._eventprocessor = eventprocessor
 
@@ -1002,6 +1003,8 @@ class SlskProtoThread(threading.Thread):
 
                             if self._bindip:
                                 server_socket.bind((self._bindip, 0))
+                            elif self._interface:
+                                server_socket.setsockopt(socket.SOL_SOCKET, 25, self._interface.encode())
 
                             server_socket.setblocking(0)
                             server_socket.connect_ex(msg_obj.addr)
@@ -1038,6 +1041,8 @@ class SlskProtoThread(threading.Thread):
 
                             if self._bindip:
                                 conn.bind((self._bindip, 0))
+                            elif self._interface:
+                                conn.setsockopt(socket.SOL_SOCKET, 25, self._interface.encode())
 
                             conn.setblocking(0)
                             conn.connect_ex(msg_obj.addr)

@@ -82,7 +82,7 @@ from pynicotine.utils import version
 
 class NicotineFrame:
 
-    def __init__(self, application, data_dir, config, plugins, use_trayicon, start_hidden, bindip=None, port=None):
+    def __init__(self, application, data_dir, config, plugins, use_trayicon, start_hidden, bindip=None, interface=None, port=None):
 
         self.application = application
         self.clip = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
@@ -117,6 +117,7 @@ class NicotineFrame:
             self.network_callback,
             self.set_status_text,
             self.bindip,
+            interface,
             self.port,
             data_dir,
             config
@@ -2751,7 +2752,7 @@ class NicotineFrame:
 
 class MainApp(Gtk.Application):
 
-    def __init__(self, data_dir, config, plugins, trayicon, start_hidden, bindip, port):
+    def __init__(self, data_dir, config, plugins, trayicon, start_hidden, bindip, interface, port):
 
         application_id = "org.nicotine_plus.Nicotine"
 
@@ -2765,6 +2766,7 @@ class MainApp(Gtk.Application):
         self.trayicon = trayicon
         self.start_hidden = start_hidden
         self.bindip = bindip
+        self.interface = interface
         self.port = port
 
     def do_activate(self):
@@ -2779,6 +2781,7 @@ class MainApp(Gtk.Application):
                 self.trayicon,
                 self.start_hidden,
                 self.bindip,
+                self.interface,
                 self.port
             )
             return

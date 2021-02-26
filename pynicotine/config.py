@@ -82,6 +82,7 @@ class Config:
                 "portrange": (2234, 2239),
                 "upnp": True,
                 "upnp_interval": 4,
+                "interface": "",
                 "auto_connect_startup": True,
                 "userlist": [],
                 "banlist": [],
