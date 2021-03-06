@@ -57,6 +57,7 @@ from pynicotine.gtkgui.utils import load_ui_elements
 from pynicotine.gtkgui.utils import open_log
 from pynicotine.gtkgui.utils import PopupMenu
 from pynicotine.gtkgui.utils import scroll_bottom
+from pynicotine.gtkgui.utils import TextEntryUndoRedo
 from pynicotine.gtkgui.utils import TextSearchBar
 from pynicotine.gtkgui.utils import expand_alias
 from pynicotine.gtkgui.utils import is_alias
@@ -551,6 +552,8 @@ class ChatRoom:
 
         completion.set_match_func(entry_completion_find_match)
         completion.connect("match-selected", entry_completion_found_match)
+
+        TextEntryUndoRedo(self.ChatEntry)
 
         self.Log.set_active(config["logging"]["chatrooms"])
         if not self.Log.get_active():

@@ -1692,6 +1692,121 @@ class TextSearchBar:
         self.entry.grab_focus_without_selecting()
 
 
+class TextEntryUndoRedo:
+    """ Custom implementation of undo/redo functionality for GtkEntry, since GTK lacks
+    one. We will be able to remove this implementation once we have migrated to GTK4 """
+
+    def __init__(self, entry):
+
+        self.entry = entry
+        self.buffer = entry.get_buffer()
+        self.undo = []
+        self.redo = []
+
+        self.connect_buffer_signals()
+        self.entry.connect("key-press-event", self.on_key_press)
+
+    def connect_buffer_signals(self):
+        self.insert_signal = self.buffer.connect("inserted-text", self.on_insert)
+        self.delete_signal = self.buffer.connect("deleted-text", self.on_delete)
+
+    def disconnect_buffer_signals(self):
+        self.buffer.disconnect(self.insert_signal)
+        self.buffer.disconnect(self.delete_signal)
+
+    def do_undo(self):
+
+        if not self.undo:
+            return
+
+        # Only user-initiated entry changes should activate signals
+        self.disconnect_buffer_signals()
+
+        action = self.undo.pop()
+
+        if action[0] == "insert":
+            self.buffer.delete_text(action[1], len(action[2]))
+
+            # undo previous delete_range that issued within 1 msec
+            # to cope with ibus-replace-with-kanji smoothly
+            if self.undo:
+                prev = self.undo[-1]
+
+                if prev[0] == "delete" and action[3] - prev[3] < 0.001:
+                    self.redo.append(action)
+                    action = self.undo.pop()
+
+                    n_chars = len(action[2])
+                    self.buffer.insert_text(action[1], action[2], n_chars)
+                    self.entry.set_position(action[1] + n_chars)
+
+        elif action[0] == "delete":
+            n_chars = len(action[2])
+            self.buffer.insert_text(action[1], action[2], n_chars)
+            self.entry.set_position(action[1] + n_chars)
+
+        self.redo.append(action)
+
+        # Watch for user-initiated changes once again
+        self.connect_buffer_signals()
+
+    def do_redo(self):
+
+        if not self.redo:
+            return
+
+        # Only user-initiated entry changes should activate signals
+        self.disconnect_buffer_signals()
+
+        action = self.redo.pop()
+
+        if action[0] == "insert":
+            n_chars = len(action[2])
+            self.buffer.insert_text(action[1], action[2], n_chars)
+            self.entry.set_position(action[1] + n_chars)
+
+        elif action[0] == "delete":
+            self.buffer.delete_text(action[1], len(action[2]))
+
+            # redo previous insert_text that issued within 1 msec
+            # to cope with ibus-replace-with-kanji smoothly
+            if self.redo:
+                prev = self.redo[-1]
+
+                if prev[0] == "insert" and action[3] - prev[3] < 0.001:
+                    self.undo.append(action)
+                    action = self.redo.pop()
+
+                    n_chars = len(action[2])
+                    self.buffer.insert_text(action[1], action[2], n_chars)
+                    self.entry.set_position(action[1] + n_chars)
+
+        self.undo.append(action)
+
+        # Watch for user-initiated changes once again
+        self.connect_buffer_signals()
+
+    def on_insert(self, textbuffer, position, text, n_chars):
+
+        self.undo.append(["insert", position, text, time.perf_counter()])
+        self.redo.clear()
+
+    def on_delete(self, textbuffer, position, n_chars):
+
+        text = self.buffer.get_text()[position:n_chars]
+        self.undo.append(["delete", position, text, time.perf_counter()])
+        self.redo.clear()
+
+    def on_key_press(self, widget, event):
+
+        if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
+            if event.hardware_keycode in keyval_to_hardware_keycode(Gdk.KEY_z):
+                self.do_undo()
+
+            elif event.hardware_keycode in keyval_to_hardware_keycode(Gdk.KEY_y):
+                self.do_redo()
+
+
 def clear_entry(entry):
 
     completion = entry.get_completion()

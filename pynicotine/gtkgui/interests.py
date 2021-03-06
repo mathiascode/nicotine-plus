@@ -31,6 +31,7 @@ from pynicotine.gtkgui.utils import initialise_columns
 from pynicotine.gtkgui.utils import load_ui_elements
 from pynicotine.gtkgui.utils import PopupMenu
 from pynicotine.gtkgui.utils import set_treeview_selected_row
+from pynicotine.gtkgui.utils import TextEntryUndoRedo
 from pynicotine.gtkgui.utils import triggers_context_menu
 from pynicotine.gtkgui.utils import update_widget_visuals
 
@@ -44,6 +45,9 @@ class Interests:
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "interests.ui"))
         self.frame.interestsvbox.add(self.Main)
+
+        for entry in (self.AddLikeEntry, self.AddDislikeEntry):
+            TextEntryUndoRedo(entry)
 
         self.likes = {}
         self.likes_model = Gtk.ListStore(str)

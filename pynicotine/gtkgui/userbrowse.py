@@ -43,6 +43,7 @@ from pynicotine.gtkgui.utils import open_file_path
 from pynicotine.gtkgui.utils import PopupMenu
 from pynicotine.gtkgui.utils import save_columns
 from pynicotine.gtkgui.utils import set_treeview_selected_row
+from pynicotine.gtkgui.utils import TextEntryUndoRedo
 from pynicotine.gtkgui.utils import triggers_context_menu
 from pynicotine.gtkgui.utils import update_widget_visuals
 from pynicotine.logfacility import log
@@ -60,6 +61,7 @@ class UserBrowse:
         # Build the window
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "userbrowse.ui"))
         self.info_bar = InfoBar(self.InfoBar, Gtk.MessageType.INFO)
+        TextEntryUndoRedo(self.SearchEntry)
 
         # Monitor user online status
         if user not in self.frame.np.watchedusers:

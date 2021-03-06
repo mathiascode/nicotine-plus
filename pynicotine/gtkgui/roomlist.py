@@ -33,6 +33,7 @@ from pynicotine.gtkgui.utils import initialise_columns
 from pynicotine.gtkgui.utils import load_ui_elements
 from pynicotine.gtkgui.utils import PopupMenu
 from pynicotine.gtkgui.utils import set_treeview_selected_row
+from pynicotine.gtkgui.utils import TextEntryUndoRedo
 from pynicotine.gtkgui.utils import triggers_context_menu
 from pynicotine.gtkgui.utils import update_widget_visuals
 from pynicotine.logfacility import log
@@ -78,6 +79,8 @@ class RoomList:
         self.RoomsList.connect("popup-menu", self.on_popup_menu)
         self.RoomsList.connect("touch_event", self.on_list_clicked)
         self.RoomsList.set_headers_clickable(True)
+
+        TextEntryUndoRedo(self.SearchRooms)
 
         self.search_iter = None
         self.query = ""

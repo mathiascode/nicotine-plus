@@ -67,6 +67,7 @@ from pynicotine.gtkgui.utils import open_log
 from pynicotine.gtkgui.utils import open_uri
 from pynicotine.gtkgui.utils import PopupMenu
 from pynicotine.gtkgui.utils import scroll_bottom
+from pynicotine.gtkgui.utils import TextEntryUndoRedo
 from pynicotine.gtkgui.utils import TextSearchBar
 from pynicotine.gtkgui.utils import triggers_context_menu
 from pynicotine.gtkgui.utils import update_widget_visuals
@@ -270,14 +271,19 @@ class NicotineFrame:
 
         self.update_visuals()
 
-        """ Entry Completion """
+        """ Entry Completion and Undo/Redo """
 
         for entry_name in ("RoomSearch", "UserSearch", "Search", "PrivateChat", "UserInfo", "UserBrowse"):
             completion = self.__dict__[entry_name + "Completion"]
+            entry = self.__dict__[entry_name + "Entry"]
             model = self.__dict__[entry_name + "Combo"].get_model()
 
             completion.set_model(model)
             completion.set_text_column(0)
+
+            TextEntryUndoRedo(entry)
+
+        TextEntryUndoRedo(self.AddUserEntry)
 
         """ Tray/Notifications """
 

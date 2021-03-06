@@ -29,6 +29,7 @@ from gi.repository import Gtk
 from pynicotine.gtkgui.dialogs import option_dialog
 from pynicotine.gtkgui.utils import initialise_columns
 from pynicotine.gtkgui.utils import load_ui_elements
+from pynicotine.gtkgui.utils import TextEntryUndoRedo
 from pynicotine.gtkgui.utils import update_widget_visuals
 from pynicotine.logfacility import log
 
@@ -46,6 +47,8 @@ class WishList:
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "wishlist.ui"))
         self.WishListDialog.set_transient_for(frame.MainWindow)
+
+        TextEntryUndoRedo(self.AddWishEntry)
 
         self.store = Gtk.ListStore(str)
 

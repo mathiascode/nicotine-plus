@@ -51,6 +51,7 @@ from pynicotine.gtkgui.utils import load_ui_elements
 from pynicotine.gtkgui.utils import open_log
 from pynicotine.gtkgui.utils import PopupMenu
 from pynicotine.gtkgui.utils import scroll_bottom
+from pynicotine.gtkgui.utils import TextEntryUndoRedo
 from pynicotine.gtkgui.utils import TextSearchBar
 from pynicotine.gtkgui.utils import triggers_context_menu
 from pynicotine.gtkgui.utils import unalias
@@ -351,6 +352,8 @@ class PrivateChat:
         completion.set_text_column(0)
         completion.set_match_func(entry_completion_find_match)
         completion.connect("match-selected", entry_completion_found_match)
+
+        TextEntryUndoRedo(self.ChatLine)
 
         self.Log.set_active(self.frame.np.config.sections["logging"]["privatechat"])
 
