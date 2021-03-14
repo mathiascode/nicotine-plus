@@ -1115,6 +1115,7 @@ class Search:
 
     def on_key_press_event(self, widget, event):
 
+        log.add_debug("Keys pressed in search list: %s %s" % (event.get_state(), event.hardware_keycode))
         self.select_results()
 
         if event.get_state() & Gdk.ModifierType.CONTROL_MASK and \
