@@ -235,6 +235,7 @@ class Downloads(TransferList):
 
     def on_key_press_event(self, widget, event):
 
+        log.add("Keys pressed in download list: %s %s" % (event.get_state(), event.hardware_keycode))
         keycode = event.hardware_keycode
 
         self.select_transfers()
