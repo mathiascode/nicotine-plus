@@ -626,8 +626,17 @@ class NicotineFrame:
                 screen, self.global_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
             )
 
-        for widget in self.__dict__.values():
-            update_widget_visuals(widget)
+        line = "Initial dict: %s" % self.__dict__.keys()
+        print(line)
+        log.write_log(self.np.config.sections["logging"]["debuglogsdir"], "errdict", line)
+
+        try:
+            for widget in self.__dict__.values():
+                update_widget_visuals(widget)
+        except Exception:
+            line = "Changed dict: %s" % self.__dict__.keys()
+            print(line)
+            log.write_log(self.np.config.sections["logging"]["debuglogsdir"], "errdict", line)
 
     """ General """
 
