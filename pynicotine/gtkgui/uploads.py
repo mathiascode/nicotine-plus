@@ -79,16 +79,15 @@ class Uploads(TransferList):
 
     def on_open_directory(self, widget):
 
-        downloaddir = self.frame.np.config.sections["transfers"]["downloaddir"]
         incompletedir = self.frame.np.config.sections["transfers"]["incompletedir"]
 
-        if incompletedir == "":
-            incompletedir = downloaddir
+        if not incompletedir:
+            incompletedir = self.frame.np.config.sections["transfers"]["downloaddir"]
 
         transfer = next(iter(self.selected_transfers))
 
-        if os.path.exists(transfer.path):
-            final_path = transfer.path
+        if os.path.exists(transfer.targetfolder):
+            final_path = transfer.targetfolder
         else:
             final_path = incompletedir
 
@@ -99,7 +98,7 @@ class Uploads(TransferList):
     def on_play_files(self, widget, prefix=""):
 
         for fn in self.selected_transfers:
-            playfile = fn.realfilename
+            playfile = self.frame.np.shares.virtual2real(fn.virtualpath)
 
             if os.path.exists(playfile):
                 command = self.frame.np.config.sections["players"]["default"]

@@ -22,6 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import ntpath
 import os
 
 from sys import maxsize
@@ -87,7 +88,7 @@ class TransferList:
 
         self.transfersmodel = Gtk.TreeStore(
             str,                   # (0)  user
-            str,                   # (1)  path
+            str,                   # (1)  target folder
             str,                   # (2)  file name
             str,                   # (3)  status
             str,                   # (4)  hqueue position
@@ -96,7 +97,7 @@ class TransferList:
             str,                   # (7)  hspeed
             str,                   # (8)  htime elapsed
             str,                   # (9)  time left
-            str,                   # (10) path
+            str,                   # (10) virtual path
             str,                   # (11) status (non-translated)
             GObject.TYPE_UINT64,   # (12) size
             GObject.TYPE_UINT64,   # (13) current bytes
@@ -182,7 +183,7 @@ class TransferList:
     def on_file_search(self, widget):
 
         for transfer in self.selected_transfers:
-            self.frame.SearchEntry.set_text(transfer.filename.rsplit("\\", 1)[1])
+            self.frame.SearchEntry.set_text(ntpath.basename(transfer.virtualpath))
             self.frame.change_main_page("search")
             break
 
@@ -211,10 +212,10 @@ class TransferList:
     def select_transfer(self, model, iterator, selectuser=False):
 
         user = model.get_value(iterator, 0)
-        filepath = model.get_value(iterator, 10)
+        virtualpath = model.get_value(iterator, 10)
 
         for i in self.list:
-            if i.user == user and i.filename == filepath:
+            if i.user == user and i.virtualpath == virtualpath:
                 self.selected_transfers.add(i)
                 break
 
@@ -450,9 +451,9 @@ class TransferList:
             self.transfersmodel.set_value(initer, 17, GObject.Value(GObject.TYPE_UINT64, place))
 
         else:
-            fn = transfer.filename
+            virtualpath = transfer.virtualpath
             user = transfer.user
-            shortfn = fn.split("\\")[-1]
+            basename = ntpath.basename(virtualpath)
             filecount = 1
 
             if self.tree_users != "ungrouped":
@@ -493,18 +494,18 @@ class TransferList:
                 if self.tree_users == "folder_grouping":
                     # Group by folder
 
-                    """ Paths can be empty if files are downloaded individually, make sure we
+                    """ Target folder can be empty if files are downloaded individually, make sure we
                     don't add files to the wrong user in the TreeView """
-                    path = transfer.path
-                    user_path = user + path
-                    reverse_path = '/'.join(reversed(path.split('/')))
+                    targetfolder = transfer.targetfolder
+                    user_path = user + targetfolder
+                    reverse_targetfolder = '/'.join(reversed(targetfolder.split('/')))
 
                     if user_path not in self.paths:
                         self.paths[user_path] = self.transfersmodel.insert_with_values(
                             self.users[user], -1, self.column_numbers,
                             [
                                 user,
-                                reverse_path,
+                                reverse_targetfolder,
                                 empty_str,
                                 empty_str,
                                 empty_str,
@@ -537,16 +538,16 @@ class TransferList:
             # Add a new transfer
             if self.tree_users == "folder_grouping":
                 # Group by folder, path not visible
-                path = ""
+                targetfolder = ""
             else:
-                path = '/'.join(reversed(transfer.path.split('/')))
+                targetfolder = '/'.join(reversed(transfer.targetfolder.split('/')))
 
             iterator = self.transfersmodel.insert_with_values(
                 parent, -1, self.column_numbers,
                 (
                     user,
-                    path,
-                    shortfn,
+                    targetfolder,
+                    basename,
                     hstatus,
                     hplace,
                     GObject.Value(GObject.TYPE_UINT64, percent),
@@ -554,7 +555,7 @@ class TransferList:
                     hspeed,
                     helapsed,
                     left,
-                    fn,
+                    virtualpath,
                     status,
                     GObject.Value(GObject.TYPE_UINT64, size),
                     GObject.Value(GObject.TYPE_UINT64, icurrentbytes),
@@ -757,24 +758,22 @@ class TransferList:
         if not self.selected_transfers:
             return
 
-        i = next(iter(self.selected_transfers))
-        text = self.transfersmodel.get_value(i.iter, 10)
-
-        self.frame.clip.set_text(text, -1)
+        transfer = next(iter(self.selected_transfers))
+        self.frame.clip.set_text(transfer.virtualpath, -1)
 
     def on_copy_url(self, widget):
-        i = next(iter(self.selected_transfers))
-        self.frame.set_clipboard_url(i.user, i.filename)
+        transfer = next(iter(self.selected_transfers))
+        self.frame.set_clipboard_url(transfer.user, transfer.virtualpath)
 
     def on_copy_dir_url(self, widget):
 
-        i = next(iter(self.selected_transfers))
-        path = "\\".join(i.filename.split("\\")[:-1])
+        transfer = next(iter(self.selected_transfers))
+        path = "\\".join(transfer.virtualpath.split("\\")[:-1])
 
         if path[:-1] != "/":
             path += "/"
 
-        self.frame.set_clipboard_url(i.user, path)
+        self.frame.set_clipboard_url(transfer.user, path)
 
     def on_retry_transfer(self, widget):
         self.select_transfers()

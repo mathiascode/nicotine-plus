@@ -23,6 +23,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import ntpath
 import os
 import re
 
@@ -154,6 +155,7 @@ class Downloads(TransferList):
             self.frame.np.config.sections["transfers"]["downloadregexp"] = ""
 
     def selected_results_all_data(self, model, path, iterator, data):
+
         if iterator in self.selected_users:
             return
 
@@ -209,19 +211,14 @@ class Downloads(TransferList):
         downloaddir = self.frame.np.config.sections["transfers"]["downloaddir"]
         incompletedir = self.frame.np.config.sections["transfers"]["incompletedir"]
 
-        if incompletedir == "":
+        if not incompletedir:
             incompletedir = downloaddir
 
         transfer = next(iter(self.selected_transfers))
 
-        complete_path = os.path.join(downloaddir, transfer.path)
+        complete_path = os.path.join(downloaddir, transfer.targetfolder)
 
-        if transfer.path == "":
-            if transfer.status == "Finished":
-                final_path = downloaddir
-            else:
-                final_path = incompletedir
-        elif os.path.exists(complete_path):  # and tranfer.status is "Finished"
+        if transfer.status == "Finished" and os.path.exists(complete_path):
             final_path = complete_path
         else:
             final_path = incompletedir
@@ -234,16 +231,17 @@ class Downloads(TransferList):
 
         downloaddir = self.frame.np.config.sections["transfers"]["downloaddir"]
 
-        for fn in self.selected_transfers:
+        for transfer in self.selected_transfers:
 
             playfile = None
 
-            if fn.file is not None and os.path.exists(fn.file.name):
-                playfile = fn.file.name
+            if transfer.file is not None and os.path.exists(transfer.file.name):
+                playfile = transfer.file.name
+
             else:
                 # If this file doesn't exist anymore, it may have finished downloading and have been renamed
                 # try looking in the download directory and match the original filename.
-                basename = str.split(fn.filename, '\\')[-1]
+                basename = ntpath.basename(transfer.virtualpath)
                 path = os.sep.join([downloaddir, basename])
 
                 if os.path.exists(path):

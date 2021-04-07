@@ -77,7 +77,7 @@ class UserBrowse:
         self.search_list = []
         self.query = None
         self.search_position = 0
-        self.selected_files = []
+        self.selected_files = {}
 
         self.shares = []
 
@@ -305,12 +305,15 @@ class UserBrowse:
         return True
 
     def select_files(self):
-        self.selected_files = []
+        self.selected_files.clear()
         self.FileTreeView.get_selection().selected_foreach(self.selected_files_callback)
 
     def selected_files_callback(self, model, path, iterator):
+
         rawfilename = self.file_store.get_value(iterator, 0)
-        self.selected_files.append(rawfilename)
+        filesize = self.file_store.get_value(iterator, 4)
+
+        self.selected_files[rawfilename] = filesize
 
     def on_file_clicked(self, widget, event):
 
@@ -356,7 +359,7 @@ class UserBrowse:
 
         self.shares = list
         self.selected_folder = None
-        self.selected_files = []
+        self.selected_files.clear()
         self.directories.clear()
         self.files.clear()
         self.dir_store.clear()
@@ -826,26 +829,20 @@ class UserBrowse:
 
         folder = self.selected_folder
 
-        if folder is None:
+        if not folder:
             return
 
-        users = []
-        for entry in self.frame.np.config.sections["server"]["userlist"]:
-            users.append(entry[0])
-
-        users.sort()
         user = combo_box_dialog(
             parent=self.frame.MainWindow,
             title=_("Upload Folder's Contents"),
             message=_('Enter the User you wish to upload to:'),
-            droplist=users
+            droplist=(user[0] for user in self.frame.np.config.sections["server"]["userlist"])
         )
 
-        if user is None or user == "":
+        if not user:
             return
 
         self.frame.np.send_message_to_peer(user, slskmessages.UploadQueueNotification(None))
-
         self.upload_directory_to(user, folder, recurse)
 
     def on_upload_directory_recursive_to(self, widget):
@@ -856,11 +853,10 @@ class UserBrowse:
         if not self.frame.np.transfers:
             return
 
-        if folder == "" or folder is None or user is None or user == "":
+        if not folder or not user:
             return
 
-        realpath = self.frame.np.shares.virtual2real(folder)
-        ldir = folder.split("\\")[-1]
+        targetfolder = folder.split("\\")[-1]
 
         locally_queued = False
         for d, f in self.shares:
@@ -870,10 +866,9 @@ class UserBrowse:
                 continue
 
             for file in f:
-                filename = "\\".join([folder, file[1]])
-                realfilename = os.path.join(realpath, file[1])
+                virtualpath = "\\".join([folder, file[1]])
                 size = file[2]
-                self.frame.np.transfers.push_file(user, filename, realfilename, ldir, size=size, locally_queued=locally_queued)
+                self.frame.np.transfers.push_file(user, virtualpath, targetfolder, size=size, locally_queued=locally_queued)
                 locally_queued = True
 
         if not recurse:
@@ -883,35 +878,29 @@ class UserBrowse:
             if folder in subdir and folder != subdir:
                 self.upload_directory_to(user, subdir, recurse)
 
-    def on_upload_files(self, widget, prefix=""):
+    def on_upload_files(self, widget, targetfolder=""):
 
         if not self.frame.np.transfers:
             return
 
         folder = self.selected_folder
-        realpath = self.frame.np.shares.virtual2real(folder)
 
-        users = []
-
-        for entry in self.frame.np.config.sections["server"]["userlist"]:
-            users.append(entry[0])
-
-        users.sort()
         user = combo_box_dialog(
             parent=self.frame.MainWindow,
             title=_('Upload File(s)'),
             message=_('Enter the User you wish to upload to:'),
-            droplist=users
+            droplist=(user[0] for user in self.frame.np.config.sections["server"]["userlist"])
         )
 
-        if user is None or user == "":
+        if not user:
             return
 
         self.frame.np.send_message_to_peer(user, slskmessages.UploadQueueNotification(None))
 
         locally_queued = False
-        for fn in self.selected_files:
-            self.frame.np.transfers.push_file(user, "\\".join([folder, fn]), os.path.join(realpath, fn), prefix, locally_queued=locally_queued)
+        for fn, size in self.selected_files.items():
+            virtualpath = "\\".join([folder, fn])
+            self.frame.np.transfers.push_file(user, virtualpath, targetfolder, size=size, locally_queued=locally_queued)
             locally_queued = True
 
     def on_key_press_event(self, widget, event):

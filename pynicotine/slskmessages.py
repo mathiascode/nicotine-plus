@@ -2421,12 +2421,11 @@ class TransferRequest(PeerMessage):
     to send a download request as well, but Nicotine+, Museek+ and the official clients
     use QueueUpload for this purpose today. """
 
-    def __init__(self, conn, direction=None, req=None, file=None, filesize=None, realfile=None, legacy_client=False):
+    def __init__(self, conn, direction=None, req=None, file=None, filesize=None, legacy_client=False):
         self.conn = conn
         self.direction = direction
         self.req = req
-        self.file = file  # virtual file
-        self.realfile = realfile
+        self.file = file
         self.filesize = filesize
         self.legacy_client = legacy_client
 
@@ -2445,6 +2444,7 @@ class TransferRequest(PeerMessage):
         pos, self.direction = self.get_object(message, int)
         pos, self.req = self.get_object(message, int, pos)
         pos, self.file = self.get_object(message, str, pos)
+        self.file = self.file.replace('/', '\\')
 
         if self.direction == 1:
             pos, self.filesize = self.get_object(message, int, pos, getunsignedlonglong=True)
@@ -2500,6 +2500,7 @@ class PlaceholdUpload(PeerMessage):
 
     def parse_network_message(self, message):
         pos, self.file = self.get_object(message, str)
+        self.file = self.file.replace('/', '\\')
 
 
 class QueueUpload(PlaceholdUpload):
@@ -2514,20 +2515,21 @@ class PlaceInQueue(PeerMessage):
     """ Peer code: 44 """
     """ The peer replies with the upload queue placement of the requested file. """
 
-    def __init__(self, conn, filename=None, place=None):
+    def __init__(self, conn, file=None, place=None):
         self.conn = conn
-        self.filename = filename
+        self.file = file
         self.place = place
 
     def make_network_message(self):
         msg = bytearray()
-        msg.extend(self.pack_object(self.filename))
+        msg.extend(self.pack_object(self.file))
         msg.extend(self.pack_object(self.place, unsignedint=True))
 
         return msg
 
     def parse_network_message(self, message):
-        pos, self.filename = self.get_object(message, str)
+        pos, self.file = self.get_object(message, str)
+        self.file = self.file.replace('/', '\\')
         pos, self.place = self.get_object(message, int, pos)
 
 
@@ -2559,6 +2561,7 @@ class UploadDenied(PeerMessage):
 
     def parse_network_message(self, message):
         pos, self.file = self.get_object(message, str)
+        self.file = self.file.replace('/', '\\')
         pos, self.reason = self.get_object(message, str, pos)
 
 
