@@ -43,7 +43,7 @@ class FastConfigureAssistant(object):
         self.downloaddir = FileChooserButton(self.downloaddir, self.FastConfigureDialog, "folder")
 
         # Page specific, sharepage
-        self.sharelist = Gtk.ListStore(
+        """self.sharelist = Gtk.ListStore(
             str,
             str
         )
@@ -55,17 +55,17 @@ class FastConfigureAssistant(object):
             ["folder", _("Folder"), 0, "text", None]
         )
 
-        self.shareddirectoriestree.set_model(self.sharelist)
+        self.shareddirectoriestree.set_model(self.sharelist)"""
 
     def show(self):
 
         # userpasspage
-        self.username.set_text(
+        """self.username.set_text(
             self.config.sections["server"]["login"]
         )
         self.password.set_text(
             self.config.sections["server"]["passw"]
-        )
+        )"""
 
         # sharepage
         if self.config.sections['transfers']['downloaddir']:
@@ -73,10 +73,10 @@ class FastConfigureAssistant(object):
                 self.config.sections['transfers']['downloaddir']
             )
 
-        self.sharelist.clear()
+        """self.sharelist.clear()
 
         for directory in self.config.sections["transfers"]["shared"]:
-            self.add_shared_folder(directory)
+            self.add_shared_folder(directory)"""
 
         self.FastConfigureDialog.show()
 
@@ -100,7 +100,7 @@ class FastConfigureAssistant(object):
         if not page:
             return
 
-        name = Gtk.Buildable.get_name(page)
+        name = Gtk.Buildable.get_buildable_id(page)
 
         if name == 'welcomepage':
             complete = True
@@ -156,7 +156,7 @@ class FastConfigureAssistant(object):
     def on_prepare(self, widget, page):
         self.reset_completeness()
 
-    def on_entry_changed(self, widget, *args):
+    def on_entry_changed(self, *args):
         self.reset_completeness()
 
     def on_check_port_status(self, widget):
@@ -270,5 +270,5 @@ class FastConfigureAssistant(object):
         if not self.frame.np.active_server_conn:
             self.frame.on_connect()
 
-    def on_close(self, widget):
+    def on_close(self, *args):
         self.FastConfigureDialog.hide()

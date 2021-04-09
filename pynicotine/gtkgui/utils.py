@@ -786,17 +786,17 @@ class ImageLabel(Gtk.Box):
             return
 
         close_image = Gtk.Image()
-        close_image.set_from_icon_name("window-close-symbolic", Gtk.IconSize.MENU)
+        close_image.set_from_icon_name("window-close-symbolic")
 
         self.button = Gtk.Button()
-        self.button.add(close_image)
+        self.button.append(close_image)
         self.button.set_relief(Gtk.ReliefStyle.NONE)
         self.button.show_all()
 
         if self.onclose is not None:
             self.button.connect("clicked", self.onclose)
 
-        self.add(self.button)
+        self.append(self.button)
 
     def _remove_close_button(self):
 
@@ -1625,21 +1625,20 @@ class FileChooserButton:
         self.icon = Gtk.Image.new()
 
         if chooser_type == "folder":
-            self.icon.set_from_icon_name("folder-symbolic", Gtk.IconSize.BUTTON)
+            self.icon.set_from_icon_name("folder-symbolic")
 
         elif chooser_type == "image":
-            self.icon.set_from_icon_name("image-x-generic-symbolic", Gtk.IconSize.BUTTON)
+            self.icon.set_from_icon_name("image-x-generic-symbolic")
 
         else:
-            self.icon.set_from_icon_name("text-x-generic-symbolic", Gtk.IconSize.BUTTON)
+            self.icon.set_from_icon_name("text-x-generic-symbolic")
 
         self.label = Gtk.Label.new(_("(None)"))
 
-        box.add(self.icon)
-        box.add(self.label)
+        box.append(self.icon)
+        box.append(self.label)
 
-        self.button.add(box)
-        self.button.show_all()
+        self.button.set_child(box)
 
         self.button.connect("clicked", self.open_file_chooser)
 
