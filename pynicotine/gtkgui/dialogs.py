@@ -39,14 +39,14 @@ def combo_box_dialog(parent, title, message, default_text="",
 
     self = Gtk.MessageDialog(
         transient_for=parent,
-        flags=0,
         message_type=Gtk.MessageType.QUESTION,
         buttons=Gtk.ButtonsType.OK_CANCEL,
         text=title
     )
     self.set_default_size(500, -1)
+    self.set_destroy_with_parent(True)
     self.set_modal(True)
-    self.format_secondary_text(message)
+    self.set_property("secondary-text", message)
 
     self.gotoption = option
 
@@ -88,14 +88,14 @@ def entry_dialog(parent, title, message, default=""):
 
     self = Gtk.MessageDialog(
         transient_for=parent,
-        flags=0,
         message_type=Gtk.MessageType.QUESTION,
         buttons=Gtk.ButtonsType.OK_CANCEL,
         text=title
     )
     self.set_default_size(500, -1)
+    self.set_destroy_with_parent(True)
     self.set_modal(True)
-    self.format_secondary_text(message)
+    self.set_property("secondary-text", message)
 
     entry = Gtk.Entry()
     entry.connect("activate", activate, self)
@@ -117,19 +117,18 @@ def message_dialog(parent, title, message):
 
     self = Gtk.MessageDialog(
         transient_for=parent,
-        flags=0,
         message_type=Gtk.MessageType.INFO,
         buttons=Gtk.ButtonsType.OK,
         text=title
     )
+    self.set_destroy_with_parent(True)
     self.set_modal(True)
-    self.format_secondary_text(message)
+    self.set_property("secondary-text", message)
 
-    label = self.get_message_area().get_children()[-1]
+    label = self.get_message_area().get_last_child()
     label.set_selectable(True)
 
-    self.run()
-    self.destroy()
+    self.show()
 
 
 def option_dialog(parent, title, message, callback, callback_data=None, checkbox_label="", cancel=True, third=""):
@@ -141,16 +140,16 @@ def option_dialog(parent, title, message, callback, callback_data=None, checkbox
 
     self = Gtk.MessageDialog(
         transient_for=parent,
-        flags=0,
         message_type=Gtk.MessageType.QUESTION,
         buttons=buttons,
         text=title
     )
     self.connect("response", callback, callback_data)
+    self.set_destroy_with_parent(True)
     self.set_modal(True)
-    self.format_secondary_text(message)
+    self.set_property("secondary-text", message)
 
-    label = self.get_message_area().get_children()[-1]
+    label = self.get_message_area().get_last_child()
     label.set_selectable(True)
 
     if checkbox_label:
@@ -162,8 +161,7 @@ def option_dialog(parent, title, message, callback, callback_data=None, checkbox
     if third:
         self.add_button(third, Gtk.ResponseType.REJECT)
 
-    self.run()
-    self.destroy()
+    self.show()
 
 
 """ File Chooser Dialogs """

@@ -88,7 +88,7 @@ class NicotineFrame:
             sys.excepthook = self.on_critical_error
 
         self.application = application
-        self.clip = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        self.clip = None#Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.clip_data = ""
         self.data_dir = data_dir
         self.gui_dir = os.path.dirname(os.path.realpath(__file__))
@@ -155,17 +155,11 @@ class NicotineFrame:
         self.set_up_actions()
         self.set_up_menu()
 
-        self.accel_group = Gtk.AccelGroup()
-        self.MainWindow.add_accel_group(self.accel_group)
-
         """ Icons """
 
         self.load_icons()
 
-        if self.images["n"]:
-            self.MainWindow.set_default_icon(self.images["n"])
-        else:
-            self.MainWindow.set_default_icon_name(GLib.get_prgname())
+        self.MainWindow.set_default_icon_name(GLib.get_prgname())
 
         """ Window Properties """
 
@@ -175,19 +169,13 @@ class NicotineFrame:
         for signal_type in (signal.SIGINT, signal.SIGTERM):
             signal.signal(signal_type, self.on_quit)
 
-        self.MainWindow.resize(
+        self.MainWindow.set_default_size(
             config["ui"]["width"],
             config["ui"]["height"]
         )
 
         xpos = config["ui"]["xposition"]
         ypos = config["ui"]["yposition"]
-
-        # According to the pygtk doc this will be ignored my many window managers since the move takes place before we do a show()
-        if min(xpos, ypos) < 0:
-            self.MainWindow.set_position(Gtk.WindowPosition.CENTER)
-        else:
-            self.MainWindow.move(xpos, ypos)
 
         if config["ui"]["maximized"]:
             self.MainWindow.maximize()
@@ -217,7 +205,7 @@ class NicotineFrame:
         for i in range(self.MainNotebook.get_n_pages()):
             tab_box = self.MainNotebook.get_nth_page(i)
             placehold_tab_label = self.MainNotebook.get_tab_label(tab_box)
-            eventbox_name = Gtk.Buildable.get_name(placehold_tab_label)
+            eventbox_name = Gtk.Buildable.get_buildable_id(placehold_tab_label)
 
             # Initialize the image label
             tab_label = ImageLabel(
@@ -237,9 +225,9 @@ class NicotineFrame:
 
             # Set the menu to hide the tab
             popup_id = eventbox_name + "Menu"
-            tab_label.connect('button_press_event', self.on_tab_click, popup_id)
+            """tab_label.connect('button_press_event', self.on_tab_click, popup_id)
             tab_label.connect('popup_menu', self.on_tab_popup, popup_id)
-            tab_label.connect('touch_event', self.on_tab_click, popup_id)
+            tab_label.connect('touch_event', self.on_tab_click, popup_id)"""
 
             self.__dict__[eventbox_name + "Menu"] = popup = PopupMenu(self)
             popup.setup(
@@ -374,24 +362,6 @@ class NicotineFrame:
         # Check command line option and config option
         if not start_hidden and not config["ui"]["startup_hidden"]:
             self.MainWindow.present_with_time(Gdk.CURRENT_TIME)
-
-        """ Plugins: loaded here to ensure all requirements are initialized """
-
-        self.np.pluginhandler = PluginHandler(self, plugins, self.np.config)
-
-        """ Connect """
-
-        if self.np.config.need_config():
-            self.connect_action.set_enabled(False)
-            self.rescan_public_action.set_enabled(True)
-
-            # Set up fast configure dialog
-            self.on_fast_configure()
-
-        elif config["server"]["auto_connect_startup"]:
-            self.on_connect()
-
-        self.update_bandwidth()
 
     """ Window """
 
@@ -1316,7 +1286,7 @@ class NicotineFrame:
         end_widget.add(self.HeaderMenu)
 
         key, mod = Gtk.accelerator_parse("F10")
-        self.HeaderMenu.add_accelerator("clicked", self.accel_group, key, mod, Gtk.AccelFlags.VISIBLE)
+        self.HeaderMenu.add_shortcut("clicked", self.accel_group, key, mod, Gtk.AccelFlags.VISIBLE)
 
         header_bar = self.__dict__["Header" + page_id]
         header_bar.set_title(GLib.get_application_name())
@@ -1363,7 +1333,7 @@ class NicotineFrame:
         """ Remove the current CSD headerbar, and show the regular titlebar """
 
         key, mod = Gtk.accelerator_parse("F10")
-        self.HeaderMenu.remove_accelerator(self.accel_group, key, mod)
+        self.HeaderMenu.remove_shortcut(self.accel_group, key, mod)
 
         self.MainWindow.unrealize()
         self.MainWindow.set_titlebar(None)

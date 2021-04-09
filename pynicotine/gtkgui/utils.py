@@ -59,20 +59,26 @@ def load_ui_elements(ui_class, filename):
     try:
         builder = Gtk.Builder()
 
+        for j in dir(ui_class):
+            try:
+                if not j.startswith("_"):
+                    builder.get_scope().add_callback_symbol(j, getattr(ui_class, j))
+
+            except TypeError:
+                pass
+
         builder.set_translation_domain('nicotine')
         builder.add_from_file(filename)
 
         for i in builder.get_objects():
             try:
-                obj_name = Gtk.Buildable.get_name(i)
+                obj_name = Gtk.Buildable.get_buildable_id(i)
 
                 if not obj_name.startswith("_"):
                     ui_class.__dict__[obj_name] = i
 
             except TypeError:
                 pass
-
-        builder.connect_signals(ui_class)
 
     except Exception as e:
         log.add_warning(_("Failed to load ui file %(file)s: %(error)s"), {
@@ -282,9 +288,9 @@ def hide_columns(treeview, cols, config):
 
     for (column_id, column) in cols.items():
         parent = column.get_widget().get_ancestor(Gtk.Button)
-        if parent:
-            parent.connect('button_press_event', press_header)
-            parent.connect('touch_event', press_header)
+        #if parent:
+            #parent.connect('button_press_event', press_header)
+            #parent.connect('touch_event', press_header)
 
         # Read Show / Hide column settings from last session
         if config:
@@ -694,7 +700,7 @@ class ImageLabel(Gtk.Box):
         self.onclose = onclose
 
         self.label = Gtk.Label()
-        self.label.set_angle(angle)
+        #self.label.set_angle(angle)
         self.label.set_halign(Gtk.Align.START)
         self.label.set_hexpand(True)
         self.label.show()
@@ -726,13 +732,13 @@ class ImageLabel(Gtk.Box):
 
             self.eventbox.remove(self.box)
 
-        self.eventbox = Gtk.EventBox()
+        self.eventbox = Gtk.Box()
         self.eventbox.show()
-        self.add(self.eventbox)
+        self.append(self.eventbox)
 
         self.box = Gtk.Box()
         self.box.set_spacing(2)
-        self.eventbox.add(self.box)
+        self.eventbox.append(self.box)
 
         if self.angle in (90, -90):
             self.set_orientation(Gtk.Orientation.VERTICAL)
@@ -747,9 +753,9 @@ class ImageLabel(Gtk.Box):
         self.status_image.set_margin_end(5)
         self.hilite_image.set_margin_start(5)
 
-        self.box.add(self.status_image)
-        self.box.add(self.label)
-        self.box.add(self.hilite_image)
+        self.box.append(self.status_image)
+        self.box.append(self.label)
+        self.box.append(self.hilite_image)
         self.box.show()
 
         if self.closebutton and self.onclose is not None:
@@ -757,7 +763,7 @@ class ImageLabel(Gtk.Box):
 
     def _order_children(self):
 
-        if self.angle == 90:
+        """if self.angle == 90:
             self.box.reorder_child(self.hilite_image, 0)
             self.box.reorder_child(self.label, 1)
             self.box.reorder_child(self.status_image, 2)
@@ -771,7 +777,8 @@ class ImageLabel(Gtk.Box):
             self.box.reorder_child(self.hilite_image, 2)
 
             if hasattr(self, "button"):
-                self.reorder_child(self.button, 1)
+                self.reorder_child(self.button, 1)"""
+        pass
 
     def _add_close_button(self):
 
@@ -878,7 +885,7 @@ class ImageLabel(Gtk.Box):
         return self.status_pixbuf
 
     def set_icon(self, icon_name):
-        self.status_image.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+        self.status_image.set_from_icon_name(icon_name)
 
     def set_text(self, lbl):
         self.set_text_color(notify=None, text=lbl)
@@ -983,9 +990,9 @@ class IconNotebook:
 
         # menu for all tabs
         label_tab_menu = ImageLabel(label)
-        label_tab.connect('button_press_event', self.on_tab_click, page)
+        """label_tab.connect('button_press_event', self.on_tab_click, page)
         label_tab.connect('popup_menu', self.on_tab_popup, page)
-        label_tab.connect('touch_event', self.on_tab_click, page)
+        label_tab.connect('touch_event', self.on_tab_click, page)"""
         label_tab.show()
 
         Gtk.Notebook.append_page_menu(self.notebook, page, label_tab, label_tab_menu)

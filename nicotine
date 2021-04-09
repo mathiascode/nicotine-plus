@@ -66,7 +66,7 @@ You should install Python 3.5 or newer.""") % (e)
         return _("Cannot find %s, please install it.") % "pygobject"
     else:
         try:
-            gi.require_version('Gtk', '3.0')
+            gi.require_version('Gtk', '4.0')
         except ValueError as e:
             return _("""You're using an unsupported version of GTK (%s).
 You should install GTK 3.0 or newer.""") % e
