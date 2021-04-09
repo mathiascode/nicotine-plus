@@ -297,11 +297,11 @@ class NicotineFrame:
 
         """ Tab Visibility/Order """
 
-        """self.set_tab_positions()
+        self.set_tab_positions()
         self.set_main_tabs_reorderable()
         self.set_main_tabs_order()
         self.set_main_tabs_visibility()
-        self.set_last_session_tab()"""
+        self.set_last_session_tab()
 
         """ Disable elements """
 
@@ -349,7 +349,7 @@ class NicotineFrame:
 
         """ Transfer Statistics """
 
-        #self.statistics = Statistics(self, self.np.config)
+        self.statistics = Statistics(self, self.np.config)
 
         """ Tab Signals """
 
@@ -652,10 +652,10 @@ class NicotineFrame:
         if self.autoaway:
             self.autoaway = self.away = False
 
-        self.uploads.conn_close()
-        self.downloads.conn_close()
-        self.searches.wish_list.conn_close()
-        self.userlist.conn_close()
+        #self.uploads.conn_close()
+        #self.downloads.conn_close()
+        #self.searches.wish_list.conn_close()
+        #self.userlist.conn_close()
 
         if self.shutdown:
             # Application is shutting down, stop here
@@ -666,11 +666,11 @@ class NicotineFrame:
 
         self.set_user_status(_("Offline"))
 
-        self.searches.wish_list.interval = 0
+        """self.searches.wish_list.interval = 0
         self.chatrooms.conn_close()
         self.privatechats.conn_close()
         self.userinfo.conn_close()
-        self.userbrowse.conn_close()
+        self.userbrowse.conn_close()"""
 
         # Reset transfer stats (speed, total files/users)
         self.update_bandwidth()
@@ -1272,16 +1272,15 @@ class NicotineFrame:
         # Override link handler with our own
         self.AboutDialog.connect("activate-link", self.on_about_uri)
 
-        if self.images["n"]:
-            self.AboutDialog.set_logo(self.images["n"])
-        else:
-            self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
+        #if self.images["n"]:
+            #self.AboutDialog.set_logo(self.images["n"])
+        #else:
+        self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
 
         self.AboutDialog.set_transient_for(self.MainWindow)
         self.AboutDialog.set_version(version)
 
-        self.AboutDialog.run()
-        self.AboutDialog.destroy()
+        self.AboutDialog.show()
 
     def on_about_uri(self, widget, uri):
         open_uri(uri, self.MainWindow)
@@ -1302,13 +1301,12 @@ class NicotineFrame:
             menu_parent.remove(self.HeaderMenu)
 
         end_widget = self.__dict__[page_id + "End"]
-        end_widget.add(self.HeaderMenu)
+        end_widget.append(self.HeaderMenu)
 
-        key, mod = Gtk.accelerator_parse("F10")
-        self.HeaderMenu.add_shortcut("clicked", self.accel_group, key, mod, Gtk.AccelFlags.VISIBLE)
+        #ok, key, mod = Gtk.accelerator_parse("F10")
+        #self.HeaderMenu.add_shortcut("clicked", key, mod)
 
         header_bar = self.__dict__["Header" + page_id]
-        header_bar.set_title(GLib.get_application_name())
         self.MainWindow.set_titlebar(header_bar)
 
     def set_toolbar(self, page_id):
@@ -1330,12 +1328,12 @@ class NicotineFrame:
         title_widget = self.__dict__[page_id + "Title"]
         title_widget.set_hexpand(True)
         header_bar.set_custom_title(None)
-        toolbar_contents.add(title_widget)
+        toolbar_contents.append(title_widget)
 
         try:
             start_widget = self.__dict__[page_id + "Start"]
             header_bar.remove(start_widget)
-            toolbar_contents.add(start_widget)
+            toolbar_contents.append(start_widget)
 
         except KeyError:
             # No start widget
@@ -1343,7 +1341,7 @@ class NicotineFrame:
 
         end_widget = self.__dict__[page_id + "End"]
         header_bar.remove(end_widget)
-        toolbar_contents.add(end_widget)
+        toolbar_contents.aappend(end_widget)
 
         toolbar.show()
 
@@ -1351,8 +1349,8 @@ class NicotineFrame:
 
         """ Remove the current CSD headerbar, and show the regular titlebar """
 
-        key, mod = Gtk.accelerator_parse("F10")
-        self.HeaderMenu.remove_shortcut(self.accel_group, key, mod)
+        #key, mod = Gtk.accelerator_parse("F10")
+        #self.HeaderMenu.remove_shortcut(self.accel_group, key, mod)
 
         self.MainWindow.unrealize()
         self.MainWindow.set_titlebar(None)
@@ -1379,7 +1377,7 @@ class NicotineFrame:
         try:
             start_widget = self.__dict__[self.current_page_id + "Start"]
             toolbar_contents.remove(start_widget)
-            header_bar.add(start_widget)
+            header_bar.append(start_widget)
 
         except KeyError:
             # No start widget
@@ -1430,7 +1428,10 @@ class NicotineFrame:
         tab_label.set_hilite_image(hilite_icon)
         tab_label.set_text_color(status + 1)
 
-    def on_switch_page(self, notebook, page, page_num):
+    def on_switch_page(self):
+        self.set_active_header_bar("Default")
+
+    """def on_switch_page(self, notebook, page, page_num):
 
         GLib.idle_add(notebook.grab_focus)
 
@@ -1478,7 +1479,7 @@ class NicotineFrame:
             self.set_active_header_bar("UserList")
 
         else:
-            self.set_active_header_bar("Default")
+            self.set_active_header_bar("Default")"""
 
     def on_page_removed(self, main_notebook, child, page_num):
 
@@ -1627,7 +1628,7 @@ class NicotineFrame:
         else:
             expand = True
 
-        #self.MainNotebook.child_set_property(tab_box, "tab-expand", expand)
+        self.MainNotebook.get_page(tab_box).set_property("tab-expand", expand)
         tab_label.set_centered(expand)
 
     def get_tab_position(self, string):
@@ -2514,8 +2515,9 @@ class NicotineFrame:
         self.np.shares.close_shares("buddy")
 
     def save_columns(self):
-        for i in (self.userbrowse, self.userlist, self.chatrooms, self.downloads, self.uploads, self.searches):
-            i.save_columns()
+        """for i in (self.userbrowse, self.userlist, self.chatrooms, self.downloads, self.uploads, self.searches):
+            i.save_columns()"""
+        pass
 
 
 class MainApp(Gtk.Application):

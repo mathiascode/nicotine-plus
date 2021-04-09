@@ -5,7 +5,6 @@
     <property name="title" translatable="yes">File Properties</property>
     <property name="modal">1</property>
     <property name="default-width">600</property>
-    <property name="window-position">center-on-parent</property>
     <child internal-child="vbox">
       <object class="GtkBox">
         <property name="visible">1</property>
