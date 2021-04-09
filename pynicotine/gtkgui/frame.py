@@ -246,15 +246,15 @@ class NicotineFrame:
         self.InterestsTabLabel.set_icon("emblem-default-symbolic")
 
         # Initialise other notebooks
-        self.interests = Interests(self, self.np)
-        self.chatrooms = ChatRooms(self)
-        self.searches = Searches(self)
-        self.downloads = Downloads(self, self.DownloadsTabLabel)
-        self.uploads = Uploads(self, self.UploadsTabLabel)
-        self.userlist = UserList(self)
-        self.privatechats = PrivateChats(self)
-        self.userinfo = UserTabs(self, UserInfo, self.UserInfoNotebookRaw, self.UserInfoTabLabel, "userinfo")
-        self.userbrowse = UserTabs(self, UserBrowse, self.UserBrowseNotebookRaw, self.UserBrowseTabLabel, "userbrowse")
+        self.interests = None#Interests(self, self.np)
+        self.chatrooms = None#ChatRooms(self)
+        self.searches = None#Searches(self)
+        self.downloads = None#Downloads(self, self.DownloadsTabLabel)
+        self.uploads = None#Uploads(self, self.UploadsTabLabel)
+        self.userlist = None#UserList(self)
+        self.privatechats = None#PrivateChats(self)
+        self.userinfo = None#UserTabs(self, UserInfo, self.UserInfoNotebookRaw, self.UserInfoTabLabel, "userinfo")
+        self.userbrowse = None#UserTabs(self, UserBrowse, self.UserBrowseNotebookRaw, self.UserBrowseTabLabel, "userbrowse")
 
         self.update_visuals()
 
@@ -297,11 +297,11 @@ class NicotineFrame:
 
         """ Tab Visibility/Order """
 
-        self.set_tab_positions()
+        """self.set_tab_positions()
         self.set_main_tabs_reorderable()
         self.set_main_tabs_order()
         self.set_main_tabs_visibility()
-        self.set_last_session_tab()
+        self.set_last_session_tab()"""
 
         """ Disable elements """
 
@@ -362,6 +362,24 @@ class NicotineFrame:
         # Check command line option and config option
         if not start_hidden and not config["ui"]["startup_hidden"]:
             self.MainWindow.present_with_time(Gdk.CURRENT_TIME)
+
+        """ Plugins: loaded here to ensure all requirements are initialized """
+
+        self.np.pluginhandler = PluginHandler(self, plugins, self.np.config)
+
+        """ Connect """
+
+        if self.np.config.need_config():
+            self.connect_action.set_enabled(False)
+            self.rescan_public_action.set_enabled(True)
+
+            # Set up fast configure dialog
+            self.on_fast_configure()
+
+        elif config["server"]["auto_connect_startup"]:
+            self.on_connect()
+
+        self.update_bandwidth()
 
     """ Window """
 
@@ -586,13 +604,13 @@ class NicotineFrame:
 
         if not hasattr(self, "global_css_provider"):
 
-            screen = Gdk.Screen.get_default()
+            display = Gdk.Display.get_default()
             self.global_css_provider = Gtk.CssProvider()
             self.global_css_provider.load_from_data(
                 b".toolbar { border-bottom: 1px solid @borders; }"
             )
-            Gtk.StyleContext.add_provider_for_screen(
-                screen, self.global_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            Gtk.StyleContext.add_provider_for_display(
+                display, self.global_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
             )
 
         for widget in self.__dict__.values():
@@ -683,12 +701,12 @@ class NicotineFrame:
         if self.current_tab_label == self.SearchTabLabel:
             GLib.idle_add(self.SearchEntry.grab_focus)
 
-        self.interests.SimilarUsersButton.set_sensitive(status)
+        """self.interests.SimilarUsersButton.set_sensitive(status)
         self.interests.GlobalRecommendationsButton.set_sensitive(status)
         self.interests.RecommendationsButton.set_sensitive(status)
 
         self.downloads.DownloadButtons.set_sensitive(status)
-        self.uploads.UploadButtons.set_sensitive(status)
+        self.uploads.UploadButtons.set_sensitive(status)"""
 
         self.RoomType.set_sensitive(status)
         self.JoinRoomEntry.set_sensitive(status)
@@ -1008,11 +1026,11 @@ class NicotineFrame:
         self.np.config.sections["logging"]["debug"] = not state
 
     def set_show_flags(self, state):
-        for room in self.chatrooms.joinedrooms:
+        """for room in self.chatrooms.joinedrooms:
             self.chatrooms.joinedrooms[room].cols["country"].set_visible(state)
             self.np.config.sections["columns"]["chat_room"][room][1] = int(state)
 
-        self.userlist.cols["country"].set_visible(state)
+        self.userlist.cols["country"].set_visible(state)"""
         self.np.config.sections["columns"]["buddy_list"][1] = int(state)
 
     def on_show_flags(self, action, *args):
@@ -1024,8 +1042,9 @@ class NicotineFrame:
         self.np.config.sections["columns"]["hideflags"] = not state
 
     def set_show_transfer_buttons(self, show):
-        self.downloads.DownloadButtons.set_visible(show)
-        self.uploads.UploadButtons.set_visible(show)
+        #self.downloads.DownloadButtons.set_visible(show)
+        #self.uploads.UploadButtons.set_visible(show)
+        pass
 
     def on_show_transfer_buttons(self, action, *args):
 
@@ -1039,7 +1058,7 @@ class NicotineFrame:
 
         mode = self.verify_buddy_list_mode(mode)
 
-        if self.userlist.Main in self.NotebooksPane.get_children():
+        """if self.userlist.Main in self.NotebooksPane.get_children():
 
             if mode == "always":
                 return
@@ -1083,7 +1102,7 @@ class NicotineFrame:
             self.show_tab(self.userlistvbox)
 
             self.userlist.BuddiesToolbar.hide()
-            self.userlist.UserLabel.show()
+            self.userlist.UserLabel.show()"""
 
     def on_toggle_buddy_list(self, action, state):
         """ Function used to switch around the UI the BuddyList position """
@@ -1608,7 +1627,7 @@ class NicotineFrame:
         else:
             expand = True
 
-        self.MainNotebook.child_set_property(tab_box, "tab-expand", expand)
+        #self.MainNotebook.child_set_property(tab_box, "tab-expand", expand)
         tab_label.set_centered(expand)
 
     def get_tab_position(self, string):
@@ -1646,7 +1665,7 @@ class NicotineFrame:
             tab_label.set_angle(ui["labelmain"])
 
         # Other notebooks
-        self.chatrooms.set_tab_pos(self.get_tab_position(ui["tabrooms"]))
+        """self.chatrooms.set_tab_pos(self.get_tab_position(ui["tabrooms"]))
         self.chatrooms.set_tab_angle(ui["labelrooms"])
 
         self.privatechats.set_tab_pos(self.get_tab_position(ui["tabprivate"]))
@@ -1659,7 +1678,7 @@ class NicotineFrame:
         self.userbrowse.set_tab_angle(ui["labelbrowse"])
 
         self.searches.set_tab_pos(self.get_tab_position(ui["tabsearch"]))
-        self.searches.set_tab_angle(ui["labelsearch"])
+        self.searches.set_tab_angle(ui["labelsearch"])"""
 
     def match_main_notebox(self, tab):
 

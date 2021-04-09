@@ -727,7 +727,7 @@ class ImageLabel(Gtk.Box):
     def _pack_children(self):
 
         if hasattr(self, "box"):
-            for widget in self.box.get_children():
+            for widget in self.box:
                 self.box.remove(widget)
 
             self.eventbox.remove(self.box)
@@ -824,7 +824,7 @@ class ImageLabel(Gtk.Box):
 
     def set_angle(self, angle):
         self.angle = angle
-        self.label.set_angle(self.angle)
+        #self.label.set_angle(self.angle)
         self._remove_close_button()
 
         self._pack_children()

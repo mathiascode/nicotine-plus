@@ -35,7 +35,7 @@ class Tray:
 
     def __init__(self, frame):
 
-        try:
+        """try:
             # Check if AyatanaAppIndicator3 is available
             gi.require_version('AyatanaAppIndicator3', '0.1')
             from gi.repository import AyatanaAppIndicator3
@@ -52,8 +52,9 @@ class Tray:
                 # No AppIndicator support, fall back to GtkStatusIcon
                 from gi.repository import Gtk
                 self.appindicator = None
-                self.gtk = Gtk
+                self.gtk = Gtk"""
 
+        self.appindicator = None
         self.frame = frame
         self.trayicon = None
         self.custom_icons = False
@@ -265,14 +266,14 @@ class Tray:
                 hide_unhide_item = gtk_menu.get_children()[0]
                 trayicon.set_secondary_activate_target(hide_unhide_item)
 
-            else:
+            #else:
                 # GtkStatusIcon fallback
-                trayicon = self.gtk.StatusIcon()
+                """trayicon = self.gtk.StatusIcon()
                 trayicon.set_tooltip_text(GLib.get_application_name())
                 trayicon.connect("activate", self.on_hide_unhide_window)
-                trayicon.connect("popup-menu", self.on_status_icon_popup)
+                trayicon.connect("popup-menu", self.on_status_icon_popup)"""
 
-            self.trayicon = trayicon
+            self.trayicon = None
 
         """ Set up icons """
 
@@ -285,9 +286,9 @@ class Tray:
         """ Set visible """
         if self.appindicator is not None:
             self.trayicon.set_status(self.appindicator.IndicatorStatus.ACTIVE)
-        else:
+        #else:
             # GtkStatusIcon fallback
-            self.trayicon.set_visible(True)
+            #self.trayicon.set_visible(True)
 
         self.set_image(self.tray_status["status"])
 
@@ -298,9 +299,9 @@ class Tray:
 
         if self.appindicator is not None:
             self.trayicon.set_status(self.appindicator.IndicatorStatus.PASSIVE)
-        else:
+        #else:
             # GtkStatusIcon fallback
-            self.trayicon.set_visible(False)
+            #self.trayicon.set_visible(False)
 
     def show_window(self):
         self.frame.MainWindow.present_with_time(Gdk.CURRENT_TIME)
@@ -348,15 +349,15 @@ class Tray:
 
                 self.trayicon.set_icon_full(icon_name, GLib.get_application_name())
 
-            else:
+            #else:
                 # GtkStatusIcon fallback
-                if self.custom_icons or self.local_icons:
+                """if self.custom_icons or self.local_icons:
                     self.trayicon.set_from_pixbuf(
                         self.frame.images["trayicon_" + icon_name]
                     )
 
                 else:
-                    self.trayicon.set_from_icon_name(GLib.get_prgname() + "-" + icon_name)
+                    self.trayicon.set_from_icon_name(GLib.get_prgname() + "-" + icon_name)"""
 
         except Exception as e:
             log.add_warning(_("ERROR: cannot set trayicon image: %(error)s"), {'error': e})
