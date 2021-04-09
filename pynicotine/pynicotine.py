@@ -1107,8 +1107,8 @@ class NetworkEventProcessor:
             self.watch_user(self.config.sections["server"]["login"])
 
             self.search = Search(self, self.config, self.queue, self.shares.share_dbs, self.ui_callback)
-            self.transfers = transfers.Transfers(self.peerconns, self.queue, self, self.users,
-                                                 self.network_callback, self.ui_callback.notifications, self.pluginhandler)
+            self.transfers = None#transfers.Transfers(self.peerconns, self.queue, self, self.users,
+                             #                    self.network_callback, self.ui_callback.notifications, self.pluginhandler)
             self.shares.set_connected(True)
 
             if msg.ip is not None:
@@ -1120,7 +1120,7 @@ class NetworkEventProcessor:
 
             self.privatechat, self.chatrooms, self.userinfo, self.userbrowse, downloads, uploads, self.userlist, self.interests = self.ui_callback.init_interface(msg)
 
-            self.transfers.set_transfer_views(downloads, uploads)
+            #self.transfers.set_transfer_views(downloads, uploads)
 
             for thing in self.config.sections["interests"]["likes"]:
                 if thing and isinstance(thing, str):

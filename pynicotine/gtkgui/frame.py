@@ -289,11 +289,11 @@ class NicotineFrame:
 
         """ Element Visibility """
 
-        self.set_show_log(not config["logging"]["logcollapsed"])
+        """self.set_show_log(not config["logging"]["logcollapsed"])
         self.set_show_debug(config["logging"]["debug"])
         self.set_show_flags(not config["columns"]["hideflags"])
         self.set_show_transfer_buttons(config["transfers"]["enabletransferbuttons"])
-        self.set_toggle_buddy_list(config["ui"]["buddylistinchatrooms"])
+        self.set_toggle_buddy_list(config["ui"]["buddylistinchatrooms"])"""
 
         """ Tab Visibility/Order """
 
@@ -310,7 +310,7 @@ class NicotineFrame:
 
         """ Log """
 
-        # Popup menu on the log windows
+        """# Popup menu on the log windows
         self.logpopupmenu = PopupMenu(self)
         self.logpopupmenu.setup(
             ("#" + _("Find"), self.on_find_log_window),
@@ -333,7 +333,7 @@ class NicotineFrame:
         self.debugStatistics.set_active((6 in config["logging"]["debugmodes"]))
 
         # Text Search
-        TextSearchBar(self.LogWindow, self.LogSearchBar, self.LogSearchEntry)
+        TextSearchBar(self.LogWindow, self.LogSearchBar, self.LogSearchEntry)"""
 
         """ Scanning """
 
@@ -349,7 +349,7 @@ class NicotineFrame:
 
         """ Transfer Statistics """
 
-        self.statistics = Statistics(self, self.np.config)
+        #self.statistics = Statistics(self, self.np.config)
 
         """ Tab Signals """
 
@@ -417,12 +417,12 @@ class NicotineFrame:
         self.set_widget_online_status(True)
         self.tray.set_away(self.away)
 
-        self.uploads.init_interface(self.np.transfers.uploads)
-        self.downloads.init_interface(self.np.transfers.downloads)
+        #self.uploads.init_interface(self.np.transfers.uploads)
+        #self.downloads.init_interface(self.np.transfers.downloads)
 
-        self.privatechats.login()
-        self.userbrowse.login()
-        self.userinfo.login()
+        #self.privatechats.login()
+        #self.userbrowse.login()
+        #self.userinfo.login()
 
         if msg.banner != "":
             log.add(msg.banner)
@@ -1750,7 +1750,8 @@ class NicotineFrame:
     """ Search """
 
     def set_wishlist_interval(self, msg):
-        self.searches.set_wishlist_interval(msg)
+        #self.searches.set_wishlist_interval(msg)
+        pass
 
     def show_search_result(self, msg, username, country):
         self.searches.show_search_result(msg, username, country)
