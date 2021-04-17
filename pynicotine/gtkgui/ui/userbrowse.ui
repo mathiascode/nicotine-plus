@@ -26,7 +26,6 @@
         <child>
           <object class="GtkPaned">
             <property name="visible">1</property>
-            <property name="can-focus">1</property>
             <child>
               <object class="GtkBox" id="FolderPane">
                 <property name="visible">1</property>
