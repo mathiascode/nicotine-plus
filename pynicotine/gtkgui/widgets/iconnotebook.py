@@ -35,7 +35,7 @@ from pynicotine.config import config
 
 class ImageLabel(Gtk.Box):
 
-    def __init__(self, label="", onclose=None, closebutton=False, angle=0, hilite_image=None, show_hilite_image=True, status_image=None, show_status_image=False):
+    def __init__(self, label="", onclose=None, closebutton=False, angle=0, show_hilite_image=False, show_status_image=False):
 
         Gtk.Box.__init__(self)
         self.set_hexpand(False)
@@ -55,18 +55,19 @@ class ImageLabel(Gtk.Box):
         self.text = label
         self.set_text(self.text)
 
-        self.status_image = Gtk.Image()
-        self.status_pixbuf = None
+        self.icon_start = Gtk.Image()
+        self.icon_start.set_from_pixbuf(None)
+        self.icon_name_start = ""
 
         if show_status_image:
-            self.set_status_image(status_image)
-            self.status_image.show()
+            self.icon_start.show()
 
-        self.hilite_image = Gtk.Image()
-        self.hilite_pixbuf = None
+        self.icon_end = Gtk.Image()
+        self.icon_end.set_from_pixbuf(None)
+        self.icon_name_end = ""
 
         if show_hilite_image:
-            self.set_hilite_image(hilite_image)
+            self.icon_end.show()
 
         self._pack_children()
         self._order_children()
@@ -97,12 +98,12 @@ class ImageLabel(Gtk.Box):
         else:
             self.set_halign(Gtk.Align.FILL)
 
-        self.status_image.set_margin_end(5)
-        self.hilite_image.set_margin_start(5)
+        self.icon_start.set_margin_end(5)
+        self.icon_end.set_margin_start(5)
 
-        self.box.add(self.status_image)
+        self.box.add(self.icon_start)
         self.box.add(self.label)
-        self.box.add(self.hilite_image)
+        self.box.add(self.icon_end)
         self.box.show()
 
         if self.closebutton and self.onclose is not None:
@@ -111,17 +112,17 @@ class ImageLabel(Gtk.Box):
     def _order_children(self):
 
         if self.angle == 90:
-            self.box.reorder_child(self.hilite_image, 0)
+            self.box.reorder_child(self.icon_end, 0)
             self.box.reorder_child(self.label, 1)
-            self.box.reorder_child(self.status_image, 2)
+            self.box.reorder_child(self.icon_start, 2)
 
             if hasattr(self, "button"):
                 self.reorder_child(self.button, 0)
 
         else:
-            self.box.reorder_child(self.status_image, 0)
+            self.box.reorder_child(self.icon_start, 0)
             self.box.reorder_child(self.label, 1)
-            self.box.reorder_child(self.hilite_image, 2)
+            self.box.reorder_child(self.icon_end, 2)
 
             if hasattr(self, "button"):
                 self.reorder_child(self.button, 1)
@@ -162,12 +163,6 @@ class ImageLabel(Gtk.Box):
 
         self._order_children()
 
-    def show_hilite_image(self, show=True):
-        if show and self.get_hilite_image() is not None:
-            self.hilite_image.show()
-        else:
-            self.hilite_image.hide()
-
     def set_angle(self, angle):
         self.angle = angle
         self.label.set_angle(self.angle)
@@ -207,32 +202,41 @@ class ImageLabel(Gtk.Box):
             from html import escape
             self.label.set_markup("<span foreground=\"%s\">%s</span>" % (color, escape(self.text)))
 
-    def set_hilite_image(self, status):
-        self.hilite_pixbuf = status
-        self.hilite_image.set_from_icon_name(status, Gtk.IconSize.BUTTON)
+    def set_show_icon_start(self, show):
+        self.icon_start.set_visible(show)
 
-        self.show_hilite_image()
+    def set_icon_start(self, icon_name):
 
-    def get_hilite_image(self):
-        return self.hilite_pixbuf
-
-    def set_status_image(self, status):
-        if status == self.status_pixbuf:
+        if icon_name == self.icon_name_start:
             return
 
-        if config.sections["ui"]["tab_status_icons"]:
-            self.status_image.show()
+        self.icon_name_start = icon_name
+
+        if icon_name:
+            self.icon_start.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
         else:
-            self.status_image.hide()
+            self.icon_start.set_from_pixbuf(None)
 
-        self.status_pixbuf = status
-        self.status_image.set_from_icon_name(status, Gtk.IconSize.BUTTON)
+    def get_icon_start(self):
+        return self.icon_name_start
 
-    def get_status_image(self):
-        return self.status_pixbuf
+    def set_show_icon_end(self, show):
+        self.icon_end.set_visible(show)
 
-    def set_icon(self, icon_name):
-        self.status_image.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+    def set_icon_end(self, icon_name):
+
+        if icon_name == self.icon_name_end:
+            return
+
+        self.icon_name_end = icon_name
+
+        if icon_name:
+            self.icon_end.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+        else:
+            self.icon_end.set_from_pixbuf(None)
+
+    def get_icon_end(self):
+        return self.icon_name_end
 
     def set_text(self, lbl):
         self.set_text_color(notify=None, text=lbl)
@@ -289,33 +293,32 @@ class IconNotebook:
 
         self.reorderable = reorderable
 
-        for i in range(self.notebook.get_n_pages()):
-            page = self.notebook.get_nth_page(i)
+        for page in self.notebook.get_children():
             self.notebook.set_tab_reorderable(page, self.reorderable)
 
     def set_tab_closers(self, closers):
 
         self.tabclosers = closers
 
-        for i in range(self.notebook.get_n_pages()):
-            page = self.notebook.get_nth_page(i)
+        for page in self.notebook.get_children():
             tab_label, menu_label = self.get_labels(page)
-
             tab_label.set_onclose(self.tabclosers)
 
     def show_hilite_images(self, show_image=True):
 
         self._show_hilite_image = show_image
 
-        for i in range(self.notebook.get_n_pages()):
-            page = self.notebook.get_nth_page(i)
+        for page in self.notebook.get_children():
             tab_label, menu_label = self.get_labels(page)
-
-            tab_label.show_hilite_image(self._show_hilite_image)
+            tab_label.set_show_icon_end(show_image)
 
     def show_status_images(self, show_image=True):
 
         self._show_status_image = show_image
+
+        for page in self.notebook.get_children():
+            tab_label, menu_label = self.get_labels(page)
+            tab_label.set_show_icon_start(show_image)
 
     def set_tab_angle(self, angle):
 
@@ -324,10 +327,8 @@ class IconNotebook:
 
         self.angle = angle
 
-        for i in range(self.notebook.get_n_pages()):
-            page = self.notebook.get_nth_page(i)
+        for page in self.notebook.get_children():
             tab_label, menu_label = self.get_labels(page)
-
             tab_label.set_angle(angle)
 
     def set_tab_pos(self, pos):
@@ -341,9 +342,9 @@ class IconNotebook:
         label_tab = ImageLabel(
             label, onclose, closebutton=closebutton, angle=angle,
             show_hilite_image=self._show_hilite_image,
-            status_image="offline",
             show_status_image=self._show_status_image
         )
+        label_tab.set_icon_start("nicotine-plus-status-offline")
 
         if fulltext is None:
             fulltext = label
@@ -419,14 +420,14 @@ class IconNotebook:
         tab_label, menu_label = self.get_labels(page)
 
         if status == 1:
-            image_name = "away"
+            icon_name = "nicotine-plus-status-away"
         elif status == 2:
-            image_name = "online"
+            icon_name = "nicotine-plus-status-online"
         else:
-            image_name = "offline"
+            icon_name = "nicotine-plus-status-offline"
 
-        tab_label.set_status_image(image_name)
-        menu_label.set_status_image(image_name)
+        tab_label.set_icon_start(icon_name)
+        menu_label.set_icon_start(icon_name)
 
     def set_user_status(self, page, user, status):
 
@@ -451,20 +452,20 @@ class IconNotebook:
     def set_hilite_image(self, page, status):
 
         tab_label, menu_label = self.get_labels(page)
-        image = None
+        icon_name = ""
 
         if status > 0:
-            image = ("hilite-notify", "hilite-default")[status - 1]
+            icon_name = ("nicotine-plus-hilite-notify", "nicotine-plus-hilite-default")[status - 1]
 
-        if status == 1 and tab_label.get_hilite_image() == "hilite-default":
+        if status == 1 and tab_label.get_icon_end() == "nicotine-plus-hilite-default":
             # Chat mentions have priority over normal notifications
             return
 
-        tab_label.set_hilite_image(image)
-        menu_label.set_hilite_image(image)
+        tab_label.set_icon_end(icon_name)
+        menu_label.set_icon_end(icon_name)
 
         # Determine if button for unread notifications should be shown
-        if image:
+        if icon_name:
             if page not in self.unread_pages:
                 self.unread_pages.append(page)
                 self.unread_button.show()

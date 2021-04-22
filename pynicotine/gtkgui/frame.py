@@ -1331,7 +1331,7 @@ class NicotineFrame:
             )
             setattr(self, tab_label_id, tab_label)
 
-            tab_label.set_icon(tab_icon_name)
+            tab_label.set_icon_start(tab_icon_name)
             tab_label.set_text_color()
 
             # Replace previous placeholder label
@@ -1360,14 +1360,14 @@ class NicotineFrame:
         else:
             hilite_icon = "hilite-notify"
 
-            if tab_label.get_hilite_image() == "hilite-default":
+            if tab_label.get_icon_end() == "hilite-default":
                 # Chat mentions have priority over normal notifications
                 return
 
-        if hilite_icon == tab_label.get_hilite_image():
+        if hilite_icon == tab_label.get_icon_end():
             return
 
-        tab_label.set_hilite_image(hilite_icon)
+        tab_label.set_icon_end(hilite_icon)
         tab_label.set_text_color(status + 1)
 
     def on_switch_page(self, notebook, page, page_num):
@@ -1388,7 +1388,7 @@ class NicotineFrame:
 
         if tab_label is not None:
             # Defaults
-            tab_label.set_hilite_image(None)
+            tab_label.set_icon_end("")
             tab_label.set_text_color(0)
 
         if tab_label == self.ChatTabLabel:
@@ -2304,14 +2304,12 @@ class NicotineFrame:
             w.show_status_images(config.sections["ui"]["tab_status_icons"])
 
         # Main notebook
-        for i in range(self.MainNotebook.get_n_pages()):
-            tab_box = self.MainNotebook.get_nth_page(i)
-            tab_label = self.MainNotebook.get_tab_label(tab_box)
-
-            tab_label.show_hilite_image(config.sections["notifications"]["notification_tab_icons"])
+        for page in self.MainNotebook.get_children():
+            tab_label = self.MainNotebook.get_tab_label(page)
+            tab_label.set_show_icon_end(config.sections["notifications"]["notification_tab_icons"])
             tab_label.set_text_color(0)
 
-            self.MainNotebook.set_tab_reorderable(tab_box, config.sections["ui"]["tab_reorderable"])
+            self.MainNotebook.set_tab_reorderable(page, config.sections["ui"]["tab_reorderable"])
 
         self.set_tab_positions()
 
