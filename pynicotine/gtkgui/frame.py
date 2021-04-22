@@ -30,7 +30,6 @@ import time
 
 import gi
 from gi.repository import Gdk
-from gi.repository import GdkPixbuf
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -168,10 +167,7 @@ class NicotineFrame:
 
         self.load_icons()
 
-        if self.images["n"]:
-            self.MainWindow.set_default_icon(self.images["n"])
-        else:
-            self.MainWindow.set_default_icon_name(GLib.get_prgname())
+        self.MainWindow.set_default_icon_name(GLib.get_prgname())
 
         """ Window Properties """
 
@@ -407,81 +403,9 @@ class NicotineFrame:
         except (ImportError, ValueError):
             self.spell_checker = False
 
-    def load_pixbuf_from_path(self, path):
-
-        with open(path, 'rb') as f:
-            loader = GdkPixbuf.PixbufLoader()
-            loader.write(f.read())
-            loader.close()
-            return loader.get_pixbuf()
-
-    def get_flag_image(self, country):
-
-        if not country:
-            return None
-
-        country = country.lower().replace("flag_", "")
-
-        try:
-            if country not in self.flag_images:
-                self.flag_images[country] = self.load_pixbuf_from_path(
-                    os.path.join(self.gui_dir, "icons", "flags", country + ".svg")
-                )
-
-        except Exception:
-            return None
-
-        return self.flag_images[country]
-
-    def load_ui_icon(self, name):
-        """ Load icon required by the UI """
-
-        try:
-            return self.load_pixbuf_from_path(
-                os.path.join(self.gui_dir, "icons", name + ".svg")
-            )
-
-        except Exception:
-            return None
-
-    def load_custom_icons(self, names):
-        """ Load custom icon theme if one is selected """
-
-        if config.sections["ui"].get("icontheme"):
-            log.add_debug("Loading custom icons when available")
-            extensions = ["jpg", "jpeg", "bmp", "png", "svg"]
-
-            for name in names:
-                path = None
-                exts = extensions[:]
-                loaded = False
-
-                while not path or (exts and not loaded):
-                    path = os.path.expanduser(os.path.join(config.sections["ui"]["icontheme"], "%s.%s" % (name, exts.pop())))
-
-                    if os.path.isfile(path):
-                        try:
-                            self.images[name] = self.load_pixbuf_from_path(path)
-                            loaded = True
-
-                        except Exception as e:
-                            log.add(_("Error loading custom icon %(path)s: %(error)s"), {
-                                "path": path,
-                                "error": str(e)
-                            })
-
-                if name not in self.images:
-                    self.images[name] = self.load_ui_icon(name)
-
-            return True
-
-        return False
-
-    def load_local_icons(self):
+    def load_local_icons(self, icon_theme):
         """ Attempt to load local window, notification and tray icons.
         If not found, system-wide icons will be used instead. """
-
-        app_id = GLib.get_prgname()
 
         if hasattr(sys, "real_prefix") or sys.base_prefix != sys.prefix:
             # Virtual environment
@@ -493,81 +417,32 @@ class NicotineFrame:
         log.add_debug("Loading local icons, using path %s", icon_path)
 
         # Window and notification icons
-        try:
-            scandir = os.scandir(icon_path)
-
-            for entry in scandir:
-                if entry.is_file() and entry.name == app_id + ".svg":
-                    log.add_debug("Detected Nicotine+ icon: %s", entry.name)
-
-                    try:
-                        scandir.close()
-                    except AttributeError:
-                        # Python 3.5 compatibility
-                        pass
-
-                    for name in ("n", "notify"):
-                        self.images[name] = self.load_pixbuf_from_path(entry.path)
-
-        except FileNotFoundError:
-            pass
+        icon_theme.append_search_path(icon_path)
 
         # Tray icons
         if icon_path.endswith("files"):
             icon_path = os.path.join(icon_path, "icons", "tray")
-
-        for name in ("away", "connect", "disconnect", "msg"):
-            try:
-                scandir = os.scandir(icon_path)
-
-                for entry in scandir:
-                    if entry.is_file() and entry.name == app_id + "-" + name + ".svg":
-                        log.add_debug("Detected tray icon: %s", entry.name)
-
-                        try:
-                            scandir.close()
-                        except AttributeError:
-                            # Python 3.5 compatibility
-                            pass
-
-                        self.images["trayicon_" + name] = self.load_pixbuf_from_path(entry.path)
-
-            except FileNotFoundError:
-                pass
+            icon_theme.append_search_path(icon_path)
 
     def load_icons(self):
         """ Load custom icons necessary for Nicotine+ to function """
 
-        self.images = {}
-        self.flag_images = {}
-
-        names = [
-            "away",
-            "online",
-            "offline",
-            "hilite",
-            "hilite3",
-            "trayicon_away",
-            "trayicon_connect",
-            "trayicon_disconnect",
-            "trayicon_msg",
-            "n",
-            "notify"
-        ]
+        icon_theme = Gtk.IconTheme.get_default()
 
         """ Load custom icon theme if available """
 
-        if self.load_custom_icons(names):
-            return
+        custom_path = config.sections["ui"].get("icontheme")
+        if custom_path:
+            icon_theme.prepend_search_path(custom_path)
 
         """ Load icons required by Nicotine+, such as status icons """
 
-        for name in names:
-            self.images[name] = self.load_ui_icon(name)
+        icon_theme.append_search_path(os.path.join(self.gui_dir, "icons"))
+        icon_theme.append_search_path(os.path.join(self.gui_dir, "icons", "flags"))
 
         """ Load local icons, if available """
 
-        self.load_local_icons()
+        self.load_local_icons(icon_theme)
 
     def update_visuals(self):
 
@@ -1288,10 +1163,7 @@ class NicotineFrame:
         self.AboutDialog.connect("activate-link", self.on_about_uri)
         self.AboutDialog.connect("response", lambda x, y: x.destroy())
 
-        if self.images["n"]:
-            self.AboutDialog.set_logo(self.images["n"])
-        else:
-            self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
+        self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
 
         self.AboutDialog.set_transient_for(self.MainWindow)
         self.AboutDialog.set_version(version)
@@ -1479,11 +1351,11 @@ class NicotineFrame:
             return
 
         if status == 1:
-            hilite_icon = self.images["hilite"]
+            hilite_icon = "hilite"
         else:
-            hilite_icon = self.images["hilite3"]
+            hilite_icon = "hilite3"
 
-            if tab_label.get_hilite_image() == self.images["hilite"]:
+            if tab_label.get_hilite_image() == "hilite":
                 # Chat mentions have priority over normal notifications
                 return
 
@@ -2091,13 +1963,21 @@ class NicotineFrame:
 
         self.focus_combobox(parent)
 
+    def get_flag_image(self, country):
+
+        if not country:
+            return ""
+
+        return country.lower().replace("flag_", "")
+
     def get_status_image(self, status):
+
         if status == 1:
-            return self.images["away"]
+            return "away"
         elif status == 2:
-            return self.images["online"]
+            return "online"
         else:
-            return self.images["offline"]
+            return "offline"
 
     def has_user_flag(self, user, country):
 

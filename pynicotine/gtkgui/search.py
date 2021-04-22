@@ -73,7 +73,6 @@ class Searches(IconNotebook):
 
         IconNotebook.__init__(
             self,
-            self.frame.images,
             angle=config.sections["ui"]["labelsearch"],
             tabclosers=config.sections["ui"]["tabclosers"],
             show_hilite_image=config.sections["notifications"]["notification_tab_icons"],
@@ -396,7 +395,7 @@ class Search:
         self.resultsmodel = Gtk.TreeStore(
             GObject.TYPE_UINT64,  # (0)  num
             str,                  # (1)  user
-            GObject.TYPE_OBJECT,  # (2)  flag
+            str,                  # (2)  flag
             str,                  # (3)  immediatedl
             str,                  # (4)  h_speed
             str,                  # (5)  h_queue
@@ -652,7 +651,7 @@ class Search:
                 [
                     GObject.Value(GObject.TYPE_UINT64, counter),
                     user,
-                    GObject.Value(GObject.TYPE_OBJECT, self.frame.get_flag_image(country)),
+                    self.frame.get_flag_image(country),
                     imdl,
                     h_speed,
                     h_queue,

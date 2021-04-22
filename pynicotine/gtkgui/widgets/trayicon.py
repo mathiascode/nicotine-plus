@@ -382,9 +382,7 @@ class TrayIcon:
             else:
                 # GtkStatusIcon fallback
                 if self.custom_icons or self.local_icons:
-                    self.trayicon.set_from_pixbuf(
-                        self.frame.images["trayicon_" + icon_name]
-                    )
+                    self.trayicon.set_from_icon_name("trayicon_" + icon_name)
 
                 else:
                     self.trayicon.set_from_icon_name(GLib.get_prgname() + "-" + icon_name)

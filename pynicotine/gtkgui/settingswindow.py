@@ -1328,17 +1328,17 @@ class IconsFrame(BuildFrame):
             }
         }
 
-        self.N.set_from_pixbuf(self.frame.images["n"])
-        self.Away.set_from_pixbuf(self.frame.images["away"])
-        self.Online.set_from_pixbuf(self.frame.images["online"])
-        self.Offline.set_from_pixbuf(self.frame.images["offline"])
-        self.Hilite.set_from_pixbuf(self.frame.images["hilite"])
-        self.Hilite3.set_from_pixbuf(self.frame.images["hilite3"])
-        self.Trayicon_Away.set_from_pixbuf(self.frame.images["trayicon_away"])
-        self.Trayicon_Connect.set_from_pixbuf(self.frame.images["trayicon_connect"])
-        self.Trayicon_Disconnect.set_from_pixbuf(self.frame.images["trayicon_disconnect"])
-        self.Trayicon_Msg.set_from_pixbuf(self.frame.images["trayicon_msg"])
-        self.Notify.set_from_pixbuf(self.frame.images["notify"])
+        self.N.set_from_icon_name("org.nicotine_plus.Nicotine", Gtk.IconSize.DIALOG)
+        self.Away.set_from_icon_name("away", Gtk.IconSize.BUTTON)
+        self.Online.set_from_icon_name("online", Gtk.IconSize.BUTTON)
+        self.Offline.set_from_icon_name("offline", Gtk.IconSize.BUTTON)
+        self.Hilite.set_from_icon_name("hilite", Gtk.IconSize.BUTTON)
+        self.Hilite3.set_from_icon_name("hilite3", Gtk.IconSize.BUTTON)
+        self.Trayicon_Away.set_from_icon_name("trayicon_away", Gtk.IconSize.BUTTON)
+        self.Trayicon_Connect.set_from_icon_name("trayicon_connect", Gtk.IconSize.BUTTON)
+        self.Trayicon_Disconnect.set_from_icon_name("trayicon_disconnect", Gtk.IconSize.BUTTON)
+        self.Trayicon_Msg.set_from_icon_name("trayicon_msg", Gtk.IconSize.BUTTON)
+        self.Notify.set_from_icon_name("notify", Gtk.IconSize.DIALOG)
 
     def set_settings(self):
 

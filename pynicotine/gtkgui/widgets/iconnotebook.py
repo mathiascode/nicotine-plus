@@ -207,17 +207,17 @@ class ImageLabel(Gtk.Box):
             from html import escape
             self.label.set_markup("<span foreground=\"%s\">%s</span>" % (color, escape(self.text)))
 
-    def set_hilite_image(self, pixbuf):
-        self.hilite_pixbuf = pixbuf
-        self.hilite_image.set_from_pixbuf(pixbuf)
+    def set_hilite_image(self, status):
+        self.hilite_pixbuf = status
+        self.hilite_image.set_from_icon_name(status, Gtk.IconSize.BUTTON)
 
         self.show_hilite_image()
 
     def get_hilite_image(self):
         return self.hilite_pixbuf
 
-    def set_status_image(self, pixbuf):
-        if pixbuf is self.status_pixbuf:
+    def set_status_image(self, status):
+        if status == self.status_pixbuf:
             return
 
         if config.sections["ui"]["tab_status_icons"]:
@@ -225,8 +225,8 @@ class ImageLabel(Gtk.Box):
         else:
             self.status_image.hide()
 
-        self.status_pixbuf = pixbuf
-        self.status_image.set_from_pixbuf(pixbuf)
+        self.status_pixbuf = status
+        self.status_image.set_from_icon_name(status, Gtk.IconSize.BUTTON)
 
     def get_status_image(self):
         return self.status_pixbuf
@@ -248,7 +248,7 @@ class IconNotebook:
     - You can choose the label orientation (angle).
     """
 
-    def __init__(self, images, angle=0, tabclosers=False, show_hilite_image=True, reorderable=True, show_status_image=False, notebookraw=None):
+    def __init__(self, angle=0, tabclosers=False, show_hilite_image=True, reorderable=True, show_status_image=False, notebookraw=None):
 
         # We store the real Gtk.Notebook object
         self.notebook = notebookraw
@@ -257,7 +257,6 @@ class IconNotebook:
         self.tabclosers = tabclosers
         self.reorderable = reorderable
 
-        self.images = images
         self._show_hilite_image = show_hilite_image
         self._show_status_image = show_status_image
 
@@ -342,7 +341,7 @@ class IconNotebook:
         label_tab = ImageLabel(
             label, onclose, closebutton=closebutton, angle=angle,
             show_hilite_image=self._show_hilite_image,
-            status_image=self.images["offline"],
+            status_image="offline",
             show_status_image=self._show_status_image
         )
 
@@ -426,10 +425,8 @@ class IconNotebook:
         else:
             image_name = "offline"
 
-        image = self.images[image_name]
-
-        tab_label.set_status_image(image)
-        menu_label.set_status_image(image)
+        tab_label.set_status_image(image_name)
+        menu_label.set_status_image(image_name)
 
     def set_user_status(self, page, user, status):
 
@@ -457,9 +454,9 @@ class IconNotebook:
         image = None
 
         if status > 0:
-            image = self.images[("hilite3", "hilite")[status - 1]]
+            image = ("hilite3", "hilite")[status - 1]
 
-        if status == 1 and tab_label.get_hilite_image() == self.images["hilite"]:
+        if status == 1 and tab_label.get_hilite_image() == "hilite":
             # Chat mentions have priority over normal notifications
             return
 

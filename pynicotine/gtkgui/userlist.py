@@ -59,8 +59,8 @@ class UserList:
 
         self.user_iterators = {}
         self.usersmodel = Gtk.ListStore(
-            GObject.TYPE_OBJECT,  # (0)  status icon
-            GObject.TYPE_OBJECT,  # (1)  flag
+            str,                  # (0)  status icon
+            str,                  # (1)  flag
             str,                  # (2)  username
             str,                  # (3)  hspeed
             str,                  # (4)  hfile count
@@ -140,8 +140,8 @@ class UserList:
 
             username = str(username)
             row = [
-                GObject.Value(GObject.TYPE_OBJECT, self.frame.get_status_image(0)),
-                GObject.Value(GObject.TYPE_OBJECT, self.frame.get_flag_image(country)),
+                self.frame.get_status_image(0),
+                self.frame.get_flag_image(country),
                 username,
                 "",
                 "",
@@ -275,7 +275,7 @@ class UserList:
         for i in self.usersmodel:
             iterator = i.iter
 
-            self.usersmodel.set_value(iterator, 0, GObject.Value(GObject.TYPE_OBJECT, self.frame.get_status_image(0)))
+            self.usersmodel.set_value(iterator, 0, self.frame.get_status_image(0))
             self.usersmodel.set_value(iterator, 3, "")
             self.usersmodel.set_value(iterator, 4, "")
             self.usersmodel.set_value(iterator, 10, 0)
@@ -382,7 +382,7 @@ class UserList:
             self.frame.notifications.new_notification(status_text % user)
 
         img = self.frame.get_status_image(status)
-        self.usersmodel.set_value(iterator, 0, GObject.Value(GObject.TYPE_OBJECT, img))
+        self.usersmodel.set_value(iterator, 0, img)
         self.usersmodel.set_value(iterator, 10, GObject.Value(GObject.TYPE_INT64, status))
 
         if status:  # online
@@ -414,7 +414,7 @@ class UserList:
         if iterator is None:
             return
 
-        self.usersmodel.set_value(iterator, 1, GObject.Value(GObject.TYPE_OBJECT, self.frame.get_flag_image(country)))
+        self.usersmodel.set_value(iterator, 1, self.frame.get_flag_image(country))
         self.usersmodel.set_value(iterator, 14, "flag_" + country)
 
     def add_to_list(self, user):
@@ -428,8 +428,8 @@ class UserList:
         self.user_iterators[user] = self.usersmodel.insert_with_valuesv(
             -1, self.column_numbers,
             [
-                GObject.Value(GObject.TYPE_OBJECT, self.frame.get_status_image(0)),
-                GObject.Value(GObject.TYPE_OBJECT, None),
+                self.frame.get_status_image(0),
+                empty_str,
                 user,
                 empty_str,
                 empty_str,
