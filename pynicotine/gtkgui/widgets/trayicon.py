@@ -58,9 +58,6 @@ class TrayIcon:
 
         self.frame = frame
         self.trayicon = None
-        self.custom_icons = False
-        self.local_icons = False
-        self.final_icon_path = None
         self.tray_status = {
             "status": "disconnect",
             "last": "disconnect"
@@ -221,25 +218,15 @@ class TrayIcon:
             time = Gtk.get_current_event_time()
             self.tray_popup_menu.popup(None, None, None, None, button, time)
 
-    def check_icon_path(self, icon_name, icon_path, icon_type="local"):
+    def check_icon_path(self, icon_name, icon_path):
 
-        """
-        Check if tray icons exist in the specified icon path.
-        There are two naming schemes for tray icons:
-        - System-wide/local icons: "org.nicotine_plus.Nicotine-<icon_name>"
-        - Custom icons: "trayicon_<icon_name>"
-        """
-
-        if icon_type == "local":
-            icon_scheme = GLib.get_prgname() + "-" + icon_name + "."
-        else:
-            icon_scheme = "trayicon_" + icon_name + "."
+        """ Check if tray icons exist in the specified icon path. """
 
         try:
             scandir = os.scandir(icon_path)
 
             for entry in scandir:
-                if entry.is_file() and entry.name.startswith(icon_scheme):
+                if entry.is_file() and entry.name.startswith(icon_name):
                     try:
                         scandir.close()
                     except AttributeError:
@@ -259,27 +246,22 @@ class TrayIcon:
         system-wide icons. """
 
         custom_icon_path = config.sections["ui"]["icontheme"]
+        tray_icons = ["nicotine-plus-tray-away", "nicotine-plus-tray-connect", "nicotine-plus-tray-disconnect", "nicotine-plus-tray-message"]
+        system_icons = Gtk.IconTheme.get_default().list_icons()
 
-        if hasattr(sys, "real_prefix") or sys.base_prefix != sys.prefix:
-            # Virtual environment
-            local_icon_path = os.path.join(sys.prefix, "share", "icons", "hicolor", "scalable", "apps")
-        else:
-            # Git folder
-            local_icon_path = os.path.abspath(os.path.join(self.frame.gui_dir, "..", "..", "files", "icons", "tray"))
-
-        for icon_name in ("away", "connect", "disconnect", "msg"):
+        for icon_name in tray_icons:
 
             # Check if custom icons exist
-            if self.check_icon_path(icon_name, custom_icon_path, icon_type="custom"):
-                self.custom_icons = True
+            if self.check_icon_path(icon_name, custom_icon_path):
                 return custom_icon_path
 
-            # Check if local icons exist
-            if self.check_icon_path(icon_name, local_icon_path, icon_type="local"):
-                self.local_icons = True
-                return local_icon_path
+        for icon_name in tray_icons:
 
-        return None
+            if icon_name in system_icons:
+                # Prefer icons from system icon themes
+                return None
+
+        return os.path.join(self.frame.gui_dir, "icons", "tray")
 
     def load(self):
 
@@ -307,11 +289,15 @@ class TrayIcon:
 
         """ Set up icons """
 
-        self.final_icon_path = self.get_final_icon_path()
+        final_icon_path = self.get_final_icon_path()
 
         # If custom icon path was found, use it, otherwise we fall back to system icons
-        if self.appindicator is not None and self.final_icon_path:
-            self.trayicon.set_icon_theme_path(self.final_icon_path)
+        if self.appindicator is not None:
+            if final_icon_path:
+                self.trayicon.set_icon_theme_path(final_icon_path)
+        else:
+            # GtkStatusIcon fallback
+            Gtk.IconTheme.get_default().append_search_path(os.path.join(self.frame.gui_dir, "icons", "tray"))
 
         """ Set visible """
         if self.appindicator is not None:
@@ -363,7 +349,7 @@ class TrayIcon:
 
             # Check for hilites, and display hilite icon if there is a room or private hilite
             if self.frame.hilites["rooms"] or self.frame.hilites["private"]:
-                icon_name = "msg"
+                icon_name = "message"
             else:
                 # If there is no hilite, display the status
                 icon_name = self.tray_status["status"]
@@ -371,21 +357,14 @@ class TrayIcon:
             if icon_name != self.tray_status["last"]:
                 self.tray_status["last"] = icon_name
 
-            if self.appindicator is not None:
-                if self.custom_icons:
-                    icon_name = "trayicon_" + icon_name
-                else:
-                    icon_name = GLib.get_prgname() + "-" + icon_name
+            icon_name = "nicotine-plus-tray-" + icon_name
 
+            if self.appindicator is not None:
                 self.trayicon.set_icon_full(icon_name, GLib.get_application_name())
 
             else:
                 # GtkStatusIcon fallback
-                if self.custom_icons or self.local_icons:
-                    self.trayicon.set_from_icon_name("trayicon_" + icon_name)
-
-                else:
-                    self.trayicon.set_from_icon_name(GLib.get_prgname() + "-" + icon_name)
+                self.trayicon.set_from_icon_name(icon_name)
 
         except Exception as e:
             log.add_warning(_("ERROR: cannot set trayicon image: %(error)s"), {'error': e})

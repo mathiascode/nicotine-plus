@@ -28,6 +28,7 @@ import sys
 import time
 
 from gi.repository import Gdk
+from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
 
@@ -1328,17 +1329,17 @@ class IconsFrame(BuildFrame):
             }
         }
 
-        self.N.set_from_icon_name("org.nicotine_plus.Nicotine", Gtk.IconSize.DIALOG)
-        self.Away.set_from_icon_name("away", Gtk.IconSize.BUTTON)
-        self.Online.set_from_icon_name("online", Gtk.IconSize.BUTTON)
-        self.Offline.set_from_icon_name("offline", Gtk.IconSize.BUTTON)
-        self.Hilite.set_from_icon_name("hilite", Gtk.IconSize.BUTTON)
-        self.Hilite3.set_from_icon_name("hilite3", Gtk.IconSize.BUTTON)
-        self.Trayicon_Away.set_from_icon_name("trayicon_away", Gtk.IconSize.BUTTON)
-        self.Trayicon_Connect.set_from_icon_name("trayicon_connect", Gtk.IconSize.BUTTON)
-        self.Trayicon_Disconnect.set_from_icon_name("trayicon_disconnect", Gtk.IconSize.BUTTON)
-        self.Trayicon_Msg.set_from_icon_name("trayicon_msg", Gtk.IconSize.BUTTON)
-        self.Notify.set_from_icon_name("notify", Gtk.IconSize.DIALOG)
+        self.N.set_from_icon_name("nicotine-plus-window", Gtk.IconSize.DIALOG)
+        self.Away.set_from_icon_name("nicotine-plus-status-away", Gtk.IconSize.BUTTON)
+        self.Online.set_from_icon_name("nicotine-plus-status-online", Gtk.IconSize.BUTTON)
+        self.Offline.set_from_icon_name("nicotine-plus-status-offline", Gtk.IconSize.BUTTON)
+        self.Hilite.set_from_icon_name("nicotine-plus-hilite-default", Gtk.IconSize.BUTTON)
+        self.Hilite3.set_from_icon_name("nicotine-plus-hilite-notify", Gtk.IconSize.BUTTON)
+        self.Trayicon_Away.set_from_icon_name("nicotine-plus-tray-away", Gtk.IconSize.BUTTON)
+        self.Trayicon_Connect.set_from_icon_name("nicotine-plus-tray-connect", Gtk.IconSize.BUTTON)
+        self.Trayicon_Disconnect.set_from_icon_name("nicotine-plus-tray-disconnect", Gtk.IconSize.BUTTON)
+        self.Trayicon_Msg.set_from_icon_name("nicotine-plus-tray-message", Gtk.IconSize.BUTTON)
+        self.Notify.set_from_icon_name("nicotine-plus-notify", Gtk.IconSize.DIALOG)
 
     def set_settings(self):
 

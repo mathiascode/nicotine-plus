@@ -356,7 +356,7 @@ class Interests:
 
         for user in msg.users:
             iterator = self.recommendation_users_model.insert_with_valuesv(
-                -1, self.recommendation_users_column_numbers, ["offline", user, "0", "0", 0, 0, 0]
+                -1, self.recommendation_users_column_numbers, [self.frame.get_status_image(0), user, "0", "0", 0, 0, 0]
             )
             self.recommendation_users[user] = iterator
 

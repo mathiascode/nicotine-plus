@@ -167,7 +167,12 @@ class NicotineFrame:
 
         self.load_icons()
 
-        self.MainWindow.set_default_icon_name(GLib.get_prgname())
+        window_icon_name = "nicotine-plus-window"
+
+        if window_icon_name in Gtk.IconTheme.get_default().list_icons():
+            self.MainWindow.set_default_icon_name("nicotine-plus-window")
+        else:
+            self.MainWindow.set_default_icon_name(GLib.get_prgname())
 
         """ Window Properties """
 
@@ -404,7 +409,7 @@ class NicotineFrame:
             self.spell_checker = False
 
     def load_local_icons(self, icon_theme):
-        """ Attempt to load local window, notification and tray icons.
+        """ Attempt to load local window and notification icons.
         If not found, system-wide icons will be used instead. """
 
         if hasattr(sys, "real_prefix") or sys.base_prefix != sys.prefix:
@@ -419,11 +424,6 @@ class NicotineFrame:
         # Window and notification icons
         icon_theme.append_search_path(icon_path)
 
-        # Tray icons
-        if icon_path.endswith("files"):
-            icon_path = os.path.join(icon_path, "icons", "tray")
-            icon_theme.append_search_path(icon_path)
-
     def load_icons(self):
         """ Load custom icons necessary for Nicotine+ to function """
 
@@ -433,7 +433,7 @@ class NicotineFrame:
 
         custom_path = config.sections["ui"].get("icontheme")
         if custom_path:
-            icon_theme.prepend_search_path(custom_path)
+            icon_theme.append_search_path(custom_path)
 
         """ Load icons required by Nicotine+, such as status icons """
 
@@ -1163,7 +1163,12 @@ class NicotineFrame:
         self.AboutDialog.connect("activate-link", self.on_about_uri)
         self.AboutDialog.connect("response", lambda x, y: x.destroy())
 
-        self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
+        window_icon_name = "nicotine-plus-window"
+
+        if window_icon_name in Gtk.IconTheme.get_default().list_icons():
+            self.AboutDialog.set_logo_icon_name("nicotine-plus-window")
+        else:
+            self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
 
         self.AboutDialog.set_transient_for(self.MainWindow)
         self.AboutDialog.set_version(version)
@@ -1351,11 +1356,11 @@ class NicotineFrame:
             return
 
         if status == 1:
-            hilite_icon = "hilite"
+            hilite_icon = "hilite-default"
         else:
-            hilite_icon = "hilite3"
+            hilite_icon = "hilite-notify"
 
-            if tab_label.get_hilite_image() == "hilite":
+            if tab_label.get_hilite_image() == "hilite-default":
                 # Chat mentions have priority over normal notifications
                 return
 
@@ -1968,16 +1973,16 @@ class NicotineFrame:
         if not country:
             return ""
 
-        return country.lower().replace("flag_", "")
+        return "nicotine-plus-flag-" + country.lower().replace("flag_", "")
 
     def get_status_image(self, status):
 
         if status == 1:
-            return "away"
+            return "nicotine-plus-status-away"
         elif status == 2:
-            return "online"
+            return "nicotine-plus-status-online"
         else:
-            return "offline"
+            return "nicotine-plus-status-offline"
 
     def has_user_flag(self, user, country):
 

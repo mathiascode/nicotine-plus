@@ -116,16 +116,6 @@ data_files.append(
     )
 )
 
-tray_icons = glob.glob(os.path.join("files", "icons", "tray", "*"))
-
-for icon_name in tray_icons:
-    data_files.append(
-        (
-            "share/icons/hicolor/scalable/apps",
-            [icon_name]
-        )
-    )
-
 # Documentation
 doc_files = glob.glob("[!404.md]*.md") + \
     glob.glob(os.path.join("doc", "*.md")) + \

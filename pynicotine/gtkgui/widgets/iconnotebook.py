@@ -454,9 +454,9 @@ class IconNotebook:
         image = None
 
         if status > 0:
-            image = ("hilite3", "hilite")[status - 1]
+            image = ("hilite-notify", "hilite-default")[status - 1]
 
-        if status == 1 and tab_label.get_hilite_image() == "hilite":
+        if status == 1 and tab_label.get_hilite_image() == "hilite-default":
             # Chat mentions have priority over normal notifications
             return
 
