@@ -109,32 +109,27 @@ def renameprocess(newname, debug=False):
 
     errors = []
 
-    # Renaming ourselves for ps et al.
-    try:
-        import procname
-        procname.setprocname(newname)
-    except Exception:
-        errors.append("Failed procname module")
-
     # Renaming ourselves for pkill et al.
     try:
         import ctypes
         # GNU/Linux style
-        libc = ctypes.CDLL('libc.so.6')
-        libc.prctl(15, ctypes.c_char_p(newname.encode('ascii')), 0, 0, 0)
+        libc = ctypes.CDLL(None)
+        libc.prctl(15, newname, 0, 0, 0)
+
     except Exception:
         errors.append("Failed GNU/Linux style")
 
     try:
-        import dl
-        # FreeBSD style
-        libc = dl.open('/lib/libc.so.6')
-        libc.call('setproctitle', newname + '\0')
+        import ctypes
+        # BSD style
+        libc = ctypes.CDLL(None)
+        libc.setproctitle(newname)
+
     except Exception:
-        errors.append("Failed FreeBSD style")
+        errors.append("Failed BSD style")
 
     if debug and errors:
-        msg = [_("Errors occured while trying to change process name:")]
+        msg = ["Errors occured while trying to change process name:"]
         for i in errors:
             msg.append("%s" % (i,))
         print('\n'.join(msg))
@@ -164,7 +159,7 @@ your shares this way, keep Nicotine+ closed until rescanning is done."""))
 
 def run():
 
-    renameprocess('nicotine')
+    renameprocess(b'nicotine', True)
 
     # Support for file scanning process in frozen Windows and macOS binaries
     multiprocessing.freeze_support()
@@ -267,7 +262,7 @@ def run():
             dumpfile = os.path.expanduser(config.filename) + ".profile"
             profiler = cProfile.Profile()
 
-            print(_("Starting using the profiler (saving dump to %s)") % dumpfile)
+            print("Starting using the profiler (saving dump to %s)" % dumpfile)
 
             profiler.enable()
             app.run(None)
