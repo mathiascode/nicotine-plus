@@ -85,8 +85,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh
-          bash uninstall.sh -f >/dev/null
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+          /bin/bash uninstall.sh -f >/dev/null
           nix-channel --add https://nixos.org/channels/nixpkgs-unstable
           nix-channel --update
           packaging/macos/dependencies-core.sh
