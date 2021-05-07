@@ -140,7 +140,7 @@ jobs:
         run: |
           git clone https://github.com/create-dmg/create-dmg.git
           cd create-dmg/
-          packaging/macos/create-dmg.sh
+          ../packaging/macos/create-dmg.sh
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v2
