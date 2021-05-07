@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# COPYRIGHT (C) 2020 Nicotine+ Team
+# COPYRIGHT (C) 2020-2021 Nicotine+ Team
 #
 # GNU GENERAL PUBLIC LICENSE
 #    Version 3, 29 June 2007
@@ -23,7 +23,8 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 
 mkdir dmg
 cd dmg
-../create-dmg \
+git clone https://github.com/create-dmg/create-dmg.git
+create-dmg/create-dmg \
     --volname "Nicotine+" \
     --window-size 600 400 \
     --app-drop-link 450 185 \
