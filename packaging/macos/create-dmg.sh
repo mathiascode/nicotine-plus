@@ -23,7 +23,7 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 
 mkdir dmg
 cd dmg
-create-dmg \
+../create-dmg \
     --volname "Nicotine+" \
     --window-size 600 400 \
     --app-drop-link 450 185 \
