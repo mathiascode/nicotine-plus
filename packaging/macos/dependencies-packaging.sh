@@ -24,6 +24,7 @@
 brew install \
   adwaita-icon-theme \
   create-dmg \
+  gdk-pixbuf \
   gtk+3
 
 # Install dependencies with pip
