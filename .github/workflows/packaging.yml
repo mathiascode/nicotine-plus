@@ -110,7 +110,7 @@ jobs:
           path: dist
 
   macos:
-    runs-on: macos-11
+    runs-on: macos-11.0
     env:
       PYTHON_VERSION: 3.9.5
       MACOSX_DEPLOYMENT_TARGET: 10.9
