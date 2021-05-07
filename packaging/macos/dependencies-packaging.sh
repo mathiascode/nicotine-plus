@@ -30,5 +30,5 @@ nix-env -iA \
   nixpkgs.python39Packages.pygobject3
 
 # Install dependencies with pip
-pip3 install \
+sudo pip3 install \
   pyinstaller==4.3
