@@ -87,7 +87,7 @@ jobs:
         run: |
           nix-channel --add https://nixos.org/channels/nixpkgs-unstable
           nix-channel --update
-          nix-shell -p python39
+          nix-shell
           packaging/macos/dependencies-core.sh
 
       - name: Lint with flake8
