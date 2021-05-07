@@ -120,12 +120,13 @@ jobs:
         uses: nixbuild/nix-quick-install-action@v5
       - name: Install build dependencies
         run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
           nix-channel --add https://nixos.org/channels/nixpkgs-unstable
           nix-channel --update
           nix-env -iA nixpkgs.gtk3-x11
           nix-env -iA nixpkgs.python38Packages.pygobject3
-          packaging/macos/dependencies-core.sh
-          packaging/macos/dependencies-packaging.sh
+          nix-env -iA nixpkgs.python38Packages.pip
+          pip install pyinstaller
 
       - name: Freeze application
         run: |
@@ -138,6 +139,7 @@ jobs:
 
       - name: Generate .dmg
         run: |
+          git clone https://github.com/create-dmg/create-dmg.git
           packaging/macos/create-dmg.sh
 
       - name: Archive installer artifacts
