@@ -122,13 +122,16 @@ jobs:
 
       - name: Get Python
         run: curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg"
+      - name: Get MacPorts
+        run: curl https://distfiles.macports.org/MacPorts/MacPorts-2.6.4-10.9-Mavericks.pkg -o "macports.pkg"
 
       - name: Install Python
         run: |
-          sudo installer -pkg python.pkg -target /
+          sudo installer -pkg macports.pkg -target /
 
       - name: Install build dependencies
         run: |
+          port install python39
           packaging/macos/dependencies-packaging.sh
 
       - name: Freeze application
