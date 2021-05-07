@@ -119,11 +119,11 @@ jobs:
 
       - name: Set up Nix
         uses: nixbuild/nix-quick-install-action@v5
-
-      - name: Install build dependencies
         run: |
           nix-channel --add https://nixos.org/channels/nixpkgs-unstable
           nix-channel --update
+
+      - name: Install build dependencies
           packaging/macos/dependencies-core.sh
           packaging/macos/dependencies-packaging.sh
 
