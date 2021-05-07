@@ -82,12 +82,11 @@ jobs:
 
       - name: Set up Nix
         uses: nixbuild/nix-quick-install-action@v5
-        run: |
-          nix-channel --add https://nixos.org/channels/nixpkgs-unstable
-          nix-channel --update
 
       - name: Install dependencies
         run: |
+          nix-channel --add https://nixos.org/channels/nixpkgs-unstable
+          nix-channel --update
           packaging/macos/dependencies-core.sh
 
       - name: Lint with flake8

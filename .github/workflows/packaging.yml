@@ -119,17 +119,17 @@ jobs:
 
       - name: Set up Nix
         uses: nixbuild/nix-quick-install-action@v5
+
+      - name: Install build dependencies
         run: |
           nix-channel --add https://nixos.org/channels/nixpkgs-unstable
           nix-channel --update
-
-      - name: Install build dependencies
           packaging/macos/dependencies-core.sh
           packaging/macos/dependencies-packaging.sh
 
       - name: Freeze application
         run: |
-          /Users/runner/.local/bin/pyinstaller packaging/macos/nicotine.spec
+          /Users/runner/Library/Python/3.9/pyinstaller packaging/macos/nicotine.spec
           rm -rf dist/Nicotine+/
 
       - name: Ad-hoc signing
