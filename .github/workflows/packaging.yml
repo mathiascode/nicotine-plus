@@ -126,9 +126,6 @@ jobs:
           nix-env -iA nixpkgs.python38Packages.pygobject3
           nix-env -iA nixpkgs.python38Packages.pip
           sudo pip install pyinstaller
-
-      - name: Freeze application
-        run: |
           pyinstaller packaging/macos/nicotine.spec
           rm -rf dist/Nicotine+/
 
