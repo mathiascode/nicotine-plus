@@ -30,5 +30,6 @@ nix-env -iA \
 
 # Install dependencies with pip
 pip3 install --user \
+  pycairo \
   pygobject \
   pyinstaller==4.3
