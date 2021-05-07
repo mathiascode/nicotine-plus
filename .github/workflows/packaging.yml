@@ -118,7 +118,9 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Nix
-        uses: nixbuild/nix-quick-install-action@v5
+        uses: cachix/install-nix-action@v10
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
 
       - uses: workflow/nix-shell-action@v1
         with:
