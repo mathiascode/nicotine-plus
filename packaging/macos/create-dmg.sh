@@ -30,3 +30,4 @@ create-dmg/create-dmg \
     --app-drop-link 450 185 \
     "Nicotine+.dmg" \
     "$DIR/../../dist/"
+rm -rf create-dmg/

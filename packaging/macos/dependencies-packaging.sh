@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# COPYRIGHT (C) 2020 Nicotine+ Team
+# COPYRIGHT (C) 2020-2021 Nicotine+ Team
 #
 # GNU GENERAL PUBLIC LICENSE
 #    Version 3, 29 June 2007
@@ -18,18 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-### This script is used to install UI and packaging dependencies in Homebrew ###
+### This script is used to install UI and packaging dependencies in Nix ###
 
-# Install dependencies from the main Homebrew repos
-brew install \
-  adwaita-icon-theme \
-  create-dmg \
-  gdk-pixbuf \
-  gtk+3 \
-  librsvg
+# Install dependencies from the Nix repos
+nix-env -iA \
+  nixpkgs.gdk-pixbuf
+  nixpkgs.gtk3-x11
+  nixpkgs.gnome3.adwaita-icon-theme
+  nixpkgs.python39Packages.certifi
+  nixpkgs.python39Packages.pygobject3
 
 # Install dependencies with pip
-pip3 install \
-  certifi \
-  pygobject \
+pip3 install --user \
   pyinstaller==4.3

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# COPYRIGHT (C) 2020 Nicotine+ Team
+# COPYRIGHT (C) 2020-2021 Nicotine+ Team
 #
 # GNU GENERAL PUBLIC LICENSE
 #    Version 3, 29 June 2007
@@ -18,14 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-### This script is used to install core dependencies in Homebrew ###
+### This script is used to install core dependencies in Nix ###
 ### These are enough to run unit tests and use non-UI code ###
 
-# Install dependencies from the main Homebrew repos
-brew install \
-  flake8
-
-# Install dependencies with pip
-pip3 install \
-  pep8-naming \
-  pytest
+# Install dependencies from the Nix repos
+nix-env -iA \
+  nixpkgs.python39Packages.flake8
+  nixpkgs.python39Packages.pep8-naming
+  nixpkgs.python39Packages.pytest

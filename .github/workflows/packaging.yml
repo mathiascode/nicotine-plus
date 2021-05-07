@@ -116,16 +116,16 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
       - name: Set up Nix
         uses: nixbuild/nix-quick-install-action@v5
+
       - name: Install build dependencies
         run: |
           nix-channel --add https://nixos.org/channels/nixpkgs-unstable
           nix-channel --update
-          nix-env -iA nixpkgs.gtk3-x11
-          nix-env -iA nixpkgs.python38Packages.pygobject3
-          nix-env -iA nixpkgs.python38Packages.pip
-          pip install pyinstaller --user
+          packaging/macos/dependencies-core.sh
+          packaging/macos/dependencies-packaging.sh
 
       - name: Freeze application
         run: |

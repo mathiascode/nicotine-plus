@@ -80,6 +80,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Nix
+        uses: nixbuild/nix-quick-install-action@v5
+
       - name: Install dependencies
         run: |
           packaging/macos/dependencies-core.sh
