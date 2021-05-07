@@ -134,7 +134,7 @@ jobs:
 
       - name: Freeze application
         run: |
-          pyinstaller packaging/macos/nicotine.spec
+          /usr/bin/pyinstaller packaging/macos/nicotine.spec
           rm -rf dist/Nicotine+/
 
       - name: Ad-hoc signing
