@@ -122,6 +122,7 @@ jobs:
 
       - name: Install build dependencies
         run: |
+          bash uninstall.sh -f >/dev/null
           nix-channel --add https://nixos.org/channels/nixpkgs-unstable
           nix-channel --update
           packaging/macos/dependencies-core.sh
