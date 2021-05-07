@@ -22,14 +22,13 @@
 
 # Install dependencies from the Nix repos
 nix-env -iA \
-  nixpkgs.cairo \
   nixpkgs.gdk-pixbuf \
   nixpkgs.gtk3-x11 \
   nixpkgs.gnome3.adwaita-icon-theme \
   nixpkgs.python3Packages.certifi \
-  nixpkgs.python3Packages.pip
+  nixpkgs.python3Packages.pip \
+  nixpkgs.python3Packages.pygobject3
 
 # Install dependencies with pip
-pip3 install --user \
-  pygobject \
+sudo pip3 install \
   pyinstaller==4.3
