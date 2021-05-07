@@ -26,6 +26,7 @@ nix-env -iA \
   nixpkgs.gtk3-x11 \
   nixpkgs.gnome3.adwaita-icon-theme \
   nixpkgs.python39Packages.certifi \
+  nixpkgs.python39Packages.pip \
   nixpkgs.python39Packages.pygobject3
 
 # Install dependencies with pip
