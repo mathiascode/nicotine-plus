@@ -122,9 +122,9 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          nix-shell -p python3
           nix-channel --add https://nixos.org/channels/nixpkgs-unstable
           nix-channel --update
+          nix-shell -p python39
           packaging/macos/dependencies-core.sh
           packaging/macos/dependencies-packaging.sh
 
