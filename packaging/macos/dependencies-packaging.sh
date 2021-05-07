@@ -25,10 +25,10 @@ brew install \
   adwaita-icon-theme \
   create-dmg \
   gobject-introspection \
-  gtk+3
+  gtk+3 \
+  pygobject3
 
 # Install dependencies with pip
 pip3 install --user \
   certifi \
-  pygobject \
   pyinstaller==4.3
