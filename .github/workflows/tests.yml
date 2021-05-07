@@ -85,9 +85,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
           nix-channel --add https://nixos.org/channels/nixpkgs-unstable
           nix-channel --update
+          nix-shell -p python3
           packaging/macos/dependencies-core.sh
 
       - name: Lint with flake8
