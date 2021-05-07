@@ -120,8 +120,8 @@ jobs:
         uses: nixbuild/nix-quick-install-action@v5
       - name: Install build dependencies
         run: |
-          nix-env -iA nixpkgs.gtk3-x11
-          nix-env -iA nixpkgs.python38Packages.pygobject3
+          nix-env -iA gtk3-x11
+          nix-env -iA python38Packages.pygobject3
           packaging/macos/dependencies-core.sh
           packaging/macos/dependencies-packaging.sh
 
