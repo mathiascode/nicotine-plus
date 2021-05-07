@@ -25,9 +25,9 @@ nix-env -iA \
   nixpkgs.gdk-pixbuf \
   nixpkgs.gtk3-x11 \
   nixpkgs.gnome3.adwaita-icon-theme \
-  nixpkgs.python3Packages.certifi \
-  nixpkgs.python3Packages.pygobject3 \
-  nixpkgs.python3Packages.setuptools
+  nixpkgs.python39Packages.certifi \
+  nixpkgs.python39Packages.pygobject3 \
+  nixpkgs.python39Packages.setuptools
 
 # Install dependencies with pip
 wget https://github.com/pyinstaller/pyinstaller/releases/download/v4.3/pyinstaller-4.3.tar.gz
