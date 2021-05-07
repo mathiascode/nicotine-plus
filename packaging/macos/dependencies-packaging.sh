@@ -22,6 +22,7 @@
 
 # Install dependencies from the Nix repos
 nix-env -iA \
+  nixpkgs.cairo \
   nixpkgs.gdk-pixbuf \
   nixpkgs.gtk3-x11 \
   nixpkgs.gnome3.adwaita-icon-theme \
@@ -30,6 +31,5 @@ nix-env -iA \
 
 # Install dependencies with pip
 pip3 install --user \
-  pycairo \
   pygobject \
   pyinstaller==4.3
