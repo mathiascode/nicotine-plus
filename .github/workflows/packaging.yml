@@ -122,8 +122,6 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          nix-channel --add https://nixos.org/channels/nixpkgs-unstable
-          nix-channel --update
           nix-shell shell.nix
           packaging/macos/dependencies-core.sh
           packaging/macos/dependencies-packaging.sh
