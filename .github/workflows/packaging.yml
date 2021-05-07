@@ -118,13 +118,12 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Nix
-        uses: cachix/install-nix-action@v13
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
+        uses: nixbuild/nix-quick-install-action@v5
 
       - name: Install build dependencies
         run: |
-          nix-shell shell.nix
+          nix-channel --add https://nixos.org/channels/nixpkgs-unstable
+          nix-channel --update
           packaging/macos/dependencies-core.sh
           packaging/macos/dependencies-packaging.sh
 
