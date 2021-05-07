@@ -24,12 +24,10 @@
 brew install \
   adwaita-icon-theme \
   create-dmg \
-  gdk-pixbuf \
-  gtk+3 \
-  librsvg
+  gtk+3
 
 # Install dependencies with pip
-pip3 install \
+pip3 install --user \
   certifi \
   pygobject \
   pyinstaller==4.3
