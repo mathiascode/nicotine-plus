@@ -22,10 +22,10 @@
 
 # Install dependencies from the Nix repos
 nix-env -iA \
-  nixpkgs.gdk-pixbuf
-  nixpkgs.gtk3-x11
-  nixpkgs.gnome3.adwaita-icon-theme
-  nixpkgs.python39Packages.certifi
+  nixpkgs.gdk-pixbuf \
+  nixpkgs.gtk3-x11 \
+  nixpkgs.gnome3.adwaita-icon-theme \
+  nixpkgs.python39Packages.certifi \
   nixpkgs.python39Packages.pygobject3
 
 # Install dependencies with pip

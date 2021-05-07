@@ -23,6 +23,6 @@
 
 # Install dependencies from the Nix repos
 nix-env -iA \
-  nixpkgs.python39Packages.flake8
-  nixpkgs.python39Packages.pep8-naming
+  nixpkgs.python39Packages.flake8 \
+  nixpkgs.python39Packages.pep8-naming \
   nixpkgs.python39Packages.pytest
