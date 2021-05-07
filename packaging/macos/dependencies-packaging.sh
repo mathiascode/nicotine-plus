@@ -26,9 +26,9 @@ brew install \
   create-dmg \
   gobject-introspection \
   gtk+3 \
-  pygobject3
+  pygobject3 \
+  pyinstaller
 
 # Install dependencies with pip
 pip3 install --user \
-  certifi \
-  pyinstaller==4.3
+  certifi
