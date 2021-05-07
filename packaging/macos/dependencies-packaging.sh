@@ -26,9 +26,10 @@ nix-env -iA \
   nixpkgs.gtk3-x11 \
   nixpkgs.gnome3.adwaita-icon-theme \
   nixpkgs.python3Packages.certifi \
-  nixpkgs.python3Packages.pip \
   nixpkgs.python3Packages.pygobject3
 
 # Install dependencies with pip
-sudo pip3 install \
-  pyinstaller==4.3
+wget https://github.com/pyinstaller/pyinstaller/releases/download/v4.3/pyinstaller-4.3.tar.gz
+tar -zxvf pyinstaller-*.tar.gz
+cd pyinstaller-*
+sudo python setup.py install
