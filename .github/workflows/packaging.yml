@@ -126,7 +126,7 @@ jobs:
         with:
           packages: python3,python39Packages.pygobject3,python39Packages.certifi,gtk3-x11,python39Packages.pip
           script: |
-            pip3 install pyinstaller==4.3
+            sudo pip3 install pyinstaller==4.3
             pyinstaller packaging/macos/nicotine.spec
             rm -rf dist/Nicotine+/
             codesign --deep --entitlements packaging/macos/entitlements.plist --options runtime --sign - dist/Nicotine+.app
