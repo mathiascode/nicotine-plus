@@ -120,16 +120,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get Python
+      - name: Install Python
         run: |
           curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg"
           sudo installer -pkg python.pkg -target /
-          curl https://raw.githubusercontent.com/python/cpython/3.9/Modules/_gdbmmodule.c -o _gdbmmodule.c
-          python3 packaging/macos/gdbm.py build
-          python3 packaging/macos/gdbm.py install
 
       - name: Install build dependencies
         run: |
+          curl https://raw.githubusercontent.com/python/cpython/3.9/Modules/_gdbmmodule.c -o _gdbmmodule.c
+          curl https://raw.githubusercontent.com/python/cpython/3.9/Modules/clinic/_gdbmmodule.c.h -o clinic/_gdbmmodule.c.h
+          python3 packaging/macos/gdbm.py build
+          python3 packaging/macos/gdbm.py install
           packaging/macos/dependencies-core.sh
           packaging/macos/dependencies-packaging.sh
 
