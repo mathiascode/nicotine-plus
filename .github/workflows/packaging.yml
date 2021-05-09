@@ -134,7 +134,7 @@ jobs:
 
       - name: Freeze application
         run: |
-          #export DYLD_LIBRARY_PATH=DYLD_LIBRARY_PATH:/usr/lib:/usr/local/lib
+          export DYLD_FALLBACK_LIBRARY_PATH=/usr/local/lib
           export LIBRARY_PATH=/usr/local/lib
           export LD_LIBRARY_PATH=/usr/local/lib
           export PYTHONPATH=/usr/local/lib
