@@ -38,9 +38,9 @@ curl -L https://bintray.com/homebrew/bottles/download_file?file_path=gtk%2B3-3.2
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=pango-1.48.4.mojave.bottle.tar.gz -o pango-1.48.4.mojave.bottle.tar.gz
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=python%403.9-3.9.4.mojave.bottle.tar.gz -o python@3.9-3.9.4.mojave.bottle.tar.gz
 ls
-brew install -f python@3.9-3.9.4.mojave.bottle.tar.gz
-brew install -f glib-2.68.0.mojave.bottle.tar.gz
-brew install -f gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
+brew install -f --ignore-dependencies python@3.9-3.9.4.mojave.bottle.tar.gz
+brew install -f --ignore-dependencies glib-2.68.0.mojave.bottle.tar.gz
+brew install -f --ignore-dependencies gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
 brew install -f pango-1.48.4.mojave.bottle.tar.gz
 brew install -f gtk+3-3.24.29.mojave.bottle.tar.gz
 brew install -f adwaita-icon-theme \
