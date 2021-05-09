@@ -58,7 +58,7 @@ ls
 brew unlink python3 && brew link --force --overwrite python3
 
 # Install dependencies with pip
-pip3 install --user \
+pip3 install \
   pep8-naming \
   pygobject \
-  pytest
+  pytest --user
