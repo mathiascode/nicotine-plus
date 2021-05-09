@@ -23,6 +23,7 @@
 # Install dependencies from the main Homebrew repos
 brew install \
   adwaita-icon-theme \
+  gdbm \
   gtk+3
 
 # Install dependencies with pip
@@ -30,5 +31,4 @@ pip3 install \
   flake8 \
   pep8-naming \
   pygobject \
-  pytest \
-  semidbm
+  pytest
