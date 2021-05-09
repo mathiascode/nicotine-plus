@@ -92,7 +92,7 @@ jobs:
       - name: Build installer
         run: |
           export ARCH=${{ matrix.arch }}
-          pyinstaller packaging/windows/nicotine.spec
+          python -m PyInstaller packaging/windows/nicotine.spec
           makensis -DARCH=${{ matrix.arch }} packaging/windows/nicotine.nsi
           mkdir installer
           cp -r packaging/windows/Nicotine*.exe installer/
@@ -134,8 +134,7 @@ jobs:
 
       - name: Freeze application
         run: |
-          export PYTHONPATH=/Library/Frameworks/Python.framework/Versions/3.9/
-          /Library/Frameworks/Python.framework/Versions/3.9/bin/pyinstaller packaging/macos/nicotine.spec
+          python -m PyInstaller packaging/macos/nicotine.spec
           rm -rf dist/Nicotine+/
 
       - name: Ad-hoc signing
