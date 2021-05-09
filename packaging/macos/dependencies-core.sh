@@ -29,6 +29,9 @@ brew uninstall --ignore-dependencies python3
 ls
 rm -rf "$(brew --cache)"
 ls
+
+brew install gtk+3
+brew uninstall --ignore-dependencies gtk+3
 #brew cleanup -s glib
 #brew cleanup -s python3
 
@@ -41,8 +44,8 @@ ls
 brew install -f --ignore-dependencies python@3.9-3.9.4.mojave.bottle.tar.gz
 brew install -f --ignore-dependencies glib-2.68.0.mojave.bottle.tar.gz
 brew install -f --ignore-dependencies gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
-brew install -f pango-1.48.4.mojave.bottle.tar.gz
-brew install -f gtk+3-3.24.29.mojave.bottle.tar.gz
+brew install -f --ignore-dependencies pango-1.48.4.mojave.bottle.tar.gz
+brew install -f --ignore-dependencies gtk+3-3.24.29.mojave.bottle.tar.gz
 brew install -f adwaita-icon-theme \
   flake8
 ls
