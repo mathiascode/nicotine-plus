@@ -32,15 +32,13 @@ brew uninstall --ignore-dependencies glib
 brew uninstall --ignore-dependencies gtk+3
 brew uninstall --ignore-dependencies pango
 brew uninstall --ignore-dependencies python3
-brew cleanup -s python3
 
-brew install -f \
-  gdk-pixbuf-2.42.6.mojave.bottle.tar.gz \
-  glib-2.68.0.mojave.bottle.tar.gz \
-  gtk+3-3.24.29.mojave.bottle.tar.gz \
-  pango-1.48.4.mojave.bottle.tar.gz \
-  python@3.9-3.9.4.mojave.bottle.tar.gz \
-  adwaita-icon-theme \
+brew install -f gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
+brew install -f glib-2.68.0.mojave.bottle.tar.gz
+brew install -f gtk+3-3.24.29.mojave.bottle.tar.gz
+brew install -f pango-1.48.4.mojave.bottle.tar.gz
+brew install -f python@3.9-3.9.4.mojave.bottle.tar.gz
+brew install -f adwaita-icon-theme \
   flake8
 
 brew unlink gdk-pixbuf && brew link --force --overwrite gdk-pixbuf
