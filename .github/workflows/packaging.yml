@@ -134,6 +134,7 @@ jobs:
 
       - name: Freeze application
         run: |
+          export PYTHONPATH=/Library/Frameworks/Python.framework/Versions/3.9/
           /Library/Frameworks/Python.framework/Versions/3.9/bin/pyinstaller packaging/macos/nicotine.spec
           rm -rf dist/Nicotine+/
 
