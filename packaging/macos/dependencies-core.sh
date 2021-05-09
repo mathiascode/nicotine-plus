@@ -32,6 +32,7 @@ brew uninstall --ignore-dependencies glib
 brew uninstall --ignore-dependencies gtk+3
 brew uninstall --ignore-dependencies pango
 brew uninstall --ignore-dependencies python3
+brew cleanup -s python3
 
 brew install -f \
   gdk-pixbuf-2.42.6.mojave.bottle.tar.gz \
