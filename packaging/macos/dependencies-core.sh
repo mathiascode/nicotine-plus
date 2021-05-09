@@ -25,8 +25,8 @@ curl -L https://bintray.com/homebrew/bottles/download_file?file_path=adwaita-ico
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=gtk%2B3-3.24.29.mojave.bottle.tar.gz -o gtk+3.bottle.tar.gz
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=pygobject3-3.40.1.mojave.bottle.tar.gz -o pygobject3.bottle.tar.gz
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=python%403.9-3.9.4.mojave.bottle.tar.gz -o python3.bottle.tar.gz
-
-brew reinstall \
+ls
+brew install \
   ./adwaita-icon-theme.bottle.tar.gz \
   flake8 \
   ./gtk+3.bottle.tar.gz \
