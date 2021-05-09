@@ -128,6 +128,7 @@ jobs:
       - name: Install build dependencies
         run: |
           curl https://raw.githubusercontent.com/python/cpython/3.9/Modules/_gdbmmodule.c -o _gdbmmodule.c
+          mkdir clinic
           curl https://raw.githubusercontent.com/python/cpython/3.9/Modules/clinic/_gdbmmodule.c.h -o clinic/_gdbmmodule.c.h
           python3 packaging/macos/gdbm.py build
           python3 packaging/macos/gdbm.py install
