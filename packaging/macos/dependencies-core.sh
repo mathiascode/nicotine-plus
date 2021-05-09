@@ -27,11 +27,11 @@ curl -L https://bintray.com/homebrew/bottles/download_file?file_path=pygobject3-
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=python%403.9-3.9.4.mojave.bottle.tar.gz -o python3.bottle.tar.gz
 ls
 brew install -f \
-  ./adwaita-icon-theme.bottle.tar.gz \
+  adwaita-icon-theme.bottle.tar.gz \
   flake8 \
-  ./gtk+3.bottle.tar.gz \
-  ./pygobject3.bottle.tar.gz \
-  ./python3.bottle.tar.gz
+  gtk+3.bottle.tar.gz \
+  pygobject3.bottle.tar.gz \
+  python3.bottle.tar.gz
 
 # Install dependencies with pip
 pip3 install \
