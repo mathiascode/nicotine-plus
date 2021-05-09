@@ -26,7 +26,7 @@ brew install \
   flake8 \
   gtk+3 \
   pygobject3 \
-  pypy3
+  python3
 
 # Install dependencies with pip
 pip3 install \
