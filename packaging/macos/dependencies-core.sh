@@ -24,14 +24,15 @@
 export HOMEBREW_NO_AUTO_UPDATE=1
 export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
 ls
+brew install gtk+3
+brew uninstall --ignore-dependencies gtk+3
 brew uninstall --ignore-dependencies glib
+brew uninstall --ignore-dependencies gdk-pixbuf
+brew uninstall --ignore-dependencies pango
 brew uninstall --ignore-dependencies python3
 ls
 rm -rf "$(brew --cache)"
 ls
-
-brew install gtk+3
-brew uninstall --ignore-dependencies gtk+3
 #brew cleanup -s glib
 #brew cleanup -s python3
 
