@@ -134,7 +134,7 @@ jobs:
 
       - name: Freeze application
         run: |
-          export DYLD_FALLBACK_LIBRARY_PATH=/usr/local/lib
+          export DYLD_LIBRARY_PATH=/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources:/usr/local/lib/
           export LIBRARY_PATH=/usr/local/lib
           export LD_LIBRARY_PATH=/usr/local/lib
           export PYTHONPATH=/usr/local/lib
