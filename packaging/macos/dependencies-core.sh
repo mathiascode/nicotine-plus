@@ -21,7 +21,8 @@
 ### This script is used to install core dependencies in Homebrew ###
 
 # Install dependencies from the main Homebrew repos
-os.environ['HOMEBREW_NO_AUTO_UPDATE'] = '1'
+export HOMEBREW_NO_AUTO_UPDATE=1
+export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
 
 brew uninstall --ignore-dependencies glib
 brew uninstall --ignore-dependencies python3
