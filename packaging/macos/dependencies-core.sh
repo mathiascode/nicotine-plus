@@ -25,10 +25,10 @@ brew install \
   adwaita-icon-theme \
   flake8 \
   gtk+3 \
+  pygobject3 \
   pypy3
 
 # Install dependencies with pip
 pip3 install \
   pep8-naming \
-  pygobject \
   pytest
