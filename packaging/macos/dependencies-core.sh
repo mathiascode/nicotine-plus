@@ -31,12 +31,12 @@ brew install -f adwaita-icon-theme \
 #brew uninstall --ignore-dependencies glib
 #brew uninstall --ignore-dependencies gdk-pixbuf
 #brew uninstall --ignore-dependencies pango
-#brew uninstall --ignore-dependencies python3
+brew uninstall --ignore-dependencies python3
 ls
-#rm -rf "$(brew --cache)"
+rm -rf "$(brew --cache)"
 ls
 #brew cleanup -s glib
-#brew cleanup -s python3
+brew cleanup -s python3
 
 #curl -L https://bintray.com/homebrew/bottles/download_file?file_path=gdk-pixbuf-2.42.6.mojave.bottle.tar.gz -o gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
 #curl -L https://bintray.com/homebrew/bottles/download_file?file_path=glib-2.68.0.mojave.bottle.tar.gz -o glib-2.68.0.mojave.bottle.tar.gz
