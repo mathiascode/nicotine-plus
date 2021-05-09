@@ -26,10 +26,10 @@ brew install \
   create-dmg \
   gdk-pixbuf \
   gtk+3 \
-  librsvg
+  librsvg \
+  pygobject3
 
 # Install dependencies with pip
 pip3 install \
   certifi \
-  pygobject \
   pyinstaller==4.3
