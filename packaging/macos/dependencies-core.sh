@@ -21,7 +21,7 @@
 ### This script is used to install core dependencies in Homebrew ###
 
 # Install dependencies from the main Homebrew repos
-curl -L https://bintray.com/homebrew/bottles/download_file?file_path=adwaita-icon-theme-40.1.1.mojave.bottle.tar.gz -o adwaita-icon-theme.bottle.tar.gz
+curl -L https://bintray.com/homebrew/bottles/download_file?file_path=adwaita-icon-theme-3.38.0.mojave.bottle.tar.gz -o adwaita-icon-theme.bottle.tar.gz
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=gtk%2B3-3.24.29.mojave.bottle.tar.gz -o gtk+3.bottle.tar.gz
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=pygobject3-3.40.1.mojave.bottle.tar.gz -o pygobject3.bottle.tar.gz
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=python%403.9-3.9.4.mojave.bottle.tar.gz -o python3.bottle.tar.gz
