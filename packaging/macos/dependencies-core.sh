@@ -63,3 +63,8 @@ pip3 install \
   pep8-naming \
   pygobject \
   pytest --user
+
+cd /usr/lib
+ls
+cd /usr/local/lib
+ls
