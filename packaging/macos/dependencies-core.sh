@@ -30,4 +30,5 @@ pip3 install \
   flake8 \
   pep8-naming \
   pygobject \
-  pytest
+  pytest \
+  semidbm
