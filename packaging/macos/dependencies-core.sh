@@ -25,8 +25,7 @@ export HOMEBREW_NO_AUTO_UPDATE=1
 export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
 ls
 brew install -f adwaita-icon-theme \
-  gtk+3 \
-  pygobject3
+  gtk+3
 
 #brew uninstall --ignore-dependencies gtk+3
 #brew uninstall --ignore-dependencies glib
@@ -62,7 +61,7 @@ pip3 install \
   flake8 \
   pep8-naming \
   pygobject \
-  pytest --user
+  pytest
 
 cd /usr/lib
 ls
