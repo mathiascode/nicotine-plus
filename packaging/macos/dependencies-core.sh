@@ -23,11 +23,17 @@
 # Install dependencies from the main Homebrew repos
 brew install \
   adwaita-icon-theme \
-  flake8 \
-  gtk+3 \
+  gdbm \
+  gtk+3
+
+brew uninstall --ignore-dependencies glib
+
+curl -L https://bintray.com/homebrew/bottles/download_file?file_path=glib-2.68.0.mojave.bottle.tar.gz -o glib-2.68.0.mojave.bottle.tar.gz
+brew install -f glib-2.68.0.mojave.bottle.tar.gz
 
 # Install dependencies with pip
-pip3 install \
+pip3 install --no-cache-dir \
+  flake8 \
   pep8-naming \
   pygobject \
   pytest

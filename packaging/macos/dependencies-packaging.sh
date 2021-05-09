@@ -25,6 +25,6 @@ brew install \
   create-dmg
 
 # Install dependencies with pip
-pip3 install \
+pip3 install --no-cache-dir \
   certifi \
   pyinstaller==4.3
