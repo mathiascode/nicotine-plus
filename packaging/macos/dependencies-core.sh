@@ -27,10 +27,10 @@ export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
 brew uninstall --ignore-dependencies glib
 brew uninstall --ignore-dependencies python3
 
-brew cleanup -s glib
-brew cleanup -s python3
-
 rm -rf "$(brew --cache)"
+
+#brew cleanup -s glib
+#brew cleanup -s python3
 
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=gdk-pixbuf-2.42.6.mojave.bottle.tar.gz -o gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=glib-2.68.0.mojave.bottle.tar.gz -o glib-2.68.0.mojave.bottle.tar.gz
