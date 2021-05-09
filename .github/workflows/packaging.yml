@@ -139,6 +139,7 @@ jobs:
           export PYTHONPATH=/usr/local/lib
           export PATH=/Library/Frameworks/Python.framework/Versions/${PYTHON_VERSION}/bin:$PATH
           echo "/Library/Frameworks/Python.framework/Versions/${PYTHON_VERSION}/bin" >> $GITHUB_PATH
+          ln -s /usr/local/lib/libgirepository-1.0.1.dylib /usr/lib/libgirepository-1.0.1.dylib
           python3 -m PyInstaller packaging/macos/nicotine.spec
           rm -rf dist/Nicotine+/
 
