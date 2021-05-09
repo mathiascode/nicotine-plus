@@ -26,6 +26,11 @@
 #curl -L https://bintray.com/homebrew/bottles/download_file?file_path=pygobject3-3.40.1.mojave.bottle.tar.gz -o pygobject3.bottle.tar.gz
 #curl -L https://bintray.com/homebrew/bottles/download_file?file_path=python%403.9-3.9.4.mojave.bottle.tar.gz -o python3.bottle.tar.gz
 #ls
+
+brew uninstall --ignore-dependencies adwaita-icon-theme
+brew uninstall --ignore-dependencies gtk+3
+brew uninstall --ignore-dependencies python3
+
 brew install -f \
   https://bintray.com/homebrew/bottles/download_file?file_path=adwaita-icon-theme-3.38.0.mojave.bottle.tar.gz \
   https://bintray.com/homebrew/bottles/download_file?file_path=gtk%2B3-3.24.28.mojave.bottle.tar.gz \
