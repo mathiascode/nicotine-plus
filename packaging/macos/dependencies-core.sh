@@ -27,9 +27,19 @@ brew install \
   gtk+3
 
 brew uninstall --ignore-dependencies glib
+brew uninstall --ignore-dependencies gdk-pixbuf
+brew uninstall --ignore-dependencies gtk+3
+brew uninstall --ignore-dependencies pango
 
+curl -L https://bintray.com/homebrew/bottles/download_file?file_path=gdk-pixbuf-2.42.6.mojave.bottle.tar.gz -o gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
 curl -L https://bintray.com/homebrew/bottles/download_file?file_path=glib-2.68.0.mojave.bottle.tar.gz -o glib-2.68.0.mojave.bottle.tar.gz
+curl -L https://bintray.com/homebrew/bottles/download_file?file_path=gtk%2B3-3.24.29.mojave.bottle.tar.gz -o gtk+3-3.24.29.mojave.bottle.tar.gz
+curl -L https://bintray.com/homebrew/bottles/download_file?file_path=pango-1.48.4.mojave.bottle.tar.gz -o pango-1.48.4.mojave.bottle.tar.gz
+
+brew install -f gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
 brew install -f glib-2.68.0.mojave.bottle.tar.gz
+brew install -f gtk+3-3.24.29.mojave.bottle.tar.gz
+brew install -f pango-1.48.4.mojave.bottle.tar.gz
 
 # Install dependencies with pip
 pip3 install --no-cache-dir \
