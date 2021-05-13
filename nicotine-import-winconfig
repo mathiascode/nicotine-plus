@@ -4,6 +4,7 @@
 # Geert Kloosterman <geertk@ai.rug.nl>
  
 from struct import unpack
+import csv
 import getopt
 import sys
 import os
@@ -172,6 +173,21 @@ Then for each user:
  
     infile.close()
     return users
+
+
+def get_user_list(fname):
+
+    infile = open(fname, 'r')
+    csv_reader = csv.reader(infile, delimiter=';')
+    users = []
+    for row in csv_reader:
+        try:
+            users.append((row[0].strip(), row[1]))
+        except IndexError:
+            pass
+
+    infile.close()
+    return users
  
  
 def get_userinfo(fname):
@@ -257,11 +273,11 @@ def main():
  
     if opt['userlist']:
         print("Getting userlist...")
-        users = get_basic_config(winpath('hotlist.cfg'))
+        users = get_user_list(winpath('hotlist.cfg'))
  
         for i in users:
-            if not is_in_user_list(i, config.sections["server"]["userlist"]):
-                config.sections["server"]["userlist"].append([i, '', False, False, False, '', ''])
+            if not is_in_user_list(i[0], config.sections["server"]["userlist"]):
+                config.sections["server"]["userlist"].append([i[0], i[1], False, False, False, '', ''])
  
     if opt['login']:
         print("Getting login and password...")
