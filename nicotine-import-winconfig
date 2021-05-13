@@ -45,7 +45,6 @@ def parse_args():
         usage()
         sys.exit(1)
     slskdir = args[0]
-    check_slskdir(slskdir)
     opt['slskdir'] = slskdir
  
     # defaults
@@ -81,16 +80,6 @@ def parse_args():
     opt['banned']    = banned
     opt['ignored']   = ignored
     opt['userinfo']  = userinfo
- 
- 
-def check_slskdir(slskdir):
-    # we check if the file queue2.cfg exists under the slsk dir
-    queue2path = os.path.join(slskdir, 'queue2.cfg')
- 
-    if not os.access(queue2path, os.F_OK):
-        print("nicotine-import-winconfig: Error: Could not find \"queue2.cfg\" in \"%s\"" % (slskdir))
-        print("Are you sure you've supplied the right path?")
-        sys.exit(1)
  
  
 def winpath(file):
@@ -176,17 +165,10 @@ Then for each user:
  
 - The length of the username, followed by the username"""
  
-    infile = open(fname, 'rb')
-    intsize = 4
+    infile = open(fname, 'r')
     users = []
- 
-    string = infile.read(1*intsize)
- 
-    n_entries = unpack("i", string)[0]
-    for i in range(n_entries):
-        length = unpack("i", infile.read(intsize))[0]
-        user = infile.read(length)
-        users.append(user.decode('utf-8'))
+    for user in infile.readlines():
+        users.append(user.strip())
  
     infile.close()
     return users
@@ -247,8 +229,8 @@ def is_in_user_list(user, user_list):
             return 1
  
     return 0
- 
- 
+
+
 def main():
     global opt
  
@@ -279,7 +261,7 @@ def main():
  
         for i in users:
             if not is_in_user_list(i, config.sections["server"]["userlist"]):
-                config.sections["server"]["userlist"].append([i, '', False, False, False, time.strftime("%m/%d/%Y %H:%M:%S"), ''])
+                config.sections["server"]["userlist"].append([i, '', False, False, False, '', ''])
  
     if opt['login']:
         print("Getting login and password...")
