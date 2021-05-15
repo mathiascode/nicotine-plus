@@ -21,25 +21,9 @@
 ### This script is used to install core dependencies in Homebrew ###
 
 # Install dependencies from the main Homebrew repos
-brew install \
-  adwaita-icon-theme \
-  gdbm \
-  gtk+3
-
-brew uninstall --ignore-dependencies glib
-brew uninstall --ignore-dependencies gdk-pixbuf
-brew uninstall --ignore-dependencies gtk+3
-brew uninstall --ignore-dependencies pango
-
-curl -L https://bintray.com/homebrew/bottles/download_file?file_path=gdk-pixbuf-2.42.6.mojave.bottle.tar.gz -o gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
-curl -L https://bintray.com/homebrew/bottles/download_file?file_path=glib-2.68.0.mojave.bottle.tar.gz -o glib-2.68.0.mojave.bottle.tar.gz
-curl -L https://bintray.com/homebrew/bottles/download_file?file_path=gtk%2B3-3.24.29.mojave.bottle.tar.gz -o gtk+3-3.24.29.mojave.bottle.tar.gz
-curl -L https://bintray.com/homebrew/bottles/download_file?file_path=pango-1.48.4.mojave.bottle.tar.gz -o pango-1.48.4.mojave.bottle.tar.gz
-
-brew install -f gdk-pixbuf-2.42.6.mojave.bottle.tar.gz
-brew install -f glib-2.68.0.mojave.bottle.tar.gz
-brew install -f gtk+3-3.24.29.mojave.bottle.tar.gz
-brew install -f pango-1.48.4.mojave.bottle.tar.gz
+git clone https://gitlab.gnome.org/GNOME/gtk-osx.git
+cd gtk-osx/
+./gtk-osx-setup.sh
 
 # Install dependencies with pip
 pip3 install --no-cache-dir \
