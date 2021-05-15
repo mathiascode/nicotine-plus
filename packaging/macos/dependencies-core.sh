@@ -21,9 +21,15 @@
 ### This script is used to install core dependencies in Homebrew ###
 
 # Install dependencies from the main Homebrew repos
-git clone https://gitlab.gnome.org/GNOME/gtk-osx.git
-cd gtk-osx/
+export PATH="$HOME/.new_local/bin:$PATH"
+
+curl https://gitlab.gnome.org/GNOME/gtk-osx/raw/master/gtk-osx-setup.sh -o gtk-osx-setup.sh
+chmod +x gtk-osx-setup.sh
 ./gtk-osx-setup.sh
+
+jhbuild bootstrap
+jhbuild bootstrap-gtk-osx
+jhbuild build python meta-gtk-osx-bootstrap meta-gtk-osx-gtk3
 
 # Install dependencies with pip
 pip3 install --no-cache-dir \
