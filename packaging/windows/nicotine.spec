@@ -130,6 +130,5 @@ coll = COLLECT(exe,
 app = BUNDLE(coll,
              name=name + '.app',
              icon='nicotine.icns',
-             info_plist={"CFBundleDisplayName": name, "NSHighResolutionCapable": True},
              bundle_identifier='org.nicotine_plus.Nicotine',
              version=version)
