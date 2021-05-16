@@ -58,7 +58,7 @@ hiddenimports = ["certifi"] + \
 
 # GTK Builder files, plugins, geoip database, translations
 datas = [("../../pynicotine", "pynicotine")]
-mo_entries, languages = generate_mo_translations()
+mo_entries = generate_mo_translations()
 
 for target_path, mo_files in mo_entries:
     datas.append(("../../" + mo_files[0], target_path))
@@ -97,12 +97,9 @@ for file in a.datas[:]:
         elif 'Adwaita/cursors' in file[0]:
             a.datas.remove(file)
 
-    elif 'share/locale' in file[0]:
-        lang = file[0].split('/')[2]
-
-        # Remove system translations for unsupported languages
-        if lang not in languages:
-            a.datas.remove(file)
+    elif 'share/locale' in file[0] and 'nicotine.mo' not in file[0]:
+        # Remove unwanted translations
+        a.datas.remove(file)
 
 
 """ Archive """

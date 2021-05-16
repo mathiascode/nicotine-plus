@@ -63,11 +63,9 @@ class UpdatePot(Command):
 def generate_mo_translations():
 
     mo_entries = []
-    languages = []
 
     for po_file in glob.glob("po/*.po"):
         lang = os.path.basename(po_file[:-3])
-        languages.append(lang)
 
         mo_dir = os.path.join("mo", lang, "LC_MESSAGES")
         mo_file = os.path.join(mo_dir, "nicotine.mo")
@@ -80,7 +78,7 @@ def generate_mo_translations():
         targetpath = os.path.join("share", "locale", lang, "LC_MESSAGES")
         mo_entries.append((targetpath, [mo_file]))
 
-    return mo_entries, languages
+    return mo_entries
 
 
 if __name__ == '__main__':
@@ -106,7 +104,7 @@ functionality while keeping current with the Soulseek protocol."""
         ("share/icons/hicolor/symbolic/apps", glob.glob("pynicotine/gtkgui/icons/hicolor/symbolic/apps/*.svg")),
         ("share/doc/nicotine", glob.glob("[!404.md]*.md") + glob.glob("doc/*.md") + ["COPYING"]),
         ("share/man/man1", glob.glob("files/*.1"))
-    ] + generate_mo_translations()[0]
+    ] + generate_mo_translations()
 
     # Merge translations into .desktop and metainfo files
     for desktop_file in glob.glob("files/*.desktop.in"):
