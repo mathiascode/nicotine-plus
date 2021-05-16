@@ -200,8 +200,8 @@ class NicotineFrame:
         else:
             self.MainWindow.move(xpos, ypos)
 
-        if config.sections["ui"]["maximized"]:
-            self.MainWindow.maximize()
+        #if config.sections["ui"]["maximized"]:
+        #    self.MainWindow.maximize()
 
         """ Notebooks """
 
