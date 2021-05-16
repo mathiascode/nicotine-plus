@@ -37,20 +37,6 @@ from setup import generate_mo_translations
 """ Add Contents """
 
 
-# SSL support
-binaries = []
-
-if sys.platform == 'win32':
-    for i in ("libcrypto-1_1", "libssl-1_1", "libcrypto-1_1-x64", "libssl-1_1-x64"):
-        lib = find_library(i)
-
-        if lib is not None:
-            binaries.append((lib, '.'))
-
-    if not binaries:
-        raise Exception("No SSL libraries found")
-
-
 # Add plugins and SSL support
 hiddenimports = ["certifi"] + \
     [name for importer, name, ispkg in walk_packages(path=pynicotine.plugins.__path__, prefix="pynicotine.plugins.") if ispkg]
@@ -67,7 +53,7 @@ for target_path, mo_files in mo_entries:
 # Analyze required files
 a = Analysis(['../../nicotine'],
              pathex=['.'],
-             binaries=binaries,
+             binaries=[],
              datas=datas,
              hiddenimports=hiddenimports,
              hookspath=[],
@@ -141,16 +127,12 @@ coll = COLLECT(exe,
 """ Create macOS .app """
 
 
-if sys.platform == 'darwin':
-
-    info_plist = {
-        "CFBundleDisplayName": name,
-        "NSHighResolutionCapable": True,
-    }
-
-    app = BUNDLE(coll,
-                 name=name + '.app',
-                 icon='nicotine.icns',
-                 info_plist=info_plist,
-                 bundle_identifier='org.nicotine_plus.Nicotine',
-                 version=version)
+app = BUNDLE(coll,
+             name=name + '.app',
+             icon='nicotine.icns',
+             info_plist=info_plist = {
+                 "CFBundleDisplayName": name,
+                 "NSHighResolutionCapable": True,
+             },
+             bundle_identifier='org.nicotine_plus.Nicotine',
+             version=version)
