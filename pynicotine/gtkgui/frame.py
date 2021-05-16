@@ -55,6 +55,7 @@ from pynicotine.gtkgui.userinfo import UserTabs
 from pynicotine.gtkgui.userlist import UserList
 from pynicotine.gtkgui.utils import append_line
 from pynicotine.gtkgui.utils import copy_all_text
+from pynicotine.gtkgui.utils import get_ui_builder
 from pynicotine.gtkgui.utils import load_ui_elements
 from pynicotine.gtkgui.utils import open_file_path
 from pynicotine.gtkgui.utils import open_log
@@ -78,7 +79,6 @@ from pynicotine.utils import human_speed
 from pynicotine.utils import make_version
 from pynicotine.utils import RestrictedUnpickler
 from pynicotine.utils import unescape
-from pynicotine.utils import version
 
 
 class NicotineFrame:
@@ -864,16 +864,10 @@ class NicotineFrame:
 
     def set_up_menu(self):
 
-        builder = Gtk.Builder()
-        builder.set_translation_domain('nicotine')
-        builder.add_from_file(os.path.join(self.gui_dir, "ui", "menus", "mainmenu.ui"))
-
+        builder = get_ui_builder(os.path.join(self.gui_dir, "ui", "menus", "mainmenu.ui"))
         self.HeaderMenu.set_menu_model(builder.get_object("mainmenu"))
 
-        builder = Gtk.Builder()
-        builder.set_translation_domain('nicotine')
-        builder.add_from_file(os.path.join(self.gui_dir, "ui", "menus", "menubar.ui"))
-
+        builder = get_ui_builder(os.path.join(self.gui_dir, "ui", "menus", "menubar.ui"))
         self.application.set_menubar(builder.get_object("menubar"))
 
     def on_menu(self, *args):
@@ -1210,7 +1204,7 @@ class NicotineFrame:
 
         try:
             hlatest, latest, date = get_latest_version()
-            myversion = int(make_version(version))
+            myversion = int(make_version(config.version))
 
         except Exception as m:
             GLib.idle_add(
@@ -1271,7 +1265,7 @@ class NicotineFrame:
             self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
 
         self.AboutDialog.set_transient_for(self.MainWindow)
-        self.AboutDialog.set_version(version)
+        self.AboutDialog.set_version(config.version)
 
         self.AboutDialog.present_with_time(Gdk.CURRENT_TIME)
 

@@ -30,8 +30,8 @@ sys.path.append('.')
 
 import pynicotine.plugins
 
-from pynicotine.utils import version
-from setup import generate_mo_translations
+from pynicotine.config import config
+from setup import generate_translations
 
 
 """ Add Contents """
@@ -56,19 +56,15 @@ hiddenimports = ["certifi"] + \
     [name for importer, name, ispkg in walk_packages(path=pynicotine.plugins.__path__, prefix="pynicotine.plugins.") if ispkg]
 
 
-# GTK Builder files, plugins, geoip database, translations
-datas = [("../../pynicotine", "pynicotine")]
-mo_entries, languages = generate_mo_translations()
-
-for target_path, mo_files in mo_entries:
-    datas.append(("../../" + mo_files[0], target_path))
+# Generate translation files
+generate_translations()
 
 
 # Analyze required files
 a = Analysis(['../../nicotine'],
              pathex=['.'],
              binaries=binaries,
-             datas=datas,
+             datas=[("../../pynicotine", "pynicotine")],
              hiddenimports=hiddenimports,
              hookspath=[],
              runtime_hooks=[],
@@ -83,7 +79,7 @@ a = Analysis(['../../nicotine'],
 excluded = ('.ani', '.cur', '.md', '.png', '.py', '.pyc')
 
 for file in a.datas[:]:
-    if file[0].endswith(excluded):
+    if file[0].endswith(excluded) or 'share/locale' in file[0]:
         a.datas.remove(file)
 
     elif 'share/icons' in file[0] or \
@@ -95,13 +91,6 @@ for file in a.datas[:]:
             a.datas.remove(file)
 
         elif 'Adwaita/cursors' in file[0]:
-            a.datas.remove(file)
-
-    elif 'share/locale' in file[0]:
-        lang = file[0].split('/')[2]
-
-        # Remove system translations for unsupported languages
-        if lang not in languages:
             a.datas.remove(file)
 
 
@@ -145,4 +134,4 @@ app = BUNDLE(coll,
              name=name + '.app',
              icon='nicotine.icns',
              bundle_identifier='org.nicotine_plus.Nicotine',
-             version=version)
+             version=config.version)

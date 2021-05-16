@@ -29,7 +29,7 @@ def combo_box_dialog(parent, title, message, callback, callback_data=None, defau
     self = Gtk.MessageDialog(
         transient_for=parent,
         message_type=Gtk.MessageType.OTHER,
-        buttons=Gtk.ButtonsType.OK_CANCEL,
+        buttons=Gtk.ButtonsType.NONE,
         text=title,
         secondary_text=message
     )
@@ -37,6 +37,9 @@ def combo_box_dialog(parent, title, message, callback, callback_data=None, defau
     self.set_default_size(500, -1)
     self.set_destroy_with_parent(True)
     self.set_modal(True)
+
+    self.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
+    self.add_button(_("_OK"), Gtk.ResponseType.OK)
 
     label = self.get_message_area().get_children()[-1]
     label.set_selectable(True)
@@ -75,7 +78,7 @@ def entry_dialog(parent, title, message, callback, callback_data=None, default="
     self = Gtk.MessageDialog(
         transient_for=parent,
         message_type=Gtk.MessageType.OTHER,
-        buttons=Gtk.ButtonsType.OK_CANCEL,
+        buttons=Gtk.ButtonsType.NONE,
         text=title,
         secondary_text=message
     )
@@ -83,6 +86,9 @@ def entry_dialog(parent, title, message, callback, callback_data=None, default="
     self.set_default_size(500, -1)
     self.set_destroy_with_parent(True)
     self.set_modal(True)
+
+    self.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
+    self.add_button(_("_OK"), Gtk.ResponseType.OK)
 
     label = self.get_message_area().get_children()[-1]
     label.set_selectable(True)
@@ -103,7 +109,7 @@ def message_dialog(parent, title, message, callback=None):
     self = Gtk.MessageDialog(
         transient_for=parent,
         message_type=Gtk.MessageType.INFO,
-        buttons=Gtk.ButtonsType.OK,
+        buttons=Gtk.ButtonsType.NONE,
         text=title,
         secondary_text=message
     )
@@ -116,6 +122,8 @@ def message_dialog(parent, title, message, callback=None):
     self.set_destroy_with_parent(True)
     self.set_modal(True)
 
+    self.add_button(_("_OK"), Gtk.ResponseType.OK)
+
     label = self.get_message_area().get_children()[-1]
     label.set_selectable(True)
 
@@ -125,21 +133,21 @@ def message_dialog(parent, title, message, callback=None):
 def option_dialog(parent, title, message, callback, callback_data=None,
                   checkbox_label="", cancel=True, third=""):
 
-    if cancel:
-        buttons = Gtk.ButtonsType.OK_CANCEL
-    else:
-        buttons = Gtk.ButtonsType.OK
-
     self = Gtk.MessageDialog(
         transient_for=parent,
         message_type=Gtk.MessageType.QUESTION,
-        buttons=buttons,
+        buttons=Gtk.ButtonsType.NONE,
         text=title,
         secondary_text=message
     )
     self.connect("response", callback, callback_data)
     self.set_destroy_with_parent(True)
     self.set_modal(True)
+
+    if cancel:
+        self.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
+
+    self.add_button(_("_OK"), Gtk.ResponseType.OK)
 
     label = self.get_message_area().get_children()[-1]
     label.set_selectable(True)

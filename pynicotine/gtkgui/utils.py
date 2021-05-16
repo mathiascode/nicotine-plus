@@ -44,12 +44,23 @@ URL_RE = re.compile("(\\w+\\://[^\\s]+)|(www\\.\\w+\\.\\w+.*?)|(mailto\\:[^\\s]+
 NICOTINE = None
 
 
+def get_ui_builder(filename):
+
+    import xml.etree.ElementTree as ET
+
+    tree = ET.parse(filename)
+    for node in tree.iter():
+        if 'translatable' in node.attrib:
+            node.text = _(node.text)
+
+    xml_text = ET.tostring(tree.getroot(), encoding='unicode', method='xml')
+    return Gtk.Builder.new_from_string(xml_text, -1)
+
+
 def load_ui_elements(ui_class, filename):
 
     try:
-        builder = Gtk.Builder()
-        builder.set_translation_domain('nicotine')
-        builder.add_from_file(filename)
+        builder = get_ui_builder(filename)
 
         for obj in builder.get_objects():
             try:
