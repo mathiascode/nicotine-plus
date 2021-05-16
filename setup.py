@@ -23,7 +23,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-    To install Nicotine+ on a GNU/Linux distribution, run:
+To install Nicotine+ on a GNU/Linux distribution, run:
     pip3 install .
 """
 
@@ -34,7 +34,8 @@ import pynicotine
 from distutils.core import setup
 from distutils.cmd import Command
 from pkgutil import walk_packages
-from pynicotine.utils import version
+
+from pynicotine.config import config
 
 
 class UpdatePot(Command):
@@ -60,16 +61,16 @@ class UpdatePot(Command):
         os.system("xgettext --join-existing -o po/nicotine.pot " + " ".join(files))
 
 
-def generate_mo_translations():
+def generate_translations():
 
-    mo_entries = []
-    languages = []
+    packages = []
+    package_data = {}
 
     for po_file in glob.glob("po/*.po"):
         lang = os.path.basename(po_file[:-3])
-        languages.append(lang)
+        package = "pynicotine.locale." + lang + ".LC_MESSAGES"
 
-        mo_dir = os.path.join("mo", lang, "LC_MESSAGES")
+        mo_dir = os.path.join("pynicotine", "locale", lang, "LC_MESSAGES")
         mo_file = os.path.join(mo_dir, "nicotine.mo")
 
         if not os.path.exists(mo_dir):
@@ -77,10 +78,17 @@ def generate_mo_translations():
 
         os.system("msgfmt " + po_file + " -o " + mo_file)
 
-        targetpath = os.path.join("share", "locale", lang, "LC_MESSAGES")
-        mo_entries.append((targetpath, [mo_file]))
+        packages.append(package)
+        package_data[package] = ["*.mo"]
 
-    return mo_entries, languages
+    # Merge translations into .desktop and metainfo files
+    for desktop_file in glob.glob("files/*.desktop.in"):
+        os.system("msgfmt --desktop --template=" + desktop_file + " -d po -o " + desktop_file[:-3])
+
+    for metainfo_file in glob.glob("files/*.metainfo.xml.in"):
+        os.system("msgfmt --xml --template=" + metainfo_file + " -d po -o " + metainfo_file[:-3])
+
+    return packages, package_data
 
 
 if __name__ == '__main__':
@@ -92,10 +100,9 @@ Nicotine+ aims to be a pleasant, Free and Open Source (FOSS)
 alternative to the official Soulseek client, providing additional
 functionality while keeping current with the Soulseek protocol."""
 
-    # Specify included files
-    PACKAGES = ["pynicotine"] + \
-        [name for importer, name, ispkg in walk_packages(path=pynicotine.__path__, prefix="pynicotine.") if ispkg]
-    PACKAGE_DATA = dict((package, ["*.bin", "*.md", "*.py", "*.svg", "*.ui", "PLUGININFO"]) for package in PACKAGES)
+    L10N_PACKAGES, L10N_PACKAGE_DATA = generate_translations()
+    PACKAGES = ["pynicotine"] + [name for importer, name, ispkg in walk_packages(path=pynicotine.__path__, prefix="pynicotine.") if ispkg] + L10N_PACKAGES
+    PACKAGE_DATA = {**dict((package, ["*.bin", "*.md", "*.py", "*.svg", "*.ui", "PLUGININFO"]) for package in PACKAGES), **L10N_PACKAGE_DATA}
 
     SCRIPTS = ["nicotine"]
 
@@ -106,23 +113,11 @@ functionality while keeping current with the Soulseek protocol."""
         ("share/icons/hicolor/symbolic/apps", glob.glob("pynicotine/gtkgui/icons/hicolor/symbolic/apps/*.svg")),
         ("share/doc/nicotine", glob.glob("[!404.md]*.md") + glob.glob("doc/*.md") + ["COPYING"]),
         ("share/man/man1", glob.glob("files/*.1"))
-    ] + generate_mo_translations()[0]
+    ]
 
-    # Merge translations into .desktop and metainfo files
-    for desktop_file in glob.glob("files/*.desktop.in"):
-        os.system(
-            "msgfmt --desktop --template=" + desktop_file + " -d po -o " + desktop_file[:-3]
-        )
-
-    for metainfo_file in glob.glob("files/*.metainfo.xml.in"):
-        os.system(
-            "msgfmt --xml --template=" + metainfo_file + " -d po -o " + metainfo_file[:-3]
-        )
-
-    # Run setup
     setup(
         name="nicotine-plus",
-        version=version,
+        version=config.version,
         license="GPLv3+",
         description="Graphical client for the Soulseek file sharing network",
         long_description=LONG_DESCRIPTION,
@@ -134,9 +129,7 @@ functionality while keeping current with the Soulseek protocol."""
         package_data=PACKAGE_DATA,
         scripts=SCRIPTS,
         data_files=DATA_FILES,
-        python_requires='>=3.5',
-        install_requires=['PyGObject>=3.18'],
-        cmdclass={
-            'update_pot': UpdatePot,
-        }
+        python_requires=">=3.5",
+        install_requires=["PyGObject>=3.18"],
+        cmdclass={"update_pot": UpdatePot}
     )
