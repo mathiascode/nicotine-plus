@@ -28,8 +28,7 @@ pacman --noconfirm -S --needed \
   mingw-w64-$ARCH-python-flake8 \
   mingw-w64-$ARCH-python-pip \
   mingw-w64-$ARCH-python-pytest \
-  mingw-w64-$ARCH-python-gobject \
-  mingw-w64-$ARCH-python-setuptools
+  mingw-w64-$ARCH-python-gobject
 
 # Install dependencies with pip
 pip3 install \
