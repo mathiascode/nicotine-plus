@@ -79,18 +79,6 @@ modules:
             sha256: 67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd
             type: archive
 
-  - name: libayatana-indicator
-    buildsystem: cmake
-    config-opts:
-      - -DENABLE_IDO=OFF
-      - -DENABLE_TESTS=OFF
-      - -DFLAVOUR_GTK3=ON
-    cleanup:
-      - /share/libayatana-indicator
-    sources:
-      - url: https://github.com/AyatanaIndicators/libayatana-indicator.git
-        type: git
-
   - name: libayatana-appindicator
     config-opts:
       - --disable-gtk-doc
@@ -105,6 +93,25 @@ modules:
       - url: https://github.com/AyatanaIndicators/libayatana-appindicator/archive/refs/tags/0.5.5.tar.gz
         sha256: 55e47e94f54e6f2f13bcc06ab20530ad0a1412282a8775331af41788b59ee331
         type: archive
+    modules:
+      - name: libayatana-indicator
+        buildsystem: cmake
+        config-opts:
+          - -DENABLE_IDO=OFF
+          - -DENABLE_TESTS=OFF
+          - -DFLAVOUR_GTK3=ON
+        cleanup:
+          - /share/libayatana-indicator
+        sources:
+          - url: https://github.com/AyatanaIndicators/libayatana-indicator.git
+            type: git
+      - name: mate-common
+        cleanup:
+          - '*'
+        sources:
+          - url: https://github.com/mate-desktop/mate-common/releases/download/v1.24.2/mate-common-1.24.2.tar.xz
+            sha256: 71d2013f5743c71e10e04f3c2205d3bb8db1ddb26954a4197801cb5b3c152b6b
+            type: archive
 
   # Spell Checking
 
