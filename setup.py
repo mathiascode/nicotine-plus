@@ -32,8 +32,8 @@ import os
 import pynicotine
 import sys
 
-from setuptools.core import setup
-from setuptools.cmd import Command
+from setuptools import setup
+from setuptools import Command
 from pkgutil import walk_packages
 from pynicotine.config import config
 
