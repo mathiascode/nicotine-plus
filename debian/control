@@ -15,6 +15,7 @@ Build-Depends:
     python3-gdbm,
     python3-gi,
     python3-pytest,
+    python3-setuptools,
     xvfb
 Vcs-Git: https://github.com/Nicotine-Plus/nicotine-plus.git
 Vcs-browser: https://github.com/Nicotine-Plus/nicotine-plus
