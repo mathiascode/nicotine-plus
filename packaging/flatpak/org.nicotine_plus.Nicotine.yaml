@@ -88,17 +88,8 @@ modules:
     cleanup:
       - /share/libayatana-indicator
     sources:
-      - url: https://github.com/AyatanaIndicators/libayatana-indicator/archive/refs/tags/0.7.1.tar.gz
-        sha256: 63f6cfc96b212ce0e65a4507b9830da7263d82cb80374f098b5d863a13de93e8
-        type: archive
-    modules:
-      - name: mate-common
-        cleanup:
-          - '*'
-        sources:
-          - url: https://github.com/mate-desktop/mate-common/releases/download/v1.24.2/mate-common-1.24.2.tar.xz
-            sha256: 71d2013f5743c71e10e04f3c2205d3bb8db1ddb26954a4197801cb5b3c152b6b
-            type: archive
+      - url: https://github.com/AyatanaIndicators/libayatana-indicator.git
+        type: git
 
   - name: libayatana-appindicator
     config-opts:
