@@ -235,7 +235,7 @@ class WinNotify:
 
         self.nid = NOTIFYICONDATA()
         self.nid.cbSize = sizeof(NOTIFYICONDATA)
-        self.nid.hWnd = windll.user32.FindWindowW("gtkstatusicon-observer", None)
+        self.nid.hWnd = windll.user32.FindWindowA("gtkstatusicon-observer", None)
         self.nid.uFlags = self.NIF_INFO
         self.nid.dwInfoFlags = self.NIIF_NOSOUND
 
@@ -269,7 +269,7 @@ class WinNotify:
         self.nid.szInfoTitle = textwrap.shorten(title, width=64, placeholder="...")
         self.nid.szInfo = textwrap.shorten(message, width=256, placeholder="...")
 
-        windll.shell32.Shell_NotifyIconW(self.NIM_MODIFY, self.nid)
+        windll.shell32.Shell_NotifyIconA(self.NIM_MODIFY, self.nid)
         time.sleep(timeout)
 
         if not has_tray_icon:
