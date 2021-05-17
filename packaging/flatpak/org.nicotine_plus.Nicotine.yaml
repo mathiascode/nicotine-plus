@@ -80,11 +80,11 @@ modules:
             type: archive
 
   - name: libayatana-indicator
+    buildsystem: cmake
     config-opts:
-      - --disable-ido
-      - --disable-static
-      - --disable-tests
-      - --with-gtk=3
+      - -DENABLE_IDO=OFF
+      - -DENABLE_TESTS=OFF
+      - -DFLAVOUR_GTK3=ON
     cleanup:
       - /share/libayatana-indicator
     sources:
