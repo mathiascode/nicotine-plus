@@ -733,6 +733,7 @@ class NetworkEventProcessor:
 
         addr = msg.addr
 
+        print(self.peerconns)
         for i in self.peerconns:
             if i.addr == addr and i.conn is None:
                 conn = msg.conn

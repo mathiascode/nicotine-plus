@@ -21,6 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fnmatch
 import random
 import re
 import string
@@ -40,6 +41,8 @@ class Search:
         self.searchid = int(random.random() * (2 ** 31 - 1))
         self.share_dbs = share_dbs
         self.translatepunctuation = str.maketrans(dict.fromkeys(string.punctuation, ' '))
+        self.findex = None
+        self.bfindex = None
 
     """ Outgoing search requests """
 
@@ -222,35 +225,35 @@ class Search:
             word index. If not, exit, since we don't have relevant results. """
 
             largest = 0
+            words = searchterm.split()
 
-            for i in re.finditer(r'\S+', searchterm):
-                i = i.group(0)
-
-                if i not in wordindex:
+            for word in words:
+                if word not in wordindex:
                     return
 
-                list_size = len(wordindex[i])
+                list_size = len(wordindex[word])
 
                 if list_size > largest:
                     largest = list_size
-                    largest_key = i
+                    largest_key = word
 
             """ Stage 2: Start with the word that has the most file matches, which we selected
             in the previous step, and gradually remove matches that other words in the search
             term don't have. Return the remaining matches, if any. """
 
             results = wordindex[largest_key]
-            searchterm.replace(largest_key, '')
+            words.remove(largest_key)
 
-            for i in re.finditer(r'\S+', searchterm):
-                results = set(results).intersection(wordindex[i.group(0)])
+            for word in words:
+                results = set(results).intersection(wordindex[word])
 
             return results
 
         except ValueError:
             # DB is closed, perhaps when rescanning share or closing Nicotine+
             return
-
+    #from memory_profiler import profile
+    #@profile
     def process_search_request(self, searchterm, user, searchid, direct=False):
         """ Note: since this section is accessed every time a search request arrives,
         several times a second, please keep it as optimized and memory
@@ -308,9 +311,25 @@ class Search:
         slotsavail = self.np.transfers.allow_new_uploads()
 
         if checkuser == 2:
-            fileindex = self.share_dbs.get("buddyfileindex")
+            if not self.bfindex:
+                self.bfindex = []
+                from sortedcontainers import SortedDict
+                for key, values in SortedDict(self.share_dbs.get("buddyfiles")).items():
+                    for value in values:
+                        self.bfindex.append((key + "\\" + value[0], *value[1:]))
+                        
+            fileindex = self.bindex
         else:
-            fileindex = self.share_dbs.get("fileindex")
+            if not self.findex:
+                self.findex = []
+                from sortedcontainers import SortedDict
+                for key, values in SortedDict(self.share_dbs.get("files")).items():
+                    for value in values:
+                        self.findex.append((key + "\\" + value[0], *value[1:]))
+
+            import sys
+            print(sys.getsizeof(self.findex))
+            fileindex = self.findex
 
         if fileindex is None:
             return

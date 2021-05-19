@@ -2178,15 +2178,19 @@ class FileSearchResult(PeerMessage):
         final_num_results = 0
 
         for index in islice(self.list, self.numresults):
-            try:
-                fileinfo = self.fileindex[repr(index)]
-                final_num_results += 1
+            #try:
+            #gen = (key for key, values in sorted(self.fileindex.items()))
+            #gen = ((key + "\\" + value[0], *value[1:]) for key, values in self.fileindex.items() for value in values)
+            #print(list(gen))
+            #fileinfo = next(islice(gen, index, None))
+            fileinfo = self.fileindex[index]
+            final_num_results += 1
 
-            except Exception:
+            """except Exception:
                 log.add(
                     _("Your shares database is corrupted. Please rescan your shares and report any potential scanning issues to the developers.")
                 )
-                break
+                break"""
 
             msg_list.extend(bytes([1]))
             msg_list.extend(self.pack_object(fileinfo[0].replace('/', '\\')))

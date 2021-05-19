@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import gc
 import importlib.util
 import os
 import pickle
@@ -185,6 +186,9 @@ class Scanner:
 
         # Save data to databases
         self.set_shares(files=newsharedfiles, streams=newsharedfilesstreams, mtimes=newmtimes)
+        del newsharedfilesstreams
+        del newmtimes
+        gc.collect()
 
         # Update Search Index
         # wordindex is a dict in format {word: [num, num, ..], ... } with num matching keys in newfileindex
@@ -193,8 +197,10 @@ class Scanner:
 
         # Save data to databases
         self.set_shares(wordindex=wordindex)
-
         self.queue.put((0, _("%(num)s folders found after rescan"), {"num": len(newsharedfiles)}))
+        del wordindex
+        del newsharedfiles
+        gc.collect()
 
     def is_hidden(self, folder, filename=None, folder_obj=None):
         """ Stop sharing any dot/hidden directories/files """
@@ -276,7 +282,8 @@ class Scanner:
     def get_files_list(self, mtimes, oldmtimes, oldfiles, oldstreams, rebuild=False):
         """ Get a list of files with their filelength, bitrate and track length in seconds """
 
-        files = {}
+        from sortedcontainers import SortedDict
+        files = SortedDict()
         streams = {}
         count = 0
         lastpercent = 0.0
@@ -435,10 +442,8 @@ class Scanner:
         return stream
 
     @classmethod
-    def add_file_to_index(cls, index, filename, folder, fileinfo, wordindex, fileindex, pattern):
+    def add_file_to_index(cls, index, filename, folder, wordindex, pattern):
         """ Add a file to the file index database """
-
-        fileindex[repr(index)] = (folder + '\\' + filename, *fileinfo[1:])
 
         # Collect words from filenames for Search index
         # Use set to prevent duplicates
@@ -451,21 +456,17 @@ class Scanner:
     def get_files_index(self, sharedfiles):
         """ Update Search index with new files """
 
-        """ We dump data directly into the file index database to save memory.
-        For the word index db, we can't use the same approach, as we need to access
-        dict elements frequently. This would take too long to access from disk. """
-
         if self.sharestype == "normal":
             fileindex_dest = "fileindex"
         else:
             fileindex_dest = "buddyfileindex"
 
-        fileindex = shelve.open(os.path.join(self.config.data_dir, fileindex_dest + ".db"), flag='n', protocol=pickle.HIGHEST_PROTOCOL)
         wordindex = {}
 
         index = 0
         count = len(sharedfiles)
         lastpercent = 0.0
+        translatepunctuation = self.translatepunctuation
 
         for folder in sharedfiles:
             count += 1
@@ -478,10 +479,9 @@ class Scanner:
                 lastpercent = percent
 
             for fileinfo in sharedfiles[folder]:
-                self.add_file_to_index(index, fileinfo[0], folder, fileinfo, wordindex, fileindex, self.translatepunctuation)
+                self.add_file_to_index(index, fileinfo[0], folder, wordindex, translatepunctuation)
                 index += 1
 
-        fileindex.close()
         return wordindex
 
 

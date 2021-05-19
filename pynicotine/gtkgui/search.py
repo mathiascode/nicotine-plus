@@ -21,10 +21,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fnmatch
 import operator
 import os
 import re
 import sre_constants
+import string
 
 from collections import defaultdict
 
@@ -335,6 +337,7 @@ class Search:
         self.resultslimit = 2000
         self.numvisibleresults = 0
         self.active_filter_count = 0
+        self.translatepunctuation = str.maketrans(dict.fromkeys(string.punctuation, ' '))
 
         self.operators = {
             '<': operator.lt,
@@ -587,14 +590,14 @@ class Search:
                 break
 
             fullpath = result[1]
-            fullpath_lower = fullpath.lower()
+            fullpath_lower = fullpath.lower().translate(self.translatepunctuation).split()
 
             if any(word in fullpath_lower for word in self.searchterm_words_ignore):
                 """ Filter out results with filtered words (e.g. nicotine -music) """
                 log.add_search(_("Filtered out excluded search result " + fullpath + " from user " + user))
                 continue
 
-            if not any(word in fullpath_lower for word in self.searchterm_words_include):
+            if not any(fnmatch.filter(fullpath_lower, word) for word in self.searchterm_words_include):
                 """ Some users may send us wrong results, filter out such ones """
                 log.add_search(_("Filtered out inexact or incorrect search result " + fullpath + " from user " + user))
                 continue
