@@ -67,8 +67,13 @@ class TransferList:
 
         if Gtk.get_major_version() == 4:
             getattr(frame, "ToggleButton%ss" % self.type.title()).set_icon_name("view-list-symbolic")
+
+            self.ClearTransfers.set_has_frame(False)
+            self.ClearTransfers.set_label(self.ClearTransfersLabel.get_first_child().get_text())
         else:
             getattr(frame, "ToggleButton%ss" % self.type.title()).set_image(Gtk.Image.new_from_icon_name("view-list-symbolic", Gtk.IconSize.BUTTON))
+
+            self.ClearTransfers.add(self.ClearTransfersLabel)
 
         self.widget = widget = getattr(self, type.title() + "List")
         self.key_controller = connect_key_press_event(widget, self.on_key_press_event)

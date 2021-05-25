@@ -63,10 +63,6 @@ def load_ui_elements(ui_class, filename):
                     obj_name = Gtk.Buildable.get_buildable_id(obj)
 
                 if not obj_name.startswith("_"):
-                    if Gtk.get_major_version() == 4:
-                        if isinstance(obj, Gtk.Box):
-                            obj.add = obj.append
-
                     setattr(ui_class, obj_name, obj)
 
             except TypeError:

@@ -166,25 +166,7 @@
                     <property name="visible">1</property>
                     <property name="can-focus">1</property>
                     <property name="direction">up</property>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="visible">1</property>
-                        <property name="spacing">6</property>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="visible">1</property>
-                            <property name="label" translatable="yes">Clear Downloads...</property>
-                            <property name="tooltip-text">Clear every download marked with a specific status.</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkImage">
-                            <property name="visible">1</property>
-                            <property name="icon-name">pan-up-symbolic</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
+                    <property name="tooltip-text">Clear every download marked with a specific status.</property>
                     <style>
                       <class name="flat"/>
                     </style>
@@ -194,6 +176,22 @@
             </child>
           </object>
         </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkBox" id="ClearTransfersLabel">
+    <property name="visible">1</property>
+    <property name="spacing">6</property>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">1</property>
+        <property name="label" translatable="yes">Clear Downloads...</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImage">
+        <property name="visible">1</property>
+        <property name="icon-name">pan-up-symbolic</property>
       </object>
     </child>
   </object>

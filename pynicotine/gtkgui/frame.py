@@ -573,7 +573,7 @@ class NicotineFrame:
 
             self.global_css_provider = Gtk.CssProvider()
             self.global_css_provider.load_from_data(
-                b".toolbar { border-bottom: 1px solid @borders; }"
+                b".tab-toolbar { border-bottom: 1px solid @borders; }"
             )
             if Gtk.get_major_version() == 4:
                 display = Gdk.Display.get_default()
@@ -1355,6 +1355,7 @@ class NicotineFrame:
             header_bar.set_show_title_buttons(True)
 
         else:
+            self.HeaderMenu.set_image(self.HeaderMenuIcon)
             end_widget.add(self.HeaderMenu)
 
             if page_id == "Default":
@@ -2049,7 +2050,7 @@ class NicotineFrame:
             log.add(_("Can't create directory '%(folder)s', reported error: %(error)s"), {'folder': sharesdir, 'error': msg})
 
         choose_file(
-            parent=self.MainWindow.get_toplevel(),
+            parent=self.MainWindow,
             callback=self.on_load_from_disk_selected,
             initialdir=sharesdir,
             multiple=True
