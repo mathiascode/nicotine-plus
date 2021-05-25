@@ -234,7 +234,12 @@ def hide_columns(treeview, cols, config):
     for (column_id, column) in cols.items():
         parent = column.get_widget().get_ancestor(Gtk.Button)
         if parent:
-            PopupMenu(None, parent, press_header, window=treeview.get_toplevel())
+            if Gtk.get_major_version() == 4:
+                window = treeview.get_root()
+            else:
+                window = treeview.get_toplevel()
+
+            PopupMenu(None, parent, press_header, window=window)
 
         # Read Show / Hide column settings from last session
         if config:

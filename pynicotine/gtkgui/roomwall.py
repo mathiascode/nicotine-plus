@@ -24,6 +24,7 @@ from pynicotine import slskmessages
 from pynicotine.config import config
 from pynicotine.gtkgui.utils import append_line
 from pynicotine.gtkgui.utils import load_ui_elements
+from pynicotine.gtkgui.widgets.dialogs import set_up_dialog
 from pynicotine.gtkgui.widgets.theme import update_widget_visuals
 
 
@@ -35,7 +36,7 @@ class RoomWall:
         self.room = room
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "roomwall.ui"))
-        self.RoomWallDialog.set_transient_for(frame.MainWindow)
+        set_up_dialog(self.RoomWallDialog, frame.MainWindow, self.Main, self.hide)
 
     def on_set_room_wall_message(self, *args):
 

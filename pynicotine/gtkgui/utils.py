@@ -47,17 +47,12 @@ NICOTINE = None
 def load_ui_elements(ui_class, filename):
 
     try:
-        builder = Gtk.Builder()
+        if Gtk.get_major_version() == 4:
+            builder = Gtk.Builder(ui_class)
+        else:
+            builder = Gtk.Builder()
+
         builder.set_translation_domain('nicotine')
-
-        """for j in dir(ui_class):
-            try:
-                if not j.startswith("_"):
-                    builder.get_scope().add_callback_symbol(j, getattr(ui_class, j))
-
-            except TypeError:
-                pass"""
-
         builder.add_from_file(filename)
 
         for obj in builder.get_objects():
@@ -73,7 +68,8 @@ def load_ui_elements(ui_class, filename):
             except TypeError:
                 pass
 
-        #builder.connect_signals(ui_class)
+        if Gtk.get_major_version() == 3:
+            builder.connect_signals(ui_class)
 
     except Exception as e:
         log.add(_("Failed to load ui file %(file)s: %(error)s"), {
@@ -362,7 +358,12 @@ def connect_key_press_event(widget, callback):
     """ Use event controller or legacy 'key-press-event', depending on GTK version """
 
     try:
-        controller = Gtk.EventControllerKey.new(widget)
+        if Gtk.get_major_version() == 4:
+            controller = Gtk.EventControllerKey()
+            widget.add_controller(controller)
+        else:
+            controller = Gtk.EventControllerKey.new(widget)
+
         controller.connect("key-pressed", callback)
 
     except AttributeError:

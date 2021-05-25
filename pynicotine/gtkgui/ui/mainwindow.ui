@@ -838,14 +838,13 @@
     </child>
   </object>
   <object class="GtkApplicationWindow" id="MainWindow">
-    <!--<signal name="delete-event" handler="on_delete_event" swapped="no"/>
-    <signal name="focus-in-event" handler="on_focus_in" swapped="no"/>-->
+    <!--<signal name="focus-in-event" handler="on_focus_in" swapped="no"/>-->
     <child>
       <object class="GtkBox" id="MainContent">
         <property name="visible">1</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkPaned">
+          <object class="GtkPaned" id="MainPaned">
             <property name="visible">1</property>
             <property name="can-focus">1</property>
             <property name="orientation">vertical</property>
@@ -1187,9 +1186,6 @@
                                     <property name="show-border">0</property>
                                     <property name="scrollable">1</property>
                                   </object>
-                                  <!--<packing>
-                                    <property name="resize">1</property>
-                                  </packing>-->
                                 </child>
                               </object>
                             </child>
@@ -1216,10 +1212,6 @@
                   </object>
                 </child>
               </object>
-              <!--<packing>
-                <property name="resize">1</property>
-                <property name="shrink">0</property>
-              </packing>-->
             </child>
             <!-- Log Window -->
             <child>
@@ -1416,10 +1408,6 @@
                   </object>
                 </child>
               </object>
-              <!--<packing>
-                <property name="resize">0</property>
-                <property name="shrink">0</property>
-              </packing>-->
             </child>
           </object>
         </child>
@@ -1450,6 +1438,7 @@
             </child>
             <child>
               <object class="GtkProgressBar" id="SharesProgress">
+                <property name="visible">0</property>
                 <property name="valign">center</property>
                 <property name="pulse-step">0.10000000149</property>
                 <property name="text" translatable="yes">Scanning Shares</property>
@@ -1458,6 +1447,7 @@
             </child>
             <child>
               <object class="GtkProgressBar" id="BuddySharesProgress">
+                <property name="visible">0</property>
                 <property name="valign">center</property>
                 <property name="pulse-step">0.10000000149</property>
                 <property name="margin-start">18</property>

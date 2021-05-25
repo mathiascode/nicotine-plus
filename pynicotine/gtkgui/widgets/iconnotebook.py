@@ -27,7 +27,7 @@ from gi.repository import Gtk
 
 from pynicotine.gtkgui.utils import connect_key_press_event
 from pynicotine.gtkgui.utils import get_key_press_event_args
-from pynicotine.gtkgui.widgets.messagedialogs import option_dialog
+from pynicotine.gtkgui.widgets.dialogs import option_dialog
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.config import config
 
@@ -49,7 +49,8 @@ class ImageLabel(Gtk.Box):
         self.onclose = onclose
 
         self.label = Gtk.Label()
-        self.label.set_angle(angle)
+        if Gtk.get_major_version() == 3:
+            self.label.set_angle(angle)
         self.label.set_halign(Gtk.Align.START)
         self.label.set_hexpand(True)
         self.label.show()
@@ -71,7 +72,7 @@ class ImageLabel(Gtk.Box):
             self.set_hilite_image(hilite_image)
 
         self._pack_children()
-        self._order_children()
+        #self._order_children()
 
     def _pack_children(self):
 
@@ -81,13 +82,19 @@ class ImageLabel(Gtk.Box):
 
             self.eventbox.remove(self.box)
 
-        self.eventbox = Gtk.EventBox()
-        self.eventbox.show()
-        self.add(self.eventbox)
-
         self.box = Gtk.Box()
         self.box.set_spacing(2)
-        self.eventbox.add(self.box)
+
+        if Gtk.get_major_version() == 4:
+            self.eventbox = Gtk.Box()
+            self.append(self.eventbox)
+            self.eventbox.append(self.box)
+        else:
+            self.eventbox = Gtk.EventBox()
+            self.add(self.eventbox)
+            self.eventbox.add(self.box)
+
+        self.eventbox.show()
 
         if self.angle in (90, -90):
             self.set_orientation(Gtk.Orientation.VERTICAL)
@@ -101,6 +108,9 @@ class ImageLabel(Gtk.Box):
 
         self.status_image.set_margin_end(5)
         self.hilite_image.set_margin_start(5)
+
+        if Gtk.get_major_version() == 4:
+            self.box.add = self.box.append
 
         self.box.add(self.status_image)
         self.box.add(self.label)
@@ -236,7 +246,10 @@ class ImageLabel(Gtk.Box):
         return self.status_pixbuf
 
     def set_icon(self, icon_name):
-        self.status_image.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+        if Gtk.get_major_version() == 4:
+            self.status_image.set_from_icon_name(icon_name)
+        else:
+            self.status_image.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
 
     def set_text(self, lbl):
         self.set_text_color(notify=None, text=lbl)
@@ -268,10 +281,11 @@ class IconNotebook:
         self.key_controller = connect_key_press_event(self.notebook, self.on_key_press_event)
         self.notebook.connect("switch-page", self.on_switch_page)
 
-        try:
-            self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic", Gtk.IconSize.BUTTON)
-        except AttributeError:
+        if Gtk.get_major_version() == 4:
             self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic")
+        else:
+            self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic", Gtk.IconSize.BUTTON)
+
         #self.unread_button.set_relief(Gtk.ReliefStyle.NONE)
         self.unread_button.set_tooltip_text(_("Unread Tabs"))
         self.unread_button.set_halign(Gtk.Align.CENTER)
@@ -283,12 +297,12 @@ class IconNotebook:
 
         self.notebook.set_action_widget(self.unread_button, Gtk.PackType.END)
 
-        try:
-            toplevel = self.notebook.get_toplevel()
-        except AttributeError:
-            toplevel = self.notebook.get_root()
+        if Gtk.get_major_version() == 4:
+            window = self.notebook.get_root()
+        else:
+            window = self.notebook.get_toplevel()
 
-        self.popup_menu_unread = PopupMenu(window=toplevel)
+        self.popup_menu_unread = PopupMenu(window=window)
         self.unread_pages = []
 
         self.angle = angle

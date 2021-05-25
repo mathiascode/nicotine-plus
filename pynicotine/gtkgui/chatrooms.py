@@ -49,7 +49,7 @@ from pynicotine.gtkgui.utils import load_ui_elements
 from pynicotine.gtkgui.utils import open_log
 from pynicotine.gtkgui.utils import scroll_bottom
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
-from pynicotine.gtkgui.widgets.messagedialogs import option_dialog
+from pynicotine.gtkgui.widgets.dialogs import option_dialog
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.textentry import ChatEntry
 from pynicotine.gtkgui.widgets.textentry import TextSearchBar
@@ -113,6 +113,11 @@ class ChatRooms(IconNotebook):
 
         self.notebook.connect("switch-page", self.on_switch_chat)
         self.notebook.connect("page-reordered", self.on_reordered_page)
+
+        if Gtk.get_major_version() == 4:
+            self.frame.ChatroomsPane.set_property("resize-start-child", True)
+        else:
+            self.frame.ChatroomsPane.child_set_property(self.notebook, "resize", True)
 
         self.update_visuals()
 

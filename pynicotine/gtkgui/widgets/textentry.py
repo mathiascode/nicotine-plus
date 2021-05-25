@@ -506,11 +506,7 @@ class TextSearchBar:
         self.entry.connect("previous-match", self.on_search_previous_match)
         self.entry.connect("next-match", self.on_search_next_match)
 
-<<<<<<< HEAD
         self.key_controller = connect_key_press_event(self.textview, self.on_key_press_event)
-=======
-        #self.textview.connect("key-press-event", self.on_key_press)
->>>>>>> fefcba39 (gtk4)
 
     def on_search_match(self, search_type, restarted=False):
 

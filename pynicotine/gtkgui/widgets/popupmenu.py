@@ -29,7 +29,7 @@ from gi.repository import Gtk
 
 from pynicotine import slskmessages
 from pynicotine.config import config
-from pynicotine.gtkgui.widgets.messagedialogs import entry_dialog
+from pynicotine.gtkgui.widgets.dialogs import entry_dialog
 
 
 """ Popup/Context Menu """
@@ -52,7 +52,8 @@ class PopupMenu(Gio.Menu):
             self.connect_context_menu_events(widget)
 
         if not window:
-            self.window = frame.MainWindow
+            if frame:
+                self.window = frame.MainWindow
 
         elif isinstance(window, Gtk.Dialog):
             self.window = window.get_transient_for()
@@ -345,13 +346,18 @@ class PopupMenu(Gio.Menu):
 
     def connect_context_menu_events(self, widget):
 
-        self.gesture_press = Gtk.GestureLongPress.new(widget)
+        if Gtk.get_major_version() == 4:
+            self.gesture_press = Gtk.GestureLongPress()
+        else:
+            self.gesture_press = Gtk.GestureLongPress.new(widget)
+
         self.gesture_press.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         self.gesture_press.set_touch_only(True)
         self.gesture_press.connect("pressed", self._callback_press)
 
-        widget.connect("button-press-event", self._callback_click)
-        widget.connect("popup-menu", self._callback_menu)
+        if Gtk.get_major_version() == 3:
+            widget.connect("button-press-event", self._callback_click)
+            widget.connect("popup-menu", self._callback_menu)
 
     def set_widget(self, widget):
 

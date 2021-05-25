@@ -20,6 +20,32 @@ from gi.repository import Gdk
 from gi.repository import Gtk
 
 
+""" Dialogs """
+
+
+def set_up_dialog(dialog, parent, content_box=None, quit_callback=None, type_hint="normal"):
+
+    if Gtk.get_major_version() == 4:
+        if quit_callback:
+            dialog.connect("close-request", quit_callback)
+    else:
+        dialog.set_property("window-position", Gtk.WindowPosition.CENTER_ON_PARENT)
+
+        if quit_callback:
+            dialog.connect("delete-event", quit_callback)
+
+        if content_box:
+            dialog.get_content_area().add(content_box)
+
+        if type_hint == "normal":
+            dialog.set_type_hint(Gdk.WindowTypeHint.NORMAL)
+
+        elif type_hint == "dialog":
+            dialog.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+
+    dialog.set_transient_for(parent)
+
+
 """ Message Dialogs """
 
 
@@ -38,10 +64,10 @@ def entry_dialog(parent, title, message, callback, callback_data=None, default="
     self.set_destroy_with_parent(True)
     self.set_modal(True)
 
-    try:
-        label = self.get_message_area().get_children()[-1]
-    except AttributeError:
+    if Gtk.get_major_version() == 4:
         label = self.get_message_area().get_last_child()
+    else:
+        label = self.get_message_area().get_children()[-1]
 
     label.set_selectable(True)
 
@@ -52,12 +78,21 @@ def entry_dialog(parent, title, message, callback, callback_data=None, default="
         for i in droplist:
             dropdown.append_text(i)
 
-        self.get_message_area().add(dropdown)
+        if Gtk.get_major_version() == 4:
+            self.get_message_area().append(dropdown)
+        else:
+            self.get_message_area().add(dropdown)
+
         dropdown.show()
 
     else:
         entry = Gtk.Entry()
-        self.get_message_area().add(entry)
+
+        if Gtk.get_major_version() == 4:
+            self.get_message_area().append(entry)
+        else:
+            self.get_message_area().add(entry)
+
         entry.show()
 
     self.get_response_value = entry.get_text
@@ -69,7 +104,12 @@ def entry_dialog(parent, title, message, callback, callback_data=None, default="
         self.option = Gtk.CheckButton()
         self.option.set_active(optionvalue)
         self.option.set_label(optionmessage)
-        self.get_message_area().add(self.option)
+
+        if Gtk.get_major_version() == 4:
+            self.get_message_area().append(self.option)
+        else:
+            self.get_message_area().add(self.option)
+
         self.option.show()
 
         self.get_second_response_value = self.option.get_active
@@ -95,10 +135,10 @@ def message_dialog(parent, title, message, callback=None):
     self.set_destroy_with_parent(True)
     self.set_modal(True)
 
-    try:
-        label = self.get_message_area().get_children()[-1]
-    except AttributeError:
+    if Gtk.get_major_version() == 4:
         label = self.get_message_area().get_last_child()
+    else:
+        label = self.get_message_area().get_children()[-1]
 
     label.set_selectable(True)
 
@@ -124,17 +164,22 @@ def option_dialog(parent, title, message, callback, callback_data=None,
     self.set_destroy_with_parent(True)
     self.set_modal(True)
 
-    try:
-        label = self.get_message_area().get_children()[-1]
-    except AttributeError:
+    if Gtk.get_major_version() == 4:
         label = self.get_message_area().get_last_child()
+    else:
+        label = self.get_message_area().get_children()[-1]
 
     label.set_selectable(True)
 
     if checkbox_label:
         self.checkbox = Gtk.CheckButton()
         self.checkbox.set_label(checkbox_label)
-        self.get_message_area().add(self.checkbox)
+
+        if Gtk.get_major_version() == 4:
+            self.get_message_area().append(self.checkbox)
+        else:
+            self.get_message_area().add(self.checkbox)
+
         self.checkbox.show()
 
     if third:

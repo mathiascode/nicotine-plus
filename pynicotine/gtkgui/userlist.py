@@ -31,7 +31,7 @@ from gi.repository import Gtk
 from pynicotine import slskmessages
 from pynicotine.config import config
 from pynicotine.gtkgui.utils import load_ui_elements
-from pynicotine.gtkgui.widgets.messagedialogs import entry_dialog
+from pynicotine.gtkgui.widgets.dialogs import entry_dialog
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.theme import update_widget_visuals
 from pynicotine.gtkgui.widgets.treeview import initialise_columns

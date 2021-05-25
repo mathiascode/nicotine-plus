@@ -40,8 +40,8 @@ from pynicotine.gtkgui.utils import open_uri
 from pynicotine.gtkgui.widgets.filechooser import FileChooserButton
 from pynicotine.gtkgui.widgets.filechooser import choose_dir
 from pynicotine.gtkgui.widgets.filechooser import save_file
-from pynicotine.gtkgui.widgets.messagedialogs import entry_dialog
-from pynicotine.gtkgui.widgets.messagedialogs import message_dialog
+from pynicotine.gtkgui.widgets.dialogs import entry_dialog
+from pynicotine.gtkgui.widgets.dialogs import message_dialog
 from pynicotine.gtkgui.widgets.theme import update_widget_visuals
 from pynicotine.gtkgui.widgets.treeview import initialise_columns
 from pynicotine.logfacility import log

@@ -38,7 +38,7 @@ from pynicotine.gtkgui.utils import load_ui_elements
 from pynicotine.gtkgui.utils import open_file_path
 from pynicotine.gtkgui.widgets.filechooser import choose_dir
 from pynicotine.gtkgui.widgets.infobar import InfoBar
-from pynicotine.gtkgui.widgets.messagedialogs import entry_dialog
+from pynicotine.gtkgui.widgets.dialogs import entry_dialog
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.theme import update_widget_visuals
 from pynicotine.gtkgui.widgets.treeview import initialise_columns

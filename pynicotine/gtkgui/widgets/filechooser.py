@@ -222,21 +222,34 @@ class FileChooserButton:
         self.icon = Gtk.Image.new()
 
         if chooser_type == "folder":
-            self.icon.set_from_icon_name("folder-symbolic", Gtk.IconSize.BUTTON)
+            if Gtk.get_major_version() == 4:
+                self.icon.set_from_icon_name("folder-symbolic")
+            else:
+                self.icon.set_from_icon_name("folder-symbolic", Gtk.IconSize.BUTTON)
 
         elif chooser_type == "image":
-            self.icon.set_from_icon_name("image-x-generic-symbolic", Gtk.IconSize.BUTTON)
+            if Gtk.get_major_version() == 4:
+                self.icon.set_from_icon_name("image-x-generic-symbolic")
+            else:
+                self.icon.set_from_icon_name("image-x-generic-symbolic", Gtk.IconSize.BUTTON)
 
         else:
-            self.icon.set_from_icon_name("text-x-generic-symbolic", Gtk.IconSize.BUTTON)
+            if Gtk.get_major_version() == 4:
+                self.icon.set_from_icon_name("text-x-generic-symbolic")
+            else:
+                self.icon.set_from_icon_name("text-x-generic-symbolic", Gtk.IconSize.BUTTON)
 
         self.label = Gtk.Label.new(_("(None)"))
 
-        box.add(self.icon)
-        box.add(self.label)
-
-        self.button.add(box)
-        self.button.show_all()
+        if Gtk.get_major_version() == 4:
+            box.append(self.icon)
+            box.append(self.label)
+            self.button.set_child(box)
+        else:
+            box.add(self.icon)
+            box.add(self.label)
+            self.button.add(box)
+            self.button.show_all()
 
         self.button.connect("clicked", self.open_file_chooser)
 

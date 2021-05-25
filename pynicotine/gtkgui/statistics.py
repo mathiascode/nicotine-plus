@@ -23,7 +23,7 @@ from gi.repository import Gtk
 
 from pynicotine.config import config
 from pynicotine.gtkgui.utils import load_ui_elements
-from pynicotine.gtkgui.widgets.messagedialogs import option_dialog
+from pynicotine.gtkgui.widgets.dialogs import option_dialog
 from pynicotine.utils import human_size
 
 

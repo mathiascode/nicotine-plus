@@ -64,8 +64,9 @@ from pynicotine.gtkgui.utils import open_uri
 from pynicotine.gtkgui.utils import scroll_bottom
 from pynicotine.gtkgui.widgets.filechooser import choose_file
 from pynicotine.gtkgui.widgets.iconnotebook import ImageLabel
-from pynicotine.gtkgui.widgets.messagedialogs import message_dialog
-from pynicotine.gtkgui.widgets.messagedialogs import option_dialog
+from pynicotine.gtkgui.widgets.dialogs import message_dialog
+from pynicotine.gtkgui.widgets.dialogs import option_dialog
+from pynicotine.gtkgui.widgets.dialogs import set_up_dialog
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.textentry import clear_entry
 from pynicotine.gtkgui.widgets.textentry import TextSearchBar
@@ -168,8 +169,17 @@ class NicotineFrame:
         # Set up event controllers
         self.key_controller = connect_key_press_event(self.MainWindow, self.on_key_press_event)
 
+        if Gtk.get_major_version() == 4:
+            self.MainWindow.connect("close-request", self.on_delete_event)
+        else:
+            self.MainWindow.connect("delete-event", self.on_delete_event)
+
         try:
-            self.motion_controller = Gtk.EventControllerMotion.new(self.MainWindow)
+            if Gtk.get_major_version() == 4:
+                self.motion_controller = Gtk.EventControllerMotion()
+            else:
+                self.motion_controller = Gtk.EventControllerMotion.new(self.MainWindow)
+
             self.motion_controller.connect("motion", self.on_disable_auto_away)
 
         except AttributeError:
@@ -183,12 +193,12 @@ class NicotineFrame:
         width = config.sections["ui"]["width"]
         height = config.sections["ui"]["height"]
 
-        try:
-            self.MainWindow.resize(width, height)
-        except AttributeError:
+        if Gtk.get_major_version() == 4:
             self.MainWindow.set_default_size(width, height)
+        else:
+            self.MainWindow.resize(width, height)
 
-        try:
+        if Gtk.get_major_version() == 3:
             xpos = config.sections["ui"]["xposition"]
             ypos = config.sections["ui"]["yposition"]
 
@@ -197,8 +207,6 @@ class NicotineFrame:
                 self.MainWindow.set_position(Gtk.WindowPosition.CENTER)
             else:
                 self.MainWindow.move(xpos, ypos)
-        except AttributeError:
-            pass
 
         if config.sections["ui"]["maximized"]:
             self.MainWindow.maximize()
@@ -283,6 +291,17 @@ class NicotineFrame:
         # Text Search
         TextSearchBar(self.LogWindow, self.LogSearchBar, self.LogSearchEntry)
 
+        if Gtk.get_major_version() == 4:
+            self.MainPaned.set_property("resize-start-child", True)
+            self.MainPaned.set_property("shrink-start-child", False)
+            self.MainPaned.set_property("resize-end-child", False)
+            self.MainPaned.set_property("shrink-end-child", False)
+        else:
+            self.MainPaned.child_set_property(self.NotebooksPane, "resize", True)
+            self.MainPaned.child_set_property(self.NotebooksPane, "shrink", False)
+            self.MainPaned.child_set_property(self.DebugLog, "resize", False)
+            self.MainPaned.child_set_property(self.DebugLog, "shrink", False)
+
         """ Scanning """
 
         # Deactivate public shares related menu entries if we don't use them
@@ -358,14 +377,17 @@ class NicotineFrame:
 
     def save_window_state(self):
 
-        width, height = self.MainWindow.get_size()
-        xpos, ypos = self.MainWindow.get_position()
+        if Gtk.get_major_version() == 4:
+            width, height = self.MainWindow.get_default_size()
+        else:
+            width, height = self.MainWindow.get_size()
+            xpos, ypos = self.MainWindow.get_position()
+
+            config.sections["ui"]["xposition"] = xpos
+            config.sections["ui"]["yposition"] = ypos
 
         config.sections["ui"]["height"] = height
         config.sections["ui"]["width"] = width
-
-        config.sections["ui"]["xposition"] = xpos
-        config.sections["ui"]["yposition"] = ypos
 
         config.sections["ui"]["maximized"] = self.MainWindow.is_maximized()
         config.sections["ui"]["last_tab_id"] = self.MainNotebook.get_current_page()
@@ -538,14 +560,20 @@ class NicotineFrame:
 
         if not hasattr(self, "global_css_provider"):
 
-            screen = Gdk.Screen.get_default()
             self.global_css_provider = Gtk.CssProvider()
             self.global_css_provider.load_from_data(
                 b".toolbar { border-bottom: 1px solid @borders; }"
             )
-            Gtk.StyleContext.add_provider_for_screen(
-                screen, self.global_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-            )
+            if Gtk.get_major_version() == 4:
+                display = Gdk.Display.get_default()
+                Gtk.StyleContext.add_provider_for_display(
+                    display, self.global_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+            else:
+                screen = Gdk.Screen.get_default()
+                Gtk.StyleContext.add_provider_for_screen(
+                    screen, self.global_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
 
         for widget in list(self.__dict__.values()):
             update_widget_visuals(widget)
@@ -629,7 +657,7 @@ class NicotineFrame:
         self.JoinRoomEntry.set_sensitive(status)
         self.RoomList.set_sensitive(status)
 
-        #self.tray_icon.set_server_actions_sensitive(status)
+        self.tray_icon.set_server_actions_sensitive(status)
 
     def connect_error(self, conn):
 
@@ -1167,7 +1195,7 @@ class NicotineFrame:
 
         if not hasattr(self, "KeyboardShortcutsDialog"):
             load_ui_elements(self, os.path.join(self.gui_dir, "ui", "dialogs", "shortcuts.ui"))
-            self.KeyboardShortcutsDialog.set_transient_for(self.MainWindow)
+            set_up_dialog(self.KeyboardShortcutsDialog, self.MainWindow, quit_callback=self.on_hide)
 
         self.KeyboardShortcutsDialog.present_with_time(Gdk.CURRENT_TIME)
 
@@ -1238,17 +1266,21 @@ class NicotineFrame:
     def on_about(self, *args):
 
         load_ui_elements(self, os.path.join(self.gui_dir, "ui", "dialogs", "about.ui"))
+        set_up_dialog(self.AboutDialog, self.MainWindow)
 
         # Override link handler with our own
         self.AboutDialog.connect("activate-link", self.on_about_uri)
-        self.AboutDialog.connect("response", lambda x, y: x.destroy())
 
         if self.images["n"]:
             self.AboutDialog.set_logo(self.images["n"])
         else:
             self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
 
-        self.AboutDialog.set_transient_for(self.MainWindow)
+        if Gtk.get_major_version() == 4:
+            self.AboutDialog.connect("close-request", lambda x: x.destroy())
+        else:
+            self.AboutDialog.connect("response", lambda x, y: x.destroy())
+
         self.AboutDialog.set_version(config.version)
 
         self.AboutDialog.present_with_time(Gdk.CURRENT_TIME)
@@ -1273,22 +1305,26 @@ class NicotineFrame:
         if menu_parent is not None:
             menu_parent.remove(self.HeaderMenu)
 
-        end_widget = getattr(self, page_id + "End")
-        end_widget.add(self.HeaderMenu)
-
         header_bar = getattr(self, "Header" + page_id)
-        header_bar.set_title(GLib.get_application_name())
-        header_bar.pack_end(end_widget)
+        end_widget = getattr(self, page_id + "End")
 
-        try:
+        if Gtk.get_major_version() == 4:
+            self.HeaderMenu.set_icon_name("open-menu-symbolic")
+            end_widget.append(self.HeaderMenu)
+
+            header_bar.set_show_title_buttons(True)
+
+        else:
+            end_widget.add(self.HeaderMenu)
+
             if page_id == "Default":
                 header_bar.set_has_subtitle(False)
 
+            header_bar.set_title(GLib.get_application_name())
             header_bar.set_show_close_button(True)
 
-        except AttributeError:
-            header_bar.set_show_title_buttons(True)
-
+        header_bar.remove(end_widget)
+        header_bar.pack_end(end_widget)
         self.MainWindow.set_titlebar(header_bar)
 
     def set_toolbar(self, page_id):
@@ -1312,20 +1348,28 @@ class NicotineFrame:
 
         title_widget = getattr(self, page_id + "Title")
         title_widget.set_hexpand(True)
-        header_bar.set_custom_title(None)
-        toolbar_contents.add(title_widget)
 
         try:
             start_widget = getattr(self, page_id + "Start")
             header_bar.remove(start_widget)
-            toolbar_contents.add(start_widget)
 
         except AttributeError:
             # No start widget
-            pass
+            start_widget = None
 
         end_widget = getattr(self, page_id + "End")
         header_bar.remove(end_widget)
+
+        if Gtk.get_major_version() == 4:
+            header_bar.set_title_widget(None)
+            toolbar_contents.add = toolbar_contents.append
+        else:
+            header_bar.set_custom_title(None)
+
+        if start_widget:
+            toolbar_contents.add(start_widget)
+
+        toolbar_contents.add(title_widget)
         toolbar_contents.add(end_widget)
 
         toolbar.show()
@@ -1354,7 +1398,12 @@ class NicotineFrame:
         title_widget = getattr(self, self.current_page_id + "Title")
         title_widget.set_hexpand(False)
         toolbar_contents.remove(title_widget)
-        header_bar.set_custom_title(title_widget)
+
+        if Gtk.get_major_version() == 4:
+            header_bar.set_title_widget(title_widget)
+            header_bar.add = header_bar.pack_start
+        else:
+            header_bar.set_custom_title(title_widget)
 
         try:
             start_widget = getattr(self, self.current_page_id + "Start")
@@ -1406,21 +1455,14 @@ class NicotineFrame:
         }
 
         # Initialize tabs labels
-        try:
-            children = self.MainNotebook.get_children()
-        except AttributeError:
-            children = self.MainNotebook
-
-        for page in children:
+        for i in range(self.MainNotebook.get_n_pages()):
+            page = self.MainNotebook.get_nth_page(i)
             tab_label = self.MainNotebook.get_tab_label(page)
 
-            try:
+            if Gtk.get_major_version() == 4:
+                tab_label_id = Gtk.Buildable.get_buildable_id(tab_label)
+            else:
                 tab_label_id = Gtk.Buildable.get_name(tab_label)
-            except AttributeError:
-                if tab_label:
-                    tab_label_id = Gtk.Buildable.get_buildable_id(tab_label)
-                else:
-                    continue
 
             tab_text, tab_icon_name = tab_data[tab_label]
 
@@ -1471,10 +1513,20 @@ class NicotineFrame:
         # Hide widgets on previous page for a performance boost
         current_page = notebook.get_nth_page(notebook.get_current_page())
 
-        for child in current_page.get_children():
+        if Gtk.get_major_version() == 4:
+            children = current_page
+        else:
+            children = current_page.get_children()
+
+        for child in children:
             child.hide()
 
-        for child in page.get_children():
+        if Gtk.get_major_version() == 4:
+            children = page
+        else:
+            children = page.get_children()
+
+        for child in children:
             child.show()
 
         GLib.idle_add(notebook.grab_focus)
@@ -1559,7 +1611,7 @@ class NicotineFrame:
         keyval, keycode, state = get_key_press_event_args(*args)
         self.on_disable_auto_away()
 
-        if state & (Gdk.ModifierType.MOD1_MASK | Gtk.accelerator_parse("<Primary>")[1]) != Gdk.ModifierType.MOD1_MASK:
+        if state & Gtk.accelerator_parse("<Primary>")[1]:
             return False
 
         for i in range(1, 10):
@@ -2441,7 +2493,7 @@ class NicotineFrame:
             if self.MainWindow.get_property("visible"):
                 self.MainWindow.hide()
 
-    def on_delete_event(self, widget, event):
+    def on_delete_event(self, *args):
 
         if not config.sections["ui"]["exitdialog"]:
             self.save_state()
@@ -2463,7 +2515,7 @@ class NicotineFrame:
 
         return True
 
-    def on_hide(self, widget, event):
+    def on_hide(self, widget, *args):
         widget.hide()
         return True
 
