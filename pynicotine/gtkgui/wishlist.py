@@ -57,6 +57,9 @@ class WishList:
 
         self.store = Gtk.ListStore(str)
 
+        if Gtk.get_major_version() == 4:
+            self.store.insert_with_valuesv = self.store.insert_with_values
+
         self.column_numbers = list(range(self.store.get_n_columns()))
         cols = initialise_columns(
             None, self.WishlistView,

@@ -1077,14 +1077,22 @@ class NicotineFrame:
             if mode == "always":
                 return
 
-            self.NotebooksPane.remove(self.userlist.Main)
+            if Gtk.get_major_version() == 4:
+                self.NotebooksPane.set_end_child(Gtk.Box())
+                self.NotebooksPane.get_end_child().hide()
+            else:
+                self.NotebooksPane.remove(self.userlist.Main)
 
         elif self.userlist.Main in chat_children:
 
             if mode == "chatrooms":
                 return
 
-            self.ChatroomsPane.remove(self.userlist.Main)
+            if Gtk.get_major_version() == 4:
+                self.ChatroomsPane.set_end_child(Gtk.Box())
+                self.ChatroomsPane.get_end_child().hide()
+            else:
+                self.ChatroomsPane.remove(self.userlist.Main)
 
         elif self.userlist.Main in buddy_children:
 
@@ -1099,6 +1107,7 @@ class NicotineFrame:
             if self.userlist.Main not in note_children:
                 if Gtk.get_major_version() == 4:
                     self.NotebooksPane.set_end_child(self.userlist.Main)
+                    self.NotebooksPane.set_property("resize-end-child", False)
                 else:
                     self.NotebooksPane.pack2(self.userlist.Main, False, True)
 
@@ -1110,6 +1119,7 @@ class NicotineFrame:
             if self.userlist.Main not in chat_children:
                 if Gtk.get_major_version() == 4:
                     self.ChatroomsPane.set_end_child(self.userlist.Main)
+                    self.ChatroomsPane.set_property("resize-end-child", False)
                 else:
                     self.ChatroomsPane.pack2(self.userlist.Main, False, True)
 
