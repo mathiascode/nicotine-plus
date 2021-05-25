@@ -296,12 +296,6 @@
               </object>
             </child>
             <child>
-              <object class="GtkImage" id="DownloadGroupingIcon">
-                <property name="visible">1</property>
-                <property name="icon-name">view-list-symbolic</property>
-              </object>
-            </child>
-            <child>
               <object class="GtkComboBoxText" id="ToggleTreeDownloads">
                 <property name="visible">1</property>
                 <property name="has-entry">1</property>
@@ -316,11 +310,9 @@
                     <property name="visible">0</property>
                   </object>
                 </child>
-                <!--<child internal-child="button">
-                  <object class="GtkButton">
-                    <property name="image">DownloadGroupingIcon</property>
-                  </object>
-                </child>-->
+                <child internal-child="button">
+                  <object class="GtkButton" id="ToggleButtonDownloads"/>
+                </child>
               </object>
             </child>
             <style>
@@ -467,12 +459,6 @@
               </object>
             </child>
             <child>
-              <object class="GtkImage" id="UploadGroupingIcon">
-                <property name="visible">1</property>
-                <property name="icon-name">view-list-symbolic</property>
-              </object>
-            </child>
-            <child>
               <object class="GtkComboBoxText" id="ToggleTreeUploads">
                 <property name="visible">1</property>
                 <property name="has-entry">1</property>
@@ -487,11 +473,9 @@
                     <property name="visible">0</property>
                   </object>
                 </child>
-                <!--<child internal-child="button">
-                  <object class="GtkButton">
-                    <property name="image">UploadGroupingIcon</property>
-                  </object>
-                </child>-->
+                <child internal-child="button">
+                  <object class="GtkButton" id="ToggleButtonUploads"/>
+                </child>
               </object>
             </child>
             <style>
@@ -838,7 +822,6 @@
     </child>
   </object>
   <object class="GtkApplicationWindow" id="MainWindow">
-    <!--<signal name="focus-in-event" handler="on_focus_in" swapped="no"/>-->
     <child>
       <object class="GtkBox" id="MainContent">
         <property name="visible">1</property>

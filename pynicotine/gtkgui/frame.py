@@ -172,12 +172,18 @@ class NicotineFrame:
 
         if Gtk.get_major_version() == 4:
             self.MainWindow.connect("close-request", self.on_delete_event)
+
+            self.focus_controller = Gtk.EventControllerFocus()
+            self.focus_controller.connect("enter", self.on_focus_in_event)
+            self.MainWindow.add_controller(self.focus_controller)
         else:
             self.MainWindow.connect("delete-event", self.on_delete_event)
+            self.MainWindow.connect("focus-in-event", self.on_focus_in_event)
 
         try:
             if Gtk.get_major_version() == 4:
                 self.motion_controller = Gtk.EventControllerMotion()
+                self.MainWindow.add_controller(self.motion_controller)
             else:
                 self.motion_controller = Gtk.EventControllerMotion.new(self.MainWindow)
 
@@ -364,12 +370,12 @@ class NicotineFrame:
 
     """ Window State """
 
-    def on_focus_in(self, widget, event):
+    def on_focus_in_event(self, *args):
 
         self.chatrooms.clear_notifications()
         self.privatechats.clear_notifications()
 
-        if self.MainWindow.get_urgency_hint():
+        if Gtk.get_major_version() == 3 and self.MainWindow.get_urgency_hint():
             self.MainWindow.set_urgency_hint(False)
 
     def cancel(self, popup, *args):

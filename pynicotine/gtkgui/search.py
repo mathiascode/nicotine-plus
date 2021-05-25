@@ -293,6 +293,11 @@ class Search:
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "search.ui"))
         self.key_controller = connect_key_press_event(self.ResultsList, self.on_key_press_event)
 
+        if Gtk.get_major_version() == 4:
+            self.ToggleButton.set_icon_name("view-list-symbolic")
+        else:
+            self.ToggleButton.set_image(Gtk.Image.new_from_icon_name("view-list-symbolic", Gtk.IconSize.BUTTON))
+
         self.text = text
         self.searchterm_words_include = [p for p in text.lower().split() if not p.startswith('-')]
         self.searchterm_words_ignore = [p[1:] for p in text.lower().split() if p.startswith('-') and len(p) > 1]
