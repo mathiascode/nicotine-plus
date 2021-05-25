@@ -176,25 +176,28 @@ class NicotineFrame:
 
         if Gtk.get_major_version() == 4:
             self.MainWindow.connect("close-request", self.on_delete_event)
-
-            self.focus_controller = Gtk.EventControllerFocus()
-            self.focus_controller.connect("enter", self.on_focus_in_event)
-            self.MainWindow.add_controller(self.focus_controller)
         else:
             self.MainWindow.connect("delete-event", self.on_delete_event)
-            self.MainWindow.connect("focus-in-event", self.on_focus_in_event)
 
         try:
             if Gtk.get_major_version() == 4:
+                self.focus_controller = Gtk.EventControllerFocus()
                 self.motion_controller = Gtk.EventControllerMotion()
+                self.MainWindow.add_controller(self.focus_controller)
                 self.MainWindow.add_controller(self.motion_controller)
+
+                self.focus_controller.connect("enter", self.on_focus_in_event)
             else:
+                self.focus_controller = Gtk.EventControllerKey.new(self.MainWindow)
                 self.motion_controller = Gtk.EventControllerMotion.new(self.MainWindow)
+
+                self.focus_controller.connect("focus-in", self.on_focus_in_event)
 
             self.motion_controller.connect("motion", self.on_disable_auto_away)
 
         except AttributeError:
             # GTK <3.24
+            self.MainWindow.connect("focus-in-event", self.on_focus_in_event)
             self.MainWindow.connect("motion-notify-event", self.on_disable_auto_away)
 
         # Handle Ctrl+C and "kill" exit gracefully
@@ -2627,4 +2630,6 @@ class Application(Gtk.Application):
         # Show the window of the running Nicotine+ instance
         window = self.get_active_window()
         window.present_with_time(Gdk.CURRENT_TIME)
-        window.deiconify()
+
+        if Gtk.get_major_version() == 3:
+            window.deiconify()
