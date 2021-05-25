@@ -1786,10 +1786,11 @@ class NicotineFrame:
 
         for i in range(self.MainNotebook.get_n_pages()):
             tab_box = self.MainNotebook.get_nth_page(i)
-            tab_label = self.MainNotebook.get_tab_label(tab_box)
-
             self.set_tab_expand(tab_box)
-            #tab_label.set_angle(ui["labelmain"])
+
+            if Gtk.get_major_version() == 3:
+                tab_label = self.MainNotebook.get_tab_label(tab_box)
+                tab_label.set_angle(ui["labelmain"])
 
         # Other notebooks
         self.chatrooms.set_tab_pos(self.get_tab_position(ui["tabrooms"]))

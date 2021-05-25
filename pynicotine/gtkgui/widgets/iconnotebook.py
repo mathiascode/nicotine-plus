@@ -103,10 +103,11 @@ class ImageLabel(Gtk.Box):
 
         self.eventbox.show()
 
-        if self.angle in (90, -90):
-            self.set_orientation(Gtk.Orientation.VERTICAL)
-        else:
-            self.set_orientation(Gtk.Orientation.HORIZONTAL)
+        if Gtk.get_major_version() == 3:
+            if self.angle in (90, -90):
+                self.set_orientation(Gtk.Orientation.VERTICAL)
+            else:
+                self.set_orientation(Gtk.Orientation.HORIZONTAL)
 
         if self.centered:
             self.set_halign(Gtk.Align.CENTER)
@@ -129,24 +130,24 @@ class ImageLabel(Gtk.Box):
 
     def _order_children(self):
 
-        pass
-        """if self.angle == 90:
-            self.box.reorder_child(self.hilite_image, 0)
-            self.box.reorder_child(self.label, 1)
-            self.box.reorder_child(self.status_image, 2)
+        if Gtk.get_major_version() == 3:
+            if self.angle == 90:
+                self.box.reorder_child(self.hilite_image, 0)
+                self.box.reorder_child(self.label, 1)
+                self.box.reorder_child(self.status_image, 2)
 
-            if hasattr(self, "button"):
-                self.reorder_child(self.button, 0)
+                if hasattr(self, "button"):
+                    self.reorder_child(self.button, 0)
 
-        else:
-            self.box.reorder_child(self.status_image, 0)
-            self.box.reorder_child(self.label, 1)
-            self.box.reorder_child(self.hilite_image, 2)
+            else:
+                self.box.reorder_child(self.status_image, 0)
+                self.box.reorder_child(self.label, 1)
+                self.box.reorder_child(self.hilite_image, 2)
 
-            if hasattr(self, "button"):
-                # Left align close button on macOS
-                position = 0 if sys.platform == "darwin" else 1
-                self.reorder_child(self.button, position)"""
+                if hasattr(self, "button"):
+                    # Left align close button on macOS
+                    position = 0 if sys.platform == "darwin" else 1
+                    self.reorder_child(self.button, position)
 
     def _add_close_button(self):
 
@@ -160,7 +161,12 @@ class ImageLabel(Gtk.Box):
             close_image.set_from_icon_name("window-close-symbolic")
             self.button.set_child(close_image)
             self.button.set_has_frame(False)
-            self.append(self.button)
+
+            if sys.platform == "darwin":
+                # Left align close button on macOS
+                self.prepend(self.button)
+            else:
+                self.append(self.button)
 
         else:
             close_image.set_from_icon_name("window-close-symbolic", Gtk.IconSize.MENU)
