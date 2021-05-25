@@ -25,7 +25,7 @@ from pynicotine import slskmessages
 from pynicotine.config import config
 from pynicotine.gtkgui.utils import append_line
 from pynicotine.gtkgui.utils import load_ui_elements
-from pynicotine.gtkgui.widgets.dialogs import set_up_dialog
+from pynicotine.gtkgui.widgets.dialogs import generic_dialog
 from pynicotine.gtkgui.widgets.theme import update_widget_visuals
 
 
@@ -37,7 +37,15 @@ class RoomWall:
         self.room = room
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "roomwall.ui"))
-        set_up_dialog(self.RoomWallDialog, frame.MainWindow, self.Main, self.hide)
+
+        self.RoomWallDialog = generic_dialog(
+            parent=frame.MainWindow,
+            content_box=self.Main,
+            quit_callback=self.hide,
+            title=_("Room Wall"),
+            width=800,
+            height=600
+        )
 
         if Gtk.get_major_version() == 4:
             self.RoomWallListWindow.set_has_frame(True)

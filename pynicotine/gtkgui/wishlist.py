@@ -48,6 +48,7 @@ class WishList:
         self.wishes = {}
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "wishlist.ui"))
+
         self.WishListDialog = generic_dialog(
             parent=frame.MainWindow,
             content_box=self.Main,

@@ -23,6 +23,7 @@ from gi.repository import Gtk
 
 from pynicotine.config import config
 from pynicotine.gtkgui.utils import load_ui_elements
+from pynicotine.gtkgui.widgets.dialogs import generic_dialog
 from pynicotine.gtkgui.widgets.dialogs import option_dialog
 from pynicotine.utils import human_size
 
@@ -34,7 +35,14 @@ class Statistics:
         self.frame = frame
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "statistics.ui"))
-        self.StatisticsDialog.set_transient_for(frame.MainWindow)
+
+        self.StatisticsDialog = generic_dialog(
+            parent=frame.MainWindow,
+            content_box=self.Main,
+            quit_callback=self.hide,
+            title=_("Transfer Statistics"),
+            width=450
+        )
 
         # Initialize stats
         for stat_id in config.defaults["statistics"]:
