@@ -107,8 +107,6 @@ class ChatRooms(IconNotebook):
             notebookraw=self.frame.ChatNotebookRaw
         )
 
-        self.popup_enable()
-
         self.set_tab_pos(self.frame.get_tab_position(config.sections["ui"]["tabrooms"]))
 
         self.notebook.connect("switch-page", self.on_switch_chat)

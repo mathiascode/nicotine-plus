@@ -79,7 +79,6 @@ class Searches(IconNotebook):
             notebookraw=self.frame.SearchNotebookRaw
         )
 
-        self.popup_enable()
         self.load_config()
 
         self.wish_list = WishList(frame, self)

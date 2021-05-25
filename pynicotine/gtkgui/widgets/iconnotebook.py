@@ -305,6 +305,8 @@ class IconNotebook:
             self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic")
             self.unread_button.set_has_frame(False)
         else:
+            self.popup_enable()
+
             self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic", Gtk.IconSize.BUTTON)
             self.unread_button.set_relief(Gtk.ReliefStyle.NONE)
 

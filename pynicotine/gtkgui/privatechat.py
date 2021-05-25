@@ -82,8 +82,6 @@ class PrivateChats(IconNotebook):
             notebookraw=self.frame.PrivatechatNotebookRaw
         )
 
-        self.popup_enable()
-
         self.connected = True
         self.users = {}
         self.completion_list = []

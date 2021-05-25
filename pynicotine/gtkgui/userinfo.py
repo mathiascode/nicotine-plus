@@ -60,8 +60,6 @@ class UserTabs(IconNotebook):
             notebookraw=notebookraw
         )
 
-        self.popup_enable()
-
         self.subwindow = subwindow
 
         self.users = {}
