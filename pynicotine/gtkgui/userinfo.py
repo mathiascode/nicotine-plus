@@ -181,6 +181,13 @@ class UserInfo:
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "userinfo.ui"))
         self.info_bar = InfoBar(self.InfoBar, Gtk.MessageType.INFO)
 
+        if Gtk.get_major_version() == 4:
+            self.MainPaned.set_property("resize-start-child", False)
+            self.SecondPaned.set_property("resize-start-child", False)
+        else:
+            self.MainPaned.child_set_property(self.InfoVbox, "resize", False)
+            self.SecondPaned.child_set_property(self.Interests, "resize", False)
+
         # Request user status, speed and number of shared files
         self.frame.np.watch_user(user, force_update=True)
 

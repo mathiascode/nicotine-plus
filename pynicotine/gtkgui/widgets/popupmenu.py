@@ -23,6 +23,7 @@
 import random
 import string
 
+from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -291,24 +292,35 @@ class PopupMenu(Gio.Menu):
         self.menu_section = None
         self.useritem = None
 
-    def popup(self, button=3):
+    def popup(self, x, y, button=3):
 
-        if not self.popup_menu:
-            self.popup_menu = Gtk.Menu.new_from_model(self)
-            self.popup_menu.attach_to_widget(self.window, None)
+        if Gtk.get_major_version() == 4:
+            if not self.popup_menu:
+                self.popup_menu = Gtk.PopoverMenu.new_from_model(self)
 
-        if self.last_controller:
-            sequence = self.last_controller.get_current_sequence()
-            event = self.last_controller.get_last_event(sequence)
+            self.popup_menu.set_pointing_to(Gdk.Rectangle(x, y, 1, 1))
+            self.popup_menu.set_offset(x, y)
+            self.popup_menu.set_has_arrow(False)
+            self.popup_menu.set_parent(self.window)
+            self.popup_menu.popup()
+
         else:
-            event = None
+            if not self.popup_menu:
+                self.popup_menu = Gtk.Menu.new_from_model(self)
+                self.popup_menu.attach_to_widget(self.window, None)
 
-        try:
-            self.popup_menu.popup_at_pointer(event)
+            if self.last_controller:
+                sequence = self.last_controller.get_current_sequence()
+                event = self.last_controller.get_last_event(sequence)
+            else:
+                event = None
 
-        except AttributeError:
-            time = Gtk.get_current_event_time()
-            self.popup_menu.popup(None, None, None, None, button, time)
+            try:
+                self.popup_menu.popup_at_pointer(event)
+
+            except AttributeError:
+                time = Gtk.get_current_event_time()
+                self.popup_menu.popup(None, None, None, None, button, time)
 
     """ Events """
 
@@ -326,9 +338,16 @@ class PopupMenu(Gio.Menu):
             if cancel:
                 return
 
-        self.popup()
+        self.popup(x, y)
 
     def _callback_press(self, controller, x, y):
+
+        if x and y and isinstance(self.widget, Gtk.TreeView):
+            x, y = self.widget.convert_widget_to_bin_window_coords(x, y)
+
+        self._callback(controller, x, y)
+
+    def _callback_click_new(self, controller, num_p, x, y):
 
         if x and y and isinstance(self.widget, Gtk.TreeView):
             x, y = self.widget.convert_widget_to_bin_window_coords(x, y)
@@ -348,16 +367,21 @@ class PopupMenu(Gio.Menu):
 
         if Gtk.get_major_version() == 4:
             self.gesture_press = Gtk.GestureLongPress()
+            self.gesture_click = Gtk.GestureClick()
+            self.gesture_click.set_button(Gdk.BUTTON_SECONDARY)
+            self.gesture_click.connect("pressed", self._callback_click_new)
+
+            widget.add_controller(self.gesture_press)
+            widget.add_controller(self.gesture_click)
         else:
             self.gesture_press = Gtk.GestureLongPress.new(widget)
+
+            widget.connect("button-press-event", self._callback_click)
+            widget.connect("popup-menu", self._callback_menu)
 
         self.gesture_press.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         self.gesture_press.set_touch_only(True)
         self.gesture_press.connect("pressed", self._callback_press)
-
-        if Gtk.get_major_version() == 3:
-            widget.connect("button-press-event", self._callback_click)
-            widget.connect("popup-menu", self._callback_menu)
 
     def set_widget(self, widget):
 

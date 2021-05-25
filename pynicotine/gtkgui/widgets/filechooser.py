@@ -191,14 +191,16 @@ def save_file(parent, callback, callback_data=None, initialdir="~", initialfile=
     self.connect("response", _on_selected, callback, callback_data)
     self.set_modal(True)
     self.set_select_multiple(False)
-    self.set_show_hidden(True)
 
-    folder = os.path.expanduser(initialdir)
+    if Gtk.get_major_version() == 3:
+        self.set_show_hidden(True)
 
-    if os.path.isdir(folder):
-        self.set_current_folder(folder)
-    else:
-        self.set_current_folder(os.path.expanduser("~"))
+        folder = os.path.expanduser(initialdir)
+
+        if os.path.isdir(folder):
+            self.set_current_folder(folder)
+        else:
+            self.set_current_folder(os.path.expanduser("~"))
 
     self.set_current_name(initialfile)
 

@@ -81,7 +81,9 @@ class RoomList:
 
         frame.RoomList.connect("clicked", self.show)
 
-        if Gtk.get_major_version() == 3:
+        if Gtk.get_major_version() == 4:
+            self.RoomListPopover.set_parent(frame.RoomList)
+        else:
             self.RoomListPopover.set_relative_to(frame.RoomList)
 
     def get_selected_room(self, treeview):
