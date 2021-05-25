@@ -302,12 +302,14 @@ class PopupMenu(Gio.Menu):
                 self.widget.set_extra_menu(self)
 
             else:
+                if isinstance(self.widget, Gtk.TreeView):
+                    parent = parent.get_first_child().get_first_child()
+                    print(parent.get_last_child())
+
                 if not self.popup_menu:
                     self.popup_menu = Gtk.PopoverMenu.new_from_model(self)
                     self.popup_menu.set_has_arrow(False)
                     self.popup_menu.set_position(Gtk.PositionType.BOTTOM)
-                    self.popup_menu.set_autohide(True)
-                    #self.popup_menu.set_halign(Gtk.Align.START)
                     self.popup_menu.set_parent(parent)
 
                 self.popup_menu.set_pointing_to(Gdk.Rectangle(x, y, 1, 1))

@@ -91,7 +91,6 @@ class NicotineFrame:
 
         self.application = application
         self.np = network_processor
-        self.clipboard = None#Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.gui_dir = os.path.dirname(os.path.realpath(__file__))
         self.ci_mode = ci_mode
         self.current_page_id = "Default"
@@ -102,6 +101,11 @@ class NicotineFrame:
         self.bindip = bindip
         self.port = port
         utils.NICOTINE = self
+
+        if Gtk.get_major_version() == 4:
+            self.clipboard = Gdk.Display.get_default().get_clipboard()
+        else:
+            self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 
         # Initialize these windows/dialogs later when necessary
         self.fastconfigure = None
