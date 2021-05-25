@@ -3033,8 +3033,11 @@ class Settings:
         self.frame = frame
 
         # Build the window
+        load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "settings", "settingswindow.ui"))
+
         self.SettingsWindow = dialog = generic_dialog(
             parent=frame.MainWindow,
+            content_box=self.Main,
             quit_callback=self.on_delete,
             title=_("Preferences"),
             width=1050,
@@ -3050,8 +3053,6 @@ class Settings:
 
         dialog.set_default_response(Gtk.ResponseType.OK)
         dialog.connect("response", self.on_response)
-
-        load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "settings", "settingswindow.ui"))
 
         if Gtk.get_major_version() == 4:
             self.Main.set_property("resize-start-child", False)
