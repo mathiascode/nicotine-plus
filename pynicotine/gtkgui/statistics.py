@@ -85,6 +85,8 @@ class Statistics:
     def show(self):
 
         self.StatisticsDialog.present_with_time(Gdk.CURRENT_TIME)
-        self.StatisticsDialog.get_window().set_functions(
-            Gdk.WMFunction.RESIZE | Gdk.WMFunction.MOVE | Gdk.WMFunction.CLOSE
-        )
+
+        if Gtk.get_major_version() == 3:
+            self.StatisticsDialog.get_window().set_functions(
+                Gdk.WMFunction.RESIZE | Gdk.WMFunction.MOVE | Gdk.WMFunction.CLOSE
+            )

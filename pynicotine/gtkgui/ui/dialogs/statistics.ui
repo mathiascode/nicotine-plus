@@ -9,11 +9,13 @@
     <property name="margin-top">18</property>
     <property name="margin-bottom">18</property>
     <child>
-      <object class="GtkGrid">
+      <object class="GtkFlowBox">
         <property name="visible">1</property>
         <property name="row-spacing">10</property>
         <property name="column-spacing">6</property>
-        <property name="column-homogeneous">1</property>
+        <property name="homogeneous">1</property>
+        <property name="min-children-per-line">2</property>
+        <property name="max-children-per-line">2</property>
         <child>
           <object class="GtkLabel">
             <property name="visible">1</property>
@@ -25,10 +27,11 @@
               <attribute name="weight" value="bold"/>
             </attributes>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">0</property>
-          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">1</property>
+          </object>
         </child>
         <child>
           <object class="GtkLabel">
@@ -41,10 +44,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">1</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="started_downloads_session">
@@ -56,10 +55,6 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">1</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
@@ -72,10 +67,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">2</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="completed_downloads_session">
@@ -87,10 +78,6 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">2</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
@@ -103,10 +90,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">3</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="downloaded_size_session">
@@ -118,19 +101,16 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">3</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
             <property name="visible">1</property>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">4</property>
-          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">1</property>
+          </object>
         </child>
         <child>
           <object class="GtkLabel">
@@ -143,10 +123,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">5</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="started_uploads_session">
@@ -158,10 +134,6 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">5</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
@@ -174,10 +146,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">6</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="completed_uploads_session">
@@ -189,10 +157,6 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">6</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
@@ -205,10 +169,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">7</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="uploaded_size_session">
@@ -220,19 +180,16 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">7</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
             <property name="visible">1</property>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">8</property>
-          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">1</property>
+          </object>
         </child>
         <child>
           <object class="GtkLabel">
@@ -245,10 +202,11 @@
               <attribute name="weight" value="bold"/>
             </attributes>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">9</property>
-          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">1</property>
+          </object>
         </child>
         <child>
           <object class="GtkLabel">
@@ -261,10 +219,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">10</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="started_downloads_total">
@@ -276,10 +230,6 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">10</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
@@ -292,10 +242,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">11</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="completed_downloads_total">
@@ -307,10 +253,6 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">11</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
@@ -323,10 +265,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">12</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="downloaded_size_total">
@@ -338,19 +276,16 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">12</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
             <property name="visible">1</property>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">13</property>
-          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">1</property>
+          </object>
         </child>
         <child>
           <object class="GtkLabel">
@@ -363,10 +298,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">14</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="started_uploads_total">
@@ -378,10 +309,6 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">14</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
@@ -394,10 +321,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">15</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="completed_uploads_total">
@@ -409,10 +332,6 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">15</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel">
@@ -425,10 +344,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">16</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="uploaded_size_total">
@@ -440,10 +355,6 @@
             <property name="max-width-chars">48</property>
             <property name="xalign">0</property>
           </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">16</property>
-          </packing>
         </child>
       </object>
     </child>

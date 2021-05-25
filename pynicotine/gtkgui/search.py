@@ -1356,7 +1356,11 @@ class Search:
 
         if not hasattr(self, "AboutSearchFiltersPopover"):
             load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "popovers", "searchfilters.ui"))
-            self.AboutSearchFiltersPopover.set_relative_to(self.ShowChatHelp)
+
+            if Gtk.get_major_version() == 4:
+                self.AboutSearchFiltersPopover.set_parent(self.ShowChatHelp)
+            else:
+                self.AboutSearchFiltersPopover.set_relative_to(self.ShowChatHelp)
 
         try:
             self.AboutSearchFiltersPopover.popup()

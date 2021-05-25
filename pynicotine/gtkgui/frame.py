@@ -323,7 +323,7 @@ class NicotineFrame:
 
         """ Transfer Statistics """
 
-        self.statistics = None#Statistics(self)
+        self.statistics = Statistics(self)
 
         """ Tab Signals """
 
