@@ -43,13 +43,13 @@ class FastConfigureAssistant(object):
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "fastconfigure.ui"))
         set_up_dialog(self.FastConfigureDialog, frame.MainWindow, type_hint="dialog")
 
-        self.downloaddir = FileChooserButton(self.downloaddir, self.FastConfigureDialog, "folder")
-
         # Page specific, sharepage
         if Gtk.get_major_version() == 4:
             self.shareddirectories.set_has_frame(True)
         else:
             self.shareddirectories.set_shadow_type(Gtk.ShadowType.IN)
+
+        self.downloaddir = FileChooserButton(self.downloaddir, self.FastConfigureDialog, "folder")
 
         self.sharelist = Gtk.ListStore(
             str,

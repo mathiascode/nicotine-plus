@@ -139,7 +139,11 @@ def check_gui_dependencies():
 
     else:
         try:
-            gi.require_version('Gtk', '4.0')
+            try:
+                gi.require_version('Gtk', '4.0')
+
+            except ValueError:
+                gi.require_version('Gtk', '3.0')
 
         except ValueError as e:
             return _("""You are using an unsupported version of GTK.
