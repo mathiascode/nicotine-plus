@@ -42,7 +42,11 @@ class Interests:
         self.frame = frame
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "interests.ui"))
-        self.frame.interestsvbox.add(self.Main)
+
+        try:
+            self.frame.interestsvbox.add(self.Main)
+        except AttributeError:
+            self.frame.interestsvbox.append(self.Main)
 
         self.likes = {}
         self.likes_model = Gtk.ListStore(str)
@@ -138,11 +142,17 @@ class Interests:
 
         for thing in config.sections["interests"]["likes"]:
             if thing and isinstance(thing, str):
-                self.likes[thing] = self.likes_model.insert_with_valuesv(-1, self.likes_column_numbers, [thing])
+                try:
+                    self.likes[thing] = self.likes_model.insert_with_valuesv(-1, self.likes_column_numbers, [thing])
+                except AttributeError:
+                    self.likes[thing] = self.likes_model.insert_with_values(-1, self.likes_column_numbers, [thing])
 
         for thing in config.sections["interests"]["dislikes"]:
             if thing and isinstance(thing, str):
-                self.dislikes[thing] = self.dislikes_model.insert_with_valuesv(-1, self.dislikes_column_numbers, [thing])
+                try:
+                    self.dislikes[thing] = self.dislikes_model.insert_with_valuesv(-1, self.dislikes_column_numbers, [thing])
+                except AttributeError:
+                    self.dislikes[thing] = self.dislikes_model.insert_with_values(-1, self.dislikes_column_numbers, [thing])
 
         """ Popup """
 

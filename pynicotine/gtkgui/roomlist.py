@@ -80,7 +80,7 @@ class RoomList:
         self.AcceptPrivateRoom.connect("toggled", self.on_toggle_accept_private_room)
 
         frame.RoomList.connect("clicked", self.show)
-        self.RoomListPopover.set_relative_to(frame.RoomList)
+        #self.RoomListPopover.set_relative_to(frame.RoomList)
 
     def get_selected_room(self, treeview):
 

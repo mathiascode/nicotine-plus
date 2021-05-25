@@ -118,9 +118,9 @@
               </object>
             </child>
           </object>
-          <packing>
+          <!--<packing>
             <property name="resize">0</property>
-          </packing>
+          </packing>-->
         </child>
         <child>
           <object class="GtkPaned">
@@ -265,9 +265,9 @@
                   </object>
                 </child>
               </object>
-              <packing>
+              <!--<packing>
                 <property name="resize">1</property>
-              </packing>
+              </packing>-->
             </child>
             <child>
               <object class="GtkBox">
@@ -334,9 +334,9 @@
                   </object>
                 </child>
               </object>
-              <packing>
+              <!--<packing>
                 <property name="resize">0</property>
-              </packing>
+              </packing>-->
             </child>
           </object>
         </child>

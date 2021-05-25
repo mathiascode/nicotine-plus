@@ -38,7 +38,11 @@ def entry_dialog(parent, title, message, callback, callback_data=None, default="
     self.set_destroy_with_parent(True)
     self.set_modal(True)
 
-    label = self.get_message_area().get_children()[-1]
+    try:
+        label = self.get_message_area().get_children()[-1]
+    except AttributeError:
+        label = self.get_message_area().get_last_child()
+
     label.set_selectable(True)
 
     if droplist:
@@ -91,7 +95,11 @@ def message_dialog(parent, title, message, callback=None):
     self.set_destroy_with_parent(True)
     self.set_modal(True)
 
-    label = self.get_message_area().get_children()[-1]
+    try:
+        label = self.get_message_area().get_children()[-1]
+    except AttributeError:
+        label = self.get_message_area().get_last_child()
+
     label.set_selectable(True)
 
     self.present_with_time(Gdk.CURRENT_TIME)
@@ -116,7 +124,11 @@ def option_dialog(parent, title, message, callback, callback_data=None,
     self.set_destroy_with_parent(True)
     self.set_modal(True)
 
-    label = self.get_message_area().get_children()[-1]
+    try:
+        label = self.get_message_area().get_children()[-1]
+    except AttributeError:
+        label = self.get_message_area().get_last_child()
+
     label.set_selectable(True)
 
     if checkbox_label:

@@ -56,7 +56,11 @@ class TransferList:
         self.type = type
 
         load_ui_elements(self, os.path.join(frame.gui_dir, "ui", type + "s.ui"))
-        getattr(frame, type + "svbox").add(self.Main)
+        try:
+            getattr(frame, type + "svbox").add(self.Main)
+        except AttributeError:
+            getattr(frame, type + "svbox").append(self.Main)
+
         self.widget = widget = getattr(self, type.title() + "List")
         self.key_controller = connect_key_press_event(widget, self.on_key_press_event)
 
@@ -702,10 +706,16 @@ class TransferList:
 
         if expanded:
             self.widget.expand_all()
-            expand_button_icon.set_from_icon_name("go-up-symbolic", Gtk.IconSize.BUTTON)
+            try:
+                expand_button_icon.set_from_icon_name("go-up-symbolic", Gtk.IconSize.BUTTON)
+            except AttributeError:
+                expand_button_icon.set_from_icon_name("go-up-symbolic")
         else:
             collapse_treeview(self.widget, self.tree_users)
-            expand_button_icon.set_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON)
+            try:
+                expand_button_icon.set_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON)
+            except AttributeError:
+                expand_button_icon.set_from_icon_name("go-down-symbolic")
 
         config.sections["transfers"]["%ssexpanded" % self.type] = expanded
         config.write_configuration()

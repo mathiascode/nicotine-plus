@@ -49,11 +49,23 @@ def load_ui_elements(ui_class, filename):
     try:
         builder = Gtk.Builder()
         builder.set_translation_domain('nicotine')
+
+        """for j in dir(ui_class):
+            try:
+                if not j.startswith("_"):
+                    builder.get_scope().add_callback_symbol(j, getattr(ui_class, j))
+
+            except TypeError:
+                pass"""
+
         builder.add_from_file(filename)
 
         for obj in builder.get_objects():
             try:
-                obj_name = Gtk.Buildable.get_name(obj)
+                try:
+                    obj_name = Gtk.Buildable.get_name(obj)
+                except AttributeError:
+                    obj_name = Gtk.Buildable.get_buildable_id(obj)
 
                 if not obj_name.startswith("_"):
                     setattr(ui_class, obj_name, obj)
@@ -61,7 +73,7 @@ def load_ui_elements(ui_class, filename):
             except TypeError:
                 pass
 
-        builder.connect_signals(ui_class)
+        #builder.connect_signals(ui_class)
 
     except Exception as e:
         log.add(_("Failed to load ui file %(file)s: %(error)s"), {

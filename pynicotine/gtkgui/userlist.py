@@ -215,7 +215,7 @@ class UserList:
             country
         ]
 
-        self.user_iterators[username] = self.usersmodel.insert_with_valuesv(0, self.column_numbers, row)
+        #self.user_iterators[username] = self.usersmodel.insert_with_valuesv(0, self.column_numbers, row)
 
     def buddies_combos_fill(self):
 

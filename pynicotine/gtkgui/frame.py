@@ -89,7 +89,7 @@ class NicotineFrame:
 
         self.application = application
         self.np = network_processor
-        self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        self.clipboard = None#Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.gui_dir = os.path.dirname(os.path.realpath(__file__))
         self.ci_mode = ci_mode
         self.current_page_id = "Default"
@@ -180,19 +180,25 @@ class NicotineFrame:
         for signal_type in (signal.SIGINT, signal.SIGTERM):
             signal.signal(signal_type, self.on_quit)
 
-        self.MainWindow.resize(
-            config.sections["ui"]["width"],
-            config.sections["ui"]["height"]
-        )
+        width = config.sections["ui"]["width"]
+        height = config.sections["ui"]["height"]
 
-        xpos = config.sections["ui"]["xposition"]
-        ypos = config.sections["ui"]["yposition"]
+        try:
+            self.MainWindow.resize(width, height)
+        except AttributeError:
+            self.MainWindow.set_default_size(width, height)
 
-        # According to the pygtk doc this will be ignored my many window managers since the move takes place before we do a show()
-        if min(xpos, ypos) < 0:
-            self.MainWindow.set_position(Gtk.WindowPosition.CENTER)
-        else:
-            self.MainWindow.move(xpos, ypos)
+        try:
+            xpos = config.sections["ui"]["xposition"]
+            ypos = config.sections["ui"]["yposition"]
+
+            # According to the pygtk doc this will be ignored my many window managers since the move takes place before we do a show()
+            if min(xpos, ypos) < 0:
+                self.MainWindow.set_position(Gtk.WindowPosition.CENTER)
+            else:
+                self.MainWindow.move(xpos, ypos)
+        except AttributeError:
+            pass
 
         if config.sections["ui"]["maximized"]:
             self.MainWindow.maximize()
@@ -291,7 +297,7 @@ class NicotineFrame:
 
         """ Transfer Statistics """
 
-        self.statistics = Statistics(self)
+        self.statistics = None#Statistics(self)
 
         """ Tab Signals """
 
@@ -507,13 +513,26 @@ class NicotineFrame:
 
         """ Load local app and tray icons, if available """
 
-        icon_theme = Gtk.IconTheme.get_default()
+        try:
+            icon_theme = Gtk.IconTheme.get_default()
+        except AttributeError:
+            icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
 
         # Support running from folder, as well as macOS and Windows
-        icon_theme.append_search_path(os.path.join(self.gui_dir, "icons"))
+        path = os.path.join(self.gui_dir, "icons")
+
+        try:
+            icon_theme.append_search_path(path)
+        except AttributeError:
+            icon_theme.add_search_path(path)
 
         # Support Python venv
-        icon_theme.append_search_path(os.path.join(sys.prefix, "share", "icons", "hicolor", "scalable", "apps"))
+        path = os.path.join(sys.prefix, "share", "icons", "hicolor", "scalable", "apps")
+
+        try:
+            icon_theme.append_search_path(path)
+        except AttributeError:
+            icon_theme.add_search_path(path)
 
     def update_visuals(self):
 
@@ -610,7 +629,7 @@ class NicotineFrame:
         self.JoinRoomEntry.set_sensitive(status)
         self.RoomList.set_sensitive(status)
 
-        self.tray_icon.set_server_actions_sensitive(status)
+        #self.tray_icon.set_server_actions_sensitive(status)
 
     def connect_error(self, conn):
 
@@ -1009,7 +1028,7 @@ class NicotineFrame:
 
         mode = self.verify_buddy_list_mode(mode)
 
-        if self.userlist.Main in self.NotebooksPane.get_children():
+        """if self.userlist.Main in self.NotebooksPane.get_children():
 
             if mode == "always":
                 return
@@ -1053,7 +1072,7 @@ class NicotineFrame:
             self.show_tab(self.userlistvbox)
 
             self.userlist.BuddiesToolbar.hide()
-            self.userlist.UserLabel.show()
+            self.userlist.UserLabel.show()"""
 
     def on_toggle_buddy_list(self, action, state):
         """ Function used to switch around the UI the BuddyList position """
@@ -1259,6 +1278,16 @@ class NicotineFrame:
 
         header_bar = getattr(self, "Header" + page_id)
         header_bar.set_title(GLib.get_application_name())
+        header_bar.pack_end(end_widget)
+
+        try:
+            if page_id == "Default":
+                header_bar.set_has_subtitle(False)
+
+            header_bar.set_show_close_button(True)
+
+        except AttributeError:
+            header_bar.set_show_title_buttons(True)
 
         self.MainWindow.set_titlebar(header_bar)
 
@@ -1377,9 +1406,22 @@ class NicotineFrame:
         }
 
         # Initialize tabs labels
-        for page in self.MainNotebook.get_children():
+        try:
+            children = self.MainNotebook.get_children()
+        except AttributeError:
+            children = self.MainNotebook
+
+        for page in children:
             tab_label = self.MainNotebook.get_tab_label(page)
-            tab_label_id = Gtk.Buildable.get_name(tab_label)
+
+            try:
+                tab_label_id = Gtk.Buildable.get_name(tab_label)
+            except AttributeError:
+                if tab_label:
+                    tab_label_id = Gtk.Buildable.get_buildable_id(tab_label)
+                else:
+                    continue
+
             tab_text, tab_icon_name = tab_data[tab_label]
 
             # Initialize the image label
@@ -1619,8 +1661,8 @@ class NicotineFrame:
         else:
             expand = True
 
-        self.MainNotebook.child_set_property(tab_box, "tab-expand", expand)
-        tab_label.set_centered(expand)
+        #self.MainNotebook.child_set_property(tab_box, "tab-expand", expand)
+        #tab_label.set_centered(expand)
 
     def get_tab_position(self, string):
 
@@ -1654,7 +1696,7 @@ class NicotineFrame:
             tab_label = self.MainNotebook.get_tab_label(tab_box)
 
             self.set_tab_expand(tab_box)
-            tab_label.set_angle(ui["labelmain"])
+            #tab_label.set_angle(ui["labelmain"])
 
         # Other notebooks
         self.chatrooms.set_tab_pos(self.get_tab_position(ui["tabrooms"]))

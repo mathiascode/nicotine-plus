@@ -63,7 +63,10 @@ class TrayIcon:
             "status": "disconnect",
             "last": "disconnect"
         }
-        self.create_menu()
+        try:
+            self.create_menu()
+        except AttributeError:
+            pass
 
     def create_item(self, text, callback, check=False):
 

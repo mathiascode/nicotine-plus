@@ -4,12 +4,9 @@
   <object class="GtkDialog" id="WishListDialog">
     <property name="title" translatable="yes">Search Wishlist</property>
     <property name="modal">1</property>
-    <property name="window-position">center-on-parent</property>
     <property name="default-width">600</property>
     <property name="default-height">600</property>
-    <property name="type-hint">normal</property>
-    <signal name="delete-event" handler="quit" swapped="no"/>
-    <child internal-child="vbox">
+    <child>
       <object class="GtkBox">
         <property name="visible">1</property>
         <property name="orientation">vertical</property>
@@ -31,7 +28,6 @@
             <property name="visible">1</property>
             <property name="margin-start">10</property>
             <property name="margin-end">10</property>
-            <property name="shadow-type">in</property>
             <property name="vexpand">1</property>
             <child>
               <object class="GtkTreeView" id="WishlistView">

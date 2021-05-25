@@ -268,8 +268,11 @@ class IconNotebook:
         self.key_controller = connect_key_press_event(self.notebook, self.on_key_press_event)
         self.notebook.connect("switch-page", self.on_switch_page)
 
-        self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic", Gtk.IconSize.BUTTON)
-        self.unread_button.set_relief(Gtk.ReliefStyle.NONE)
+        try:
+            self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic", Gtk.IconSize.BUTTON)
+        except AttributeError:
+            self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic")
+        #self.unread_button.set_relief(Gtk.ReliefStyle.NONE)
         self.unread_button.set_tooltip_text(_("Unread Tabs"))
         self.unread_button.set_halign(Gtk.Align.CENTER)
         self.unread_button.set_valign(Gtk.Align.CENTER)
@@ -279,7 +282,13 @@ class IconNotebook:
         context.add_class("circular")
 
         self.notebook.set_action_widget(self.unread_button, Gtk.PackType.END)
-        self.popup_menu_unread = PopupMenu(window=self.notebook.get_toplevel())
+
+        try:
+            toplevel = self.notebook.get_toplevel()
+        except AttributeError:
+            toplevel = self.notebook.get_root()
+
+        self.popup_menu_unread = PopupMenu(window=toplevel)
         self.unread_pages = []
 
         self.angle = angle
