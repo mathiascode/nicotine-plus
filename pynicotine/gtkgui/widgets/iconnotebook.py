@@ -79,16 +79,15 @@ class ImageLabel(Gtk.Box):
 
     def _pack_children(self):
 
-        """if hasattr(self, "box"):
+        if hasattr(self, "box"):
             if Gtk.get_major_version() == 4:
-                children = self.box
+                while self.box.get_first_child():
+                    self.box.remove(self.box.get_first_child())
             else:
-                children = self.box.get_children()
+                for widget in self.box.get_children():
+                    self.box.remove(widget)
 
-            for widget in children:
-                self.box.remove(widget)
-
-            self.eventbox.remove(self.box)"""
+            self.eventbox.remove(self.box)
 
         self.box = Gtk.Box()
         self.box.set_spacing(2)

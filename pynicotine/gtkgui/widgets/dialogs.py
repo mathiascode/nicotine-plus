@@ -23,6 +23,44 @@ from gi.repository import Gtk
 """ Dialogs """
 
 
+def generic_dialog(parent=None, content_box=None, quit_callback=None, type_hint="normal", title="Dialog", width=400, height=400, modal=True):
+
+    from pynicotine.config import config
+
+    dialog = Gtk.Dialog(
+        use_header_bar=config.sections["ui"]["header_bar"],
+        title=title,
+        default_width=width,
+        default_height=height
+    )
+
+    if Gtk.get_major_version() == 4:
+        if quit_callback:
+            dialog.connect("close-request", quit_callback)
+
+        if content_box:
+            dialog.get_content_area().append(content_box)
+
+    else:
+        dialog.set_property("window-position", Gtk.WindowPosition.CENTER_ON_PARENT)
+
+        if quit_callback:
+            dialog.connect("delete-event", quit_callback)
+
+        if content_box:
+            dialog.get_content_area().add(content_box)
+
+        if type_hint == "normal":
+            dialog.set_type_hint(Gdk.WindowTypeHint.NORMAL)
+
+        elif type_hint == "dialog":
+            dialog.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+
+    dialog.set_modal(modal)
+    dialog.set_transient_for(parent)
+    return dialog
+
+
 def set_up_dialog(dialog, parent, content_box=None, quit_callback=None, type_hint="normal"):
 
     if Gtk.get_major_version() == 4:

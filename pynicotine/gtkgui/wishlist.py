@@ -30,7 +30,7 @@ from gi.repository import Gtk
 from pynicotine.config import config
 from pynicotine.gtkgui.utils import load_ui_elements
 from pynicotine.gtkgui.widgets.dialogs import option_dialog
-from pynicotine.gtkgui.widgets.dialogs import set_up_dialog
+from pynicotine.gtkgui.widgets.dialogs import generic_dialog
 from pynicotine.gtkgui.widgets.theme import update_widget_visuals
 from pynicotine.gtkgui.widgets.treeview import initialise_columns
 from pynicotine.logfacility import log
@@ -48,7 +48,14 @@ class WishList:
         self.wishes = {}
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "wishlist.ui"))
-        set_up_dialog(self.WishListDialog, frame.MainWindow, self.Main, self.quit)
+        self.WishListDialog = generic_dialog(
+            parent=frame.MainWindow,
+            content_box=self.Main,
+            quit_callback=self.quit,
+            title=_("Search Wishlist"),
+            width=600,
+            height=600
+        )
 
         if Gtk.get_major_version() == 4:
             self.WishlistScrolledWindow.set_has_frame(True)

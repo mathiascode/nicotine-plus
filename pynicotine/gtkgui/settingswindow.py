@@ -3032,10 +3032,7 @@ class Settings:
         self.frame = frame
 
         # Build the window
-        self.SettingsWindow = dialog = Gtk.Dialog(
-            use_header_bar=config.sections["ui"]["header_bar"]
-        )
-        set_up_dialog(dialog, frame.MainWindow, quit_callback=self.on_delete)
+        dialog = generic_dialog(frame.MainWindow, quit_callback=self.on_delete)
         dialog.set_title(_("Preferences"))
         dialog.set_default_size(1050, 700)
 
