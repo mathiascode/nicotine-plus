@@ -61,6 +61,9 @@ class TransferList:
         except AttributeError:
             getattr(frame, type + "svbox").append(self.Main)
 
+        self.ActionBar.remove(self.End)
+        self.ActionBar.pack_end(self.End)
+
         self.widget = widget = getattr(self, type.title() + "List")
         self.key_controller = connect_key_press_event(widget, self.on_key_press_event)
 

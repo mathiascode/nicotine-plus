@@ -443,6 +443,24 @@ class ChatRoom:
         # Build the window
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "chatrooms.ui"))
 
+        if Gtk.get_major_version() == 4:
+            self.ChatPaned.set_property("resize-start-child", True)
+            self.ChatPaned.set_property("shrink-start-child", False)
+            self.ChatPaned.set_property("resize-end-child", False)
+            self.ChatPaned.set_property("shrink-end-child", True)
+
+            self.ChatPanedSecond.set_property("resize-start-child", False)
+            self.ChatPanedSecond.set_property("shrink-end-child", False)
+
+        else:
+            self.ChatPaned.child_set_property(self.ChatPanedSecond, "resize", True)
+            self.ChatPaned.child_set_property(self.ChatPanedSecond, "shrink", False)
+            self.ChatPaned.child_set_property(self.UserView, "resize", False)
+            self.ChatPaned.child_set_property(self.UserView, "shrink", False)
+
+            self.ChatPanedSecond.child_set_property(self.ActivityView, "resize", False)
+            self.ChatPanedSecond.child_set_property(self.ChatView, "shrink", False)
+
         self.tickers = Tickers()
         self.room_wall = RoomWall(self.frame, self)
         self.leaving = False
@@ -574,6 +592,9 @@ class ChatRoom:
         files = userdata.files
         hspeed = human_speed(avgspeed)
         hfiles = humanize(files)
+
+        if Gtk.get_major_version() == 4:
+            self.usersmodel.insert_with_valuesv = self.usersmodel.insert_with_values
 
         iterator = self.usersmodel.insert_with_valuesv(
             -1, self.column_numbers,
@@ -1023,7 +1044,8 @@ class ChatRoom:
         update_tag_visuals(tag, color)
 
         if username:
-            tag.connect("event", self.user_name_event, username)
+            pass
+            #tag.connect("event", self.user_name_event, username)
 
         return tag
 

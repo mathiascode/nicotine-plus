@@ -49,8 +49,10 @@ class ImageLabel(Gtk.Box):
         self.onclose = onclose
 
         self.label = Gtk.Label()
+
         if Gtk.get_major_version() == 3:
             self.label.set_angle(angle)
+
         self.label.set_halign(Gtk.Align.START)
         self.label.set_hexpand(True)
         self.label.show()
@@ -146,17 +148,22 @@ class ImageLabel(Gtk.Box):
             return
 
         close_image = Gtk.Image()
-        close_image.set_from_icon_name("window-close-symbolic", Gtk.IconSize.MENU)
-
         self.button = Gtk.Button()
-        self.button.add(close_image)
-        self.button.set_relief(Gtk.ReliefStyle.NONE)
-        self.button.show_all()
+
+        if Gtk.get_major_version() == 4:
+            close_image.set_from_icon_name("window-close-symbolic")
+            self.button.set_child(close_image)
+            self.append(self.button)
+
+        else:
+            close_image.set_from_icon_name("window-close-symbolic", Gtk.IconSize.MENU)
+            self.button.add(close_image)
+            self.button.set_relief(Gtk.ReliefStyle.NONE)
+            self.button.show_all()
+            self.add(self.button)
 
         if self.onclose is not None:
             self.button.connect("clicked", self.onclose)
-
-        self.add(self.button)
 
     def _remove_close_button(self):
 
@@ -573,10 +580,20 @@ class IconNotebook:
         # Hide widgets on previous page for a performance boost
         current_page = self.get_nth_page(self.get_current_page())
 
-        for child in current_page.get_children():
+        if Gtk.get_major_version() == 4:
+            children = current_page
+        else:
+            children = current_page.get_children()
+
+        for child in children:
             child.hide()
 
-        for child in new_page.get_children():
+        if Gtk.get_major_version() == 4:
+            children = new_page
+        else:
+            children = new_page.get_children()
+
+        for child in children:
             child.show()
 
         # Dismiss tab notification

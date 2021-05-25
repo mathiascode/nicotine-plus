@@ -35,12 +35,11 @@
         <property name="can-focus">0</property>
         <property name="transition-type">slide-up</property>
         <child>
-          <object class="GtkActionBar">
+          <object class="GtkActionBar" id="ActionBar">
             <property name="visible">1</property>
             <child>
               <object class="GtkBox">
                 <property name="visible">1</property>
-                <property name="hexpand">1</property>
                 <property name="spacing">6</property>
                 <child>
                   <object class="GtkButton">
@@ -129,7 +128,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkBox">
+              <object class="GtkBox" id="End">
                 <property name="visible">1</property>
                 <property name="spacing">6</property>
                 <child>

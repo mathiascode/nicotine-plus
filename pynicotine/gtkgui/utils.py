@@ -223,7 +223,7 @@ def append_line(textview, line, tag=None, timestamp=None, showstamp=True, timest
         color = config.sections["ui"]["urlcolor"] or None
         tag = buffer.create_tag(foreground=color, underline=Pango.Underline.SINGLE)
         tag.last_event_type = -1
-        tag.connect("event", url_event, url)
+        #tag.connect("event", url_event, url)
 
         return tag
 

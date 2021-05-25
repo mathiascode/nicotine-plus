@@ -19,6 +19,7 @@
 import os
 
 from gi.repository import Gdk
+from gi.repository import Gtk
 
 from pynicotine import slskmessages
 from pynicotine.config import config
@@ -37,6 +38,11 @@ class RoomWall:
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "roomwall.ui"))
         set_up_dialog(self.RoomWallDialog, frame.MainWindow, self.Main, self.hide)
+
+        if Gtk.get_major_version() == 4:
+            self.RoomWallListWindow.set_has_frame(True)
+        else:
+            self.RoomWallListWindow.set_shadow_type(Gtk.ShadowType.IN)
 
     def on_set_room_wall_message(self, *args):
 
@@ -78,9 +84,11 @@ class RoomWall:
                 self.RoomWallEntry.select_region(0, -1)
 
         self.RoomWallDialog.present_with_time(Gdk.CURRENT_TIME)
-        self.RoomWallDialog.get_window().set_functions(
-            Gdk.WMFunction.RESIZE | Gdk.WMFunction.MOVE | Gdk.WMFunction.CLOSE
-        )
+
+        if Gtk.get_major_version == 3:
+            self.RoomWallDialog.get_window().set_functions(
+                Gdk.WMFunction.RESIZE | Gdk.WMFunction.MOVE | Gdk.WMFunction.CLOSE
+            )
 
 
 class Tickers:

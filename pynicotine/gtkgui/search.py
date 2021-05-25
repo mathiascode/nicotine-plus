@@ -1250,10 +1250,18 @@ class Search:
 
         if active:
             self.ResultsList.expand_all()
-            self.expand.set_from_icon_name("go-up-symbolic", Gtk.IconSize.BUTTON)
+
+            if Gtk.get_major_version() == 4:
+                self.expand.set_from_icon_name("go-up-symbolic")
+            else:
+                self.expand.set_from_icon_name("go-up-symbolic", Gtk.IconSize.BUTTON)
         else:
             collapse_treeview(self.ResultsList, self.ResultGrouping.get_active_id())
-            self.expand.set_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON)
+
+            if Gtk.get_major_version() == 4:
+                self.expand.set_from_icon_name("go-down-symbolic")
+            else:
+                self.expand.set_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON)
 
         config.sections["searches"]["expand_searches"] = active
 

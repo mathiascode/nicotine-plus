@@ -143,11 +143,11 @@
                         <property name="visible">0</property>
                       </object>
                     </child>
-                    <child internal-child="button">
+                    <!--<child internal-child="button">
                       <object class="GtkButton">
                         <property name="image">GroupingIcon</property>
                       </object>
-                    </child>
+                    </child>-->
                   </object>
                 </child>
                 <style>
