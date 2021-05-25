@@ -38,29 +38,28 @@ from pynicotine.gtkgui.widgets.dialogs import entry_dialog
 
 class PopupMenu(Gio.Menu):
 
-    def __init__(self, frame=None, widget=None, callback=None, window=None):
+    def __init__(self, frame=None, widget=None, callback=None):
 
         Gio.Menu.__init__(self)
 
         self.frame = frame
         self.widget = widget
         self.callback = callback
+
+        if frame:
+            self.window = frame.MainWindow
+        else:
+            if Gtk.get_major_version() == 4:
+                self.window = widget.get_root()
+            else:
+                self.window = widget.get_toplevel()
+
         self.gesture_click = None
         self.gesture_press = None
         self.last_controller = None
 
         if widget:
             self.connect_context_menu_events(widget)
-
-        if not window:
-            if frame:
-                self.window = frame.MainWindow
-
-        elif isinstance(window, Gtk.Dialog):
-            self.window = window.get_transient_for()
-
-        else:
-            self.window = window
 
         self.actions = {}
         self.items = {}
@@ -302,10 +301,6 @@ class PopupMenu(Gio.Menu):
                 self.widget.set_extra_menu(self)
 
             else:
-                if isinstance(self.widget, Gtk.TreeView):
-                    parent = parent.get_first_child().get_first_child()
-                    print(parent.get_last_child())
-
                 if not self.popup_menu:
                     self.popup_menu = Gtk.PopoverMenu.new_from_model(self)
                     self.popup_menu.set_has_arrow(False)
@@ -319,7 +314,7 @@ class PopupMenu(Gio.Menu):
         else:
             if not self.popup_menu:
                 self.popup_menu = Gtk.Menu.new_from_model(self)
-                self.popup_menu.attach_to_widget(self.window, None)
+                self.popup_menu.attach_to_widget(self.widget, None)
 
             if self.last_controller:
                 sequence = self.last_controller.get_current_sequence()

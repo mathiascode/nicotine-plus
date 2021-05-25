@@ -302,9 +302,12 @@ class IconNotebook:
         self.notebook.connect("switch-page", self.on_switch_page)
 
         if Gtk.get_major_version() == 4:
+            self.window = self.notebook.get_root()
+
             self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic")
             self.unread_button.set_has_frame(False)
         else:
+            self.window = self.notebook.get_toplevel()
             self.popup_enable()
 
             self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic", Gtk.IconSize.BUTTON)
@@ -320,12 +323,7 @@ class IconNotebook:
 
         self.notebook.set_action_widget(self.unread_button, Gtk.PackType.END)
 
-        if Gtk.get_major_version() == 4:
-            window = self.notebook.get_root()
-        else:
-            window = self.notebook.get_toplevel()
-
-        self.popup_menu_unread = PopupMenu(window=window)
+        self.popup_menu_unread = PopupMenu(widget=self.notebook)
         self.unread_pages = []
 
         self.angle = angle
@@ -425,14 +423,15 @@ class IconNotebook:
         dialog.destroy()
 
         if response_id == Gtk.ResponseType.OK:
-            for page in self.notebook.get_children():
+            for i in range(self.notebook.get_n_pages()):
+                page = self.notebook.get_nth_page(i)
                 tab_label, menu_label = self.get_labels(page)
                 tab_label.onclose(dialog)
 
     def remove_all_pages(self):
 
         option_dialog(
-            parent=self.notebook.get_toplevel(),
+            parent=self.window,
             title=_('Close All Tabs?'),
             message=_('Are you sure you wish to close all tabs?'),
             callback=self.remove_all_pages_response
