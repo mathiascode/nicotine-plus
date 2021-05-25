@@ -1570,8 +1570,9 @@ class NicotineFrame:
         for child in children:
             child.show()
 
-        # Bugged
-        #GLib.idle_add(notebook.grab_focus)
+        if Gtk.get_major_version() == 3:
+            # Currently broken in GTK 4
+            GLib.idle_add(notebook.grab_focus)
 
         tab_label = notebook.get_tab_label(page)
         self.current_tab_label = tab_label
@@ -1605,7 +1606,10 @@ class NicotineFrame:
 
         elif tab_label == self.SearchTabLabel:
             self.set_active_header_bar("Search")
-            #GLib.idle_add(self.SearchEntry.grab_focus)
+
+            if Gtk.get_major_version() == 3:
+                # Currently broken in GTK 4
+                GLib.idle_add(self.SearchEntry.grab_focus)
 
         elif tab_label == self.UserInfoTabLabel:
             self.set_active_header_bar("UserInfo")

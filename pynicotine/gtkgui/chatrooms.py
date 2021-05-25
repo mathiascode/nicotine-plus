@@ -155,7 +155,9 @@ class ChatRooms(IconNotebook):
 
         for name, room in self.joinedrooms.items():
             if room.Main == page:
-                #GLib.idle_add(room.ChatEntry.grab_focus)
+                if Gtk.get_major_version() == 3:
+                    # Currently broken in GTK 4
+                    GLib.idle_add(room.ChatEntry.grab_focus)
 
                 # Remove hilite
                 self.frame.notifications.clear("rooms", None, name)
@@ -1041,9 +1043,8 @@ class ChatRoom:
         tag = buffer.create_tag()
         update_tag_visuals(tag, color)
 
-        if username:
-            pass
-            #tag.connect("event", self.user_name_event, username)
+        if username and Gtk.get_major_version() == 3:
+            tag.connect("event", self.user_name_event, username)
 
         return tag
 

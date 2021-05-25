@@ -57,20 +57,18 @@ class TransferList:
         self.type = type
 
         load_ui_elements(self, os.path.join(frame.gui_dir, "ui", type + "s.ui"))
-        try:
-            getattr(frame, type + "svbox").add(self.Main)
-        except AttributeError:
-            getattr(frame, type + "svbox").append(self.Main)
 
         self.ActionBar.remove(self.End)
         self.ActionBar.pack_end(self.End)
 
         if Gtk.get_major_version() == 4:
+            getattr(frame, type + "svbox").append(self.Main)
             getattr(frame, "ToggleButton%ss" % self.type.title()).set_icon_name("view-list-symbolic")
 
             self.ClearTransfers.set_has_frame(False)
             self.ClearTransfers.set_label(self.ClearTransfersLabel.get_first_child().get_text())
         else:
+            getattr(frame, type + "svbox").add(self.Main)
             getattr(frame, "ToggleButton%ss" % self.type.title()).set_image(Gtk.Image.new_from_icon_name("view-list-symbolic", Gtk.IconSize.BUTTON))
 
             self.ClearTransfers.add(self.ClearTransfersLabel)
@@ -722,17 +720,17 @@ class TransferList:
         expanded = widget.get_active()
 
         if expanded:
+            icon_name = "go-up-symbolic"
             self.widget.expand_all()
-            try:
-                expand_button_icon.set_from_icon_name("go-up-symbolic", Gtk.IconSize.BUTTON)
-            except AttributeError:
-                expand_button_icon.set_from_icon_name("go-up-symbolic")
+
         else:
+            icon_name = "go-down-symbolic"
             collapse_treeview(self.widget, self.tree_users)
-            try:
-                expand_button_icon.set_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON)
-            except AttributeError:
-                expand_button_icon.set_from_icon_name("go-down-symbolic")
+
+        if Gtk.get_major_version() == 4:
+            expand_button_icon.set_from_icon_name(icon_name)
+        else:
+            expand_button_icon.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
 
         config.sections["transfers"]["%ssexpanded" % self.type] = expanded
         config.write_configuration()

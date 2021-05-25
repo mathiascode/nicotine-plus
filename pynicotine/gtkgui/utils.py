@@ -49,6 +49,7 @@ def load_ui_elements(ui_class, filename):
     try:
         if Gtk.get_major_version() == 4:
             builder = Gtk.Builder(ui_class)
+            Gtk.Buildable.get_name = Gtk.Buildable.get_buildable_id
         else:
             builder = Gtk.Builder()
 
@@ -57,10 +58,7 @@ def load_ui_elements(ui_class, filename):
 
         for obj in builder.get_objects():
             try:
-                try:
-                    obj_name = Gtk.Buildable.get_name(obj)
-                except AttributeError:
-                    obj_name = Gtk.Buildable.get_buildable_id(obj)
+                obj_name = Gtk.Buildable.get_name(obj)
 
                 if not obj_name.startswith("_"):
                     setattr(ui_class, obj_name, obj)
@@ -223,7 +221,9 @@ def append_line(textview, line, tag=None, timestamp=None, showstamp=True, timest
         color = config.sections["ui"]["urlcolor"] or None
         tag = buffer.create_tag(foreground=color, underline=Pango.Underline.SINGLE)
         tag.last_event_type = -1
-        #tag.connect("event", url_event, url)
+
+        if Gtk.get_major_version() == 3:
+            tag.connect("event", url_event, url)
 
         return tag
 
