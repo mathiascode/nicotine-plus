@@ -63,6 +63,10 @@ def load_ui_elements(ui_class, filename):
                     obj_name = Gtk.Buildable.get_buildable_id(obj)
 
                 if not obj_name.startswith("_"):
+                    if Gtk.get_major_version() == 4:
+                        if isinstance(obj, Gtk.Box):
+                            obj.add = obj.append
+
                     setattr(ui_class, obj_name, obj)
 
             except TypeError:
@@ -386,3 +390,13 @@ def get_key_press_event_args(*args):
         state = event.state
 
     return (keyval, keycode, state)
+
+
+def parse_accelerator(accelerator):
+
+    if Gtk.get_major_version() == 4:
+        ok, key, codes, mods = Gtk.accelerator_parse_with_keycode(accelerator)
+    else:
+        key, codes, mods = Gtk.accelerator_parse_with_keycode(accelerator)
+
+    return key, codes, mods

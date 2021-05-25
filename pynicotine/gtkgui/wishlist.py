@@ -50,6 +50,11 @@ class WishList:
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "wishlist.ui"))
         set_up_dialog(self.WishListDialog, frame.MainWindow, self.Main, self.quit)
 
+        if Gtk.get_major_version() == 4:
+            self.WishlistScrolledWindow.set_has_frame(True)
+        else:
+            self.WishlistScrolledWindow.set_shadow_type(Gtk.ShadowType.IN)
+
         self.store = Gtk.ListStore(str)
 
         self.column_numbers = list(range(self.store.get_n_columns()))

@@ -61,6 +61,7 @@ from pynicotine.gtkgui.utils import load_ui_elements
 from pynicotine.gtkgui.utils import open_file_path
 from pynicotine.gtkgui.utils import open_log
 from pynicotine.gtkgui.utils import open_uri
+from pynicotine.gtkgui.utils import parse_accelerator
 from pynicotine.gtkgui.utils import scroll_bottom
 from pynicotine.gtkgui.widgets.filechooser import choose_file
 from pynicotine.gtkgui.widgets.iconnotebook import ImageLabel
@@ -632,19 +633,19 @@ class NicotineFrame:
 
         self.UserBrowseCombo.set_sensitive(status)
 
-        if self.current_tab_label == self.UserBrowseTabLabel:
-            GLib.idle_add(self.UserBrowseEntry.grab_focus)
+        """if self.current_tab_label == self.UserBrowseTabLabel:
+            GLib.idle_add(self.UserBrowseEntry.grab_focus)"""
 
         self.UserInfoCombo.set_sensitive(status)
 
-        if self.current_tab_label == self.UserInfoTabLabel:
-            GLib.idle_add(self.UserInfoEntry.grab_focus)
+        """if self.current_tab_label == self.UserInfoTabLabel:
+            GLib.idle_add(self.UserInfoEntry.grab_focus)"""
 
         self.UserSearchCombo.set_sensitive(status)
         self.SearchCombo.set_sensitive(status)
 
-        if self.current_tab_label == self.SearchTabLabel:
-            GLib.idle_add(self.SearchEntry.grab_focus)
+        """if self.current_tab_label == self.SearchTabLabel:
+            GLib.idle_add(self.SearchEntry.grab_focus)"""
 
         self.interests.SimilarUsersButton.set_sensitive(status)
         self.interests.GlobalRecommendationsButton.set_sensitive(status)
@@ -1056,21 +1057,30 @@ class NicotineFrame:
 
         mode = self.verify_buddy_list_mode(mode)
 
-        """if self.userlist.Main in self.NotebooksPane.get_children():
+        if Gtk.get_major_version() == 4:
+            note_children = self.NotebooksPane
+            chat_children = self.ChatroomsPane
+            buddy_children = self.userlistvbox
+        else:
+            note_children = self.NotebooksPane.get_children()
+            chat_children = self.ChatroomsPane.get_children()
+            buddy_children = self.userlistvbox.get_children()
+
+        if self.userlist.Main in note_children:
 
             if mode == "always":
                 return
 
             self.NotebooksPane.remove(self.userlist.Main)
 
-        elif self.userlist.Main in self.ChatroomsPane.get_children():
+        elif self.userlist.Main in chat_children:
 
             if mode == "chatrooms":
                 return
 
             self.ChatroomsPane.remove(self.userlist.Main)
 
-        elif self.userlist.Main in self.userlistvbox.get_children():
+        elif self.userlist.Main in buddy_children:
 
             if mode == "tab":
                 return
@@ -1080,27 +1090,37 @@ class NicotineFrame:
 
         if mode == "always":
 
-            if self.userlist.Main not in self.NotebooksPane.get_children():
-                self.NotebooksPane.pack2(self.userlist.Main, False, True)
+            if self.userlist.Main not in note_children:
+                if Gtk.get_major_version() == 4:
+                    self.NotebooksPane.set_end_child(self.userlist.Main)
+                else:
+                    self.NotebooksPane.pack2(self.userlist.Main, False, True)
 
             self.userlist.BuddiesToolbar.show()
             self.userlist.UserLabel.hide()
 
         elif mode == "chatrooms":
 
-            if self.userlist.Main not in self.ChatroomsPane.get_children():
-                self.ChatroomsPane.pack2(self.userlist.Main, False, True)
+            if self.userlist.Main not in chat_children:
+                if Gtk.get_major_version() == 4:
+                    self.ChatroomsPane.set_end_child(self.userlist.Main)
+                else:
+                    self.ChatroomsPane.pack2(self.userlist.Main, False, True)
 
             self.userlist.BuddiesToolbar.show()
             self.userlist.UserLabel.hide()
 
         elif mode == "tab":
 
-            self.userlistvbox.add(self.userlist.Main)
+            if Gtk.get_major_version() == 4:
+                self.userlistvbox.append(self.userlist.Main)
+            else:
+                self.userlistvbox.add(self.userlist.Main)
+
             self.show_tab(self.userlistvbox)
 
             self.userlist.BuddiesToolbar.hide()
-            self.userlist.UserLabel.show()"""
+            self.userlist.UserLabel.show()
 
     def on_toggle_buddy_list(self, action, state):
         """ Function used to switch around the UI the BuddyList position """
@@ -1529,7 +1549,8 @@ class NicotineFrame:
         for child in children:
             child.show()
 
-        GLib.idle_add(notebook.grab_focus)
+        # Bugged
+        #GLib.idle_add(notebook.grab_focus)
 
         tab_label = notebook.get_tab_label(page)
         self.current_tab_label = tab_label
@@ -1563,7 +1584,7 @@ class NicotineFrame:
 
         elif tab_label == self.SearchTabLabel:
             self.set_active_header_bar("Search")
-            GLib.idle_add(self.SearchEntry.grab_focus)
+            #GLib.idle_add(self.SearchEntry.grab_focus)
 
         elif tab_label == self.UserInfoTabLabel:
             self.set_active_header_bar("UserInfo")
@@ -1611,7 +1632,7 @@ class NicotineFrame:
         keyval, keycode, state = get_key_press_event_args(*args)
         self.on_disable_auto_away()
 
-        if state & Gtk.accelerator_parse("<Primary>")[1]:
+        if state & parse_accelerator("<Primary>")[2]:
             return False
 
         for i in range(1, 10):
@@ -1713,8 +1734,12 @@ class NicotineFrame:
         else:
             expand = True
 
-        #self.MainNotebook.child_set_property(tab_box, "tab-expand", expand)
-        #tab_label.set_centered(expand)
+        if Gtk.get_major_version() == 4:
+            self.MainNotebook.get_page(tab_box).set_property("tab_expand", expand)
+        else:
+            self.MainNotebook.child_set_property(tab_box, "tab-expand", expand)
+
+        tab_label.set_centered(expand)
 
     def get_tab_position(self, string):
 

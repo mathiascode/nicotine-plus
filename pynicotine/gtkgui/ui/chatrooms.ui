@@ -120,7 +120,6 @@
                           <object class="GtkEntry" id="ChatEntry">
                             <property name="visible">1</property>
                             <property name="can-focus">1</property>
-                            <property name="has-focus">1</property>
                             <property name="hexpand">1</property>
                             <property name="width-chars">5</property>
                           </object>

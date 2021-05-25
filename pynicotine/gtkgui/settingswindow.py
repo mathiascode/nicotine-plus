@@ -42,6 +42,7 @@ from pynicotine.gtkgui.widgets.filechooser import choose_dir
 from pynicotine.gtkgui.widgets.filechooser import save_file
 from pynicotine.gtkgui.widgets.dialogs import entry_dialog
 from pynicotine.gtkgui.widgets.dialogs import message_dialog
+from pynicotine.gtkgui.widgets.dialogs import set_up_dialog
 from pynicotine.gtkgui.widgets.theme import update_widget_visuals
 from pynicotine.gtkgui.widgets.treeview import initialise_columns
 from pynicotine.logfacility import log
@@ -2633,12 +2634,11 @@ class PluginsFrame(BuildFrame):
             Gtk.Dialog.__init__(
                 self,
                 title=_("%s Properties") % name,
-                transient_for=self.settings.SettingsWindow,
                 modal=True,
                 default_width=600,
-                window_position=Gtk.WindowPosition.CENTER_ON_PARENT,
                 use_header_bar=config.sections["ui"]["header_bar"]
             )
+            set_up_dialog(self, self.settings.SettingsWindow)
 
             self.add_buttons(
                 _("Cancel"), Gtk.ResponseType.CANCEL, _("OK"), Gtk.ResponseType.OK
@@ -3035,10 +3035,9 @@ class Settings:
         self.SettingsWindow = dialog = Gtk.Dialog(
             use_header_bar=config.sections["ui"]["header_bar"]
         )
+        set_up_dialog(dialog, frame.MainWindow, quit_callback=self.on_delete)
         dialog.set_title(_("Preferences"))
-        dialog.set_transient_for(frame.MainWindow)
         dialog.set_default_size(1050, 700)
-        dialog.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
 
         dialog.add_buttons(
             _("Cancel"), Gtk.ResponseType.CANCEL,
@@ -3048,20 +3047,28 @@ class Settings:
         )
 
         dialog.set_default_response(Gtk.ResponseType.OK)
-        dialog.connect("delete-event", self.on_delete)
         dialog.connect("response", self.on_response)
 
-        content_area = dialog.get_content_area()
-        content_area.set_border_width(0)
-
-        action_area = dialog.get_action_area()
-        action_area.set_margin_top(10)
-        action_area.set_margin_bottom(10)
-        action_area.set_margin_start(10)
-        action_area.set_margin_end(10)
-
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "settings", "settingswindow.ui"))
-        content_area.add(self.Main)
+
+        content_area = dialog.get_content_area()
+
+        if Gtk.get_major_version() == 4:
+            content_area.append(self.Main)
+        else:
+            action_area = dialog.get_action_area()
+            action_area.set_margin_top(10)
+            action_area.set_margin_bottom(10)
+            action_area.set_margin_start(10)
+            action_area.set_margin_end(10)
+
+            content_area.set_border_width(0)
+            content_area.add(self.Main)
+
+        if Gtk.get_major_version() == 4:
+            self.Main.set_property("resize-start-child", False)
+        else:
+            self.Main.child_set_property(self.SettingsList, "resize", False)
 
         # Signal sent and catch by frame.py on update
         GObject.signal_new("settings-updated", Gtk.Window, GObject.SignalFlags.RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING,))

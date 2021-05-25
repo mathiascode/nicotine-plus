@@ -157,7 +157,7 @@ class ChatRooms(IconNotebook):
 
         for name, room in self.joinedrooms.items():
             if room.Main == page:
-                GLib.idle_add(room.ChatEntry.grab_focus)
+                #GLib.idle_add(room.ChatEntry.grab_focus)
 
                 # Remove hilite
                 self.frame.notifications.clear("rooms", None, name)

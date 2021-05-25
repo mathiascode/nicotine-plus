@@ -36,6 +36,7 @@ from pynicotine.gtkgui.utils import connect_key_press_event
 from pynicotine.gtkgui.utils import copy_file_url
 from pynicotine.gtkgui.utils import get_key_press_event_args
 from pynicotine.gtkgui.utils import load_ui_elements
+from pynicotine.gtkgui.utils import parse_accelerator
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.theme import update_widget_visuals
 from pynicotine.gtkgui.widgets.treeview import collapse_treeview
@@ -115,6 +116,9 @@ class TransferList:
             GObject.TYPE_UINT64,   # (17) queue position
             GObject.TYPE_PYOBJECT  # (18) transfer object
         )
+
+        if Gtk.get_major_version() == 4:
+            self.transfersmodel.insert_with_valuesv = self.transfersmodel.insert_with_values
 
         self.column_numbers = list(range(self.transfersmodel.get_n_columns()))
         self.cols = cols = initialise_columns(
@@ -812,17 +816,17 @@ class TransferList:
         keyval, keycode, state = get_key_press_event_args(*args)
         self.select_transfers()
 
-        if keycode in Gtk.accelerator_parse_with_keycode("t")[1]:
+        if keycode in parse_accelerator("t")[1]:
             self.abort_transfers()
 
-        elif keycode in Gtk.accelerator_parse_with_keycode("r")[1]:
+        elif keycode in parse_accelerator("r")[1]:
             self.retry_transfers()
 
-        elif state & Gtk.accelerator_parse("<Primary>")[1] and \
-                keycode in Gtk.accelerator_parse_with_keycode("c")[1]:
+        elif state & parse_accelerator("<Primary>")[2] and \
+                keycode in parse_accelerator("c")[1]:
             self.on_copy_file_path()
 
-        elif keycode in Gtk.accelerator_parse_with_keycode("Delete")[1]:
+        elif keycode in parse_accelerator("Delete")[1]:
             self.abort_transfers(clear=True)
 
         else:

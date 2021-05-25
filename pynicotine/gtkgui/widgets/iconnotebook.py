@@ -27,6 +27,7 @@ from gi.repository import Gtk
 
 from pynicotine.gtkgui.utils import connect_key_press_event
 from pynicotine.gtkgui.utils import get_key_press_event_args
+from pynicotine.gtkgui.utils import parse_accelerator
 from pynicotine.gtkgui.widgets.dialogs import option_dialog
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.config import config
@@ -74,15 +75,20 @@ class ImageLabel(Gtk.Box):
             self.set_hilite_image(hilite_image)
 
         self._pack_children()
-        #self._order_children()
+        self._order_children()
 
     def _pack_children(self):
 
-        if hasattr(self, "box"):
-            for widget in self.box.get_children():
+        """if hasattr(self, "box"):
+            if Gtk.get_major_version() == 4:
+                children = self.box
+            else:
+                children = self.box.get_children()
+
+            for widget in children:
                 self.box.remove(widget)
 
-            self.eventbox.remove(self.box)
+            self.eventbox.remove(self.box)"""
 
         self.box = Gtk.Box()
         self.box.set_spacing(2)
@@ -124,7 +130,8 @@ class ImageLabel(Gtk.Box):
 
     def _order_children(self):
 
-        if self.angle == 90:
+        pass
+        """if self.angle == 90:
             self.box.reorder_child(self.hilite_image, 0)
             self.box.reorder_child(self.label, 1)
             self.box.reorder_child(self.status_image, 2)
@@ -140,7 +147,7 @@ class ImageLabel(Gtk.Box):
             if hasattr(self, "button"):
                 # Left align close button on macOS
                 position = 0 if sys.platform == "darwin" else 1
-                self.reorder_child(self.button, position)
+                self.reorder_child(self.button, position)"""
 
     def _add_close_button(self):
 
@@ -153,6 +160,7 @@ class ImageLabel(Gtk.Box):
         if Gtk.get_major_version() == 4:
             close_image.set_from_icon_name("window-close-symbolic")
             self.button.set_child(close_image)
+            self.button.set_has_frame(False)
             self.append(self.button)
 
         else:
@@ -290,10 +298,11 @@ class IconNotebook:
 
         if Gtk.get_major_version() == 4:
             self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic")
+            self.unread_button.set_has_frame(False)
         else:
             self.unread_button = Gtk.Button.new_from_icon_name("emblem-important-symbolic", Gtk.IconSize.BUTTON)
+            self.unread_button.set_relief(Gtk.ReliefStyle.NONE)
 
-        #self.unread_button.set_relief(Gtk.ReliefStyle.NONE)
         self.unread_button.set_tooltip_text(_("Unread Tabs"))
         self.unread_button.set_halign(Gtk.Align.CENTER)
         self.unread_button.set_valign(Gtk.Align.CENTER)
@@ -560,8 +569,8 @@ class IconNotebook:
     def on_key_press_event(self, *args):
 
         keyval, keycode, state = get_key_press_event_args(*args)
-        key, codes_w, mods = Gtk.accelerator_parse_with_keycode("<Primary>w")
-        key, codes_f4, mods = Gtk.accelerator_parse_with_keycode("<Primary>F4")
+        key, codes_w, mods = parse_accelerator("<Primary>w")
+        key, codes_f4, mods = parse_accelerator("<Primary>F4")
 
         if state & mods:
             if keycode in codes_w or \

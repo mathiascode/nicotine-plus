@@ -40,6 +40,7 @@ from pynicotine.gtkgui.utils import connect_key_press_event
 from pynicotine.gtkgui.utils import copy_file_url
 from pynicotine.gtkgui.utils import get_key_press_event_args
 from pynicotine.gtkgui.utils import load_ui_elements
+from pynicotine.gtkgui.utils import parse_accelerator
 from pynicotine.gtkgui.widgets.filechooser import choose_dir
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
@@ -1030,10 +1031,9 @@ class Search:
         keyval, keycode, state = get_key_press_event_args(*args)
         self.select_results()
 
-        key, codes, mods = Gtk.accelerator_parse_with_keycode("<Primary>c")
+        key, codes, mods = parse_accelerator("<Primary>c")
 
-        if state & mods and \
-                keycode in codes:
+        if state & mods and keycode in codes:
             self.on_copy_file_path()
         else:
             # No key match, continue event

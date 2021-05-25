@@ -24,7 +24,7 @@
           </object>
         </child>
         <child>
-          <object class="GtkScrolledWindow">
+          <object class="GtkScrolledWindow" id="WishlistScrolledWindow">
             <property name="visible">1</property>
             <property name="margin-start">10</property>
             <property name="margin-end">10</property>
