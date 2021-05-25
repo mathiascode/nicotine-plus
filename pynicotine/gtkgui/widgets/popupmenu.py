@@ -336,7 +336,6 @@ class PopupMenu(Gio.Menu):
         if x and y and isinstance(self.widget, Gtk.TreeView):
             from pynicotine.gtkgui.widgets.treeview import set_treeview_selected_row
             set_treeview_selected_row(self.widget, x, y)
-            path, widget, x, y = self.widget.get_path_at_pos(x, y)
 
         self.last_controller = controller
 

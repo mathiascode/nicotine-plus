@@ -73,6 +73,11 @@ class UserList:
             str                   # (14) country
         )
 
+        if Gtk.get_major_version() == 4:
+            frame.userlistvbox.append(self.Main)
+        else:
+            frame.userlistvbox.add(self.Main)
+
         self.column_numbers = list(range(self.usersmodel.get_n_columns()))
         self.cols = cols = initialise_columns(
             "buddy_list", self.UserListTree,
@@ -87,6 +92,8 @@ class UserList:
             ["last_seen", _("Last seen"), 160, "text", None],
             ["comments", _("Comments"), 400, "edit", None]
         )
+
+        frame.userlistvbox.remove(self.Main)
 
         cols["status"].set_sort_column_id(10)
         cols["country"].set_sort_column_id(14)
