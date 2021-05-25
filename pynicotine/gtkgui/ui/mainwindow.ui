@@ -1202,7 +1202,6 @@
                 <child>
                   <object class="GtkRevealer" id="DebugButtons">
                     <property name="visible">1</property>
-                    <property name="can-focus">0</property>
                     <property name="transition-type">slide-up</property>
                     <child>
                       <object class="GtkFlowBox">
