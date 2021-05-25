@@ -294,15 +294,22 @@ class PopupMenu(Gio.Menu):
 
     def popup(self, x, y, button=3):
 
-        if Gtk.get_major_version() == 4:
-            if not self.popup_menu:
-                self.popup_menu = Gtk.PopoverMenu.new_from_model(self)
+        if not self.widget:
+            return
 
-            self.popup_menu.set_pointing_to(Gdk.Rectangle(x, y, 1, 1))
-            self.popup_menu.set_offset(x, y)
-            self.popup_menu.set_has_arrow(False)
-            self.popup_menu.set_parent(self.window)
-            self.popup_menu.popup()
+        if Gtk.get_major_version() == 4:
+            if isinstance(self.widget, Gtk.TextView):
+                self.widget.set_extra_menu(self)
+            else:
+                if not self.popup_menu:
+                    self.popup_menu = Gtk.PopoverMenu.new_from_model(self)
+                    self.popup_menu.set_has_arrow(False)
+                    self.popup_menu.set_parent(self.widget)
+                    #self.popup_menu.set_halign(Gtk.Align.START)
+
+                self.popup_menu.set_pointing_to(Gdk.Rectangle(x, y, 1, 1))
+                self.popup_menu.set_offset(x, y)
+                self.popup_menu.popup()
 
         else:
             if not self.popup_menu:
