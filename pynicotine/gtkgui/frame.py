@@ -549,26 +549,19 @@ class NicotineFrame:
 
         """ Load local app and tray icons, if available """
 
-        try:
-            icon_theme = Gtk.IconTheme.get_default()
-        except AttributeError:
+        if Gtk.get_major_version() == 4:
             icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
+            icon_theme.append_search_path = icon_theme.add_search_path
+        else:
+            icon_theme = Gtk.IconTheme.get_default()
 
         # Support running from folder, as well as macOS and Windows
         path = os.path.join(self.gui_dir, "icons")
-
-        try:
-            icon_theme.append_search_path(path)
-        except AttributeError:
-            icon_theme.add_search_path(path)
+        icon_theme.append_search_path(path)
 
         # Support Python venv
         path = os.path.join(sys.prefix, "share", "icons", "hicolor", "scalable", "apps")
-
-        try:
-            icon_theme.append_search_path(path)
-        except AttributeError:
-            icon_theme.add_search_path(path)
+        icon_theme.append_search_path(path)
 
     def update_visuals(self):
 
