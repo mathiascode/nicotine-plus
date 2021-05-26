@@ -251,6 +251,7 @@ class ImageLabel(Gtk.Box):
         return self.hilite_pixbuf
 
     def set_status_image(self, pixbuf):
+
         if pixbuf is self.status_pixbuf:
             return
 
@@ -266,6 +267,7 @@ class ImageLabel(Gtk.Box):
         return self.status_pixbuf
 
     def set_icon(self, icon_name):
+
         if Gtk.get_major_version() == 4:
             self.status_image.set_from_icon_name(icon_name)
         else:

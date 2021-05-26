@@ -433,7 +433,11 @@ class PrivateChat:
 
         if not hasattr(self, "AboutPrivateChatCommandsPopover"):
             load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "popovers", "privatechatcommands.ui"))
-            self.AboutPrivateChatCommandsPopover.set_relative_to(self.ShowChatHelp)
+
+            if Gtk.get_major_version() == 4:
+                self.AboutPrivateChatCommandsPopover.set_parent(self.ShowChatHelp)
+            else:
+                self.AboutPrivateChatCommandsPopover.set_relative_to(self.ShowChatHelp)
 
         try:
             self.AboutPrivateChatCommandsPopover.popup()

@@ -731,7 +731,11 @@ class ChatRoom:
 
         if not hasattr(self, "AboutChatRoomCommandsPopover"):
             load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "popovers", "chatroomcommands.ui"))
-            self.AboutChatRoomCommandsPopover.set_relative_to(self.ShowChatHelp)
+
+            if Gtk.get_major_version() == 4:
+                self.AboutChatRoomCommandsPopover.set_parent(self.ShowChatHelp)
+            else:
+                self.AboutChatRoomCommandsPopover.set_relative_to(self.ShowChatHelp)
 
         try:
             self.AboutChatRoomCommandsPopover.popup()
