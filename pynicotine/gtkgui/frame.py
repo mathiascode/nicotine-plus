@@ -1324,7 +1324,10 @@ class NicotineFrame:
         else:
             self.AboutDialog.connect("response", lambda x, y: x.destroy())
 
-        self.AboutDialog.set_version(config.version)
+        self.AboutDialog.set_version(
+            config.version + "  •  GTK %s.%s.%s" % \
+            (Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version())
+        )
 
         self.AboutDialog.present_with_time(Gdk.CURRENT_TIME)
 
