@@ -314,8 +314,7 @@ class PrivateChat:
 
         self.Log.set_active(config.sections["logging"]["privatechat"])
 
-        tab_label, menu_label = self.chats.get_labels(self.Main)
-        self.popup_menu_user = popup = PopupMenu(self.frame, tab_label, self.on_popup_menu)
+        self.popup_menu_user = popup = PopupMenu(self.frame, None, self.on_popup_menu)
         popup.setup_user_menu(user, page="privatechat")
         popup.setup(
             ("", None),
