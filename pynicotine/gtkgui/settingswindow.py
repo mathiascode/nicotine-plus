@@ -43,7 +43,7 @@ from pynicotine.gtkgui.widgets.filechooser import save_file
 from pynicotine.gtkgui.widgets.dialogs import entry_dialog
 from pynicotine.gtkgui.widgets.dialogs import generic_dialog
 from pynicotine.gtkgui.widgets.dialogs import message_dialog
-from pynicotine.gtkgui.widgets.dialogs import set_up_dialog
+from pynicotine.gtkgui.widgets.dialogs import set_dialog_properties
 from pynicotine.gtkgui.widgets.theme import update_widget_visuals
 from pynicotine.gtkgui.widgets.treeview import initialise_columns
 from pynicotine.logfacility import log
@@ -2639,7 +2639,7 @@ class PluginsFrame(BuildFrame):
                 default_width=600,
                 use_header_bar=config.sections["ui"]["header_bar"]
             )
-            set_up_dialog(self, self.settings.SettingsWindow)
+            set_dialog_properties(self, self.settings.SettingsWindow)
 
             self.add_buttons(
                 _("Cancel"), Gtk.ResponseType.CANCEL, _("OK"), Gtk.ResponseType.OK

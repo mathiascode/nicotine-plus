@@ -30,7 +30,7 @@ from pynicotine.gtkgui.widgets.filechooser import choose_dir
 from pynicotine.gtkgui.widgets.filechooser import FileChooserButton
 from pynicotine.gtkgui.widgets.dialogs import entry_dialog
 from pynicotine.gtkgui.widgets.dialogs import message_dialog
-from pynicotine.gtkgui.widgets.dialogs import set_up_dialog
+from pynicotine.gtkgui.widgets.dialogs import set_dialog_properties
 from pynicotine.gtkgui.widgets.treeview import initialise_columns
 
 
@@ -41,7 +41,7 @@ class FastConfigureAssistant(object):
         self.frame = frame
 
         load_ui_elements(self, os.path.join(self.frame.gui_dir, "ui", "dialogs", "fastconfigure.ui"))
-        set_up_dialog(self.FastConfigureDialog, frame.MainWindow, type_hint="dialog")
+        set_dialog_properties(self.FastConfigureDialog, frame.MainWindow, type_hint="dialog")
 
         for page in (self.welcomepage, self.userpasspage, self.portpage, self.sharepage, self.summarypage):
             self.FastConfigureDialog.append_page(page)

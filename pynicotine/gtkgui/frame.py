@@ -67,7 +67,7 @@ from pynicotine.gtkgui.widgets.filechooser import choose_file
 from pynicotine.gtkgui.widgets.iconnotebook import ImageLabel
 from pynicotine.gtkgui.widgets.dialogs import message_dialog
 from pynicotine.gtkgui.widgets.dialogs import option_dialog
-from pynicotine.gtkgui.widgets.dialogs import set_up_dialog
+from pynicotine.gtkgui.widgets.dialogs import set_dialog_properties
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.textentry import clear_entry
 from pynicotine.gtkgui.widgets.textentry import TextSearchBar
@@ -1238,7 +1238,7 @@ class NicotineFrame:
 
         if not hasattr(self, "KeyboardShortcutsDialog"):
             load_ui_elements(self, os.path.join(self.gui_dir, "ui", "dialogs", "shortcuts.ui"))
-            set_up_dialog(self.KeyboardShortcutsDialog, self.MainWindow, quit_callback=self.on_hide)
+            set_dialog_properties(self.KeyboardShortcutsDialog, self.MainWindow, quit_callback=self.on_hide)
 
         self.KeyboardShortcutsDialog.present_with_time(Gdk.CURRENT_TIME)
 
@@ -1309,7 +1309,7 @@ class NicotineFrame:
     def on_about(self, *args):
 
         load_ui_elements(self, os.path.join(self.gui_dir, "ui", "dialogs", "about.ui"))
-        set_up_dialog(self.AboutDialog, self.MainWindow)
+        set_dialog_properties(self.AboutDialog, self.MainWindow)
 
         # Override link handler with our own
         self.AboutDialog.connect("activate-link", self.on_about_uri)

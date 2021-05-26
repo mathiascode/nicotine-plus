@@ -34,21 +34,26 @@ def generic_dialog(parent=None, content_box=None, quit_callback=None, type_hint=
         default_height=height
     )
 
+    if content_box:
+        if Gtk.get_major_version() == 4:
+            dialog.get_content_area().append(content_box)
+        else:
+            dialog.get_content_area().add(content_box)
+
+    set_dialog_properties(dialog, parent, quit_callback, type_hint, modal)
+    return dialog
+
+
+def set_dialog_properties(dialog, parent, quit_callback=None, type_hint="normal", modal=True):
+
     if Gtk.get_major_version() == 4:
         if quit_callback:
             dialog.connect("close-request", quit_callback)
-
-        if content_box:
-            dialog.get_content_area().append(content_box)
-
     else:
         dialog.set_property("window-position", Gtk.WindowPosition.CENTER_ON_PARENT)
 
         if quit_callback:
             dialog.connect("delete-event", quit_callback)
-
-        if content_box:
-            dialog.get_content_area().add(content_box)
 
         if type_hint == "normal":
             dialog.set_type_hint(Gdk.WindowTypeHint.NORMAL)
@@ -57,30 +62,6 @@ def generic_dialog(parent=None, content_box=None, quit_callback=None, type_hint=
             dialog.set_type_hint(Gdk.WindowTypeHint.DIALOG)
 
     dialog.set_modal(modal)
-    dialog.set_transient_for(parent)
-    return dialog
-
-
-def set_up_dialog(dialog, parent, content_box=None, quit_callback=None, type_hint="normal"):
-
-    if Gtk.get_major_version() == 4:
-        if quit_callback:
-            dialog.connect("close-request", quit_callback)
-    else:
-        dialog.set_property("window-position", Gtk.WindowPosition.CENTER_ON_PARENT)
-
-        if quit_callback:
-            dialog.connect("delete-event", quit_callback)
-
-        if content_box:
-            dialog.get_content_area().add(content_box)
-
-        if type_hint == "normal":
-            dialog.set_type_hint(Gdk.WindowTypeHint.NORMAL)
-
-        elif type_hint == "dialog":
-            dialog.set_type_hint(Gdk.WindowTypeHint.DIALOG)
-
     dialog.set_transient_for(parent)
 
 
