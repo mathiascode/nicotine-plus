@@ -911,7 +911,11 @@ class NicotineFrame:
         self.application.set_menubar(builder.get_object("menubar"))
 
     def on_menu(self, *args):
-        self.HeaderMenu.set_active(not self.HeaderMenu.get_active())
+
+        if Gtk.get_major_version() == 4:
+            self.HeaderMenu.popup()
+        else:
+            self.HeaderMenu.set_active(not self.HeaderMenu.get_active())
 
     # File
 
@@ -1318,7 +1322,7 @@ class NicotineFrame:
             self.AboutDialog.connect("response", lambda x, y: x.destroy())
 
         self.AboutDialog.set_version(
-            config.version + "  •  GTK %s.%s.%s" % \
+            config.version + "  •  GTK %s.%s.%s" %
             (Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version())
         )
 
