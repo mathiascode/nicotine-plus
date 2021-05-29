@@ -339,7 +339,7 @@ class Search:
         self.resultsmodel = Gtk.TreeStore(
             GObject.TYPE_UINT64,  # (0)  num
             str,                  # (1)  user
-            str,                  # (2)  flag
+            Gio.Icon,             # (2)  flag
             str,                  # (3)  immediatedl
             str,                  # (4)  h_speed
             str,                  # (5)  h_queue

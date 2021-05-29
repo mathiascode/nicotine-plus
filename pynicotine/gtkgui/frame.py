@@ -463,7 +463,6 @@ class NicotineFrame:
         fin.write(data)
         fin.close()
 
-
     def load_icons(self):
         """ Load custom icons necessary for Nicotine+ to function """
 
@@ -1463,11 +1462,11 @@ class NicotineFrame:
             return
 
         if status == 1:
-            hilite_icon = "nicotine-hilite-default"
+            hilite_icon = GLib.get_prgname() + "-hilite-default"
         else:
-            hilite_icon = "nicotine-hilite-notify"
+            hilite_icon = GLib.get_prgname() + "-hilite-notify"
 
-            if tab_label.get_icon_end() == "nicotine-hilite-default":
+            if tab_label.get_icon_end() == GLib.get_prgname() + "-hilite-default":
                 # Chat mentions have priority over normal notifications
                 return
 
@@ -2072,18 +2071,18 @@ class NicotineFrame:
     def get_flag_image(self, country):
 
         if not country:
-            return ""
+            return Gio.ThemedIcon.new("")
 
-        return "nicotine-flag-" + country.lower().replace("flag_", "")
+        return Gio.ThemedIcon.new(GLib.get_prgname() + "-flag-" + country.lower().replace("flag_", ""))
 
     def get_status_image(self, status):
 
         if status == 1:
-            return "nicotine-status-away"
+            return Gio.ThemedIcon.new(GLib.get_prgname() + "-status-away")
         elif status == 2:
-            return "nicotine-status-online"
+            return Gio.ThemedIcon.new(GLib.get_prgname() + "-status-online")
         else:
-            return "nicotine-status-offline"
+            return Gio.ThemedIcon.new(GLib.get_prgname() + "-status-offline")
 
     def has_user_flag(self, user, country):
 

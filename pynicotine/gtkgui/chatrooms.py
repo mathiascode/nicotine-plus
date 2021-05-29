@@ -487,8 +487,8 @@ class ChatRoom:
             config.sections["columns"]["chat_room"][room] = {}
 
         self.usersmodel = Gtk.ListStore(
-            str,                  # (0)  status_image
-            str,                  # (1)  flag
+            Gio.Icon,             # (0)  status_image
+            Gio.Icon,             # (1)  flag
             str,                  # (2)  username
             str,                  # (3)  h_speed
             str,                  # (4)  h_files

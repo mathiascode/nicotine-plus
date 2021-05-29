@@ -20,6 +20,7 @@
 
 import os
 
+from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -119,7 +120,7 @@ class Interests:
 
         self.recommendation_users = {}
         self.recommendation_users_model = Gtk.ListStore(
-            str,                  # (0) status icon
+            Gio.Icon,             # (0) status icon
             str,                  # (1) user
             str,                  # (2) hspeed
             str,                  # (3) hfiles

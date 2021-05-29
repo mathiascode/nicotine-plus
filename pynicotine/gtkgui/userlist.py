@@ -24,6 +24,7 @@
 import os
 import time
 
+from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -56,8 +57,8 @@ class UserList:
 
         self.user_iterators = {}
         self.usersmodel = Gtk.ListStore(
-            str,                  # (0)  status icon
-            str,                  # (1)  flag
+            Gio.Icon,             # (0)  status icon
+            Gio.Icon,             # (1)  flag
             str,                  # (2)  username
             str,                  # (3)  hspeed
             str,                  # (4)  hfile count
