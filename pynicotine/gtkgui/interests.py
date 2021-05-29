@@ -119,7 +119,7 @@ class Interests:
 
         self.recommendation_users = {}
         self.recommendation_users_model = Gtk.ListStore(
-            GObject.TYPE_OBJECT,  # (0) status icon
+            str,                  # (0) status icon
             str,                  # (1) user
             str,                  # (2) hspeed
             str,                  # (3) hfiles
@@ -131,7 +131,7 @@ class Interests:
         self.recommendation_users_column_numbers = list(range(self.recommendation_users_model.get_n_columns()))
         cols = initialise_columns(
             None, self.RecommendationUsersList,
-            ["status", _("Status"), 25, "pixbuf", None],
+            ["status", _("Status"), 25, "icon", None],
             ["user", _("User"), 100, "text", None],
             ["speed", _("Speed"), 100, "text", None],
             ["files", _("Files"), 100, "text", None],
@@ -365,7 +365,7 @@ class Interests:
 
         for user in msg.users:
             iterator = self.recommendation_users_model.insert_with_valuesv(
-                -1, self.recommendation_users_column_numbers, [GObject.Value(GObject.TYPE_OBJECT, self.frame.images["offline"]), user, "0", "0", 0, 0, 0]
+                -1, self.recommendation_users_column_numbers, [self.frame.images["offline"], user, "0", "0", 0, 0, 0]
             )
             self.recommendation_users[user] = iterator
 

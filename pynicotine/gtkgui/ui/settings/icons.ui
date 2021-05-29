@@ -133,15 +133,6 @@
             </child>
           </object>
         </child>
-        <child>
-          <object class="GtkIconView" id="IconView">
-            <property name="visible">1</property>
-            <property name="pixbuf-column">0</property>
-            <property name="text-column">1</property>
-            <property name="selection-mode">none</property>
-            <property name="vexpand">1</property>
-          </object>
-        </child>
       </object>
     </child>
   </object>

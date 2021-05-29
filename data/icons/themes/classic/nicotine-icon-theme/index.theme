@@ -1,0 +1,7 @@
+[Icon Theme]
+Name=Nicotine+ Icon Theme
+Inherits=elementary
+Directories=..
+
+[..]
+Size=16

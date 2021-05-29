@@ -23,6 +23,7 @@
 import sys
 
 from gi.repository import Gdk
+from gi.repository import GLib
 from gi.repository import Gtk
 
 from pynicotine.gtkgui.utils import connect_key_press_event
@@ -38,7 +39,7 @@ from pynicotine.config import config
 
 class ImageLabel(Gtk.Box):
 
-    def __init__(self, label="", onclose=None, closebutton=False, hilite_image=None, show_hilite_image=True, status_image=None, show_status_image=False):
+    def __init__(self, label="", onclose=None, closebutton=False, show_icon_start=False, show_icon_end=False):
 
         Gtk.Box.__init__(self)
         self.set_hexpand(False)
@@ -56,22 +57,23 @@ class ImageLabel(Gtk.Box):
         self.text = label
         self.set_text(self.text)
 
-        self.status_image = Gtk.Image()
-        self.status_pixbuf = None
+        self.icon_start = Gtk.Image()
+        self.icon_start.set_from_pixbuf(None)
+        self.icon_name_start = ""
 
-        if show_status_image:
-            self.set_status_image(status_image)
-            self.status_image.show()
+        if show_icon_start:
+            self.icon_start.show()
         else:
-            self.status_image.hide()
+            self.icon_start.hide()
 
-        self.hilite_image = Gtk.Image()
-        self.hilite_pixbuf = None
+        self.icon_end = Gtk.Image()
+        self.icon_end.set_from_pixbuf(None)
+        self.icon_name_end = ""
 
-        if show_hilite_image:
-            self.set_hilite_image(hilite_image)
+        if show_icon_end:
+            self.icon_end.show()
         else:
-            self.hilite_image.hide()
+            self.icon_end.hide()
 
         self._pack_children()
 
@@ -106,15 +108,15 @@ class ImageLabel(Gtk.Box):
         else:
             self.set_halign(Gtk.Align.FILL)
 
-        self.status_image.set_margin_end(5)
-        self.hilite_image.set_margin_start(5)
+        self.icon_start.set_margin_end(5)
+        self.icon_end.set_margin_start(5)
 
         if Gtk.get_major_version() == 4:
             self.box.add = self.box.append
 
-        self.box.add(self.status_image)
+        self.box.add(self.icon_start)
         self.box.add(self.label)
-        self.box.add(self.hilite_image)
+        self.box.add(self.icon_end)
         self.box.show()
 
         if self.closebutton and self.onclose is not None:
@@ -165,12 +167,6 @@ class ImageLabel(Gtk.Box):
         else:
             self._remove_close_button()
 
-    def show_hilite_image(self, show=True):
-        if show and self.get_hilite_image() is not None:
-            self.hilite_image.show()
-        else:
-            self.hilite_image.hide()
-
     def set_centered(self, centered):
         self.centered = centered
         self._pack_children()
@@ -200,37 +196,47 @@ class ImageLabel(Gtk.Box):
             from html import escape
             self.label.set_markup("<span foreground=\"%s\">%s</span>" % (color, escape(self.text)))
 
-    def set_hilite_image(self, pixbuf):
-        self.hilite_pixbuf = pixbuf
-        self.hilite_image.set_from_pixbuf(pixbuf)
+    def set_show_icon_start(self, show):
+        self.icon_start.set_visible(show)
 
-        self.show_hilite_image()
+    def set_icon_start(self, icon_name):
 
-    def get_hilite_image(self):
-        return self.hilite_pixbuf
-
-    def set_status_image(self, pixbuf):
-
-        if pixbuf is self.status_pixbuf:
+        if icon_name == self.icon_name_start:
             return
 
-        if config.sections["ui"]["tab_status_icons"]:
-            self.status_image.show()
+        self.icon_name_start = icon_name
+
+        if icon_name:
+            if Gtk.get_major_version() == 4:
+                self.icon_start.set_from_icon_name(icon_name)
+            else:
+                self.icon_start.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
         else:
-            self.status_image.hide()
+            self.icon_start.set_from_pixbuf(None)
 
-        self.status_pixbuf = pixbuf
-        self.status_image.set_from_pixbuf(pixbuf)
+    def get_icon_start(self):
+        return self.icon_name_start
 
-    def get_status_image(self):
-        return self.status_pixbuf
+    def set_show_icon_end(self, show):
+        self.icon_end.set_visible(show)
 
-    def set_icon(self, icon_name):
+    def set_icon_end(self, icon_name):
 
-        if Gtk.get_major_version() == 4:
-            self.status_image.set_from_icon_name(icon_name)
+        if icon_name == self.icon_name_end:
+            return
+
+        self.icon_name_end = icon_name
+
+        if icon_name:
+            if Gtk.get_major_version() == 4:
+                self.icon_end.set_from_icon_name(icon_name)
+            else:
+                self.icon_end.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
         else:
-            self.status_image.set_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+            self.icon_end.set_from_pixbuf(None)
+
+    def get_icon_end(self):
+        return self.icon_name_end
 
     def set_text(self, lbl):
         self.set_text_color(notify=None, text=lbl)
@@ -247,7 +253,7 @@ class IconNotebook:
     - A few shortcuts
     """
 
-    def __init__(self, images, tabclosers=False, show_hilite_image=True, reorderable=True, show_status_image=False, notebookraw=None):
+    def __init__(self, tabclosers=False, show_hilite_image=True, reorderable=True, show_status_image=False, notebookraw=None):
 
         # We store the real Gtk.Notebook object
         self.notebook = notebookraw
@@ -256,7 +262,6 @@ class IconNotebook:
         self.tabclosers = tabclosers
         self.reorderable = reorderable
 
-        self.images = images
         self._show_hilite_image = show_hilite_image
         self._show_status_image = show_status_image
 
@@ -322,11 +327,17 @@ class IconNotebook:
             page = self.notebook.get_nth_page(i)
             tab_label, menu_label = self.get_labels(page)
 
-            tab_label.show_hilite_image(self._show_hilite_image)
+            tab_label.set_show_icon_end(self._show_hilite_image)
 
     def show_status_images(self, show_image=True):
 
         self._show_status_image = show_image
+
+        for i in range(self.notebook.get_n_pages()):
+            page = self.notebook.get_nth_page(i)
+            tab_label, menu_label = self.get_labels(page)
+
+            tab_label.set_show_icon_start(self._show_status_image)
 
     def set_tab_pos(self, pos):
         self.notebook.set_tab_pos(pos)
@@ -337,10 +348,10 @@ class IconNotebook:
 
         label_tab = ImageLabel(
             label, onclose, closebutton=closebutton,
-            show_hilite_image=self._show_hilite_image,
-            status_image=self.images["offline"],
-            show_status_image=self._show_status_image
+            show_icon_end=self._show_hilite_image,
+            show_icon_start=self._show_status_image
         )
+        label_tab.set_icon_start(GLib.get_prgname() + "-status-offline")
 
         if fulltext is None:
             fulltext = label
@@ -411,16 +422,15 @@ class IconNotebook:
         tab_label, menu_label = self.get_labels(page)
 
         if status == 1:
-            image_name = "away"
+            icon_name = "away"
         elif status == 2:
-            image_name = "online"
+            icon_name = "online"
         else:
-            image_name = "offline"
+            icon_name = "offline"
 
-        image = self.images[image_name]
-
-        tab_label.set_status_image(image)
-        menu_label.set_status_image(image)
+        icon_name = GLib.get_prgname() + "-status-" + icon_name
+        tab_label.set_icon_start(icon_name)
+        menu_label.set_icon_start(icon_name)
 
     def set_user_status(self, page, user, status):
 
@@ -445,20 +455,20 @@ class IconNotebook:
     def set_hilite_image(self, page, status):
 
         tab_label, menu_label = self.get_labels(page)
-        image = None
+        icon_name = None
 
         if status > 0:
-            image = self.images[("hilite3", "hilite")[status - 1]]
+            icon_name = (GLib.get_prgname() + "-hilite-notify", GLib.get_prgname() + "-hilite-default")[status - 1]
 
-        if status == 1 and tab_label.get_hilite_image() == self.images["hilite"]:
+        if status == 1 and tab_label.get_icon_end() == GLib.get_prgname() + "-hilite-default":
             # Chat mentions have priority over normal notifications
             return
 
-        tab_label.set_hilite_image(image)
-        menu_label.set_hilite_image(image)
+        tab_label.set_icon_end(icon_name)
+        menu_label.set_icon_end(icon_name)
 
         # Determine if button for unread notifications should be shown
-        if image:
+        if icon_name:
             if page not in self.unread_pages:
                 self.unread_pages.append(page)
                 self.popup_menu_unread.clear()

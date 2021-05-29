@@ -100,7 +100,6 @@ class ChatRooms(IconNotebook):
 
         IconNotebook.__init__(
             self,
-            self.frame.images,
             tabclosers=config.sections["ui"]["tabclosers"],
             show_hilite_image=config.sections["notifications"]["notification_tab_icons"],
             reorderable=config.sections["ui"]["tab_reorderable"],
@@ -488,8 +487,8 @@ class ChatRoom:
             config.sections["columns"]["chat_room"][room] = {}
 
         self.usersmodel = Gtk.ListStore(
-            GObject.TYPE_OBJECT,  # (0)  status_image
-            GObject.TYPE_OBJECT,  # (1)  flag
+            str,                  # (0)  status_image
+            str,                  # (1)  flag
             str,                  # (2)  username
             str,                  # (3)  h_speed
             str,                  # (4)  h_files
@@ -503,8 +502,8 @@ class ChatRoom:
         self.column_numbers = list(range(self.usersmodel.get_n_columns()))
         self.cols = cols = initialise_columns(
             ("chat_room", room), self.UserList,
-            ["status", _("Status"), 25, "pixbuf", None],
-            ["country", _("Country"), 25, "pixbuf", None],
+            ["status", _("Status"), 25, "icon", None],
+            ["country", _("Country"), 25, "icon", None],
             ["user", _("User"), 100, "text", self.user_column_draw],
             ["speed", _("Speed"), 100, "number", None],
             ["files", _("Files"), 100, "number", None]
@@ -599,8 +598,8 @@ class ChatRoom:
         iterator = self.usersmodel.insert_with_valuesv(
             -1, self.column_numbers,
             [
-                GObject.Value(GObject.TYPE_OBJECT, status_image),
-                GObject.Value(GObject.TYPE_OBJECT, flag_image),
+                status_image,
+                flag_image,
                 username,
                 hspeed,
                 hfiles,
@@ -987,7 +986,7 @@ class ChatRoom:
             color = get_user_status_color(status)
             update_tag_visuals(self.tag_users[user], color)
 
-        self.usersmodel.set_value(self.users[user], 0, GObject.Value(GObject.TYPE_OBJECT, img))
+        self.usersmodel.set_value(self.users[user], 0, img)
         self.usersmodel.set_value(self.users[user], 5, status)
 
     def set_user_flag(self, user, country):
@@ -999,7 +998,7 @@ class ChatRoom:
             # Country didn't change, no need to update
             return
 
-        self.usersmodel.set_value(self.users[user], 1, GObject.Value(GObject.TYPE_OBJECT, self.frame.get_flag_image(country)))
+        self.usersmodel.set_value(self.users[user], 1, self.frame.get_flag_image(country))
         self.usersmodel.set_value(self.users[user], 8, country)
 
     def update_visuals(self):

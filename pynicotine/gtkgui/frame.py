@@ -30,7 +30,6 @@ import time
 
 import gi
 from gi.repository import Gdk
-from gi.repository import GdkPixbuf
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -162,11 +161,7 @@ class NicotineFrame:
         """ Icons """
 
         self.load_icons()
-
-        if self.images["n"] and Gtk.get_major_version() == 3:
-            self.MainWindow.set_default_icon(self.images["n"])
-        else:
-            self.MainWindow.set_default_icon_name(GLib.get_prgname())
+        self.MainWindow.set_default_icon_name(GLib.get_prgname())
 
         """ Window Properties """
 
@@ -444,107 +439,33 @@ class NicotineFrame:
         except (ImportError, ValueError):
             self.spell_checker = False
 
-    def load_pixbuf_from_path(self, path):
+    def set_icon_theme_inheritance(self, custom_path):
 
-        with open(path, 'rb') as f:
-            loader = GdkPixbuf.PixbufLoader()
-            loader.write(f.read())
-            loader.close()
-            return loader.get_pixbuf()
+        theme_file = os.path.join(custom_path, "nicotine-icon-theme", "index.theme")
 
-    def get_flag_image(self, country):
+        fin = open(theme_file, "rt")
+        data = ""
+        for line in fin:
+            if line.startswith("Inherits="):
+                icon_theme = Gtk.Settings.get_default().get_property("gtk-icon-theme-name")
 
-        if not country:
-            return None
+                if icon_theme == "nicotine-icon-theme":
+                    data = data + line
+                    continue
 
-        country = country.lower().replace("flag_", "")
+                line = "Inherits=" + icon_theme + "\n"
 
-        try:
-            if country not in self.flag_images:
-                self.flag_images[country] = self.load_pixbuf_from_path(
-                    os.path.join(self.gui_dir, "icons", "flags", country + ".svg")
-                )
+            data = data + line
 
-        except Exception:
-            return None
+        fin.close()
 
-        return self.flag_images[country]
+        fin = open(theme_file, "wt")
+        fin.write(data)
+        fin.close()
 
-    def load_ui_icon(self, name):
-        """ Load icon required by the UI """
-
-        try:
-            return self.load_pixbuf_from_path(
-                os.path.join(self.gui_dir, "icons", name + ".svg")
-            )
-
-        except Exception:
-            return None
-
-    def load_custom_icons(self, names):
-        """ Load custom icon theme if one is selected """
-
-        if config.sections["ui"].get("icontheme"):
-            log.add_debug("Loading custom icons when available")
-            extensions = ["jpg", "jpeg", "bmp", "png", "svg"]
-
-            for name in names:
-                path = None
-                exts = extensions[:]
-                loaded = False
-
-                while not path or (exts and not loaded):
-                    path = os.path.expanduser(os.path.join(config.sections["ui"]["icontheme"], "%s.%s" % (name, exts.pop())))
-
-                    if os.path.isfile(path):
-                        try:
-                            self.images[name] = self.load_pixbuf_from_path(path)
-                            loaded = True
-
-                        except Exception as e:
-                            log.add(_("Error loading custom icon %(path)s: %(error)s"), {
-                                "path": path,
-                                "error": str(e)
-                            })
-
-                if name not in self.images:
-                    self.images[name] = self.load_ui_icon(name)
-
-            return True
-
-        return False
 
     def load_icons(self):
         """ Load custom icons necessary for Nicotine+ to function """
-
-        self.images = {}
-        self.flag_images = {}
-
-        names = [
-            "away",
-            "online",
-            "offline",
-            "hilite",
-            "hilite3",
-            "trayicon_away",
-            "trayicon_connect",
-            "trayicon_disconnect",
-            "trayicon_msg",
-            "n",
-            "notify"
-        ]
-
-        """ Load custom icon theme if available """
-
-        if self.load_custom_icons(names):
-            return
-
-        """ Load icons required by Nicotine+, such as status icons """
-
-        for name in names:
-            self.images[name] = self.load_ui_icon(name)
-
-        """ Load local app and tray icons, if available """
 
         if Gtk.get_major_version() == 4:
             icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
@@ -552,9 +473,20 @@ class NicotineFrame:
         else:
             icon_theme = Gtk.IconTheme.get_default()
 
+        """ Load custom icon theme if available """
+
+        custom_path = config.sections["ui"].get("icontheme")
+        if custom_path:
+            icon_theme.append_search_path(custom_path)
+            self.set_icon_theme_inheritance(custom_path)
+            Gtk.Settings.get_default().set_property("gtk-icon-theme-name", "nicotine-icon-theme")
+
+        """ Load local app and tray icons, if available """
+
         # Support running from folder, as well as macOS and Windows
-        path = os.path.join(self.gui_dir, "icons")
-        icon_theme.append_search_path(path)
+        icon_theme.append_search_path(os.path.join(self.gui_dir, "icons"))
+        icon_theme.append_search_path(os.path.join(self.gui_dir, "icons", "flags"))
+        icon_theme.append_search_path(os.path.join(self.gui_dir, "icons", "tray"))
 
         # Support Python venv
         path = os.path.join(sys.prefix, "share", "icons", "hicolor", "scalable", "apps")
@@ -1307,16 +1239,7 @@ class NicotineFrame:
 
         # Override link handler with our own
         self.AboutDialog.connect("activate-link", self.on_about_uri)
-
-        if self.images["n"]:
-            logo = self.images["n"]
-
-            if Gtk.get_major_version() == 4:
-                logo = Gdk.Texture.new_for_pixbuf(logo)
-
-            self.AboutDialog.set_logo(logo)
-        else:
-            self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
+        self.AboutDialog.set_logo_icon_name(GLib.get_prgname())
 
         if Gtk.get_major_version() == 4:
             self.AboutDialog.connect("close-request", lambda x: x.destroy())
@@ -1515,12 +1438,12 @@ class NicotineFrame:
             # Initialize the image label
             tab_label = ImageLabel(
                 tab_text,
-                show_hilite_image=config.sections["notifications"]["notification_tab_icons"],
-                show_status_image=True
+                show_icon_end=config.sections["notifications"]["notification_tab_icons"],
+                show_icon_start=True
             )
             setattr(self, tab_label_id, tab_label)
 
-            tab_label.set_icon(tab_icon_name)
+            tab_label.set_icon_start(tab_icon_name)
             tab_label.set_text_color()
 
             # Replace previous placeholder label
@@ -1540,18 +1463,18 @@ class NicotineFrame:
             return
 
         if status == 1:
-            hilite_icon = self.images["hilite"]
+            hilite_icon = "nicotine-hilite-default"
         else:
-            hilite_icon = self.images["hilite3"]
+            hilite_icon = "nicotine-hilite-notify"
 
-            if tab_label.get_hilite_image() == self.images["hilite"]:
+            if tab_label.get_icon_end() == "nicotine-hilite-default":
                 # Chat mentions have priority over normal notifications
                 return
 
-        if hilite_icon == tab_label.get_hilite_image():
+        if hilite_icon == tab_label.get_icon_end():
             return
 
-        tab_label.set_hilite_image(hilite_icon)
+        tab_label.set_icon_end(hilite_icon)
         tab_label.set_text_color(status + 1)
 
     def on_switch_page(self, notebook, page, page_num):
@@ -1582,7 +1505,7 @@ class NicotineFrame:
 
         if tab_label is not None:
             # Defaults
-            tab_label.set_hilite_image(None)
+            tab_label.set_icon_end(None)
             tab_label.set_text_color(0)
 
         if tab_label == self.ChatTabLabel:
@@ -2146,13 +2069,21 @@ class NicotineFrame:
 
         self.focus_combobox(parent)
 
+    def get_flag_image(self, country):
+
+        if not country:
+            return ""
+
+        return "nicotine-flag-" + country.lower().replace("flag_", "")
+
     def get_status_image(self, status):
+
         if status == 1:
-            return self.images["away"]
+            return "nicotine-status-away"
         elif status == 2:
-            return self.images["online"]
+            return "nicotine-status-online"
         else:
-            return self.images["offline"]
+            return "nicotine-status-offline"
 
     def has_user_flag(self, user, country):
 
@@ -2435,8 +2366,7 @@ class NicotineFrame:
         for i in range(self.MainNotebook.get_n_pages()):
             tab_box = self.MainNotebook.get_nth_page(i)
             tab_label = self.MainNotebook.get_tab_label(tab_box)
-
-            tab_label.show_hilite_image(config.sections["notifications"]["notification_tab_icons"])
+            tab_label.set_show_icon_end(config.sections["notifications"]["notification_tab_icons"])
             tab_label.set_text_color(0)
 
             self.MainNotebook.set_tab_reorderable(tab_box, config.sections["ui"]["tab_reorderable"])

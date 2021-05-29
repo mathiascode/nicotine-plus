@@ -57,7 +57,6 @@ class TrayIcon:
 
         self.frame = frame
         self.trayicon = None
-        self.custom_icons = False
         self.final_icon_path = None
         self.tray_status = {
             "status": "disconnect",
@@ -222,19 +221,10 @@ class TrayIcon:
             time = Gtk.get_current_event_time()
             self.tray_popup_menu.popup(None, None, None, None, button, time)
 
-    def check_icon_path(self, icon_name, icon_path, icon_type="local"):
+    def check_icon_path(self, icon_name, icon_path):
+        """ Check if tray icons exist in the specified icon path. """
 
-        """
-        Check if tray icons exist in the specified icon path.
-        There are two naming schemes for tray icons:
-        - System-wide/local icons: "org.nicotine_plus.Nicotine-<icon_name>"
-        - Custom icons: "trayicon_<icon_name>"
-        """
-
-        if icon_type == "local":
-            icon_scheme = GLib.get_prgname() + "-" + icon_name + "."
-        else:
-            icon_scheme = "trayicon_" + icon_name + "."
+        icon_scheme = GLib.get_prgname() + "-" + icon_name + "."
 
         try:
             scandir = os.scandir(icon_path)
@@ -271,13 +261,11 @@ class TrayIcon:
         for icon_name in ("away", "connect", "disconnect", "msg"):
 
             # Check if custom icons exist
-            if self.check_icon_path(icon_name, custom_icon_path, icon_type="custom"):
-                self.custom_icons = True
+            if self.check_icon_path(icon_name, custom_icon_path):
                 return custom_icon_path
 
             # Check if local icons exist
-            if self.check_icon_path(icon_name, local_icon_path, icon_type="local"):
-                self.local_icons = True
+            if self.check_icon_path(icon_name, local_icon_path):
                 return local_icon_path
 
         return None
@@ -389,23 +377,14 @@ class TrayIcon:
         if icon_name != self.tray_status["last"]:
             self.tray_status["last"] = icon_name
 
-        if self.custom_icons:
-            icon_name = "trayicon_" + icon_name
-        else:
-            icon_name = GLib.get_prgname() + "-" + icon_name
+        icon_name = GLib.get_prgname() + "-" + icon_name
 
         if self.appindicator is not None:
             self.trayicon.set_icon_full(icon_name, GLib.get_application_name())
 
         else:
             # GtkStatusIcon fallback
-            if self.custom_icons:
-                self.trayicon.set_from_pixbuf(
-                    self.frame.images[icon_name]
-                )
-
-            else:
-                self.trayicon.set_from_icon_name(icon_name)
+            self.trayicon.set_from_icon_name(icon_name)
 
     def set_away(self, enable):
 

@@ -154,7 +154,10 @@ def initialise_columns(treeview_name, treeview, *args):
 
         else:
             renderer = Gtk.CellRendererPixbuf()
-            column = Gtk.TreeViewColumn(id, renderer, pixbuf=i)
+            column = Gtk.TreeViewColumn(id, renderer, icon_name=i)
+
+            if id == "country" and Gtk.get_major_version() == 3:
+                renderer.set_property("stock-size", Gtk.IconSize.register("flag", 21, 21))
 
         if width == -1:
             column.set_resizable(False)
