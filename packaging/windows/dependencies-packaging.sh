@@ -28,4 +28,4 @@ pacman --noconfirm -S --needed \
 
 # Install PyInstaller dependency
 # Rebuild bootloader to reduce false positives in anti-malware software
-pip install PyInstaller
+pip install PyInstaller==4.2
