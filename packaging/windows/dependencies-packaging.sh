@@ -28,6 +28,4 @@ pacman --noconfirm -S --needed \
 
 # Install PyInstaller dependency
 # Rebuild bootloader to reduce false positives in anti-malware software
-wget https://github.com/pyinstaller/pyinstaller/archive/refs/tags/v4.3.zip
-unzip v4.3.zip
-pip3 install .
+pip install PyInstaller
