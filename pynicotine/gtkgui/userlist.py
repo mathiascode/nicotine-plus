@@ -114,8 +114,8 @@ class UserList:
         for render in cols["privileged"].get_cells():
             render.connect('toggled', self.cell_toggle_callback, self.UserListTree, 7)
 
-        for render in cols["comments"].get_cells():
-            render.connect('edited', self.cell_edited_callback, self.UserListTree, 9)
+        #for render in cols["comments"].get_cells():
+            #render.connect('edited', self.cell_edited_callback, self.UserListTree, 9)
 
         self.UserListTree.set_model(self.usersmodel)
 

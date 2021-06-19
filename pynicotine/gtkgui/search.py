@@ -354,7 +354,8 @@ class Search:
             GObject.TYPE_UINT64,  # (15) speed
             GObject.TYPE_UINT64,  # (16) queue
             GObject.TYPE_UINT64,  # (17) length
-            str                   # (18) color
+            str,                  # (18) color
+            str                   # (19) locked
         )
 
         self.column_numbers = list(range(self.resultsmodel.get_n_columns()))
@@ -368,7 +369,7 @@ class Search:
             ["speed", _("Speed"), 90, "number", color_col],
             ["in_queue", _("In Queue"), 90, "center", color_col],
             ["folder", _("Folder"), 400, "text", color_col],
-            ["filename", _("Filename"), 400, "text", color_col],
+            ["filename", _("Filename"), 400, "text", (color_col, "lock")],
             ["size", _("Size"), 100, "number", color_col],
             ["bitrate", _("Bitrate"), 100, "number", color_col],
             ["length", _("Length"), 100, "number", color_col]
@@ -541,6 +542,62 @@ class Search:
             else:
                 combobox.prepend_text(text)
 
+    def add_user_result(self, result, user, counter, inqueue, ulspeed, h_speed, imdl, color, h_queue, country, locked=False):
+
+        fullpath = result[1]
+        fullpath_lower = fullpath.lower()
+
+        if any(word in fullpath_lower for word in self.searchterm_words_ignore):
+            """ Filter out results with filtered words (e.g. nicotine -music) """
+            log.add_search(_("Filtered out excluded search result " + fullpath + " from user " + user))
+            return "filtered"
+
+        if not any(word in fullpath_lower for word in self.searchterm_words_include):
+            """ Some users may send us wrong results, filter out such ones """
+            log.add_search(_("Filtered out inexact or incorrect search result " + fullpath + " from user " + user))
+            return "filtered"
+
+        fullpath_split = reversed(fullpath.split('\\'))
+        name = next(fullpath_split)
+        directory = '\\'.join(fullpath_split)
+
+        size = result[2]
+        h_size = human_size(size)
+        h_bitrate, bitrate, h_length, length = get_result_bitrate_length(size, result[4])
+
+        if locked:
+            name = "[LOCKED] " + name
+            #lock = "system-lock-screen-symbolic"
+        #else:
+        lock = ""
+
+        is_result_visible = self.append(
+            [
+                GObject.Value(GObject.TYPE_UINT64, counter),
+                user,
+                GObject.Value(GObject.TYPE_OBJECT, self.frame.get_flag_image(country)),
+                imdl,
+                h_speed,
+                h_queue,
+                directory,
+                name,
+                h_size,
+                h_bitrate,
+                h_length,
+                GObject.Value(GObject.TYPE_UINT64, bitrate),
+                fullpath,
+                country,
+                GObject.Value(GObject.TYPE_UINT64, size),
+                GObject.Value(GObject.TYPE_UINT64, ulspeed),
+                GObject.Value(GObject.TYPE_UINT64, inqueue),
+                GObject.Value(GObject.TYPE_UINT64, length),
+                GObject.Value(GObject.TYPE_STRING, color),
+                lock
+            ]
+        )
+
+        return is_result_visible
+
     def add_user_results(self, msg, user, country):
 
         if user in self.users:
@@ -569,59 +626,33 @@ class Search:
         max_results = config.sections["searches"]["max_displayed_results"]
 
         for result in msg.list:
-
             if counter > max_results:
                 break
 
-            fullpath = result[1]
-            fullpath_lower = fullpath.lower()
+            is_result_visible = self.add_user_result(result, user, counter, inqueue, ulspeed, h_speed, imdl, color, h_queue, country)
 
-            if any(word in fullpath_lower for word in self.searchterm_words_ignore):
-                """ Filter out results with filtered words (e.g. nicotine -music) """
-                log.add_search(_("Filtered out excluded search result " + fullpath + " from user " + user))
+            if is_result_visible == "filtered":
                 continue
-
-            if not any(word in fullpath_lower for word in self.searchterm_words_include):
-                """ Some users may send us wrong results, filter out such ones """
-                log.add_search(_("Filtered out inexact or incorrect search result " + fullpath + " from user " + user))
-                continue
-
-            fullpath_split = reversed(fullpath.split('\\'))
-            name = next(fullpath_split)
-            directory = '\\'.join(fullpath_split)
-
-            size = result[2]
-            h_size = human_size(size)
-            h_bitrate, bitrate, h_length, length = get_result_bitrate_length(size, result[4])
-
-            is_result_visible = self.append(
-                [
-                    GObject.Value(GObject.TYPE_UINT64, counter),
-                    user,
-                    GObject.Value(GObject.TYPE_OBJECT, self.frame.get_flag_image(country)),
-                    imdl,
-                    h_speed,
-                    h_queue,
-                    directory,
-                    name,
-                    h_size,
-                    h_bitrate,
-                    h_length,
-                    GObject.Value(GObject.TYPE_UINT64, bitrate),
-                    fullpath,
-                    country,
-                    GObject.Value(GObject.TYPE_UINT64, size),
-                    GObject.Value(GObject.TYPE_UINT64, ulspeed),
-                    GObject.Value(GObject.TYPE_UINT64, inqueue),
-                    GObject.Value(GObject.TYPE_UINT64, length),
-                    GObject.Value(GObject.TYPE_STRING, color)
-                ]
-            )
 
             if is_result_visible:
                 update_ui = True
 
             counter += 1
+
+        if config.sections["searches"]["show_locked_results"]:
+            for result in msg.lockedlist:
+                if counter > max_results:
+                    break
+
+                is_result_visible = self.add_user_result(result, user, counter, inqueue, ulspeed, h_speed, imdl, color, h_queue, country, locked=True)
+
+                if is_result_visible == "filtered":
+                    continue
+
+                if is_result_visible:
+                    update_ui = True
+
+                counter += 1
 
         if update_ui:
             # If this search wasn't initiated by us (e.g. wishlist), and the results aren't spoofed, show tab
@@ -663,7 +694,7 @@ class Search:
 
     def add_row_to_model(self, row):
         (counter, user, flag, immediatedl, h_speed, h_queue, directory, filename, h_size, h_bitrate,
-            h_length, bitrate, fullpath, country, size, speed, queue, length, color) = row
+            h_length, bitrate, fullpath, country, size, speed, queue, length, color, lock_icon) = row
 
         if self.grouping_mode != "ungrouped":
             # Group by folder or user
@@ -693,7 +724,8 @@ class Search:
                         speed,
                         queue,
                         empty_int,
-                        color
+                        color,
+                        lock_icon
                     ]
                 )
 
@@ -724,7 +756,8 @@ class Search:
                             speed,
                             queue,
                             empty_int,
-                            color
+                            color,
+                            lock_icon
                         ]
                     )
 

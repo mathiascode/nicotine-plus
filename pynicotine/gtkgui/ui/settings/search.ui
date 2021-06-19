@@ -146,6 +146,13 @@
           </object>
         </child>
         <child>
+          <object class="GtkCheckButton" id="ShowLockedResults">
+            <property name="label" translatable="yes">Show locked search results</property>
+            <property name="visible">1</property>
+            <property name="use-underline">1</property>
+          </object>
+        </child>
+        <child>
           <object class="GtkCheckButton" id="RemoveSpecialChars">
             <property name="label" translatable="yes">Remove special characters from search terms</property>
             <property name="visible">1</property>

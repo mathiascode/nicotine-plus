@@ -234,7 +234,8 @@ class Config:
                 "search_results": True,
                 "max_displayed_results": 1500,
                 "min_search_chars": 3,
-                "remove_special_chars": True
+                "remove_special_chars": True,
+                "show_locked_results": False
             },
 
             "ui": {

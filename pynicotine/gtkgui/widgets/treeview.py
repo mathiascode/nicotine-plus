@@ -197,6 +197,15 @@ def initialise_columns(treeview_name, treeview, *args):
                 column.set_fixed_width(width)
             column.set_min_width(0)
 
+        if isinstance(extra, tuple):
+            color, string = extra
+            column.add_attribute(renderer, "foreground", color)
+
+            if string == "lock":
+                lock_renderer = Gtk.CellRendererPixbuf()
+                column.pack_start(lock_renderer, False)
+                column.add_attribute(lock_renderer, "icon-name", 19)
+
         if isinstance(extra, int):
             column.add_attribute(renderer, "foreground", extra)
 
