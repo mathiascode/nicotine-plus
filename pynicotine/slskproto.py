@@ -1293,7 +1293,7 @@ class SlskProtoThread(threading.Thread):
                     else:
                         conns[incconn] = PeerConnection(conn=incconn, addr=incaddr)
                         self._ui_callback([IncConn(incconn, incaddr)])
-                        self.selector.register(incconn, selectors.EVENT_READ | selectors.EVENT_WRITE)
+                        self.selector.register(incconn, selectors.EVENT_READ)
 
             # Manage Connections
             curtime = time.time()
