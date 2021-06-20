@@ -1030,6 +1030,7 @@ class SlskProtoThread(threading.Thread):
                             server_socket.setblocking(1)
 
                             connsinprogress[server_socket] = PeerConnectionInProgress(server_socket, msg_obj)
+                            self.selector.register(server_socket, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
                             numsockets += 1
 
@@ -1065,6 +1066,7 @@ class SlskProtoThread(threading.Thread):
                             conn.setblocking(1)
 
                             connsinprogress[conn] = PeerConnectionInProgress(conn, msg_obj)
+                            self.selector.register(conn, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
                             numsockets += 1
 
@@ -1251,13 +1253,6 @@ class SlskProtoThread(threading.Thread):
                         self.selector.register(i, event_masks)
                     except Exception:
                         self.selector.modify(i, event_masks)
-
-                for i in connsinprogress:
-                    event_masks = selectors.EVENT_READ | selectors.EVENT_WRITE
-                    try:
-                        self.selector.register(i, event_masks)
-                    except Exception:
-                        pass
 
                 key_events = self.selector.select(timeout=-1)
                 input_list = set(key.fileobj for key, event in key_events if event & selectors.EVENT_READ)
