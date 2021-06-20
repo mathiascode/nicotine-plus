@@ -440,7 +440,7 @@ class SlskProtoThread(threading.Thread):
 
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.selector.register(listen_socket, selectors.EVENT_READ)
+        self.selector.register(self.listen_socket, selectors.EVENT_READ)
 
         self.server_socket = None
 
