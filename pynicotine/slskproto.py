@@ -440,6 +440,7 @@ class SlskProtoThread(threading.Thread):
 
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.selector.register(listen_socket, selectors.EVENT_READ)
 
         self.server_socket = None
 
@@ -1216,7 +1217,6 @@ class SlskProtoThread(threading.Thread):
 
         # @var p Peer / Listen Port
         listen_socket = self.listen_socket
-        self.selector.register(listen_socket, selectors.EVENT_READ)
 
         # @var s Server Port
         server_socket = self.server_socket
