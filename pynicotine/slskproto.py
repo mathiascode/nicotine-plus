@@ -435,6 +435,9 @@ class SlskProtoThread(threading.Thread):
         for i in self.peercodes:
             self.peerclasses[self.peercodes[i]] = i
 
+        # Select Networking Input and Output sockets
+        self.selector = selectors.DefaultSelector()
+
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -590,6 +593,7 @@ class SlskProtoThread(threading.Thread):
             # Already removed
             return
 
+        self.selector.unregister(connection)
         connection.close()
         del connection_list[connection]
 
@@ -1210,6 +1214,7 @@ class SlskProtoThread(threading.Thread):
 
         # @var p Peer / Listen Port
         listen_socket = self.listen_socket
+        self.selector.register(listen_socket, selectors.EVENT_READ)
 
         # @var s Server Port
         server_socket = self.server_socket
@@ -1234,9 +1239,6 @@ class SlskProtoThread(threading.Thread):
             self._dlimits = {}
 
             try:
-                # Select Networking Input and Output sockets
-                selector = selectors.DefaultSelector()
-
                 for i in conns:
                     conn = conns[i]
                     event_masks = selectors.EVENT_READ
@@ -1245,15 +1247,19 @@ class SlskProtoThread(threading.Thread):
                                       and conn.fileupl is not None and conn.fileupl.offset is not None)):
                         event_masks |= selectors.EVENT_WRITE
 
-                    selector.register(i, event_masks)
+                    try:
+                        self.selector.register(i, event_masks)
+                    except Exception:
+                        self.selector.modify(i, event_masks)
 
                 for i in connsinprogress:
                     event_masks = selectors.EVENT_READ | selectors.EVENT_WRITE
-                    selector.register(i, event_masks)
+                    try:
+                        self.selector.register(i, event_masks)
+                    except Exception:
+                        pass
 
-                selector.register(listen_socket, selectors.EVENT_READ)
-
-                key_events = selector.select(timeout=-1)
+                key_events = self.selector.select(timeout=-1)
                 input_list = set(key.fileobj for key, event in key_events if event & selectors.EVENT_READ)
                 output_list = set(key.fileobj for key, event in key_events if event & selectors.EVENT_WRITE)
 
