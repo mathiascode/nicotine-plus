@@ -435,12 +435,8 @@ class SlskProtoThread(threading.Thread):
         for i in self.peercodes:
             self.peerclasses[self.peercodes[i]] = i
 
-        # Select Networking Input and Output sockets
-        self.selector = selectors.DefaultSelector()
-
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.selector.register(self.listen_socket, selectors.EVENT_READ)
 
         self.server_socket = None
 
@@ -594,7 +590,6 @@ class SlskProtoThread(threading.Thread):
             # Already removed
             return
 
-        self.selector.unregister(connection)
         connection.close()
         del connection_list[connection]
 
@@ -1031,7 +1026,6 @@ class SlskProtoThread(threading.Thread):
                             server_socket.setblocking(1)
 
                             connsinprogress[server_socket] = PeerConnectionInProgress(server_socket, msg_obj)
-                            self.selector.register(server_socket, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
                             numsockets += 1
 
@@ -1067,7 +1061,6 @@ class SlskProtoThread(threading.Thread):
                             conn.setblocking(1)
 
                             connsinprogress[conn] = PeerConnectionInProgress(conn, msg_obj)
-                            self.selector.register(conn, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
                             numsockets += 1
 
@@ -1241,6 +1234,9 @@ class SlskProtoThread(threading.Thread):
             self._dlimits = {}
 
             try:
+                # Select Networking Input and Output sockets
+                selector = selectors.DefaultSelector()
+
                 for i in conns:
                     conn = conns[i]
                     event_masks = selectors.EVENT_READ
@@ -1249,9 +1245,15 @@ class SlskProtoThread(threading.Thread):
                                       and conn.fileupl is not None and conn.fileupl.offset is not None)):
                         event_masks |= selectors.EVENT_WRITE
 
-                    self.selector.modify(i, event_masks)
+                    selector.register(i, event_masks)
 
-                key_events = self.selector.select(timeout=-1)
+                for i in connsinprogress:
+                    event_masks = selectors.EVENT_READ | selectors.EVENT_WRITE
+                    selector.register(i, event_masks)
+
+                selector.register(listen_socket, selectors.EVENT_READ)
+
+                key_events = selector.select(timeout=-1)
                 input_list = set(key.fileobj for key, event in key_events if event & selectors.EVENT_READ)
                 output_list = set(key.fileobj for key, event in key_events if event & selectors.EVENT_WRITE)
 
@@ -1293,7 +1295,6 @@ class SlskProtoThread(threading.Thread):
                     else:
                         conns[incconn] = PeerConnection(conn=incconn, addr=incaddr)
                         self._ui_callback([IncConn(incconn, incaddr)])
-                        self.selector.register(incconn, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
             # Manage Connections
             curtime = time.time()
