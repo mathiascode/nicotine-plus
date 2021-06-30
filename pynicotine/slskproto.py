@@ -205,7 +205,7 @@ else:
     otherwise we just waste resources.
     The maximum is 1024, but can be lower if the file limit is too low. """
 
-    MAXSOCKETS = min(max(int(MAXFILELIMIT * 0.75), 50), 1024)
+    MAXSOCKETS = min(max(int(MAXFILELIMIT * 0.75), 50), 50024)
 
 
 class Connection:
@@ -229,11 +229,12 @@ class Connection:
 
 class PeerConnection(Connection):
 
-    __slots__ = ("filereq", "filedown", "fileupl", "filereadbytes", "bytestoread", "piercefw",
+    __slots__ = ("username", "filereq", "filedown", "fileupl", "filereadbytes", "bytestoread", "piercefw",
                  "lastcallback", "starttime", "sentbytes2", "readbytes2")
 
     def __init__(self, conn=None, addr=None, init=None):
         Connection.__init__(self, conn, addr)
+        self.username = None
         self.filereq = None
         self.filedown = None
         self.fileupl = None
@@ -254,9 +255,10 @@ class PeerConnectionInProgress:
     hold data about a connection that is not yet established. msgObj is
     a message to be sent after the connection has been established.
     """
-    __slots__ = "conn", "msg_obj", "lastactive"
+    __slots__ = "username", "conn", "msg_obj", "lastactive"
 
-    def __init__(self, conn=None, msg_obj=None):
+    def __init__(self, username=None, conn=None, msg_obj=None):
+        self.username = username
         self.conn = conn
         self.msg_obj = msg_obj
         self.lastactive = time.time()
@@ -679,7 +681,7 @@ class SlskProtoThread(threading.Thread):
             server_socket.connect_ex(msg_obj.addr)
             server_socket.setblocking(1)
 
-            connsinprogress[server_socket] = PeerConnectionInProgress(server_socket, msg_obj)
+            connsinprogress[server_socket] = PeerConnectionInProgress(None, server_socket, msg_obj)
             self.selector.register(server_socket, selectors.EVENT_READ | selectors.EVENT_WRITE)
             self.server_socket = server_socket
 
@@ -750,7 +752,7 @@ class SlskProtoThread(threading.Thread):
             conn.connect_ex(msg_obj.addr)
             conn.setblocking(1)
 
-            connsinprogress[conn] = PeerConnectionInProgress(conn, msg_obj)
+            connsinprogress[conn] = PeerConnectionInProgress(msg_obj.username, conn, msg_obj)
             self.selector.register(conn, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
         except socket.error as err:
@@ -1319,7 +1321,8 @@ class SlskProtoThread(threading.Thread):
                         else:
                             conns[connection_in_progress] = PeerConnection(
                                 conn=connection_in_progress, addr=addr, init=msg_obj.init)
-                            self._core_callback([OutConn(connection_in_progress, addr)])
+                            conns[connection_in_progress].username = connsinprogress[connection_in_progress].username
+                            self._core_callback([OutConn(connection_in_progress, addr, msg_obj.init, conns[connection_in_progress].username)])
 
                         del connsinprogress[connection_in_progress]
 

@@ -38,12 +38,13 @@ class InternalMessage:
 
 class Conn(InternalMessage):
 
-    __slots__ = ("conn", "addr", "init")
+    __slots__ = ("conn", "addr", "init", "username")
 
-    def __init__(self, conn=None, addr=None, init=None):
+    def __init__(self, conn=None, addr=None, init=None, username=None):
         self.conn = conn
         self.addr = addr
         self.init = init
+        self.username = username
 
 
 class DistribConn(InternalMessage):

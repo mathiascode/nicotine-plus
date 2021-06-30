@@ -30,6 +30,8 @@ This is the actual client code. Actual GUI classes are in the separate modules
 """
 
 import os
+import random
+import string
 import threading
 import time
 
@@ -122,7 +124,7 @@ class NicotineCore:
         self.bindip = bindip
         self.port = port
 
-        self.peerconns = []
+        self.peerconns = {}
         self.watchedusers = set()
         self.ip_requested = set()
         self.users = {}
@@ -274,7 +276,7 @@ class NicotineCore:
 
         self.shares = Shares(self, config, self.queue, ui_callback)
         self.search = Search(self, config, self.queue, self.shares.share_dbs, ui_callback)
-        self.transfers = transfers.Transfers(self, config, self.peerconns, self.queue, self.users,
+        self.transfers = transfers.Transfers(self, config, self.queue, self.users,
                                              self.network_callback, ui_callback)
         self.interests = Interests(self, config, self.queue, ui_callback)
         self.userbrowse = UserBrowse(self, config, ui_callback)
@@ -420,33 +422,31 @@ class NicotineCore:
 
         # We need two connections in our name if we're downloading from ourselves
         if user != config.sections["server"]["login"] and conn_type != 'F':
-            for i in self.peerconns:
-                if i.username == user and i.conn_type == conn_type:
-                    i.addr = addr
-                    i.conn = conn
-                    i.token = None
-                    i.init = msg
+            i = self.peerconns.get(user + conn_type)
+            
+            if i:
+                i.addr = addr
+                i.conn = conn
+                i.token = None
+                i.init = msg
 
-                    if i in self.out_indirect_conn_request_times:
-                        del self.out_indirect_conn_request_times[i]
+                if i in self.out_indirect_conn_request_times:
+                    del self.out_indirect_conn_request_times[i]
 
-                    found_conn = True
+                found_conn = True
 
-                    # Deliver our messages to the peer
-                    self.process_conn_messages(i, conn)
-                    break
+                # Deliver our messages to the peer
+                self.process_conn_messages(i, conn)
 
         if not found_conn:
             """ No previous connection exists for user """
 
-            self.peerconns.append(
-                PeerConnection(
-                    addr=addr,
-                    username=user,
-                    conn=conn,
-                    init=msg,
-                    msgs=[]
-                )
+            self.peerconns[user + conn_type] = PeerConnection(
+                addr=addr,
+                username=user,
+                conn=conn,
+                init=msg,
+                msgs=[]
             )
 
         log.add_conn("Received incoming direct connection of type %(type)s from user %(user)s", {
@@ -464,14 +464,14 @@ class NicotineCore:
         if message.__class__ is not slskmessages.FileRequest:
             """ Check if there's already a connection object for the specified username """
 
-            for i in self.peerconns:
-                if i.username == user and i.conn_type == 'P':
-                    conn = i
-                    log.add_conn("Found existing connection of type %(type)s for user %(user)s, using it.", {
-                        'type': i.conn_type,
-                        'user': user
-                    })
-                    break
+            conn_type = 'P'
+            conn = self.peerconns.get(user + conn_type)
+
+            if conn:
+                log.add_conn("Found existing connection of type %(type)s for user %(user)s, using it.", {
+                    'type': conn_type,
+                    'user': user
+                })
 
         if conn is not None and conn.conn is not None:
             """ We have initiated a connection previously, and it's ready """
@@ -527,20 +527,18 @@ class NicotineCore:
         else:
             self.connect_to_peer_direct(user, addr, message_type)
 
-        self.peerconns.append(
-            PeerConnection(
-                addr=addr,
-                username=user,
-                msgs=[message],
-                init=init
-            )
+        self.peerconns[user + message_type] = PeerConnection(
+            addr=addr,
+            username=user,
+            msgs=[message],
+            init=init
         )
 
     def connect_to_peer_direct(self, user, addr, message_type, init=None):
 
         """ Initiate a connection with a peer directly """
 
-        self.queue.append(slskmessages.OutConn(None, addr, init))
+        self.queue.append(slskmessages.OutConn(None, addr, init, user))
 
         log.add_conn("Initialising direct connection of type %(type)s to user %(user)s", {
             'type': message_type,
@@ -581,24 +579,24 @@ Error: %(error)s""", {
         init = slskmessages.PeerInit(None, user, conn_type, 0)
 
         if user != config.sections["server"]["login"] and conn_type != 'F':
-            for i in self.peerconns:
-                if i.username == user and i.conn_type == conn_type:
-                    """ Only update existing connection if it hasn't been established yet,
-                    otherwise ignore indirect connection request. """
+            i = self.peerconns.get(user + conn_type)
 
-                    found_conn = True
+            if i:
+                """ Only update existing connection if it hasn't been established yet,
+                otherwise ignore indirect connection request. """
 
-                    if i.conn is None:
-                        i.addr = addr
-                        i.token = token
-                        i.init = init
-                        break
+                found_conn = True
 
+                if i.conn is None:
+                    i.addr = addr
+                    i.token = token
+                    i.init = init
+
+                else:
                     if i in self.out_indirect_conn_request_times:
                         del self.out_indirect_conn_request_times[i]
 
                     should_connect = False
-                    break
 
         if should_connect:
             self.connect_to_peer_direct(user, addr, conn_type, init)
@@ -606,14 +604,12 @@ Error: %(error)s""", {
         if not found_conn:
             """ No previous connection exists for user """
 
-            self.peerconns.append(
-                PeerConnection(
-                    addr=addr,
-                    username=user,
-                    msgs=[],
-                    token=token,
-                    init=init
-                )
+            self.peerconns[user + conn_type] = PeerConnection(
+                addr=addr,
+                username=user,
+                msgs=[],
+                token=token,
+                init=init
             )
 
     def get_peer_address(self, msg):
@@ -624,7 +620,7 @@ Error: %(error)s""", {
 
         user = msg.user
 
-        for i in self.peerconns:
+        for i in self.peerconns.values():
             if i.username == user and i.addr is None:
                 if msg.port != 0 or i.tryaddr == 10:
 
@@ -754,30 +750,35 @@ Error: %(error)s""", {
 
         log.add_msg_contents(msg)
 
-        addr = msg.addr
+        if msg.init:
+            peer_conn = self.peerconns.get(msg.username + msg.init.conn_type)
 
-        for i in self.peerconns:
-            if i.addr == addr and i.conn is None:
-                conn = msg.conn
+        else:
+            addr = msg.addr
 
-                if i.token is None:
-                    i.init.conn = conn
-                    self.queue.append(i.init)
+            for i in self.peerconns.values():
+                if i.addr == addr:
+                    peer_conn = i
 
-                else:
-                    self.queue.append(slskmessages.PierceFireWall(conn, i.token))
+        if peer_conn and peer_conn.conn is None:
+            conn = msg.conn
 
-                i.conn = conn
+            if peer_conn.token is None:
+                peer_conn.init.conn = conn
+                self.queue.append(peer_conn.init)
 
-                log.add_conn("Connection established with user %(user)s. List of outgoing messages: %(messages)s", {
-                    'user': i.username,
-                    'messages': i.msgs
-                })
+            else:
+                self.queue.append(slskmessages.PierceFireWall(conn, peer_conn.token))
 
-                # Deliver our messages to the peer
-                self.process_conn_messages(i, conn)
+            peer_conn.conn = conn
 
-                break
+            log.add_conn("Connection established with user %(user)s. List of outgoing messages: %(messages)s", {
+                'user': peer_conn.username,
+                'messages': peer_conn.msgs
+            })
+
+            # Deliver our messages to the peer
+            self.process_conn_messages(peer_conn, conn)
 
     def pierce_fire_wall(self, msg):
 
@@ -790,7 +791,7 @@ Error: %(error)s""", {
         # Sometimes a token is seemingly not sent by the peer, check if the
         # IP address matches in that case
 
-        for i in self.peerconns:
+        for i in self.peerconns.values():
             if i.token is None or i.conn is not None:
                 continue
 
@@ -852,13 +853,13 @@ Error: %(error)s""", {
 
         token = msg.token
 
-        for i in self.peerconns:
+        for k, i in self.peerconns.items():
             if i.token == token:
 
                 if i in self.out_indirect_conn_request_times:
                     del self.out_indirect_conn_request_times[i]
 
-                self.peerconns.remove(i)
+                del self.peerconns[k]
 
                 self.show_connection_error_message(i)
                 log.add_conn("Can't connect to user %s neither directly nor indirectly, giving up", i.username)
@@ -876,10 +877,10 @@ Error: %(error)s""", {
 
         log.add_msg_contents(msg)
 
-        try:
-            self.peerconns.remove(conn)
-        except ValueError:
-            pass
+        for k, i in self.peerconns.items():
+            if i == conn:
+                del self.peerconns[k]
+                break
 
         if conn in self.out_indirect_conn_request_times:
             del self.out_indirect_conn_request_times[conn]
@@ -934,7 +935,7 @@ Error: %(error)s""", {
         else:
             """ A peer connection has died, remove it """
 
-            for i in self.peerconns:
+            for k, i in self.peerconns.items():
                 if i.conn == conn:
                     log.add_conn("Connection closed by peer: %(peer)s. Error: %(error)s",
                                  {'peer': log.contents(i), 'error': error})
@@ -947,7 +948,7 @@ Error: %(error)s""", {
                     if i.conn_type == 'D':
                         self.send_have_no_parent()
 
-                    self.peerconns.remove(i)
+                    del self.peerconns[k]
                     return
 
     def conn_close(self, msg):
@@ -980,30 +981,31 @@ Error: %(error)s""", {
 
         elif msg.connobj.__class__ is slskmessages.OutConn:
 
+            username = msg.connobj.username
             addr = msg.connobj.addr
+            conn_type = msg.connobj.init.conn_type
 
-            for i in self.peerconns:
-                if i.addr == addr and i.conn is None:
-                    if i.token is None:
+            peer_conn = self.peerconns.get(username + conn_type)
 
-                        """ We can't correct to peer directly, request indirect connection """
+            if peer_conn and peer_conn.conn is None:
+                if peer_conn.token is None:
 
-                        self.connect_to_peer_indirect(i, msg.err)
+                    """ We can't correct to peer directly, request indirect connection """
 
-                    elif i not in self.out_indirect_conn_request_times:
+                    self.connect_to_peer_indirect(peer_conn, msg.err)
 
-                        """ Peer sent us an indirect connection request, and we weren't able to
-                        connect to them. """
+                elif peer_conn not in self.out_indirect_conn_request_times:
 
-                        log.add_conn(
-                            "Can't respond to indirect connection request from user %(user)s. Error: %(error)s", {
-                                'user': i.username,
-                                'error': msg.err
-                            })
+                    """ Peer sent us an indirect connection request, and we weren't able to
+                    connect to them. """
 
-                        self.peerconns.remove(i)
+                    log.add_conn(
+                        "Can't respond to indirect connection request from user %(user)s. Error: %(error)s", {
+                            'user': username,
+                            'error': msg.err
+                        })
 
-                    break
+                    del self.peerconns[username + conn_type]
 
         else:
             self.closed_connection(msg.connobj.conn, msg.connobj.addr, msg.err)
@@ -1694,23 +1696,9 @@ Error: %(error)s""", {
 
         log.add_msg_contents(msg)
 
-        user = ip_address = port = None
+        user = msg.conn.username
+        ip_address = port = msg.conn.addr
         conn = msg.conn.conn
-
-        # Get peer's username, ip and port
-        for i in self.peerconns:
-            if i.conn is conn:
-                user = i.username
-                if i.addr is not None:
-                    if len(i.addr) != 2:
-                        break
-                    ip_address, port = i.addr
-                break
-
-        if user is None:
-            # No peer connection
-            return
-
         request_time = time.time()
 
         if user in self.requested_share_times and request_time < self.requested_share_times[user] + 0.4:
@@ -1771,12 +1759,11 @@ Error: %(error)s""", {
     def shared_file_list(self, msg):
         """ Peer code: 5 """
 
+        username = msg.conn.username
         conn = msg.conn.conn
 
-        for i in self.peerconns:
-            if i.conn is conn and i.username != config.sections["server"]["login"]:
-                self.userbrowse.shared_file_list(i.username, msg)
-                break
+        if username != config.sections["server"]["login"]:
+            self.userbrowse.shared_file_list(i.username, msg)
 
     def file_search_result(self, msg):
         """ Peer message: 9 """
@@ -1804,21 +1791,9 @@ Error: %(error)s""", {
 
         log.add_msg_contents(msg)
 
-        user = ip_address = port = None
+        user = msg.conn.username
+        ip_address, port = msg.conn.addr
         conn = msg.conn.conn
-
-        # Get peer's username, ip and port
-        for i in self.peerconns:
-            if i.conn is conn:
-                user = i.username
-                if i.addr is not None:
-                    ip_address, port = i.addr
-                break
-
-        if user is None:
-            # No peer connection
-            return
-
         request_time = time.time()
 
         if user in self.requested_info_times and request_time < self.requested_info_times[user] + 0.4:
@@ -1891,12 +1866,11 @@ Error: %(error)s""", {
 
         log.add_msg_contents(msg)
 
+        username = msg.conn.username
         conn = msg.conn.conn
 
-        for i in self.peerconns:
-            if i.conn is conn and i.username != config.sections["server"]["login"]:
-                self.userinfo.user_info_reply(i.username, msg)
-                break
+        if username != config.sections["server"]["login"]:
+            self.userinfo.user_info_reply(i.username, msg)
 
     def p_message_user(self, msg):
         """ Peer code: 22 """
@@ -1904,17 +1878,7 @@ Error: %(error)s""", {
         log.add_msg_contents(msg)
 
         conn = msg.conn.conn
-        user = None
-
-        # Get peer's username
-        for i in self.peerconns:
-            if i.conn is conn:
-                user = i.username
-                break
-
-        if user is None:
-            # No peer connection
-            return
+        user = msg.conn.username
 
         if user != msg.user:
             msg.msg = _("(Warning: %(realuser)s is attempting to spoof %(fakeuser)s) ") % {
@@ -1930,18 +1894,9 @@ Error: %(error)s""", {
 
         conn = msg.conn.conn
         ip_address, _port = msg.conn.addr
-        username = None
-        checkuser = None
+        username = msg.conn.username
+        checkuser = self.network_filter.check_user(username, ip_address)
         reason = ""
-
-        for i in self.peerconns:
-            if i.conn is conn:
-                username = i.username
-                checkuser, reason = self.network_filter.check_user(username, ip_address)
-                break
-
-        if not username:
-            return
 
         if not checkuser:
             self.privatechats.send_automatic_message(username, reason)
@@ -1987,11 +1942,7 @@ Error: %(error)s""", {
                         folder = j
 
         if many:
-            for i in self.peerconns:
-                if i.conn is conn:
-                    username = i.username
-                    break
-
+            username = msg.conn.username
             self.transfers.downloadsview.download_large_folder(username, folder, numfiles, conn, file_list)
         else:
             self.transfers.folder_contents_response(conn, file_list)
@@ -2063,7 +2014,7 @@ Error: %(error)s""", {
 
     def get_parent_conn(self):
 
-        for i in self.peerconns:
+        for i in self.peerconns.values():
             if i.conn_type == 'D':
                 return i
 
@@ -2089,7 +2040,7 @@ Error: %(error)s""", {
         log.add_msg_contents(msg)
 
         if not self.has_parent:
-            for i in self.peerconns[:]:
+            for k, i in self.peerconns.copy().items():
                 if i.conn_type == 'D':
                     """ We previously attempted to connect to all potential parents. Since we now
                     have a parent, stop connecting to the others. """
@@ -2101,7 +2052,7 @@ Error: %(error)s""", {
                         if i in self.out_indirect_conn_request_times:
                             del self.out_indirect_conn_request_times[i]
 
-                        self.peerconns.remove(i)
+                        del self.peerconns[k]
 
             parent = self.get_parent_conn()
 
