@@ -33,7 +33,6 @@ import os
 import threading
 import time
 
-from collections import defaultdict
 from collections import deque
 
 from pynicotine import slskmessages
@@ -55,28 +54,6 @@ from pynicotine.userbrowse import UserBrowse
 from pynicotine.userinfo import UserInfo
 from pynicotine.userlist import UserList
 from pynicotine.utils import unescape
-
-
-class PeerConnection:
-    """
-    Holds information about a peer connection. Not every field may be set
-    to something. addr is (ip, port) address, conn is a socket object, msgs is
-    a list of outgoing pending messages, token is a reverse-handshake
-    number (protocol feature), init is a PeerInit protocol message. (read
-    slskmessages docstrings for explanation of these)
-    """
-
-    __slots__ = ("addr", "username", "conn", "msgs", "token", "init", "conn_type", "tryaddr")
-
-    def __init__(self, addr=None, username=None, conn=None, msgs=None, token=None, init=None, tryaddr=None):
-        self.addr = addr
-        self.username = username
-        self.conn = conn
-        self.msgs = msgs
-        self.token = token
-        self.init = init
-        self.conn_type = init.conn_type
-        self.tryaddr = tryaddr
 
 
 class UserAddr:
@@ -124,7 +101,6 @@ class NicotineCore:
         self.port = port
 
         self.peerconns = []
-        self.msgs = defaultdict(list)
         self.watchedusers = set()
         self.ip_requested = set()
         self.users = {}
@@ -168,8 +144,8 @@ class NicotineCore:
             slskmessages.GetPeerAddress: self.get_peer_address,
             slskmessages.UserInfoReply: self.user_info_reply,
             slskmessages.UserInfoRequest: self.user_info_request,
-            slskmessages.PierceFireWall: self.pierce_fire_wall,
-            slskmessages.CantConnectToPeer: self.cant_connect_to_peer,
+            slskmessages.PierceFireWall: self.dummy_message,
+            slskmessages.CantConnectToPeer: self.dummy_message,
             slskmessages.PeerTransfer: self.peer_transfer,
             slskmessages.SharedFileList: self.shared_file_list,
             slskmessages.GetSharedFileList: self.get_shared_file_list,
@@ -179,7 +155,7 @@ class NicotineCore:
             slskmessages.ProcessConnMessages: self.process_conn_messages,
             slskmessages.GetUserStats: self.get_user_stats,
             slskmessages.Relogged: self.relogged,
-            slskmessages.PeerInit: self.peer_init,
+            slskmessages.PeerInit: self.dummy_message,
             slskmessages.CheckDownloadQueue: self.check_download_queue,
             slskmessages.CheckUploadQueue: self.check_upload_queue,
             slskmessages.DownloadFile: self.file_download,
@@ -214,7 +190,6 @@ class NicotineCore:
             slskmessages.DistribBranchRoot: self.distrib_branch_root,
             slskmessages.AdminMessage: self.admin_message,
             slskmessages.TunneledMessage: self.tunneled_message,
-            slskmessages.IncConn: self.inc_conn,
             slskmessages.PlaceholdUpload: self.dummy_message,
             slskmessages.PlaceInQueueRequest: self.place_in_queue_request,
             slskmessages.UploadQueueNotification: self.upload_queue_notification,
@@ -227,7 +202,6 @@ class NicotineCore:
             slskmessages.DistribAlive: self.dummy_message,
             slskmessages.DistribSearch: self.distrib_search,
             slskmessages.DistribEmbeddedMessage: self.embedded_message,
-            slskmessages.ConnectToPeerTimeout: self.connect_to_peer_timeout,
             slskmessages.TransferTimeout: self.transfer_timeout,
             slskmessages.SetCurrentConnectionCount: self.set_current_connection_count,
             slskmessages.GlobalRecommendations: self.global_recommendations,
@@ -256,6 +230,7 @@ class NicotineCore:
             slskmessages.PrivateRoomAddOperator: self.private_room_add_operator,
             slskmessages.PrivateRoomRemoveOperator: self.private_room_remove_operator,
             slskmessages.PublicRoomMessage: self.public_room_message,
+            slskmessages.ShowConnectionErrorMessage: self.show_connection_error_message,
             slskmessages.UnknownPeerMessage: self.ignore
         }
 
@@ -389,18 +364,12 @@ class NicotineCore:
         self.token += 1
         return self.token
 
-    def peer_init(self, msg):
-
-        """ Peer wants to connect to us, remember them """
-
-        log.add_msg_contents(msg)
-
     def send_message_to_peer(self, user, message, address=None):
 
         """ Sends message to a peer. Used primarily when we know the username of a peer,
         but don't have an active connection. """
 
-        self.queue.append(slskmessages.SendNetworkMessage(user, message, config.sections["server"]["login"]))
+        self.queue.append(slskmessages.SendNetworkMessage(user, message, config.sections["server"]["login"], address))
 
     def get_peer_address(self, msg):
 
@@ -465,51 +434,17 @@ class NicotineCore:
             'country': country
         })
 
-    def process_conn_messages(self, msg=None, username=None, conn=None):
+    def process_conn_messages(self, msg):
 
-        """ A connection is established with the peer, time to queue up our peer
-        messages for delivery """
+        username = msg.conn.init.target_user
+        conn = msg.conn.conn
 
-        if not username:
-            username = msg.conn.init.target_user
-
-        if not conn:
-            conn = msg.conn.conn
-
-        msgs = self.msgs.get(username)
-
-        if msgs is None:
-            return
-
-        log.add_conn("List of outgoing messages for user %(user)s: %(messages)s", {
-                         'user': username,
-                         'messages': msgs
-                     })
-
-        for j in msgs:
-
+        for j in msg.msgs:
             if j.__class__ is slskmessages.UserInfoRequest:
                 self.userinfo.set_conn(username, conn)
 
             elif j.__class__ is slskmessages.GetSharedFileList:
                 self.userbrowse.set_conn(username, conn)
-
-            j.conn = conn
-            self.queue.append(j)
-
-        self.msgs[username] = []
-
-    @staticmethod
-    def inc_conn(msg):
-        log.add_msg_contents(msg)
-
-    def pierce_fire_wall(self, msg):
-
-        """ We received a response to our indirect connection request. Since a
-        connection is now established with the peer, re-send our original peer
-        messages. """
-
-        log.add_msg_contents(msg)
 
     def close_peer_connection(self, conn):
 
@@ -522,45 +457,21 @@ class NicotineCore:
         if not self.protothread.socket_still_active(conn.conn):
             self.queue.append(slskmessages.ConnClose(conn.conn))
 
-    def show_connection_error_message(self, username):
-
+    def show_connection_error_message(self, msg):
         """ Request UI to show error messages related to connectivity """
 
-        for i in self.msgs[username]:
+        for i in msg.msgs:
             if i.__class__ in (slskmessages.FileRequest, slskmessages.TransferRequest):
                 self.transfers.get_cant_connect_request(i.req)
 
             elif i.__class__ is slskmessages.QueueUpload:
-                self.transfers.get_cant_connect_queue_file(conn.username, i.file)
+                self.transfers.get_cant_connect_queue_file(msg.user, i.file)
 
             elif i.__class__ is slskmessages.GetSharedFileList:
-                self.userbrowse.show_connection_error(conn.username)
+                self.userbrowse.show_connection_error(msg.user)
 
             elif i.__class__ is slskmessages.UserInfoRequest:
-                self.userinfo.show_connection_error(conn.username)
-
-    def cant_connect_to_peer(self, msg):
-
-        """ Peer informs us via the server that an indirect connection has failed.
-        Game over. """
-
-        log.add_msg_contents(msg)
-
-        self.show_connection_error_message(msg.conn.init.target_user)
-
-    def connect_to_peer_timeout(self, msg):
-
-        """ Peer was not able to repond to our indirect connection request """
-
-        log.add_msg_contents(msg)
-
-        self.show_connection_error_message(msg.conn.init.target_user)
-        log.add_conn(
-            "Indirect connect request of type %(type)s to user %(user)s expired, giving up", {
-                'type': conn.conn_type,
-                'user': conn.username
-            }
-        )
+                self.userinfo.show_connection_error(msg.user)
 
     def server_conn(self, msg):
 
@@ -639,9 +550,9 @@ class NicotineCore:
         conn_type = msg.conn.init.conn_type
         error = None
         log.add_conn("Connection closed by peer: %(peer)s. Error: %(error)s",
-                     {'peer': log.contents(i), 'error': error})
+                     {'peer': log.contents(msg.conn.conn), 'error': error})
 
-        self.transfers.conn_close(conn, username, error)
+        self.transfers.conn_close(msg.conn.conn, username, error)
 
         if conn_type == 'D':
             self.send_have_no_parent()
