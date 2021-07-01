@@ -98,6 +98,7 @@ from pynicotine.slskmessages import ParentMinSpeed
 from pynicotine.slskmessages import ParentSpeedRatio
 from pynicotine.slskmessages import PeerConn
 from pynicotine.slskmessages import PeerInit
+from pynicotine.slskmessages import PeerInitMessage
 from pynicotine.slskmessages import PeerMessage
 from pynicotine.slskmessages import PeerTransfer
 from pynicotine.slskmessages import PierceFireWall
@@ -768,48 +769,76 @@ class SlskProtoThread(threading.Thread):
 
         return True
 
-    def process_peer_init_input(self, msgtype, msgsize, msg_buffer, msgs, conns, conn):
+    def process_peer_init_input(self, conns, conn, msg_buffer):
 
-        if msgtype not in self.peerinitclasses:
-            if conn.piercefw is None:
+        msgs = []
+
+        # Peer init messages are 8 bytes or greater in length
+        while len(msg_buffer) >= 8:
+            msgsize = struct.unpack("<I", msg_buffer[:4])[0]
+
+            if msgsize < 0 or msgsize + 4 > len(msg_buffer):
+                # Invalid message size or buffer is being filled
+                break
+
+            msgtype = msg_buffer[4]
+
+            # Unpack Peer Init Messages
+            if msgtype in self.peerinitclasses:
+                msg = self.peerinitclasses[msgtype](conn)
+                msg.parse_network_message(msg_buffer[5:msgsize + 4])
+
+                if self.peerinitclasses[msgtype] is PierceFireWall:
+                    conn.piercefw = msg
+
+                elif self.peerinitclasses[msgtype] is PeerInit:
+                    conn.init = msg
+
+                msgs.append(msg)
+
+            elif conn.piercefw is None:
                 log.add("Peer init message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
                         {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[5:msgsize + 4].__repr__()})
 
                 self._core_callback([ConnClose(conn.conn, conn.addr)])
                 self.close_connection(conns, conn)
 
-            return False
+            else:
+                break
 
-        msg = self.peerinitclasses[msgtype](conn)
-        msg.parse_network_message(msg_buffer[5:msgsize + 4])
+            msg_buffer = msg_buffer[msgsize + 4:]
 
-        if self.peerinitclasses[msgtype] is PierceFireWall:
-            conn.piercefw = msg
+        conn.ibuf = msg_buffer
+        return msgs
 
-        elif self.peerinitclasses[msgtype] is PeerInit:
-            conn.init = msg
+    def process_peer_init_output(self, conns, msg_obj):
 
-        msgs.append(msg)
-        return True
-
-    def process_peer_message_input(self, msgtype, msgsize, msg_buffer, msgs, conn):
-
-        if msgtype not in self.peerclasses:
-            host = port = "unknown"
-
-            if conn.init.conn is not None and conn.addr is not None:
-                host = conn.addr[0]
-                port = conn.addr[1]
-
-            log.add(("Peer message type %(type)s size %(size)i contents %(msg_buffer)s unknown, "
-                     "from user: %(user)s, %(host)s:%(port)s"), {
-                'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer[8:msgsize + 4].__repr__(),
-                'user': conn.init.user, 'host': host, 'port': port})
+        if msg_obj.conn not in conns:
+            log.add_conn("Can't send the message over the closed connection: %(type)s %(msg_obj)s", {
+                'type': msg_obj.__class__,
+                'msg_obj': vars(msg_obj)
+            })
             return
 
-        msg = self.peerclasses[msgtype](conn)
-        msg.parse_network_message(msg_buffer[8:msgsize + 4])
-        msgs.append(msg)
+        # Pack peer init messages
+        if msg_obj.__class__ is PierceFireWall:
+            conns[msg_obj.conn].piercefw = msg_obj
+
+            msg = msg_obj.make_network_message()
+
+            conns[msg_obj.conn].obuf.extend(struct.pack("<i", len(msg) + 1))
+            conns[msg_obj.conn].obuf.extend(bytes([self.peerinitcodes[msg_obj.__class__]]))
+            conns[msg_obj.conn].obuf.extend(msg)
+
+        elif msg_obj.__class__ is PeerInit:
+            conns[msg_obj.conn].init = msg_obj
+
+            msg = msg_obj.make_network_message()
+
+            if conns[msg_obj.conn].piercefw is None:
+                conns[msg_obj.conn].obuf.extend(struct.pack("<i", len(msg) + 1))
+                conns[msg_obj.conn].obuf.extend(bytes([self.peerinitcodes[msg_obj.__class__]]))
+                conns[msg_obj.conn].obuf.extend(msg)
 
     def process_peer_input(self, conns, conn, msg_buffer):
         """ We have a "P" connection (p2p exchange), peer has sent us
@@ -833,18 +862,23 @@ class SlskProtoThread(threading.Thread):
                 # Invalid message size or buffer is being filled
                 break
 
-            if conn.init is None:
-                # Unpack Peer Connections
-                if not self.process_peer_init_input(msg_buffer[4], msgsize, msg_buffer, msgs, conns, conn):
-                    break
-
-            elif conn.init.conn_type == 'P':
-                # Unpack Peer Messages
-                self.process_peer_message_input(msgtype, msgsize, msg_buffer, msgs, conn)
+            # Unpack Peer Messages
+            if msgtype in self.peerclasses:
+                msg = self.peerclasses[msgtype](conn)
+                msg.parse_network_message(msg_buffer[8:msgsize + 4])
+                msgs.append(msg)
 
             else:
-                # Unknown Message type
-                log.add("Can't handle connection type %s", conn.init.conn_type)
+                host = port = "unknown"
+
+                if conn.init.conn is not None and conn.addr is not None:
+                    host = conn.addr[0]
+                    port = conn.addr[1]
+
+                log.add(("Peer message type %(type)s size %(size)i contents %(msg_buffer)s unknown, "
+                         "from user: %(user)s, %(host)s:%(port)s"), {
+                    'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer[8:msgsize + 4].__repr__(),
+                    'user': conn.init.user, 'host': host, 'port': port})
 
             msg_buffer = msg_buffer[msgsize + 4:]
 
@@ -861,31 +895,11 @@ class SlskProtoThread(threading.Thread):
             return
 
         # Pack peer messages
-        if msg_obj.__class__ is PierceFireWall:
-            conns[msg_obj.conn].piercefw = msg_obj
+        msg = msg_obj.make_network_message()
 
-            msg = msg_obj.make_network_message()
-
-            conns[msg_obj.conn].obuf.extend(struct.pack("<i", len(msg) + 1))
-            conns[msg_obj.conn].obuf.extend(bytes([self.peerinitcodes[msg_obj.__class__]]))
-            conns[msg_obj.conn].obuf.extend(msg)
-
-        elif msg_obj.__class__ is PeerInit:
-            conns[msg_obj.conn].init = msg_obj
-
-            msg = msg_obj.make_network_message()
-
-            if conns[msg_obj.conn].piercefw is None:
-                conns[msg_obj.conn].obuf.extend(struct.pack("<i", len(msg) + 1))
-                conns[msg_obj.conn].obuf.extend(bytes([self.peerinitcodes[msg_obj.__class__]]))
-                conns[msg_obj.conn].obuf.extend(msg)
-
-        else:
-            msg = msg_obj.make_network_message()
-
-            conns[msg_obj.conn].obuf.extend(struct.pack("<i", len(msg) + 4))
-            conns[msg_obj.conn].obuf.extend(struct.pack("<i", self.peercodes[msg_obj.__class__]))
-            conns[msg_obj.conn].obuf.extend(msg)
+        conns[msg_obj.conn].obuf.extend(struct.pack("<i", len(msg) + 4))
+        conns[msg_obj.conn].obuf.extend(struct.pack("<i", self.peercodes[msg_obj.__class__]))
+        conns[msg_obj.conn].obuf.extend(msg)
 
     def process_file_input(self, conn, msg_buffer, conns):
         """ We have a "F" connection (filetransfer), peer has sent us
@@ -1051,8 +1065,8 @@ class SlskProtoThread(threading.Thread):
             msgs, conn_obj.ibuf = self.process_server_input(conn_obj.ibuf)
             self._core_callback(msgs)
 
-        elif conn_obj.init is None or conn_obj.init.conn_type not in ('F', 'D'):
-            msgs = self.process_peer_input(conns, conn_obj, conn_obj.ibuf)
+        elif conn_obj.__class__ is None:
+            msgs = self.process_peer_init_input(conns, conn_obj, conn_obj.ibuf)
             self._core_callback(msgs)
 
         elif conn_obj.init is not None and conn_obj.init.conn_type == 'F':
@@ -1061,6 +1075,10 @@ class SlskProtoThread(threading.Thread):
 
         elif conn_obj.init is not None and conn_obj.init.conn_type == 'D':
             msgs = self.process_distrib_input(conns, conn_obj, conn_obj.ibuf)
+            self._core_callback(msgs)
+
+        else:
+            msgs = self.process_peer_input(conns, conn_obj, conn_obj.ibuf)
             self._core_callback(msgs)
 
     def process_queue(self, queue, conns, connsinprogress, maxsockets=MAXSOCKETS):
@@ -1077,6 +1095,9 @@ class SlskProtoThread(threading.Thread):
         for msg_obj in msg_list:
             if issubclass(msg_obj.__class__, ServerMessage):
                 self.process_server_output(conns, msg_obj)
+
+            elif issubclass(msg_obj.__class__, PeerInitMessage):
+                self.process_peer_init_output(conns, msg_obj)
 
             elif issubclass(msg_obj.__class__, PeerMessage):
                 self.process_peer_output(conns, msg_obj)
