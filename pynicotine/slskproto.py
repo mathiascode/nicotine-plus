@@ -1033,17 +1033,35 @@ Error: %(error)s""", {
 
                     user = msg.user
                     addr = (msg.ip_address, msg.port)
-                    init = PeerInit(init_user=user, target_user=user, conn_type=msg.conn_type, token=0)
+                    token = msg.token
+                    conn_type = msg.conn_type
+                    found_conn = False
+                    should_connect = True
 
-                    if conn_obj.conn is None:
-                        conn_obj.addr = addr
-                        conn_obj.token = msg.token
-                        conn:obj.init = init
+                    init = PeerInit(init_user=user, target_user=user, conn_type=conn_type, token=0)
 
-                        self.connect_to_peer_direct(user, addr, msg.conn_type, init)
+                    if conn_type != 'F':
+                        for _, i in self._conns.items():
+                            if i.init is not None and i.init.target_user == user and i.init.conn_type == conn_type:
+                                """ Only update existing connection if it hasn't been established yet,
+                                otherwise ignore indirect connection request. """
 
-                    if conn_obj in self.out_indirect_conn_request_times:
-                        del self.out_indirect_conn_request_times[conn_obj]
+                                found_conn = True
+
+                                if i.conn is None:
+                                    i.addr = addr
+                                    i.token = token
+                                    i.init = init
+                                    break
+
+                                if i in self.out_indirect_conn_request_times:
+                                    del self.out_indirect_conn_request_times[i]
+
+                                should_connect = False
+                                break
+
+                    if should_connect:
+                        self.connect_to_peer_direct(user, addr, conn_type, init)
 
                 if self.serverclasses[msgtype] is GetPeerAddress:
 
