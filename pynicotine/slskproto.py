@@ -713,6 +713,7 @@ class SlskProtoThread(threading.Thread):
                 # Invalid message size or buffer is being filled
                 break
 
+            # Unpack server messages
             if msgtype in self.serverclasses:
                 msg = self.serverclasses[msgtype]()
                 msg.parse_network_message(msg_buffer[8:msgsize + 4])
@@ -774,7 +775,7 @@ class SlskProtoThread(threading.Thread):
         msgs = []
 
         # Peer init messages are 8 bytes or greater in length
-        while len(msg_buffer) >= 8:
+        while conn.init is None and len(msg_buffer) >= 8:
             msgsize = struct.unpack("<I", msg_buffer[:4])[0]
 
             if msgsize < 0 or msgsize + 4 > len(msg_buffer):
@@ -783,7 +784,7 @@ class SlskProtoThread(threading.Thread):
 
             msgtype = msg_buffer[4]
 
-            # Unpack Peer Init Messages
+            # Unpack peer init messages
             if msgtype in self.peerinitclasses:
                 msg = self.peerinitclasses[msgtype](conn)
                 msg.parse_network_message(msg_buffer[5:msgsize + 4])
@@ -802,9 +803,6 @@ class SlskProtoThread(threading.Thread):
 
                 self._core_callback([ConnClose(conn.conn, conn.addr)])
                 self.close_connection(conns, conn)
-
-            else:
-                break
 
             msg_buffer = msg_buffer[msgsize + 4:]
 
@@ -840,7 +838,7 @@ class SlskProtoThread(threading.Thread):
                 conns[msg_obj.conn].obuf.extend(bytes([self.peerinitcodes[msg_obj.__class__]]))
                 conns[msg_obj.conn].obuf.extend(msg)
 
-    def process_peer_input(self, conns, conn, msg_buffer):
+    def process_peer_input(self, conn, msg_buffer):
         """ We have a "P" connection (p2p exchange), peer has sent us
         something, this function retrieves messages
         from the msg_buffer, creates message objects and returns them
@@ -862,7 +860,7 @@ class SlskProtoThread(threading.Thread):
                 # Invalid message size or buffer is being filled
                 break
 
-            # Unpack Peer Messages
+            # Unpack peer messages
             if msgtype in self.peerclasses:
                 msg = self.peerclasses[msgtype](conn)
                 msg.parse_network_message(msg_buffer[8:msgsize + 4])
@@ -901,7 +899,7 @@ class SlskProtoThread(threading.Thread):
         conns[msg_obj.conn].obuf.extend(struct.pack("<i", self.peercodes[msg_obj.__class__]))
         conns[msg_obj.conn].obuf.extend(msg)
 
-    def process_file_input(self, conn, msg_buffer, conns):
+    def process_file_input(self, conns, conn, msg_buffer):
         """ We have a "F" connection (filetransfer), peer has sent us
         something, this function retrieves messages
         from the msg_buffer, creates message objects and returns them
@@ -1026,6 +1024,7 @@ class SlskProtoThread(threading.Thread):
 
             msgtype = msg_buffer[4]
 
+            # Unpack distributed messages
             if msgtype in self.distribclasses:
                 msg = self.distribclasses[msgtype](conn)
                 msg.parse_network_message(msg_buffer[5:msgsize + 4])
@@ -1065,12 +1064,16 @@ class SlskProtoThread(threading.Thread):
             msgs, conn_obj.ibuf = self.process_server_input(conn_obj.ibuf)
             self._core_callback(msgs)
 
-        elif conn_obj.__class__ is None:
+        elif conn_obj.init is None:
             msgs = self.process_peer_init_input(conns, conn_obj, conn_obj.ibuf)
             self._core_callback(msgs)
 
+        elif conn_obj.init is not None and conn_obj.init.conn_type == 'P':
+            msgs = self.process_peer_input(conn_obj, conn_obj.ibuf)
+            self._core_callback(msgs)
+
         elif conn_obj.init is not None and conn_obj.init.conn_type == 'F':
-            msgs = self.process_file_input(conn_obj, conn_obj.ibuf, conns)
+            msgs = self.process_file_input(conns, conn_obj, conn_obj.ibuf)
             self._core_callback(msgs)
 
         elif conn_obj.init is not None and conn_obj.init.conn_type == 'D':
@@ -1078,8 +1081,8 @@ class SlskProtoThread(threading.Thread):
             self._core_callback(msgs)
 
         else:
-            msgs = self.process_peer_input(conns, conn_obj, conn_obj.ibuf)
-            self._core_callback(msgs)
+            # Unknown message type
+            log.add("Can't handle connection type %s", conn_obj.init.conn_type)
 
     def process_queue(self, queue, conns, connsinprogress, maxsockets=MAXSOCKETS):
         """ Processes messages sent by the main thread. queue holds the messages,
