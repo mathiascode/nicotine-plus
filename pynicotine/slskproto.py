@@ -782,6 +782,7 @@ class SlskProtoThread(threading.Thread):
             """ This is a new peer, initiate a connection """
 
             self.initiate_connection_to_peer(user, message, login, address)
+            self.msgs[user].append(message)
 
         log.add_conn("Sending message of type %(type)s to user %(user)s", {
             'type': message.__class__,
