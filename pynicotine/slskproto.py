@@ -233,7 +233,7 @@ class Connection:
 class PeerConnection(Connection):
 
     __slots__ = ("filereq", "filedown", "fileupl", "filereadbytes", "bytestoread", "piercefw",
-                 "lastcallback", "starttime", "sentbytes2", "readbytes2")
+                 "token", "lastcallback", "starttime", "sentbytes2", "readbytes2")
 
     def __init__(self, conn=None, addr=None, init=None):
         Connection.__init__(self, conn, addr)
@@ -244,6 +244,7 @@ class PeerConnection(Connection):
         self.bytestoread = 0
         self.init = init
         self.piercefw = None
+        self.token = None
         self.lastactive = time.time()
         self.lastcallback = time.time()
 
@@ -460,6 +461,8 @@ class SlskProtoThread(threading.Thread):
 
         self._conns = {}
         self._connsinprogress = {}
+        self.token = 100
+        self.out_indirect_conn_request_times = {}
         self._uploadlimit = (self._calc_upload_limit_none, 0)
         self._downloadlimit = (self._calc_download_limit_by_total, 0)
         self._ulimits = {}
@@ -667,6 +670,51 @@ class SlskProtoThread(threading.Thread):
 
         return None
 
+    def connect_error(self, msg_obj, error, conn=None):
+
+        if msg_obj is ServerConn:
+            self._core_callback([ConnectError(msg_obj, error)])
+            return
+
+        if not conn:
+            return
+
+        if conn.token is None:
+            """ We can't correct to peer directly, request indirect connection """
+
+            self.connect_to_peer_indirect(conn, error)
+
+        elif conn not in self.out_indirect_conn_request_times:
+
+            """ Peer sent us an indirect connection request, and we weren't able to
+            connect to them. """
+
+            log.add_conn(
+                "Can't respond to indirect connection request from user %(user)s. Error: %(error)s", {
+                    'user': conn.init.target_user,
+                    'error': error
+                })
+
+    def get_new_token(self):
+        self.token += 1
+        return self.token
+
+    def connect_to_peer_indirect(self, conn, error):
+        """ Send a message to the server to ask the peer to connect to us instead (indirect connection) """
+
+        conn.token = self.get_new_token()
+        self._queue.append(slskmessages.ConnectToPeer(conn.token, conn.username, conn.conn_type))
+        self.out_indirect_conn_request_times[conn] = time.time()
+
+        log.add_conn(
+            """Direct connection of type %(type)s to user %(user)s failed, attempting indirect connection.
+Error: %(error)s""", {
+                "type": conn.init.conn_type,
+                "user": conn.init.target_user,
+                "error": error
+            }
+        )
+
     def close_connection(self, connection_list, connection):
 
         if connection not in connection_list:
@@ -746,7 +794,7 @@ class SlskProtoThread(threading.Thread):
             self.server_socket = server_socket
 
         except socket.error as err:
-            self._core_callback([ConnectError(msg_obj, err)])
+            self.connect_error(msg_obj, err)
             server_socket.close()
 
             return False
@@ -896,7 +944,7 @@ class SlskProtoThread(threading.Thread):
             self.selector.register(conn, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
         except socket.error as err:
-            self._core_callback([ConnectError(msg_obj, err)])
+            self.connect_error(msg_obj, err)
             conn.close()
 
             return False
@@ -1193,7 +1241,7 @@ class SlskProtoThread(threading.Thread):
 
             elif msg_obj.__class__ is PeerConn:
                 if msg_obj.addr[1] == 0:
-                    self._core_callback([ConnectError(msg_obj, "Port cannot be zero")])
+                    self.connect_error(msg_obj, conns[msg_obj.conn], "Port cannot be zero")
 
                 elif maxsockets == -1 or numsockets < maxsockets:
                     if self.init_peer_conn(connsinprogress, msg_obj):
@@ -1432,7 +1480,7 @@ class SlskProtoThread(threading.Thread):
 
                 if (curtime - conn_obj.lastactive) > self.IN_PROGRESS_STALE_AFTER:
 
-                    self._core_callback([ConnectError(msg_obj, "Timed out")])
+                    self.connect_error(msg_obj, conn_obj, "Timed out")
                     self.close_connection(connsinprogress, connection_in_progress)
                     continue
 
@@ -1445,7 +1493,7 @@ class SlskProtoThread(threading.Thread):
 
                 except socket.error as err:
 
-                    self._core_callback([ConnectError(msg_obj, err)])
+                    self.connect_error(msg_obj, conn_obj, err)
                     self.close_connection(connsinprogress, connection_in_progress)
 
                 else:
@@ -1489,7 +1537,6 @@ class SlskProtoThread(threading.Thread):
                         self.write_data(conns, connection)
 
                     except socket.error as err:
-                        self._core_callback([ConnectError(conn_obj, err)])
                         self.close_connection(conns, connection)
                         continue
 
@@ -1526,7 +1573,6 @@ class SlskProtoThread(threading.Thread):
                         self.read_data(conns, connection)
 
                     except socket.error as err:
-                        self._core_callback([ConnectError(conn_obj, err)])
                         self.close_connection(conns, connection)
                         continue
 

@@ -547,23 +547,6 @@ class NicotineCore:
             'user': user
         })
 
-    def connect_to_peer_indirect(self, conn, error):
-
-        """ Send a message to the server to ask the peer to connect to us instead (indirect connection) """
-
-        conn.token = self.get_new_token()
-        self.queue.append(slskmessages.ConnectToPeer(conn.token, conn.username, conn.conn_type))
-        self.out_indirect_conn_request_times[conn] = time.time()
-
-        log.add_conn(
-            """Direct connection of type %(type)s to user %(user)s failed, attempting indirect connection.
-Error: %(error)s""", {
-                "type": conn.conn_type,
-                "user": conn.username,
-                "error": error
-            }
-        )
-
     def connect_to_peer_request(self, msg):
 
         """ Peer sent us an indirect connection request via the server, attempt to
@@ -1011,36 +994,6 @@ Error: %(error)s""", {
 
             if self.ui_callback:
                 self.ui_callback.server_connect_error()
-
-        elif msg.connobj.__class__ is slskmessages.PeerConn:
-
-            addr = msg.connobj.addr
-
-            for i in self.peerconns:
-                if i.addr == addr and i.conn is None:
-                    if i.token is None:
-
-                        """ We can't correct to peer directly, request indirect connection """
-
-                        self.connect_to_peer_indirect(i, msg.err)
-
-                    elif i not in self.out_indirect_conn_request_times:
-
-                        """ Peer sent us an indirect connection request, and we weren't able to
-                        connect to them. """
-
-                        log.add_conn(
-                            "Can't respond to indirect connection request from user %(user)s. Error: %(error)s", {
-                                'user': i.username,
-                                'error': msg.err
-                            })
-
-                        self.peerconns.remove(i)
-
-                    break
-
-        else:
-            self.closed_connection(msg.connobj.conn, msg.connobj.addr, msg.err)
 
     def start_upnp_timer(self):
         """ Port mapping entries last 24 hours, we need to regularly renew them """
