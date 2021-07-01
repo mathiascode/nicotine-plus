@@ -249,7 +249,6 @@ class PeerConnection(Connection):
         self.tryaddr = 0
         self.init = init
         self.piercefw = None
-        self.token = None
         self.lastactive = time.time()
         self.lastcallback = time.time()
 
@@ -269,7 +268,6 @@ class PeerConnectionInProgress:
         self.conn = conn
         self.msg_obj = msg_obj
         self.lastactive = time.time()
-        self.token = None
 
 
 class UserAddr:
@@ -826,28 +824,28 @@ class SlskProtoThread(threading.Thread):
             'user': user
         })
 
-    def connect_error(self, msg_obj, error, conn=None):
+    def connect_error(self, msg_obj, error, conn_obj=None):
 
         if msg_obj is ServerConn:
             self._core_callback([ConnectError(msg_obj, error)])
             return
 
-        if not conn or not hasattr(conn, "token"):
+        if not conn_obj or not hasattr(conn_obj, "init"):
             return
 
-        if conn.token is None:
+        if conn_obj.init.token is None:
             """ We can't correct to peer directly, request indirect connection """
 
-            self.connect_to_peer_indirect(msg_obj, conn, error)
+            self.connect_to_peer_indirect(msg_obj, conn_obj, error)
 
-        elif conn not in self.out_indirect_conn_request_times:
+        elif conn_obj not in self.out_indirect_conn_request_times:
 
             """ Peer sent us an indirect connection request, and we weren't able to
             connect to them. """
 
             log.add_conn(
                 "Can't respond to indirect connection request from user %(user)s. Error: %(error)s", {
-                    'user': conn.init.target_user,
+                    'user': conn_obj.init.target_user,
                     'error': error
                 })
 
@@ -998,7 +996,7 @@ Error: %(error)s""", {
                     conn_type = msg.conn_type
                     should_connect = True
 
-                    init = PeerInit(init_user=user, target_user=user, conn_type=conn_type, token=0)
+                    init = PeerInit(init_user=user, target_user=user, conn_type=conn_type, token=token)
                     self.connect_to_peer_direct(user, addr, conn_type, init)
 
                 if self.serverclasses[msgtype] is GetPeerAddress:
@@ -1127,7 +1125,7 @@ Error: %(error)s""", {
 
                     elif self.peerinitclasses[msgtype] is PeerInit:
                         conn.init = msg
-                        conn.token = None
+                        conn.init.token = None
 
                         if conn in self.out_indirect_conn_request_times:
                             del self.out_indirect_conn_request_times[conn]
@@ -1774,8 +1772,14 @@ Error: %(error)s""", {
                             conns[connection_in_progress] = conn_obj = PeerConnection(
                                 conn=connection_in_progress, addr=addr, init=msg_obj.init)
 
-                            conn_obj.init.conn = connection_in_progress
-                            self._queue.append(conn_obj.init)
+                            old_conn_obj = connsinprogress[connection_in_progress]
+
+                            if conn_obj.init.token is None:
+                                conn_obj.init.conn = connection_in_progress
+                                self._queue.append(conn_obj.init)
+
+                            else:
+                                self._queue.append(PierceFireWall(conn_obj.conn, conn_obj.init.token))
 
                             log.add_conn("Connection established with user %s", conn_obj.init.target_user)
 
