@@ -996,33 +996,10 @@ Error: %(error)s""", {
                     addr = (msg.ip_address, msg.port)
                     token = msg.token
                     conn_type = msg.conn_type
-                    found_conn = False
                     should_connect = True
 
                     init = PeerInit(init_user=user, target_user=user, conn_type=conn_type, token=0)
-
-                    if conn_type != 'F':
-                        for _, i in self._conns.items():
-                            if i.init is not None and i.init.target_user == user and i.init.conn_type == conn_type:
-                                """ Only update existing connection if it hasn't been established yet,
-                                otherwise ignore indirect connection request. """
-
-                                found_conn = True
-
-                                if i.conn is None:
-                                    i.addr = addr
-                                    i.token = token
-                                    i.init = init
-                                    break
-
-                                if i in self.out_indirect_conn_request_times:
-                                    del self.out_indirect_conn_request_times[i]
-
-                                should_connect = False
-                                break
-
-                    if should_connect:
-                        self.connect_to_peer_direct(user, addr, conn_type, init)
+                    self.connect_to_peer_direct(user, addr, conn_type, init)
 
                 if self.serverclasses[msgtype] is GetPeerAddress:
 
@@ -1797,7 +1774,7 @@ Error: %(error)s""", {
                             conns[connection_in_progress] = conn_obj = PeerConnection(
                                 conn=connection_in_progress, addr=addr, init=msg_obj.init)
 
-                            conn_obj.init.conn = conn
+                            conn_obj.init.conn = connection_in_progress
                             self._queue.append(conn_obj.init)
 
                             log.add_conn("Connection established with user %s", conn_obj.init.target_user)
