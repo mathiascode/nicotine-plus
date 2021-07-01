@@ -428,50 +428,6 @@ class NicotineCore:
 
         user = msg.user
 
-        for i in self.peerconns:
-            if i.username == user and i.addr is None:
-                if msg.port != 0 or i.tryaddr == 10:
-
-                    """ We now have the IP address for a user we previously didn't know,
-                    attempt a direct connection to the peer/user """
-
-                    if i.tryaddr == 10:
-                        log.add_conn(
-                            "Server reported port 0 for the 10th time for user %(user)s, giving up", {
-                                'user': user
-                            }
-                        )
-
-                    elif i.tryaddr is not None:
-                        log.add_conn(
-                            "Server reported non-zero port for user %(user)s after %(tries)i retries", {
-                                'user': user,
-                                'tries': i.tryaddr
-                            }
-                        )
-
-                    i.addr = (msg.ip_address, msg.port)
-                    i.tryaddr = None
-
-                    self.connect_to_peer_direct(user, i.addr, i.conn_type)
-
-                else:
-
-                    """ Server responded with an incorrect port, request peer address again """
-
-                    if i.tryaddr is None:
-                        i.tryaddr = 1
-                        log.add_conn(
-                            "Server reported port 0 for user %(user)s, retrying", {
-                                'user': user
-                            }
-                        )
-                    else:
-                        i.tryaddr += 1
-
-                    self.queue.append(slskmessages.GetPeerAddress(user))
-                    return
-
         if user in self.users:
             self.users[user].addr = (msg.ip_address, msg.port)
         else:

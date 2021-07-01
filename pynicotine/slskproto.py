@@ -236,7 +236,7 @@ class Connection:
 class PeerConnection(Connection):
 
     __slots__ = ("filereq", "filedown", "fileupl", "filereadbytes", "bytestoread", "piercefw",
-                 "token", "lastcallback", "starttime", "sentbytes2", "readbytes2")
+                 "token", "lastcallback", "starttime", "sentbytes2", "readbytes2", "tryaddr")
 
     def __init__(self, conn=None, addr=None, init=None):
         Connection.__init__(self, conn, addr)
@@ -245,6 +245,7 @@ class PeerConnection(Connection):
         self.fileupl = None
         self.filereadbytes = 0
         self.bytestoread = 0
+        self.tryaddr = 0
         self.init = init
         self.piercefw = None
         self.token = None
@@ -267,6 +268,15 @@ class PeerConnectionInProgress:
         self.conn = conn
         self.msg_obj = msg_obj
         self.lastactive = time.time()
+
+
+class UserAddr:
+
+    __slots__ = ("addr", "status")
+
+    def __init__(self, addr=None, status=None):
+        self.addr = addr
+        self.status = status
 
 
 class SlskProtoThread(threading.Thread):
@@ -914,6 +924,57 @@ Error: %(error)s""", {
                 msg = self.unpack_network_message(
                     self.serverclasses[msgtype], msg_buffer[8:msgsize + 4], msgsize - 4, "server")
 
+                if self.serverclasses[msgtype] is GetPeerAddress:
+
+                    for _, i in self._conns.items():
+                        if i.init is not None and i.init.target_user == msg.user and i.addr is None:
+                            if msg.port != 0 or i.tryaddr == 10:
+
+                                """ We now have the IP address for a user we previously didn't know,
+                                attempt a direct connection to the peer/user """
+
+                                if i.tryaddr == 10:
+                                    log.add_conn(
+                                        "Server reported port 0 for the 10th time for user %(user)s, giving up", {
+                                            'user': user
+                                        }
+                                    )
+
+                                elif i.tryaddr is not None:
+                                    log.add_conn(
+                                        "Server reported non-zero port for user %(user)s after %(tries)i retries", {
+                                            'user': user,
+                                            'tries': i.tryaddr
+                                        }
+                                    )
+
+                                i.addr = (msg.ip_address, msg.port)
+                                i.tryaddr = None
+
+                                self.connect_to_peer_direct(user, i.addr, i.init.conn_type)
+
+                            else:
+
+                                """ Server responded with an incorrect port, request peer address again """
+
+                                if i.tryaddr is None:
+                                    i.tryaddr = 1
+                                    log.add_conn(
+                                        "Server reported port 0 for user %(user)s, retrying", {
+                                            'user': user
+                                        }
+                                    )
+                                else:
+                                    i.tryaddr += 1
+
+                                self._queue.append(slskmessages.GetPeerAddress(user))
+                                return
+
+                    if msg.user in self.users:
+                        self.users[msg.user].addr = (msg.ip_address, msg.port)
+                    else:
+                        self.users[msg.user] = UserAddr(addr=(msg.ip_address, msg.port))
+
                 if self.serverclasses[msgtype] is CantConnectToPeer:
                     if conn_obj in self.out_indirect_conn_request_times:
                         del self.out_indirect_conn_request_times[conn_obj]
@@ -1065,6 +1126,7 @@ Error: %(error)s""", {
             conn.setblocking(1)
 
             connsinprogress[conn] = PeerConnectionInProgress(conn, msg_obj)
+            print("ETABL")
             self.selector.register(conn, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
         except socket.error as err:
@@ -1635,13 +1697,6 @@ Error: %(error)s""", {
                         else:
                             conns[connection_in_progress] = conn_obj = PeerConnection(
                                 conn=connection_in_progress, addr=addr, init=msg_obj.init)
-
-                            #self._core_callback([ProcessConnMessages(conn)])
-
-                            """log.add_conn("Connection established with user %(user)s. List of outgoing messages: %(messages)s", {
-                                'user': conn_obj.init.target_user,
-                                'messages': []
-                            })"""
 
                             self._core_callback([PeerConn(connection_in_progress, addr)])
 
