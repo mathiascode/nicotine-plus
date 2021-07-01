@@ -165,7 +165,6 @@ class NicotineCore:
             slskmessages.CantCreateRoom: self.dummy_message,
             slskmessages.QueuedDownloads: self.dummy_message,
             slskmessages.GetPeerAddress: self.get_peer_address,
-            slskmessages.PeerConn: self.peer_conn,
             slskmessages.UserInfoReply: self.user_info_reply,
             slskmessages.UserInfoRequest: self.user_info_request,
             slskmessages.PierceFireWall: self.pierce_fire_wall,
@@ -313,9 +312,7 @@ class NicotineCore:
 
         # Shut down networking thread
         server_conn = self.active_server_conn
-
-        if server_conn:
-            self.closed_connection(server_conn, server_conn.getsockname())
+        self.server_disconnect(server_conn.getsockname())
 
         self.protothread.abort()
         self.stop_timers()
@@ -479,8 +476,13 @@ class NicotineCore:
 
         msgs = self.msgs.get(username)
 
-        if not msgs:
+        if msgs is None:
             return
+
+        log.add_conn("List of outgoing messages for user %(user)s: %(messages)s", {
+                         'user': username,
+                         'messages': msgs
+                     })
 
         for j in msgs:
 
@@ -499,41 +501,6 @@ class NicotineCore:
     def inc_conn(msg):
         log.add_msg_contents(msg)
 
-    def peer_conn(self, msg):
-
-        """ Networking thread told us that the connection to the peer was successful.
-        If we connected directly to the peer, send a PeerInit message. If we connected
-        as a result of an indirect connect request by the peer, send a PierceFirewall
-        message. Queue up any messages we want to deliver to the peer. """
-
-        log.add_msg_contents(msg)
-
-        addr = msg.addr
-        print("test")
-
-        for i in self.peerconns:
-            if i.addr == addr and i.conn is None:
-                conn = msg.conn
-
-                if i.token is None:
-                    i.init.conn = conn
-                    self.queue.append(i.init)
-
-                else:
-                    self.queue.append(slskmessages.PierceFireWall(conn, i.token))
-
-                i.conn = conn
-
-                log.add_conn("Connection established with user %(user)s. List of outgoing messages: %(messages)s", {
-                    'user': i.username,
-                    'messages': i.msgs
-                })
-
-                # Deliver our messages to the peer
-                self.process_conn_messages(username=i.username, conn=conn)
-
-                break
-
     def pierce_fire_wall(self, msg):
 
         """ We received a response to our indirect connection request. Since a
@@ -546,7 +513,7 @@ class NicotineCore:
 
         """ Request UI to show error messages related to connectivity """
 
-        for i in conn.msgs:
+        for i in self.msgs[username]:
             if i.__class__ in (slskmessages.FileRequest, slskmessages.TransferRequest):
                 self.transfers.get_cant_connect_request(i.req)
 
@@ -566,19 +533,15 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
+        self.show_connection_error_message(msg.conn.init.target_user)
+
     def connect_to_peer_timeout(self, msg):
 
         """ Peer was not able to repond to our indirect connection request """
 
-        conn = msg.conn
-
-        if conn.conn is not None:
-            # Connection has succeeded since the timeout callback was initiated
-            return
-
         log.add_msg_contents(msg)
 
-        self.show_connection_error_message(conn)
+        self.show_connection_error_message(msg.conn.init.target_user)
         log.add_conn(
             "Indirect connect request of type %(type)s to user %(user)s expired, giving up", {
                 'type': conn.conn_type,
@@ -649,32 +612,27 @@ class NicotineCore:
         if self.ui_callback:
             self.ui_callback.server_disconnect()
 
-    def closed_connection(self, conn, addr, error=None):
-
-        if conn == self.active_server_conn:
-            self.server_disconnect(addr)
-
-        else:
-            """ A peer connection has died, remove it """
-
-            for i in self.peerconns:
-                if i.conn == conn:
-                    log.add_conn("Connection closed by peer: %(peer)s. Error: %(error)s",
-                                 {'peer': log.contents(i), 'error': error})
-
-                    self.transfers.conn_close(conn, i.username, error)
-
-                    if i.conn == self.parent_conn:
-                        self.send_have_no_parent()
-
-                    self.peerconns.remove(i)
-                    return
-
     def conn_close(self, msg):
 
         log.add_msg_contents(msg)
 
-        self.closed_connection(msg.conn, msg.addr)
+        if msg.conn.conn == self.parent_conn:
+            self.send_have_no_parent()
+
+        if msg.conn.conn == self.active_server_conn:
+            self.server_disconnect(msg.conn.addr)
+            return
+
+        username = msg.conn.init.target_user
+        conn_type = msg.conn.init.conn_type
+        error = None
+        log.add_conn("Connection closed by peer: %(peer)s. Error: %(error)s",
+                     {'peer': log.contents(i), 'error': error})
+
+        self.transfers.conn_close(conn, username, error)
+
+        if conn_type == 'D':
+            self.send_have_no_parent()
 
     def connect_error(self, msg):
 
