@@ -262,12 +262,13 @@ class PeerConnectionInProgress:
     hold data about a connection that is not yet established. msgObj is
     a message to be sent after the connection has been established.
     """
-    __slots__ = "conn", "msg_obj", "lastactive"
+    __slots__ = "conn", "msg_obj", "lastactive", "token"
 
     def __init__(self, conn=None, msg_obj=None):
         self.conn = conn
         self.msg_obj = msg_obj
         self.lastactive = time.time()
+        self.token = None
 
 
 class UserAddr:
@@ -818,7 +819,7 @@ class SlskProtoThread(threading.Thread):
             })
 
         else:
-            self.connect_to_peer_direct(user, addr, message_type)
+            self.connect_to_peer_direct(user, addr, message_type, init)
 
     def connect_to_peer_direct(self, user, addr, message_type, init=None):
 
@@ -863,8 +864,9 @@ class SlskProtoThread(threading.Thread):
     def connect_to_peer_indirect(self, conn, error):
         """ Send a message to the server to ask the peer to connect to us instead (indirect connection) """
 
+        print("YGJKJNHJ")
         conn.token = self.get_new_token()
-        conn.init = slskmessages.PeerInit(init_user=conn.init.init_user, target_user=conn.init.init_user, conn_type=conn.init.conn_type, token=0)
+        conn.init = PeerInit(init_user=conn.init.init_user, target_user=conn.init.init_user, conn_type=conn.init.conn_type, token=0)
 
         if conn in self.out_indirect_conn_request_times:
             del self.out_indirect_conn_request_times[conn]
@@ -1036,7 +1038,7 @@ Error: %(error)s""", {
                                 else:
                                     i.tryaddr += 1
 
-                                self._queue.append(slskmessages.GetPeerAddress(user))
+                                self._queue.append(GetPeerAddress(user))
                                 return
 
                     if msg.user in self.users:
@@ -1113,11 +1115,8 @@ Error: %(error)s""", {
 
                         self._core_callback([ProcessConnMessages(conn)])
 
-                        log.add_conn("User %(user)s managed to connect to us indirectly, connection is established. "
-                                     + "List of outgoing messages: %(messages)s", {
-                                         'user': conn.init.target_user,
-                                         'messages': []
-                                     })
+                        log.add_conn("User %s managed to connect to us indirectly, connection is established.",
+                                     conn.init.target_user)
 
                     elif self.peerinitclasses[msgtype] is PeerInit:
                         conn.init = msg
@@ -1140,7 +1139,7 @@ Error: %(error)s""", {
                     log.add("Peer init message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
                             {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[5:msgsize + 4]})
 
-                    self._core_callback([ConnClose(conn.conn, conn.addr)])
+                    self._core_callback([ConnClose(conn)])
                     self.close_connection(self._conns, conn)
 
                 break
@@ -1322,7 +1321,7 @@ Error: %(error)s""", {
 
                 except IOError as strerror:
                     self._core_callback([FileError(conn, conn.filedown.file, strerror)])
-                    self._core_callback([ConnClose(conn.conn, conn.addr)])
+                    self._core_callback([ConnClose(conn)])
                     self.close_connection(self._conns, conn.conn)
 
                 except ValueError:
@@ -1348,7 +1347,7 @@ Error: %(error)s""", {
                 conn.lastcallback = curtime
 
             if finished:
-                self._core_callback([ConnClose(conn.conn, conn.addr)])
+                self._core_callback([ConnClose(conn)])
                 self.close_connection(self._conns, conn.conn)
 
             conn.filereadbytes += addedbyteslen
@@ -1364,7 +1363,7 @@ Error: %(error)s""", {
 
                 except IOError as strerror:
                     self._core_callback([FileError(conn, conn.fileupl.file, strerror)])
-                    self._core_callback([ConnClose(conn.conn, conn.addr)])
+                    self._core_callback([ConnClose(conn)])
                     self.close_connection(self._conns, conn.conn)
 
                 except ValueError:
@@ -1441,7 +1440,7 @@ Error: %(error)s""", {
             else:
                 log.add("Distrib message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
                         {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[5:msgsize + 4]})
-                self._core_callback([ConnClose(conn.conn, conn.addr)])
+                self._core_callback([ConnClose(conn)])
                 self.close_connection(self._conns, conn)
                 break
 
@@ -1539,7 +1538,7 @@ Error: %(error)s""", {
             elif msg_class is ConnClose and msg_obj.conn in self._conns:
                 conn = msg_obj.conn
 
-                self._core_callback([ConnClose(conn, self._conns[conn].addr)])
+                self._core_callback([ConnClose(conns[conn])])
                 self.close_connection(self._conns, conn)
 
             elif msg_class is ServerConn:
@@ -1646,7 +1645,7 @@ Error: %(error)s""", {
 
             except IOError as strerror:
                 self._core_callback([FileError(conn_obj, conn_obj.fileupl.file, strerror)])
-                self._core_callback([ConnClose(connection, conn_obj.addr)])
+                self._core_callback([ConnClose(conn_obj)])
                 self.close_connection(self._conns, connection)
 
             except ValueError:
@@ -1795,7 +1794,12 @@ Error: %(error)s""", {
                             self._conns[connection_in_progress] = conn_obj = PeerConnection(
                                 conn=connection_in_progress, addr=addr, init=msg_obj.init)
 
-                            self._core_callback([PeerConn(connection_in_progress, addr)])
+                            conn_obj.init.conn = conn
+                            self._queue.append(conn_obj.init)
+
+                            log.add_conn("Connection established with user %s", conn_obj.init.target_user)
+
+                            self._core_callback([ProcessConnMessages(conn_obj)])
 
                         del self._connsinprogress[connection_in_progress]
 
@@ -1815,7 +1819,7 @@ Error: %(error)s""", {
                     # Timeout Connections
 
                     if curtime - conn_obj.lastactive > self.CONNECTION_MAX_IDLE:
-                        self._core_callback([ConnClose(connection, addr)])
+                        self._core_callback([ConnClose(conn_obj)])
                         self.close_connection(self._conns, connection)
                         continue
 
@@ -1824,7 +1828,7 @@ Error: %(error)s""", {
                             "ip": addr[0],
                             "port": addr[1]
                         })
-                        self._core_callback([ConnClose(connection, addr)])
+                        self._core_callback([ConnClose(conn_obj)])
                         self.close_connection(self._conns, connection)
                         continue
 
