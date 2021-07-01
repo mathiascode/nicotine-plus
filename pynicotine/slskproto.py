@@ -212,7 +212,7 @@ else:
     otherwise we just waste resources.
     The maximum is 1024, but can be lower if the file limit is too low. """
 
-    MAXSOCKETS = min(max(int(MAXFILELIMIT * 0.75), 50), 1024)
+    MAXSOCKETS = min(max(int(MAXFILELIMIT * 0.75), 50), 10024)
 
 
 class Connection:
