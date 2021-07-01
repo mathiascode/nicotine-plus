@@ -289,7 +289,9 @@ class NicotineCore:
 
         # Shut down networking thread
         server_conn = self.active_server_conn
-        self.server_disconnect(server_conn.getsockname())
+
+        if server_conn:
+            self.server_disconnect(server_conn.getsockname())
 
         self.protothread.abort()
         self.stop_timers()

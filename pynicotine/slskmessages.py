@@ -2109,9 +2109,9 @@ class PeerInit(PeerInitMessage):
         pos, self.init_user = self.get_object(message, str)
         pos, self.conn_type = self.get_object(message, str, pos)
 
-        if message[pos:]:
+        """if message[pos:]:
             # A token is not guaranteed to be sent
-            pos, self.token = self.get_object(message, int, pos)
+            pos, token = self.get_object(message, int, pos)"""
 
         if self.target_user is None:
             # The user we're connecting to initiated the connection. Set them as target user.
