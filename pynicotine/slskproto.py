@@ -57,6 +57,7 @@ from pynicotine.slskmessages import DistribBranchRoot
 from pynicotine.slskmessages import DistribChildDepth
 from pynicotine.slskmessages import DistribEmbeddedMessage
 from pynicotine.slskmessages import DistribMessage
+from pynicotine.slskmessages import DistribRequest
 from pynicotine.slskmessages import DistribSearch
 from pynicotine.slskmessages import DownloadFile
 from pynicotine.slskmessages import EmbeddedMessage
@@ -146,6 +147,7 @@ from pynicotine.slskmessages import SearchInactivityTimeout
 from pynicotine.slskmessages import SearchParent
 from pynicotine.slskmessages import SendConnectToken
 from pynicotine.slskmessages import SendDownloadSpeed
+from pynicotine.slskmessages import SendNetworkMessage
 from pynicotine.slskmessages import SendUploadSpeed
 from pynicotine.slskmessages import ServerConn
 from pynicotine.slskmessages import ServerMessage
@@ -461,6 +463,7 @@ class SlskProtoThread(threading.Thread):
         self.server_socket = None
 
         self._conns = {}
+        self.users = {}
         self._connsinprogress = {}
         self.token = 100
         self.out_indirect_conn_request_times = {}
@@ -680,6 +683,91 @@ class SlskProtoThread(threading.Thread):
 
         return None
 
+    def send_message_to_peer(self, user, message, login, address=None):
+
+        """ Sends message to a peer. Used primarily when we know the username of a peer,
+        but don't have an active connection. """
+
+        conn = None
+
+        if message.__class__ is not FileRequest:
+            """ Check if there's already a connection object for the specified username """
+
+            for _, i in self._conns.items():
+                if i.init is not None and i.init.target_user == user and i.init.conn_type == 'P':
+                    conn = i
+                    log.add_conn("Found existing connection of type %(type)s for user %(user)s, using it.", {
+                        'type': i.init.conn_type,
+                        'user': user
+                    })
+                    break
+
+        if conn is not None and conn.conn is not None:
+            """ We have initiated a connection previously, and it's ready """
+
+            self.msgs[user].append(message)
+            self._core_callback([ProcessConnMessages(conn)])
+
+        elif conn is not None:
+            """ Connection exists but is not ready yet, add new messages to it """
+
+            self.msgs[user].append(message)
+
+        else:
+            """ This is a new peer, initiate a connection """
+
+            self.initiate_connection_to_peer(user, message, login, address)
+
+        log.add_conn("Sending message of type %(type)s to user %(user)s", {
+            'type': message.__class__,
+            'user': user
+        })
+
+    def initiate_connection_to_peer(self, user, message, login, address=None):
+
+        """ Prepare to initiate a connection with a peer """
+
+        if message.__class__ is FileRequest:
+            message_type = 'F'
+
+        elif message.__class__ is DistribRequest:
+            message_type = 'D'
+
+        else:
+            message_type = 'P'
+
+        init = PeerInit(
+            init_user=login, target_user=user, conn_type=message_type, token=0)
+        addr = None
+
+        if user in self.users:
+            addr = self.users[user].addr
+
+        elif address is not None:
+            self.users[user] = UserAddr(status=-1, addr=address)
+            addr = address
+
+        if addr is None:
+            self._queue.append(GetPeerAddress(user))
+
+            log.add_conn("Requesting address for user %(user)s", {
+                'user': user
+            })
+
+        else:
+            self.connect_to_peer_direct(user, addr, message_type)
+
+    def connect_to_peer_direct(self, user, addr, message_type, init=None):
+
+        """ Initiate a connection with a peer directly """
+
+        self._queue.append(PeerConn(None, addr, init))
+
+        log.add_conn("Initialising direct connection of type %(type)s to user %(user)s", {
+            'type': message_type,
+            'user': user
+        })
+
     def connect_error(self, msg_obj, error, conn=None):
 
         if msg_obj is ServerConn:
@@ -713,7 +801,11 @@ class SlskProtoThread(threading.Thread):
         """ Send a message to the server to ask the peer to connect to us instead (indirect connection) """
 
         conn.token = self.get_new_token()
-        self._queue.append(slskmessages.ConnectToPeer(conn.token, conn.username, conn.conn_type))
+        conn.init = slskmessages.PeerInit(init_user=conn.init.init_user, target_user=conn.init.init_user, conn_type=conn.init.conn_type, token=0)
+
+        if conn in self.out_indirect_conn_request_times:
+            del self.out_indirect_conn_request_times[conn]
+
         self.out_indirect_conn_request_times[conn] = time.time()
 
         log.add_conn(
@@ -1329,6 +1421,9 @@ Error: %(error)s""", {
 
                 self._reset_counters(conns)
                 self._uploadlimit = (callback, msg_obj.limit)
+
+            elif msg_obj.__class__ is SendNetworkMessage:
+                self.send_message_to_peer(msg_obj.user, msg_obj.message, msg_obj.login)
 
         return numsockets
 

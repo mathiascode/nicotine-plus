@@ -85,6 +85,14 @@ class ConnClose(InternalMessage):
         self.callback = callback
 
 
+class SendNetworkMessage(InternalMessage):
+
+    def __init__(self, user=None, message=None, login=None):
+        self.user = user
+        self.message = message
+        self.login = login
+
+
 class ProcessConnMessages(InternalMessage):
 
     __slots__ = ("conn")
