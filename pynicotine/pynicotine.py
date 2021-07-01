@@ -128,7 +128,6 @@ class NicotineCore:
         self.watchedusers = set()
         self.ip_requested = set()
         self.users = {}
-        self.out_indirect_conn_request_times = {}
 
         self.queue = deque()
 
@@ -393,20 +392,6 @@ class NicotineCore:
         self.token += 1
         return self.token
 
-    def _check_indirect_connection_timeouts(self):
-
-        while True:
-            curtime = time.time()
-
-            if self.out_indirect_conn_request_times:
-                for conn, request_time in self.out_indirect_conn_request_times.copy().items():
-                    if (curtime - request_time) >= 20:
-                        self.network_callback([slskmessages.ConnectToPeerTimeout(conn)])
-
-            if self.exit.wait(1):
-                # Event set, we're exiting
-                return
-
     def peer_init(self, msg):
 
         """ Peer wants to connect to us, remember them """
@@ -524,6 +509,7 @@ class NicotineCore:
         log.add_msg_contents(msg)
 
         addr = msg.addr
+        print("test")
 
         for i in self.peerconns:
             if i.addr == addr and i.conn is None:
@@ -592,14 +578,6 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
-        try:
-            self.peerconns.remove(conn)
-        except ValueError:
-            pass
-
-        if conn in self.out_indirect_conn_request_times:
-            del self.out_indirect_conn_request_times[conn]
-
         self.show_connection_error_message(conn)
         log.add_conn(
             "Indirect connect request of type %(type)s to user %(user)s expired, giving up", {
@@ -662,8 +640,6 @@ class NicotineCore:
         self.active_server_conn = None
 
         # Clean up connections
-        self.out_indirect_conn_request_times.clear()
-
         self.watchedusers.clear()
         self.shares.set_connected(False)
 
@@ -685,9 +661,6 @@ class NicotineCore:
                 if i.conn == conn:
                     log.add_conn("Connection closed by peer: %(peer)s. Error: %(error)s",
                                  {'peer': log.contents(i), 'error': error})
-
-                    if i in self.out_indirect_conn_request_times:
-                        del self.out_indirect_conn_request_times[i]
 
                     self.transfers.conn_close(conn, i.username, error)
 
@@ -883,13 +856,6 @@ class NicotineCore:
         log.add_msg_contents(msg)
 
         if msg.success:
-            # Check for indirect connection timeouts
-            self.exit.clear()
-            thread = threading.Thread(target=self._check_indirect_connection_timeouts)
-            thread.name = "IndirectConnectionTimeoutTimer"
-            thread.daemon = True
-            thread.start()
-
             self.away = config.sections["server"]["away"]
             self.queue.append(slskmessages.SetStatus((not self.away) + 1))
             self.watch_user(config.sections["server"]["login"])
