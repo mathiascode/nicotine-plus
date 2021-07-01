@@ -70,10 +70,6 @@ class InitPeerConn(Conn):
     to NicotineCore. """
 
 
-class IncConn(Conn):
-    """ Sent by networking thread to indicate an incoming connection."""
-
-
 class ConnClose(InternalMessage):
     """ Sent by networking thread to indicate a connection has been closed."""
 
@@ -91,6 +87,22 @@ class ConnCloseIP(InternalMessage):
 
     def __init__(self, addr=None):
         self.addr = addr
+
+
+class SendNetworkMessage(InternalMessage):
+
+    def __init__(self, user=None, message=None, login=None, addr=None):
+        self.user = user
+        self.message = message
+        self.login = login
+        self.addr = addr
+
+
+class ShowConnectionErrorMessage(InternalMessage):
+
+    def __init__(self, user=None, msgs=None):
+        self.user = user
+        self.msgs = msgs
 
 
 class ConnectError(InternalMessage):
@@ -2139,9 +2151,9 @@ class PeerInit(PeerInitMessage):
         pos, self.init_user = self.get_object(message, str)
         pos, self.conn_type = self.get_object(message, str, pos)
 
-        if message[pos:]:
+        """if message[pos:]:
             # A token is not guaranteed to be sent
-            pos, self.token = self.get_object(message, int, pos)
+            pos, token = self.get_object(message, int, pos)"""
 
         if self.target_user is None:
             # The user we're connecting to initiated the connection. Set them as target user.
