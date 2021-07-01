@@ -177,7 +177,6 @@ class NicotineCore:
             slskmessages.GetSharedFileList: self.get_shared_file_list,
             slskmessages.FileSearchRequest: self.dummy_message,
             slskmessages.FileSearchResult: self.file_search_result,
-            slskmessages.ConnectToPeer: self.connect_to_peer_request,
             slskmessages.GetUserStatus: self.get_user_status,
             slskmessages.ProcessConnMessages: self.process_conn_messages,
             slskmessages.GetUserStats: self.get_user_stats,
@@ -419,146 +418,7 @@ class NicotineCore:
         """ Sends message to a peer. Used primarily when we know the username of a peer,
         but don't have an active connection. """
 
-        conn = None
-
-        if message.__class__ is not slskmessages.FileRequest:
-            """ Check if there's already a connection object for the specified username """
-
-            for i in self.peerconns:
-                if i.username == user and i.conn_type == 'P':
-                    conn = i
-                    log.add_conn("Found existing connection of type %(type)s for user %(user)s, using it.", {
-                        'type': i.conn_type,
-                        'user': user
-                    })
-                    break
-
-        if conn is not None and conn.conn is not None:
-            """ We have initiated a connection previously, and it's ready """
-
-            self.msgs[user].append(message)
-            self.process_conn_messages(username=user, conn=conn.conn)
-
-        elif conn is not None:
-            """ Connection exists but is not ready yet, add new messages to it """
-
-            self.msgs[user].append(message)
-
-        else:
-            """ This is a new peer, initiate a connection """
-
-            self.initiate_connection_to_peer(user, message, address)
-
-        log.add_conn("Sending message of type %(type)s to user %(user)s", {
-            'type': message.__class__,
-            'user': user
-        })
-
-    def initiate_connection_to_peer(self, user, message, address=None):
-
-        """ Prepare to initiate a connection with a peer """
-
-        if message.__class__ is slskmessages.FileRequest:
-            message_type = 'F'
-
-        elif message.__class__ is slskmessages.DistribRequest:
-            message_type = 'D'
-
-        else:
-            message_type = 'P'
-
-        init = slskmessages.PeerInit(
-            init_user=config.sections["server"]["login"], target_user=user, conn_type=message_type, token=0)
-        addr = None
-
-        if user in self.users:
-            addr = self.users[user].addr
-
-        elif address is not None:
-            self.users[user] = UserAddr(status=-1, addr=address)
-            addr = address
-
-        if addr is None:
-            self.queue.append(slskmessages.GetPeerAddress(user))
-
-            log.add_conn("Requesting address for user %(user)s", {
-                'user': user
-            })
-
-        else:
-            self.connect_to_peer_direct(user, addr, message_type, init)
-
-        self.peerconns.append(
-            PeerConnection(
-                addr=addr,
-                username=user,
-                msgs=[message],
-                init=init
-            )
-        )
-
-    def connect_to_peer_direct(self, user, addr, message_type, init=None):
-
-        """ Initiate a connection with a peer directly """
-
-        self.queue.append(slskmessages.PeerConn(None, addr, init))
-
-        log.add_conn("Initialising direct connection of type %(type)s to user %(user)s", {
-            'type': message_type,
-            'user': user
-        })
-
-    def connect_to_peer_request(self, msg):
-
-        """ Peer sent us an indirect connection request via the server, attempt to
-        connect to them """
-
-        log.add_msg_contents(msg)
-
-        user = msg.user
-        addr = (msg.ip_address, msg.port)
-        token = msg.token
-        conn_type = msg.conn_type
-        found_conn = False
-        should_connect = True
-
-        init = slskmessages.PeerInit(init_user=user, target_user=user, conn_type=conn_type, token=0)
-
-        if user != config.sections["server"]["login"] and conn_type != 'F':
-            for i in self.peerconns:
-                if i.username == user and i.conn_type == conn_type:
-                    """ Only update existing connection if it hasn't been established yet,
-                    otherwise ignore indirect connection request. """
-
-                    found_conn = True
-
-                    if i.conn is None:
-                        i.addr = addr
-                        i.token = token
-                        i.init = init
-                        break
-
-                    if i in self.out_indirect_conn_request_times:
-                        del self.out_indirect_conn_request_times[i]
-
-                    should_connect = False
-                    break
-
-        if should_connect:
-            self.connect_to_peer_direct(user, addr, conn_type, init)
-
-        if not found_conn:
-            """ No previous connection exists for user """
-
-            self.peerconns.append(
-                PeerConnection(
-                    addr=addr,
-                    username=user,
-                    msgs=[],
-                    token=token,
-                    init=init
-                )
-            )
+        self.queue.append(slskmessages.SendNetworkMessage(user, message, config.sections["server"]["login"]))
 
     def get_peer_address(self, msg):
 
@@ -764,15 +624,6 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
-        token = msg.token
-
-        for i in self.peerconns:
-            if i.token == token:
-                self.peerconns.remove(i)
-
-                self.show_connection_error_message(i)
-                break
-
     def connect_to_peer_timeout(self, msg):
 
         """ Peer was not able to repond to our indirect connection request """
@@ -855,7 +706,6 @@ class NicotineCore:
         self.active_server_conn = None
 
         # Clean up connections
-        self.peerconns.clear()
         self.out_indirect_conn_request_times.clear()
 
         self.watchedusers.clear()
