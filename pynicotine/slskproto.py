@@ -477,6 +477,7 @@ class SlskProtoThread(threading.Thread):
         self.users = {}
         self._connsinprogress = {}
         self.token = 100
+        self.exit = threading.Event()
         self.out_indirect_conn_request_times = {}
         self._uploadlimit = (self._calc_upload_limit_none, 0)
         self._downloadlimit = (self._calc_download_limit_by_total, 0)
@@ -563,6 +564,11 @@ class SlskProtoThread(threading.Thread):
             self.close_connection(self._connsinprogress, i)
 
         self._queue.clear()
+
+        # Inform threads we've disconnected
+        self.exit.set()
+
+        self.out_indirect_conn_request_times.clear()
 
         if not self._want_abort:
             self._core_callback([SetCurrentConnectionCount(0)])
@@ -681,6 +687,21 @@ class SlskProtoThread(threading.Thread):
                 i.sentbytes2 = 0
 
     """ Connections """
+
+    def _check_indirect_connection_timeouts(self):
+
+        while True:
+            curtime = time.time()
+
+            if self.out_indirect_conn_request_times:
+                for conn, request_time in self.out_indirect_conn_request_times.copy().items():
+                    if (curtime - request_time) >= 20:
+                        self.network_callback([slskmessages.ConnectToPeerTimeout(conn)])
+                        del self.out_indirect_conn_request_times[conn]
+
+            if self.exit.wait(1):
+                # Event set, we're exiting
+                return
 
     def socket_still_active(self, conn):
 
@@ -962,6 +983,15 @@ Error: %(error)s""", {
             if msgtype in self.serverclasses:
                 msg = self.unpack_network_message(
                     self.serverclasses[msgtype], msg_buffer[8:msgsize + 4], msgsize - 4, "server")
+
+                if self.serverclasses[msgtype] is Login and msg.success:
+                    # Check for indirect connection timeouts
+                    self.exit.clear()
+
+                    thread = threading.Thread(target=self._check_indirect_connection_timeouts)
+                    thread.name = "IndirectConnectionTimeoutTimer"
+                    thread.daemon = True
+                    thread.start()
 
                 if self.serverclasses[msgtype] is GetPeerAddress:
 
