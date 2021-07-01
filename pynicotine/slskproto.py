@@ -122,6 +122,7 @@ from pynicotine.slskmessages import PrivateRoomSomething
 from pynicotine.slskmessages import PrivateRoomToggle
 from pynicotine.slskmessages import PrivateRoomUsers
 from pynicotine.slskmessages import PrivilegedUsers
+from pynicotine.slskmessages import ProcessConnMessages
 from pynicotine.slskmessages import PublicRoomMessage
 from pynicotine.slskmessages import QueuedDownloads
 from pynicotine.slskmessages import UploadDenied
@@ -717,7 +718,7 @@ class SlskProtoThread(threading.Thread):
             self._core_callback([ConnectError(msg_obj, error)])
             return
 
-        if not conn:
+        if not conn or not hasattr(conn, "token"):
             return
 
         if conn.token is None:
@@ -860,6 +861,12 @@ Error: %(error)s""", {
                 msg = self.unpack_network_message(
                     self.serverclasses[msgtype], msg_buffer[8:msgsize + 4], msgsize - 4, "server")
 
+                if self.serverclasses[msgtype] is CantConnectToPeer:
+                    if conn_obj in self.out_indirect_conn_request_times:
+                        del self.out_indirect_conn_request_times[conn_obj]
+
+                    log.add_conn("Can't connect to user %s neither directly nor indirectly, giving up", conn_obj.init.target_user)
+
                 if msg is not None:
                     msgs.append(msg)
 
@@ -915,8 +922,33 @@ Error: %(error)s""", {
                     if self.peerinitclasses[msgtype] is PierceFireWall:
                         conn.piercefw = msg
 
+                        if conn in self.out_indirect_conn_request_times:
+                            del self.out_indirect_conn_request_times[conn]
+
+                        conn.init.conn = conn.conn
+                        self._queue.append(conn.init)
+
+                        self._core_callback([ProcessConnMessages(conn)])
+
+                        log.add_conn("User %(user)s managed to connect to us indirectly, connection is established. "
+                                     + "List of outgoing messages: %(messages)s", {
+                                         'user': conn.init.target_user,
+                                         'messages': []
+                                     })
+
                     elif self.peerinitclasses[msgtype] is PeerInit:
                         conn.init = msg
+                        conn.token = None
+
+                        if conn in self.out_indirect_conn_request_times:
+                            del self.out_indirect_conn_request_times[conn]
+
+                        self._core_callback([ProcessConnMessages(conn)])
+
+                        log.add_conn("Received incoming direct connection of type %(type)s from user %(user)s", {
+                            'type': conn.init.conn_type,
+                            'user': conn.init.target_user
+                        })
 
                     msgs.append(msg)
 
@@ -1259,7 +1291,7 @@ Error: %(error)s""", {
     def process_conn_input(self, connection, conn_obj):
 
         if connection is self.server_socket:
-            msgs, conn_obj.ibuf = self.process_server_input(conn_obj.ibuf)
+            msgs, conn_obj.ibuf = self.process_server_input(conn_obj.ibuf, conn_obj)
             self._core_callback(msgs)
 
         elif conn_obj.init is None:
@@ -1547,7 +1579,7 @@ Error: %(error)s""", {
 
                 if (curtime - conn_obj.lastactive) > self.IN_PROGRESS_STALE_AFTER:
 
-                    self.connect_error(msg_obj, conn_obj, "Timed out")
+                    self.connect_error(msg_obj, "Timed out", conn_obj)
                     self.close_connection(self._connsinprogress, connection_in_progress)
                     continue
 
@@ -1560,7 +1592,7 @@ Error: %(error)s""", {
 
                 except socket.error as err:
 
-                    self.connect_error(msg_obj, conn_obj, err)
+                    self.connect_error(msg_obj, err, conn_obj)
                     self.close_connection(self._connsinprogress, connection_in_progress)
 
                 else:
@@ -1573,8 +1605,15 @@ Error: %(error)s""", {
                             self._core_callback([ServerConn(self.server_socket, addr)])
 
                         else:
-                            self._conns[connection_in_progress] = PeerConnection(
+                            self._conns[connection_in_progress] = conn_obj = PeerConnection(
                                 conn=connection_in_progress, addr=addr, init=msg_obj.init)
+
+                            #self._core_callback([ProcessConnMessages(conn)])
+
+                            """log.add_conn("Connection established with user %(user)s. List of outgoing messages: %(messages)s", {
+                                'user': conn_obj.init.target_user,
+                                'messages': []
+                            })"""
 
                             self._core_callback([PeerConn(connection_in_progress, addr)])
 
