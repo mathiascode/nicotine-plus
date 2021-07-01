@@ -999,6 +999,22 @@ Error: %(error)s""", {
                     thread.daemon = True
                     thread.start()
 
+                if self.serverclasses[msgtype] is ConnectToPeer:
+
+                    user = msg.user
+                    addr = (msg.ip_address, msg.port)
+                    init = PeerInit(init_user=user, target_user=user, conn_type=msg.conn_type, token=0)
+
+                    if conn_obj.conn is None:
+                        conn_obj.addr = addr
+                        conn_obj.token = msg.token
+                        conn:obj.init = init
+
+                        self.connect_to_peer_direct(user, addr, msg.conn_type, init)
+
+                    if conn_obj in self.out_indirect_conn_request_times:
+                        del self.out_indirect_conn_request_times[conn_obj]
+
                 if self.serverclasses[msgtype] is GetPeerAddress:
 
                     for _, i in self._conns.items():
@@ -1550,7 +1566,7 @@ Error: %(error)s""", {
                 self._uploadlimit = (callback, msg_obj.limit)
 
             elif msg_obj.__class__ is SendNetworkMessage:
-                self.send_message_to_peer(msg_obj.user, msg_obj.message, msg_obj.login, msg.addr)
+                self.send_message_to_peer(msg_obj.user, msg_obj.message, msg_obj.login, msg_obj.addr)
 
         return numsockets
 

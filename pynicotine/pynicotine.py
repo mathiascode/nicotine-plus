@@ -144,6 +144,7 @@ class NicotineCore:
             slskmessages.UserInfoReply: self.user_info_reply,
             slskmessages.UserInfoRequest: self.user_info_request,
             slskmessages.PierceFireWall: self.dummy_message,
+            slskmessages.ConnectToPeer: self.dummy_message,
             slskmessages.CantConnectToPeer: self.dummy_message,
             slskmessages.PeerTransfer: self.peer_transfer,
             slskmessages.SharedFileList: self.shared_file_list,
