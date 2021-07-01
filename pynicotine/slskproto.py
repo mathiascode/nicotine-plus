@@ -29,6 +29,7 @@ import sys
 import threading
 import time
 
+from collections import defaultdict
 from itertools import islice
 from random import uniform
 
@@ -79,7 +80,6 @@ from pynicotine.slskmessages import GivePrivileges
 from pynicotine.slskmessages import GlobalRecommendations
 from pynicotine.slskmessages import GlobalUserList
 from pynicotine.slskmessages import HaveNoParent
-from pynicotine.slskmessages import IncConn
 from pynicotine.slskmessages import IncPort
 from pynicotine.slskmessages import ItemRecommendations
 from pynicotine.slskmessages import ItemSimilarUsers
@@ -159,6 +159,7 @@ from pynicotine.slskmessages import SetUploadLimit
 from pynicotine.slskmessages import SetWaitPort
 from pynicotine.slskmessages import SharedFileList
 from pynicotine.slskmessages import SharedFoldersFiles
+from pynicotine.slskmessages import ShowConnectionErrorMessage
 from pynicotine.slskmessages import SimilarUsers
 from pynicotine.slskmessages import TransferRequest
 from pynicotine.slskmessages import TransferResponse
@@ -476,6 +477,7 @@ class SlskProtoThread(threading.Thread):
         self._conns = {}
         self.users = {}
         self._connsinprogress = {}
+        self.msgs = defaultdict(list)
         self.token = 100
         self.exit = threading.Event()
         self.out_indirect_conn_request_times = {}
@@ -678,9 +680,18 @@ class SlskProtoThread(threading.Thread):
             curtime = time.time()
 
             if self.out_indirect_conn_request_times:
-                for conn, request_time in self.out_indirect_conn_request_times.copy().items():
+                for conn, data in self.out_indirect_conn_request_times.copy().items():
+                    username, request_time = data
+
                     if (curtime - request_time) >= 20:
-                        self.network_callback([slskmessages.ConnectToPeerTimeout(conn)])
+                        log.add_conn(
+                            "Indirect connect request of type %(type)s to user %(user)s expired, giving up", {
+                                'type': "test",
+                                'user': username
+                            }
+                        )
+
+                        self._core_callback([ShowConnectionErrorMessage(username, self.msgs[username])])
                         del self.out_indirect_conn_request_times[conn]
 
             if self.exit.wait(1):
@@ -715,6 +726,30 @@ class SlskProtoThread(threading.Thread):
 
         return None
 
+    def process_conn_messages(self, conn):
+
+        """ A connection is established with the peer, time to queue up our peer
+        messages for delivery """
+
+        username = conn.init.target_user
+
+        msgs = self.msgs.get(username)
+
+        if msgs is None:
+            return
+
+        log.add_conn("List of outgoing messages for user %(user)s: %(messages)s", {
+                     'user': username,
+                     'messages': msgs})
+
+        self._core_callback([ProcessConnMessages(conn, msgs)])
+
+        for j in msgs:
+            j.conn = conn.conn
+            self._queue.append(j)
+
+        self.msgs[username] = []
+
     def send_message_to_peer(self, user, message, login, address=None):
 
         """ Sends message to a peer. Used primarily when we know the username of a peer,
@@ -738,7 +773,7 @@ class SlskProtoThread(threading.Thread):
             """ We have initiated a connection previously, and it's ready """
 
             self.msgs[user].append(message)
-            self._core_callback([ProcessConnMessages(conn)])
+            self.process_conn_messages(conn)
 
         elif conn is not None:
             """ Connection exists but is not ready yet, add new messages to it """
@@ -812,7 +847,7 @@ class SlskProtoThread(threading.Thread):
         if conn.token is None:
             """ We can't correct to peer directly, request indirect connection """
 
-            self.connect_to_peer_indirect(conn, error)
+            self.connect_to_peer_indirect(msg_obj, conn, error)
 
         elif conn not in self.out_indirect_conn_request_times:
 
@@ -829,23 +864,22 @@ class SlskProtoThread(threading.Thread):
         self.token += 1
         return self.token
 
-    def connect_to_peer_indirect(self, conn, error):
+    def connect_to_peer_indirect(self, msg_obj, conn, error):
         """ Send a message to the server to ask the peer to connect to us instead (indirect connection) """
 
-        print("YGJKJNHJ")
+        conn_type = msg_obj.init.conn_type
         conn.token = self.get_new_token()
-        conn.init = PeerInit(init_user=conn.init.init_user, target_user=conn.init.init_user, conn_type=conn.init.conn_type, token=0)
 
         if conn in self.out_indirect_conn_request_times:
             del self.out_indirect_conn_request_times[conn]
 
-        self.out_indirect_conn_request_times[conn] = time.time()
+        self.out_indirect_conn_request_times[conn] = (msg_obj.init.target_user, time.time())
 
         log.add_conn(
             """Direct connection of type %(type)s to user %(user)s failed, attempting indirect connection.
 Error: %(error)s""", {
-                "type": conn.init.conn_type,
-                "user": conn.init.target_user,
+                "type": conn_type,
+                "user": msg_obj.init.target_user,
                 "error": error
             }
         )
@@ -977,14 +1011,14 @@ Error: %(error)s""", {
                                 if i.tryaddr == 10:
                                     log.add_conn(
                                         "Server reported port 0 for the 10th time for user %(user)s, giving up", {
-                                            'user': user
+                                            'user': msg.user
                                         }
                                     )
 
                                 elif i.tryaddr is not None:
                                     log.add_conn(
                                         "Server reported non-zero port for user %(user)s after %(tries)i retries", {
-                                            'user': user,
+                                            'user': msg.user,
                                             'tries': i.tryaddr
                                         }
                                     )
@@ -992,7 +1026,7 @@ Error: %(error)s""", {
                                 i.addr = (msg.ip_address, msg.port)
                                 i.tryaddr = None
 
-                                self.connect_to_peer_direct(user, i.addr, i.init.conn_type)
+                                self.connect_to_peer_direct(msg.user, i.addr, i.init.conn_type)
 
                             else:
 
@@ -1002,14 +1036,13 @@ Error: %(error)s""", {
                                     i.tryaddr = 1
                                     log.add_conn(
                                         "Server reported port 0 for user %(user)s, retrying", {
-                                            'user': user
+                                            'user': msg.user
                                         }
                                     )
                                 else:
                                     i.tryaddr += 1
 
-                                self._queue.append(GetPeerAddress(user))
-                                return
+                                self._queue.append(GetPeerAddress(msg.user))
 
                     if msg.user in self.users:
                         self.users[msg.user].addr = (msg.ip_address, msg.port)
@@ -1017,10 +1050,14 @@ Error: %(error)s""", {
                         self.users[msg.user] = UserAddr(addr=(msg.ip_address, msg.port))
 
                 if self.serverclasses[msgtype] is CantConnectToPeer:
+                    username = conn_obj.init.target_user
+
                     if conn_obj in self.out_indirect_conn_request_times:
                         del self.out_indirect_conn_request_times[conn_obj]
 
-                    log.add_conn("Can't connect to user %s neither directly nor indirectly, giving up", conn_obj.init.target_user)
+                    self._core_callback([ShowConnectionErrorMessage(username, self.msgs[username])])
+
+                    log.add_conn("Can't connect to user %s neither directly nor indirectly, giving up", username)
 
                 if msg is not None:
                     msgs.append(msg)
@@ -1081,7 +1118,7 @@ Error: %(error)s""", {
                         conn.init.conn = conn.conn
                         self._queue.append(conn.init)
 
-                        self._core_callback([ProcessConnMessages(conn)])
+                        self.process_conn_messages(conn)
 
                         log.add_conn("User %s managed to connect to us indirectly, connection is established.",
                                      conn.init.target_user)
@@ -1093,7 +1130,7 @@ Error: %(error)s""", {
                         if conn in self.out_indirect_conn_request_times:
                             del self.out_indirect_conn_request_times[conn]
 
-                        self._core_callback([ProcessConnMessages(conn)])
+                        self.process_conn_messages(conn)
 
                         log.add_conn("Received incoming direct connection of type %(type)s from user %(user)s", {
                             'type': conn.init.conn_type,
@@ -1513,7 +1550,7 @@ Error: %(error)s""", {
                 self._uploadlimit = (callback, msg_obj.limit)
 
             elif msg_obj.__class__ is SendNetworkMessage:
-                self.send_message_to_peer(msg_obj.user, msg_obj.message, msg_obj.login)
+                self.send_message_to_peer(msg_obj.user, msg_obj.message, msg_obj.login, msg.addr)
 
         return numsockets
 
@@ -1695,7 +1732,7 @@ Error: %(error)s""", {
                         incconn.close()
                     else:
                         conns[incconn] = PeerConnection(conn=incconn, addr=incaddr)
-                        self._core_callback([IncConn(incconn, incaddr)])
+                        log.add_conn("Incoming connection")
 
                         # Event flags are modified to include 'write' in subsequent loops, if necessary.
                         # Don't do it here, otherwise connections may break.
@@ -1749,7 +1786,7 @@ Error: %(error)s""", {
 
                             log.add_conn("Connection established with user %s", conn_obj.init.target_user)
 
-                            self._core_callback([ProcessConnMessages(conn_obj)])
+                            self.process_conn_messages(conn_obj)
 
                         del connsinprogress[connection_in_progress]
 
@@ -1793,7 +1830,7 @@ Error: %(error)s""", {
                             self.close_connection(conns, connection)
                             continue
 
-                    except socket.error as err:
+                    except socket.error:
                         self.close_connection(conns, connection)
                         continue
 
