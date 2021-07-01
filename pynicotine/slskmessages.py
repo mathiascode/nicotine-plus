@@ -85,6 +85,14 @@ class ConnClose(InternalMessage):
         self.callback = callback
 
 
+class ProcessConnMessages(InternalMessage):
+
+    __slots__ = ("conn")
+
+    def __init__(self, conn=None):
+        self.conn = conn
+
+
 class ConnectError(InternalMessage):
     """ Sent when a socket exception occurs. It's up to UI thread to
     handle this."""

@@ -33,6 +33,7 @@ import os
 import threading
 import time
 
+from collections import defaultdict
 from collections import deque
 
 from pynicotine import slskmessages
@@ -123,6 +124,7 @@ class NicotineCore:
         self.port = port
 
         self.peerconns = []
+        self.msgs = defaultdict(list)
         self.watchedusers = set()
         self.ip_requested = set()
         self.users = {}
@@ -176,6 +178,7 @@ class NicotineCore:
             slskmessages.FileSearchResult: self.file_search_result,
             slskmessages.ConnectToPeer: self.connect_to_peer_request,
             slskmessages.GetUserStatus: self.get_user_status,
+            slskmessages.ProcessConnMessages: self.process_conn_messages,
             slskmessages.GetUserStats: self.get_user_stats,
             slskmessages.Relogged: self.relogged,
             slskmessages.PeerInit: self.peer_init,
@@ -411,48 +414,6 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
-        user = msg.init_user
-        addr = msg.conn.addr
-        conn = msg.conn.conn
-        conn_type = msg.conn_type
-        found_conn = False
-
-        # We need two connections in our name if we're downloading from ourselves
-        if user != config.sections["server"]["login"] and conn_type != 'F':
-            for i in self.peerconns:
-                if i.username == user and i.conn_type == conn_type:
-                    i.addr = addr
-                    i.conn = conn
-                    i.token = None
-                    i.init = msg
-
-                    if i in self.out_indirect_conn_request_times:
-                        del self.out_indirect_conn_request_times[i]
-
-                    found_conn = True
-
-                    # Deliver our messages to the peer
-                    self.process_conn_messages(i, conn)
-                    break
-
-        if not found_conn:
-            """ No previous connection exists for user """
-
-            self.peerconns.append(
-                PeerConnection(
-                    addr=addr,
-                    username=user,
-                    conn=conn,
-                    init=msg,
-                    msgs=[]
-                )
-            )
-
-        log.add_conn("Received incoming direct connection of type %(type)s from user %(user)s", {
-            'type': conn_type,
-            'user': user
-        })
-
     def send_message_to_peer(self, user, message, address=None):
 
         """ Sends message to a peer. Used primarily when we know the username of a peer,
@@ -475,13 +436,13 @@ class NicotineCore:
         if conn is not None and conn.conn is not None:
             """ We have initiated a connection previously, and it's ready """
 
-            conn.msgs.append(message)
-            self.process_conn_messages(conn, conn.conn)
+            self.msgs[user].append(message)
+            self.process_conn_messages(username=user, conn=conn.conn)
 
         elif conn is not None:
             """ Connection exists but is not ready yet, add new messages to it """
 
-            conn.msgs.append(message)
+            self.msgs[user].append(message)
 
         else:
             """ This is a new peer, initiate a connection """
@@ -704,23 +665,34 @@ class NicotineCore:
             'country': country
         })
 
-    def process_conn_messages(self, peerconn, conn):
+    def process_conn_messages(self, msg=None, username=None, conn=None):
 
         """ A connection is established with the peer, time to queue up our peer
         messages for delivery """
 
-        for j in peerconn.msgs:
+        if not username:
+            username = msg.conn.init.target_user
+
+        if not conn:
+            conn = msg.conn.conn
+
+        msgs = self.msgs.get(username)
+
+        if not msgs:
+            return
+
+        for j in msgs:
 
             if j.__class__ is slskmessages.UserInfoRequest:
-                self.userinfo.set_conn(peerconn.username, conn)
+                self.userinfo.set_conn(username, conn)
 
             elif j.__class__ is slskmessages.GetSharedFileList:
-                self.userbrowse.set_conn(peerconn.username, conn)
+                self.userbrowse.set_conn(username, conn)
 
             j.conn = conn
             self.queue.append(j)
 
-        peerconn.msgs = []
+        self.msgs[username] = []
 
     @staticmethod
     def inc_conn(msg):
@@ -756,7 +728,7 @@ class NicotineCore:
                 })
 
                 # Deliver our messages to the peer
-                self.process_conn_messages(i, conn)
+                self.process_conn_messages(username=i.username, conn=conn)
 
                 break
 
@@ -767,34 +739,6 @@ class NicotineCore:
         messages. """
 
         log.add_msg_contents(msg)
-
-        # Sometimes a token is seemingly not sent by the peer, check if the
-        # IP address matches in that case
-
-        for i in self.peerconns:
-            if i.token is None or i.conn is not None:
-                continue
-
-            if (msg.token is None and i.addr == msg.conn.addr) or i.token == msg.token:
-                conn = msg.conn.conn
-
-                if i in self.out_indirect_conn_request_times:
-                    del self.out_indirect_conn_request_times[i]
-
-                i.init.conn = conn
-                self.queue.append(i.init)
-                i.conn = conn
-
-                log.add_conn("User %(user)s managed to connect to us indirectly, connection is established. "
-                             + "List of outgoing messages: %(messages)s", {
-                                 'user': i.username,
-                                 'messages': i.msgs
-                             })
-
-                # Deliver our messages to the peer
-                self.process_conn_messages(i, conn)
-
-                break
 
     def show_connection_error_message(self, conn):
 
@@ -824,14 +768,9 @@ class NicotineCore:
 
         for i in self.peerconns:
             if i.token == token:
-
-                if i in self.out_indirect_conn_request_times:
-                    del self.out_indirect_conn_request_times[i]
-
                 self.peerconns.remove(i)
 
                 self.show_connection_error_message(i)
-                log.add_conn("Can't connect to user %s neither directly nor indirectly, giving up", i.username)
                 break
 
     def connect_to_peer_timeout(self, msg):
