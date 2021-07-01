@@ -73,10 +73,6 @@ class PeerConn(Conn):
     to NicotineCore. """
 
 
-class IncConn(Conn):
-    """ Sent by networking thread to indicate an incoming connection."""
-
-
 class ConnClose(InternalMessage):
     """ Sent by networking thread to indicate a connection has been closed."""
 
@@ -90,18 +86,25 @@ class ConnClose(InternalMessage):
 
 class SendNetworkMessage(InternalMessage):
 
-    def __init__(self, user=None, message=None, login=None):
+    def __init__(self, user=None, message=None, login=None, addr=None):
         self.user = user
         self.message = message
         self.login = login
+        self.addr = addr
 
 
 class ProcessConnMessages(InternalMessage):
 
-    __slots__ = ("conn")
-
-    def __init__(self, conn=None):
+    def __init__(self, conn=None, msgs=None):
         self.conn = conn
+        self.msgs = msgs
+
+
+class ShowConnectionErrorMessage(InternalMessage):
+
+    def __init__(self, user=None, msgs=None):
+        self.user = user
+        self.msgs = msgs
 
 
 class ConnectError(InternalMessage):
@@ -113,14 +116,6 @@ class ConnectError(InternalMessage):
     def __init__(self, connobj=None, err=None):
         self.connobj = connobj
         self.err = err
-
-
-class ConnectToPeerTimeout:
-
-    __slots__ = ("conn",)
-
-    def __init__(self, conn):
-        self.conn = conn
 
 
 class IncPort(InternalMessage):
