@@ -27,7 +27,6 @@ jobs:
       - name: Build Debian package
         run: |
           # Generate tarball
-          cd ..
           python setup.py sdist
           cd packaging/
           mk-origtargz ../dist/nicotine-plus-*.tar.gz
