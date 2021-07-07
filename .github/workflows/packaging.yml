@@ -21,7 +21,7 @@ jobs:
         run: |
           sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
           sudo apt update
-          sudo apt build-dep packaging/
+          sudo apt build-dep packaging/debian/
 
       - name: Build Debian package
         run: |
