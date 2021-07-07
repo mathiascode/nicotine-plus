@@ -9,7 +9,7 @@
 DH_VERBOSE = 1
 export DH_OPTIONS=-v
 
-SOURCE_DIRECTORY=$(CURDIR)/../../
+SOURCE_DIRECTORY='$(dirname "$CURDIR")'
 
 %:
 	dh $@ --with python3 --buildsystem=pybuild --sourcedirectory=$(SOURCE_DIRECTORY)/
