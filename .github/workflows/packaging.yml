@@ -6,6 +6,8 @@ jobs:
 
   debian:
     runs-on: ubuntu-20.04
+    env:
+      NICOTINE_SOURCE_DIRECTORY: ${{ github.action_path }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -27,7 +29,6 @@ jobs:
       - name: Build Debian package
         run: |
           # Generate tarball
-          export NICOTINE_SOURCE_DIRECTORY=$(pwd)
           python setup.py sdist
           cd packaging/
           mk-origtargz ../dist/nicotine-plus-*.tar.gz
