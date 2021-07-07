@@ -12,7 +12,7 @@ export DH_OPTIONS=-v
 SOURCE_DIRECTORY=$(shell cd ../ && pwd)
 
 %:
-	dh $@ --with python3 --buildsystem=pybuild --sourcedirectory=$(SOURCE_DIRECTORY)
+	dh $@ --with python3 --buildsystem=pybuild --sourcedirectory=$(CURDIR)
 
 # Use Xvfb to test startup without requiring an actual X server...
 override_dh_auto_test:
