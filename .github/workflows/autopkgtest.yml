@@ -22,4 +22,5 @@ jobs:
 
       - name: Run autopkgtest
         run: |
+          cd packaging/
           sudo autopkgtest . -- null
