@@ -10,7 +10,7 @@ DH_VERBOSE = 1
 export DH_OPTIONS=-v
 
 %:
-	dh $@ --with python3 --buildsystem=pybuild --sourcedirectory=../../
+	dh $@ --with python3 --buildsystem=pybuild
 
 # Use Xvfb to test startup without requiring an actual X server...
 override_dh_auto_test:
