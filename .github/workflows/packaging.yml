@@ -27,6 +27,7 @@ jobs:
       - name: Build Debian package
         run: |
           # Generate tarball
+          export NICOTINE_SOURCE_DIRECTORY=$(pwd)
           python setup.py sdist
           cd packaging/
           mk-origtargz ../dist/nicotine-plus-*.tar.gz

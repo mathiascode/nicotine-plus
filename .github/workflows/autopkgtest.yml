@@ -22,5 +22,6 @@ jobs:
 
       - name: Run autopkgtest
         run: |
+          export NICOTINE_SOURCE_DIRECTORY=$(pwd)
           cd packaging/
           sudo autopkgtest . -- null
