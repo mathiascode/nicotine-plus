@@ -21,13 +21,14 @@ jobs:
         run: |
           sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
           sudo apt update
-          sudo apt build-dep .
+          sudo apt build-dep packaging/
 
       - name: Build Debian package
         run: |
           # Generate tarball
           python setup.py sdist
-          mk-origtargz dist/nicotine-plus-*.tar.gz
+          cd packaging/
+          mk-origtargz ../dist/nicotine-plus-*.tar.gz
 
           # Build source package
           debuild -S -sa -us -uc
