@@ -467,6 +467,10 @@ class SlskProtoThread(threading.Thread):
         self.total_uploads = 0
         self.total_downloads = 0
         self.last_conncount_callback = time.time()
+        self.last_cycle_time = time.time()
+        self.loop_count = 0
+        self.loops_per_second = 0
+        self.last_cycle_loop_count = 0
 
         self.bind_listen_port()
 
@@ -626,10 +630,9 @@ class SlskProtoThread(threading.Thread):
 
         return limit
 
-    @staticmethod
-    def set_conn_speed_limit(connection, conns, limit_callback, limits):
+    def set_conn_speed_limit(self, connection, conns, limit_callback, limits):
 
-        limit = int(limit_callback(conns) * 0.005)  # limit is per second, we loop 200 times a second
+        limit = limit_callback(conns) // max(120, self.loops_per_second)
 
         if limit > 0:
             limits[connection] = limit
@@ -890,6 +893,7 @@ class SlskProtoThread(threading.Thread):
 
         try:
             conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            #conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
             if self.interface:
                 self.bind_to_network_interface(conn, self.interface)
@@ -1024,6 +1028,7 @@ class SlskProtoThread(threading.Thread):
                     pass
 
             addedbyteslen = len(addedbytes)
+
             curtime = time.time()
 
             """ Depending on the number of active downloads, the cooldown for callbacks
@@ -1263,19 +1268,16 @@ class SlskProtoThread(threading.Thread):
             limit = None
 
         conn_obj.lastactive = time.time()
+        data = connection.recv(conn_obj.lastreadlength)
+        conn_obj.ibuf.extend(data)
 
         if limit is None:
             # Unlimited download data
-            data = connection.recv(conn_obj.lastreadlength)
-            conn_obj.ibuf.extend(data)
-
             if len(data) >= conn_obj.lastreadlength // 2:
                 conn_obj.lastreadlength = conn_obj.lastreadlength * 2
 
         else:
             # Speed Limited Download data (transfers)
-            data = connection.recv(conn_obj.lastreadlength)
-            conn_obj.ibuf.extend(data)
             conn_obj.lastreadlength = limit
             conn_obj.readbytes2 += len(data)
 
@@ -1414,6 +1416,18 @@ class SlskProtoThread(threading.Thread):
 
                 self._core_callback([SetCurrentConnectionCount(numsockets)])
                 self.last_conncount_callback = curtime
+
+            # Transfer speed calculations
+            if (curtime - self.last_cycle_time >= 1):
+                # Normalize
+                print(self.loop_count)
+                self.loops_per_second = (self.last_cycle_loop_count + self.loop_count) // 2
+
+                self.last_cycle_loop_count = self.loop_count
+                self.loop_count = 0
+                self.last_cycle_time = curtime
+            else:
+                self.loop_count = self.loop_count + 1
 
             # Listen / Peer Port
             if self.listen_socket in input_list:
