@@ -1275,7 +1275,7 @@ Error: %(error)s""", {
             # Forcibly close peer connection. Only used after receiving a search result,
             # as we need to get rid of peer connections before they pile up.
 
-            self._core_callback([ConnClose(conn.conn, conn.addr)])
+            self._core_callback([ConnClose(conn)])
             self.close_connection(conns, conn.conn)
 
         return msgs
@@ -1842,7 +1842,7 @@ Error: %(error)s""", {
                     try:
                         if not self.read_data(conn_obj):
                             # No data received, socket was likely closed remotely
-                            self._core_callback([ConnClose(connection, conn_obj.addr)])
+                            self._core_callback([ConnClose(conn_obj)])
                             self.close_connection(conns, connection)
                             continue
 
