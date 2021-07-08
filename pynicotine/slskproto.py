@@ -471,6 +471,7 @@ class SlskProtoThread(threading.Thread):
         self.loop_count = 0
         self.loops_per_second = 0
         self.last_cycle_loop_count = 0
+        self.size = 0
 
         self.bind_listen_port()
 
@@ -1281,6 +1282,8 @@ class SlskProtoThread(threading.Thread):
             conn_obj.lastreadlength = limit
             conn_obj.readbytes2 += len(data)
 
+        self.size = self.size + len(data)
+
         if not data:
             return False
 
@@ -1426,6 +1429,8 @@ class SlskProtoThread(threading.Thread):
                 self.last_cycle_loop_count = self.loop_count
                 self.loop_count = 0
                 self.last_cycle_time = curtime
+                print("read data for loop: " + str(self.size) + " bytes")
+                self.size = 0
             else:
                 self.loop_count = self.loop_count + 1
 
