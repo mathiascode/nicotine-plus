@@ -634,6 +634,7 @@ class SlskProtoThread(threading.Thread):
     def set_conn_speed_limit(self, connection, conns, limit_callback, limits):
 
         limit = limit_callback(conns) // max(1, self.loops_per_second)
+        print("limit " + str(limit) + " ", end="")
 
         if limit > 0:
             limits[connection] = limit
