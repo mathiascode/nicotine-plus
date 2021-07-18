@@ -93,25 +93,8 @@ class SSDP:
             'MX': str(SSDP.response_time_secs)
         }
 
-        # Protocol 1
-        wan_ip1_sent = False
-        wan_ip1 = SSDP._create_msearch_request('urn:schemas-upnp-org:service:WANIPConnection:1', headers=headers)
-
-        wan_ppp1_sent = False
-        wan_ppp1 = SSDP._create_msearch_request('urn:schemas-upnp-org:service:WANPPPConnection:1', headers=headers)
-
-        wan_igd1_sent = False
-        wan_igd1 = SSDP._create_msearch_request('urn:schemas-upnp-org:device:InternetGatewayDevice:1', headers=headers)
-
-        # Protocol 2
-        wan_ip2_sent = False
-        wan_ip2 = SSDP._create_msearch_request('urn:schemas-upnp-org:service:WANIPConnection:2', headers=headers)
-
-        wan_igd2_sent = False
-        wan_igd2 = SSDP._create_msearch_request('urn:schemas-upnp-org:device:InternetGatewayDevice:2', headers=headers)
-
         wan_rootdevice_sent = False
-        wan_rootdevice = SSDP._create_msearch_request('upnp:rootdevice', headers=headers)
+        wan_rootdevice = SSDP._create_msearch_request('ssdp:all', headers=headers)
 
         inputs = [sock]
         outputs = [sock]
@@ -134,39 +117,9 @@ class SSDP:
                     routers.append(router)
 
             for _sock in writable:
-                if not wan_ip1_sent:
-                    wan_ip1.sendto(_sock, (SSDP.multicast_host, SSDP.multicast_port))
-                    log.add_debug('UPnP: Sent M-SEARCH IP request 1')
-                    time_end = time.time() + SSDP.response_time_secs
-                    wan_ip1_sent = True
-
-                if not wan_ppp1_sent:
-                    wan_ppp1.sendto(_sock, (SSDP.multicast_host, SSDP.multicast_port))
-                    log.add_debug('UPnP: Sent M-SEARCH PPP request 1')
-                    time_end = time.time() + SSDP.response_time_secs
-                    wan_ppp1_sent = True
-
-                if not wan_igd1_sent:
-                    wan_igd1.sendto(_sock, (SSDP.multicast_host, SSDP.multicast_port))
-                    log.add_debug('UPnP: Sent M-SEARCH IGD request 1')
-                    time_end = time.time() + SSDP.response_time_secs
-                    wan_igd1_sent = True
-
-                if not wan_ip2_sent:
-                    wan_ip2.sendto(_sock, (SSDP.multicast_host, SSDP.multicast_port))
-                    log.add_debug('UPnP: Sent M-SEARCH IP request 2')
-                    time_end = time.time() + SSDP.response_time_secs
-                    wan_ip2_sent = True
-
-                if not wan_igd2_sent:
-                    wan_igd2.sendto(_sock, (SSDP.multicast_host, SSDP.multicast_port))
-                    log.add_debug('UPnP: Sent M-SEARCH IGD request 2')
-                    time_end = time.time() + SSDP.response_time_secs
-                    wan_igd2_sent = True
-
                 if not wan_rootdevice_sent:
                     wan_rootdevice.sendto(_sock, (SSDP.multicast_host, SSDP.multicast_port))
-                    log.add_debug('UPnP: Sent M-SEARCH root device request')
+                    log.add_debug('UPnP: Sent M-SEARCH ssdp:all request')
                     time_end = time.time() + SSDP.response_time_secs
                     wan_rootdevice_sent = True
 
