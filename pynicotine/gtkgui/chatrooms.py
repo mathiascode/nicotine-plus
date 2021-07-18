@@ -838,6 +838,7 @@ class ChatRoom:
 
         if user == login:
             tag = self.tag_local
+            log.add("sent msg shown in chatroom")
         elif text.upper().find(login.upper()) > -1:
             tag = self.tag_hilite
         else:
@@ -922,14 +923,18 @@ class ChatRoom:
 
     def send_message(self, room, text):
 
+        log.add("send_message")
         event = self.frame.np.pluginhandler.outgoing_public_chat_event(room, text)
         if event is not None:
+            log.add("pubchat processed")
             (r, text) = event
             self.say(self.frame.np.privatechats.auto_replace(text))
             self.frame.np.pluginhandler.outgoing_public_chat_notification(room, text)
+            log.add("outgoing public chat notification sent")
 
     def say(self, text):
         text = re.sub("\\s\\s+", "  ", text)
+        log.add("say_chatroom")
         self.frame.np.queue.append(slskmessages.SayChatroom(self.room, text))
 
     def user_joined_room(self, userdata):

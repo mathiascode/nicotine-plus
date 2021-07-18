@@ -332,7 +332,12 @@ class PluginHandler:
 
         function_name_camelcase = ''.join(x.capitalize() or '_' for x in function_name.split('_'))
 
+        if function_name == "outgoing_public_chat_event":
+            log.add("trigger_event outgoing")
+
         for module, plugin in self.enabled_plugins.items():
+            if function_name == "outgoing_public_chat_event":
+                log.add("trigger_outgoing_event for %s" % plugin)
             try:
                 if hasattr(plugin, function_name_camelcase):
                     plugin.log("%(old_function)s is deprecated, please use %(new_function)s" % {
@@ -416,6 +421,7 @@ class PluginHandler:
         self.trigger_event("outgoing_private_chat_notification", (user, line))
 
     def outgoing_public_chat_event(self, room, line):
+        log.add("pre trigger_event")
         return self.trigger_event("outgoing_public_chat_event", (room, line))
 
     def outgoing_public_chat_notification(self, room, line):

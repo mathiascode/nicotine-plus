@@ -216,6 +216,7 @@ class ChatEntry:
 
     def on_enter(self, widget):
 
+        log.add("on_enter")
         text = self.entry.get_text()
 
         if not text:
@@ -260,6 +261,7 @@ class ChatEntry:
                 # Remove first slash and send the rest of the command as plain text
                 text = text[1:]
 
+            log.add("regular message")
             self.send_message(self.entity, text)
             return
 
