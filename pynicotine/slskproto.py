@@ -1422,7 +1422,7 @@ class SlskProtoThread(threading.Thread):
 
             if self._server_disconnect:
                 # We're not connected to the server at the moment
-                time.sleep(0.1)
+                time.sleep(0.2)
                 continue
 
             self._ulimits = {}
@@ -1465,7 +1465,7 @@ class SlskProtoThread(threading.Thread):
                 # Possibly opened too many sockets
 
                 log.add("select ValueError: %s", error)
-                time.sleep(0.005)
+                time.sleep(0.2)
                 continue
 
             # Listen / Peer Port
@@ -1473,7 +1473,7 @@ class SlskProtoThread(threading.Thread):
                 try:
                     incconn, incaddr = self.listen_socket.accept()
                 except Exception:
-                    time.sleep(0.005)
+                    time.sleep(0.01)
                 else:
                     if self._network_filter.is_ip_blocked(incaddr[0]):
                         log.add_conn(_("Ignoring connection request from blocked IP Address %(ip)s:%(port)s"), {
@@ -1597,6 +1597,6 @@ class SlskProtoThread(threading.Thread):
                         continue
 
             # Don't exhaust the CPU
-            time.sleep(0.005)
+            time.sleep(0.2)
 
         # Networking thread aborted
