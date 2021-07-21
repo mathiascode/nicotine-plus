@@ -1841,7 +1841,7 @@ Error: %(error)s""", {
                             self._conns[connection_in_progress] = conn_obj = PeerConnection(
                                 conn=connection_in_progress, addr=addr, init=msg_obj.init)
 
-                            old_conn_obj = connsinprogress[connection_in_progress]
+                            old_conn_obj = self._connsinprogress[connection_in_progress]
 
                             if conn_obj.init.token is None:
                                 conn_obj.init.conn = connection_in_progress
