@@ -1521,7 +1521,7 @@ Error: %(error)s""", {
     def process_conn_input(self, connection, conn_obj):
 
         if connection is self.server_socket:
-            msgs, conn_obj.ibuf = self.process_server_input(conn_obj.ibuf, conn_obj)
+            msgs, conn_obj.ibuf = self.process_server_input(conn_obj.ibuf)
             self._core_callback(msgs)
 
         elif conn_obj.init is None:
