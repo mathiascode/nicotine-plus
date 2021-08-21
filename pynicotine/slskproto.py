@@ -472,10 +472,16 @@ class SlskProtoThread(threading.Thread):
         self.total_uploads = 0
         self.total_downloads = 0
         self.last_conncount_callback = time.time()
-        self.last_cycle_time = time.time()
-        self.current_cycle_loop_count = 0
-        self.last_cycle_loop_count = 0
-        self.loops_per_second = 0
+
+        self.last_read_cycle_time = time.time()
+        self.current_cycle_read_count = 0
+        self.last_cycle_read_count = 0
+        self.reads_per_second = 0
+
+        self.last_write_cycle_time = time.time()
+        self.current_cycle_write_count = 0
+        self.last_cycle_write_count = 0
+        self.writes_per_second = 0
 
         self.bind_listen_port()
 
@@ -600,27 +606,45 @@ class SlskProtoThread(threading.Thread):
 
         return int(max(1024, limit))  # 1 KB/s is the minimum download speed per transfer
 
-    def _calc_loops_per_second(self):
-        """ Calculate number of loops per second. This value is used to split the
-        per-second transfer speed limit evenly for each loop. """
+    def _calc_reads_per_second(self):
 
         curtime = time.time()
 
-        if curtime - self.last_cycle_time >= 1:
-            self.loops_per_second = (self.last_cycle_loop_count + self.current_cycle_loop_count) // 2
+        if curtime - self.last_read_cycle_time >= 1:
+            self.reads_per_second = (self.last_cycle_read_count + self.current_cycle_read_count) // 2
 
-            self.last_cycle_loop_count = self.current_cycle_loop_count
-            self.last_cycle_time = curtime
-            self.current_cycle_loop_count = 0
+            self.last_cycle_read_count = self.current_cycle_read_count
+            self.last_read_cycle_time = curtime
+            self.current_cycle_read_count = 0
         else:
-            self.current_cycle_loop_count = self.current_cycle_loop_count + 1
+            self.current_cycle_read_count = self.current_cycle_read_count + 1
 
-    def set_conn_speed_limit(self, connection, limit_callback, limits):
+    def _calc_writes_per_second(self):
 
-        limit = limit_callback() // max(1, self.loops_per_second)
+        curtime = time.time()
+
+        if curtime - self.last_write_cycle_time >= 1:
+            self.writes_per_second = (self.last_cycle_write_count + self.current_cycle_write_count) // 2
+
+            self.last_cycle_write_count = self.current_cycle_write_count
+            self.last_write_cycle_time = curtime
+            self.current_cycle_write_count = 0
+        else:
+            self.current_cycle_write_count = self.current_cycle_write_count + 1
+
+    def set_conn_download_limit(self, connection):
+
+        limit = self._downloadlimit[0]() // max(1, self.reads_per_second)
 
         if limit > 0:
-            limits[connection] = limit
+            self._dlimits[connection] = limit
+
+    def set_conn_upload_limit(self, connection):
+
+        limit = self._uploadlimit[0]() // max(1, self.reads_per_second)
+
+        if limit > 0:
+            self._ulimits[connection] = limit
 
     """ Connections """
 
@@ -1306,6 +1330,7 @@ class SlskProtoThread(threading.Thread):
         conn_obj.lastactive = time.time()
         data = connection.recv(conn_obj.lastreadlength)
         conn_obj.ibuf.extend(data)
+        self._calc_reads_per_second()
 
         if limit is None:
             # Unlimited download data
@@ -1339,6 +1364,7 @@ class SlskProtoThread(threading.Thread):
                 bytes_send = connection.send(conn_obj.obuf[:limit])
 
             conn_obj.obuf = conn_obj.obuf[bytes_send:]
+            self._calc_writes_per_second()
         else:
             bytes_send = 0
 
@@ -1545,7 +1571,7 @@ class SlskProtoThread(threading.Thread):
 
                 if connection in input_list:
                     if self._is_download(conn_obj):
-                        self.set_conn_speed_limit(connection, self._downloadlimit[0], self._dlimits)
+                        self.set_conn_download_limit(connection)
 
                     try:
                         if not self.read_data(conn_obj):
@@ -1564,7 +1590,7 @@ class SlskProtoThread(threading.Thread):
 
                 if connection in output_list:
                     if self._is_upload(conn_obj):
-                        self.set_conn_speed_limit(connection, self._uploadlimit[0], self._ulimits)
+                        self.set_conn_upload_limit(connection)
 
                     try:
                         self.write_data(conn_obj)
@@ -1582,8 +1608,6 @@ class SlskProtoThread(threading.Thread):
             # Reset transfer speed limits
             self._ulimits = {}
             self._dlimits = {}
-
-            self._calc_loops_per_second()
 
             # Don't exhaust the CPU
             time.sleep(0.005)
