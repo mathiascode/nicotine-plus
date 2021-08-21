@@ -641,7 +641,7 @@ class SlskProtoThread(threading.Thread):
 
     def set_conn_upload_limit(self, connection):
 
-        limit = self._uploadlimit[0]() // max(1, self.reads_per_second)
+        limit = self._uploadlimit[0]() // max(1, self.writes_per_second)
 
         if limit > 0:
             self._ulimits[connection] = limit
