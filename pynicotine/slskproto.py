@@ -788,29 +788,33 @@ class SlskProtoThread(threading.Thread):
         of the msg_buffer.
         """
 
-        # Server messages are 8 bytes or greater in length
-        while len(msg_buffer) >= 8:
-            msgsize, msgtype = DOUBLE_UINT_UNPACK(msg_buffer[:8])
+        msg_buffer_mem = memoryview(msg_buffer)
+        buffer_len = len(msg_buffer)
+        idx = 0
 
-            if msgsize < 0 or msgsize + 4 > len(msg_buffer):
+        # Server messages are 8 bytes or greater in length
+        while buffer_len - idx >= 8:
+            msgsize, msgtype = DOUBLE_UINT_UNPACK(msg_buffer_mem[idx:idx + 8])
+
+            if msgsize < 0 or msgsize + 4 > buffer_len - idx:
                 # Invalid message size or buffer is being filled
                 break
 
             # Unpack server messages
             if msgtype in self.serverclasses:
                 msg = self.unpack_network_message(
-                    self.serverclasses[msgtype], msg_buffer[8:msgsize + 4], msgsize - 4, "server")
+                    self.serverclasses[msgtype], msg_buffer[idx + 8:idx + msgsize + 4], msgsize - 4, "server")
 
                 if msg is not None:
                     self._callback_msgs.append(msg)
 
             else:
                 log.add("Server message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
-                        {'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer[8:msgsize + 4]})
+                        {'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer_mem[idx + 8:idx + msgsize + 4]})
 
-            msg_buffer = msg_buffer[msgsize + 4:]
+            idx += msgsize + 4
 
-        conn.ibuf = msg_buffer
+        conn.ibuf = msg_buffer[idx:]
 
     def process_server_output(self, msg_obj):
 
@@ -837,20 +841,24 @@ class SlskProtoThread(threading.Thread):
 
     def process_peer_init_input(self, conn, msg_buffer):
 
-        # Peer init messages are 8 bytes or greater in length
-        while conn.init is None and len(msg_buffer) >= 8:
-            msgsize = UINT_UNPACK(msg_buffer[:4])[0]
+        msg_buffer_mem = memoryview(msg_buffer)
+        buffer_len = len(msg_buffer)
+        idx = 0
 
-            if msgsize < 0 or msgsize + 4 > len(msg_buffer):
+        # Peer init messages are 8 bytes or greater in length
+        while conn.init is None and buffer_len - idx >= 8:
+            msgsize = UINT_UNPACK(msg_buffer_mem[idx:idx + 4])[0]
+
+            if msgsize < 0 or msgsize + 4 > buffer_len - idx:
                 # Invalid message size or buffer is being filled
                 break
 
-            msgtype = msg_buffer[4]
+            msgtype = msg_buffer_mem[idx + 4]
 
             # Unpack peer init messages
             if msgtype in self.peerinitclasses:
                 msg = self.unpack_network_message(
-                    self.peerinitclasses[msgtype], msg_buffer[5:msgsize + 4], msgsize - 1, "peer init", conn)
+                    self.peerinitclasses[msgtype], msg_buffer[idx + 5:idx + msgsize + 4], msgsize - 1, "peer init", conn)
 
                 if msg is not None:
                     if self.peerinitclasses[msgtype] is PierceFireWall:
@@ -864,16 +872,16 @@ class SlskProtoThread(threading.Thread):
             else:
                 if conn.piercefw is None:
                     log.add("Peer init message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
-                            {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[5:msgsize + 4]})
+                            {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer_mem[idx + 5:idx + msgsize + 4]})
 
                     self._callback_msgs.append(ConnClose(conn.conn, conn.addr))
                     self.close_connection(self._conns, conn)
 
                 break
 
-            msg_buffer = msg_buffer[msgsize + 4:]
+            idx += msgsize + 4
 
-        conn.ibuf = msg_buffer
+        conn.ibuf = msg_buffer[idx:]
 
     def process_peer_init_output(self, msg_obj):
 
@@ -947,25 +955,28 @@ class SlskProtoThread(threading.Thread):
         and the rest of the msg_buffer.
         """
 
+        msg_buffer_mem = memoryview(msg_buffer)
+        buffer_len = len(msg_buffer)
+        idx = 0
         search_result_received = False
 
         # Peer messages are 8 bytes or greater in length
-        while len(msg_buffer) >= 8:
-            msgsize, msgtype = DOUBLE_UINT_UNPACK(msg_buffer[:8])
+        while buffer_len - idx >= 8:
+            msgsize, msgtype = DOUBLE_UINT_UNPACK(msg_buffer_mem[idx:idx + 8])
             peer_class = self.peerclasses.get(msgtype, None)
 
             if peer_class and peer_class in (SharedFileList, UserInfoReply):
                 # Send progress to the main thread
-                self._callback_msgs.append(PeerTransfer(conn, msgsize, len(msg_buffer) - 4, peer_class))
+                self._callback_msgs.append(PeerTransfer(conn, msgsize, buffer_len - idx - 4, peer_class))
 
-            if msgsize < 0 or msgsize + 4 > len(msg_buffer):
+            if msgsize < 0 or msgsize + 4 > buffer_len - idx:
                 # Invalid message size or buffer is being filled
                 break
 
             # Unpack peer messages
             if msgtype in self.peerclasses:
                 msg = self.unpack_network_message(
-                    self.peerclasses[msgtype], msg_buffer[8:msgsize + 4], msgsize - 4, "peer", conn)
+                    self.peerclasses[msgtype], msg_buffer[idx + 8:idx + msgsize + 4], msgsize - 4, "peer", conn)
 
                 if msg.__class__ is FileSearchResult:
                     search_result_received = True
@@ -982,12 +993,12 @@ class SlskProtoThread(threading.Thread):
 
                 log.add(("Peer message type %(type)s size %(size)i contents %(msg_buffer)s unknown, "
                          "from user: %(user)s, %(host)s:%(port)s"),
-                        {'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer[8:msgsize + 4],
+                        {'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer_mem[idx + 8:idx + msgsize + 4],
                          'user': conn.init.target_user, 'host': host, 'port': port})
 
-            msg_buffer = msg_buffer[msgsize + 4:]
+            idx += msgsize + 4
 
-        conn.ibuf = msg_buffer
+        conn.ibuf = msg_buffer[idx:]
 
         if search_result_received and not self.socket_still_active(conn.conn):
             # Forcibly close peer connection. Only used after receiving a search result,
@@ -1146,34 +1157,38 @@ class SlskProtoThread(threading.Thread):
         and the rest of the msg_buffer.
         """
 
-        # Distributed messages are 5 bytes or greater in length
-        while len(msg_buffer) >= 5:
-            msgsize = UINT_UNPACK(msg_buffer[:4])[0]
+        msg_buffer_mem = memoryview(msg_buffer)
+        buffer_len = len(msg_buffer)
+        idx = 0
 
-            if msgsize < 0 or msgsize + 4 > len(msg_buffer):
+        # Distributed messages are 5 bytes or greater in length
+        while buffer_len - idx >= 5:
+            msgsize = UINT_UNPACK(msg_buffer_mem[idx:idx + 4])[0]
+
+            if msgsize < 0 or msgsize + 4 > buffer_len - idx:
                 # Invalid message size or buffer is being filled
                 break
 
-            msgtype = msg_buffer[4]
+            msgtype = msg_buffer_mem[4]
 
             # Unpack distributed messages
             if msgtype in self.distribclasses:
                 msg = self.unpack_network_message(
-                    self.distribclasses[msgtype], msg_buffer[5:msgsize + 4], msgsize - 1, "distrib", conn)
+                    self.distribclasses[msgtype], msg_buffer[idx + 5:idx + msgsize + 4], msgsize - 1, "distrib", conn)
 
                 if msg is not None:
                     self._callback_msgs.append(msg)
 
             else:
                 log.add("Distrib message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
-                        {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[5:msgsize + 4]})
+                        {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer_mem[idx + 5:idx + msgsize + 4]})
                 self._callback_msgs.append(ConnClose(conn.conn, conn.addr))
                 self.close_connection(self._conns, conn)
                 break
 
-            msg_buffer = msg_buffer[msgsize + 4:]
+            idx += msgsize + 4
 
-        conn.ibuf = msg_buffer
+        conn.ibuf = msg_buffer[idx:]
 
     def process_distrib_output(self, msg_obj):
 
@@ -1586,6 +1601,6 @@ class SlskProtoThread(threading.Thread):
             self._calc_loops_per_second()
 
             # Don't exhaust the CPU
-            time.sleep(1 / 60)
+            time.sleep(0.005)
 
         # Networking thread aborted
