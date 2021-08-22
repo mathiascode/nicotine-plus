@@ -811,7 +811,7 @@ class SlskProtoThread(threading.Thread):
 
             else:
                 log.add("Server message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
-                        {'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer_mem[idx + 8:idx + msgsize_total]})
+                        {'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer[idx + 8:idx + msgsize_total]})
 
             idx += msgsize_total
             buffer_len -= msgsize_total
@@ -861,7 +861,8 @@ class SlskProtoThread(threading.Thread):
             # Unpack peer init messages
             if msgtype in self.peerinitclasses:
                 msg = self.unpack_network_message(
-                    self.peerinitclasses[msgtype], msg_buffer_mem[idx + 5:idx + msgsize_total], msgsize - 1, "peer init", conn)
+                    self.peerinitclasses[msgtype], msg_buffer_mem[idx + 5:idx + msgsize_total], msgsize - 1,
+                    "peer init", conn)
 
                 if msg is not None:
                     if self.peerinitclasses[msgtype] is PierceFireWall:
@@ -875,7 +876,8 @@ class SlskProtoThread(threading.Thread):
             else:
                 if conn.piercefw is None:
                     log.add("Peer init message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
-                            {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer_mem[idx + 5:idx + msgsize_total]})
+                            {'type': msgtype, 'size': msgsize - 1,
+                             'msg_buffer': msg_buffer[idx + 5:idx + msgsize_total]})
 
                     self._callback_msgs.append(ConnClose(conn.conn, conn.addr))
                     self.close_connection(self._conns, conn)
@@ -1003,7 +1005,7 @@ class SlskProtoThread(threading.Thread):
 
                 log.add(("Peer message type %(type)s size %(size)i contents %(msg_buffer)s unknown, "
                          "from user: %(user)s, %(host)s:%(port)s"),
-                        {'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer_mem[idx + 8:idx + msgsize_total],
+                        {'type': msgtype, 'size': msgsize - 4, 'msg_buffer': msg_buffer[idx + 8:idx + msgsize_total],
                          'user': conn.init.target_user, 'host': host, 'port': port})
 
             idx += msgsize_total
@@ -1169,7 +1171,7 @@ class SlskProtoThread(threading.Thread):
         """
 
         msg_buffer_mem = memoryview(msg_buffer)
-        buffer_len = len(msg_buffer_men)
+        buffer_len = len(msg_buffer_mem)
         idx = 0
 
         # Distributed messages are 5 bytes or greater in length
@@ -1186,14 +1188,15 @@ class SlskProtoThread(threading.Thread):
             # Unpack distributed messages
             if msgtype in self.distribclasses:
                 msg = self.unpack_network_message(
-                    self.distribclasses[msgtype], msg_buffer_mem[idx + 5:idx + msgsize_total], msgsize - 1, "distrib", conn)
+                    self.distribclasses[msgtype], msg_buffer_mem[idx + 5:idx + msgsize_total], msgsize - 1,
+                    "distrib", conn)
 
                 if msg is not None:
                     self._callback_msgs.append(msg)
 
             else:
                 log.add("Distrib message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
-                        {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer_mem[idx + 5:idx + msgsize_total]})
+                        {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[idx + 5:idx + msgsize_total]})
                 self._callback_msgs.append(ConnClose(conn.conn, conn.addr))
                 self.close_connection(self._conns, conn)
                 break
