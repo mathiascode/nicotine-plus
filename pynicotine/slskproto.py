@@ -797,7 +797,7 @@ class SlskProtoThread(threading.Thread):
             msgsize, msgtype = DOUBLE_UINT_UNPACK(msg_buffer_mem[idx:idx + 8])
             msgsize_total = msgsize + 4
 
-            if msgsize < 0 or msgsize_total > buffer_len:
+            if msgsize_total > buffer_len or msgsize < 0:
                 # Invalid message size or buffer is being filled
                 break
 
@@ -852,7 +852,7 @@ class SlskProtoThread(threading.Thread):
             msgsize = UINT_UNPACK(msg_buffer_mem[idx:idx + 4])[0]
             msgsize_total = msgsize + 4
 
-            if msgsize < 0 or msgsize_total > buffer_len:
+            if msgsize_total > buffer_len or msgsize < 0:
                 # Invalid message size or buffer is being filled
                 break
 
@@ -981,7 +981,7 @@ class SlskProtoThread(threading.Thread):
             except KeyError:
                 pass
 
-            if msgsize < 0 or msgsize_total > buffer_len:
+            if msgsize_total > buffer_len or msgsize < 0:
                 # Invalid message size or buffer is being filled
                 break
 
@@ -1179,7 +1179,7 @@ class SlskProtoThread(threading.Thread):
             msgsize = UINT_UNPACK(msg_buffer_mem[idx:idx + 4])[0]
             msgsize_total = msgsize + 4
 
-            if msgsize < 0 or msgsize_total > buffer_len:
+            if msgsize_total > buffer_len or msgsize < 0:
                 # Invalid message size or buffer is being filled
                 break
 
