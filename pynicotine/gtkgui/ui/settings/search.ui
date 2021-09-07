@@ -387,6 +387,7 @@
             <child>
               <object class="GtkMenuButton" id="ShowSearchHelp">
                 <property name="visible">1</property>
+                <property name="label">dummy</property>
               </object>
             </child>
             <child>

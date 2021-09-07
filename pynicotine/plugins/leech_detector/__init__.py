@@ -25,7 +25,6 @@ from pynicotine.pluginsystem import BasePlugin
 
 class Plugin(BasePlugin):
 
-    __name__ = "Leech Detector"
     settings = {
         'message': 'Please consider sharing more files before downloading from me. Thanks :)',
         'num_files': 1,

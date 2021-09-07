@@ -116,7 +116,18 @@ class PluginHandler:
             plugin = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(plugin)
 
-        instance = plugin.Plugin(self, self.config, self.core)
+        instance = plugin.Plugin()
+        instance.parent = self
+        instance.config = self.config
+        instance.core = self.core
+        instance.frame = self.core.ui_callback
+
+        info = self.get_plugin_info(plugin_name)
+        instance.__internal_name__ = plugin_name
+        instance.__name__ = info["Name"]
+        instance.__authors__ = info["Authors"]
+        instance.__version__ = info["Version"]
+
         self.plugin_settings(plugin_name, instance)
 
         if hasattr(plugin, "enable"):
@@ -161,7 +172,7 @@ class PluginHandler:
             self.update_completions(plugin)
 
             self.enabled_plugins[plugin_name] = plugin
-            log.add(_("Enabled plugin %s"), plugin.__name__)
+            log.add(_("Enabled plugin %s"), plugin.name)
 
         except Exception:
             from traceback import format_exc
@@ -190,7 +201,7 @@ class PluginHandler:
             plugin = self.enabled_plugins[plugin_name]
             path = self.__findplugin(plugin_name)
 
-            log.add(_("Disabled plugin {}".format(plugin.__name__)))
+            log.add(_("Disabled plugin {}".format(plugin.name)))
             plugin.disable()
 
             for trigger, _func in plugin.__publiccommands__:
@@ -240,9 +251,9 @@ class PluginHandler:
 
         with open(path, 'r', encoding="utf-8") as file_handle:
             infodict = {
-                "Name": "Example Plugin",
+                "Name": plugin_name,
                 "Version": 1.0,
-                "Authors": "",
+                "Authors": "-",
                 "Description": "No description provided"
             }
 
@@ -293,7 +304,7 @@ class PluginHandler:
                     log.add(_("Stored setting '%(name)s' is no longer present in the plugin"), {'name': key})
 
         except KeyError:
-            log.add("No custom settings found for %s", (plugin.__name__,))
+            log.add("No custom settings found for %s", (plugin.name,))
 
     def trigger_public_command_event(self, room, command, args):
         return self._trigger_command(command, room, args, public_command=True)
@@ -595,19 +606,26 @@ class ResponseThrottle:
 
 class BasePlugin:
 
-    __name__ = "BasePlugin"
-    __publiccommands__ = []
-    __privatecommands__ = []
+    # Populated automatically
+    __name__ = "Example Plugin"
+    __internal_name__ = "example_plugin"
+    __authors__ = ["Default"]
+    __version__ = "1.0"
+
+    config = None  # Global Nicotine+ config
+    parent = None  # PluginHandler class
+    core = None    # Nicotine+ core
+    frame = None   # Nicotine+ GUI
+
+    # Modifyable
     settings = {}
     metasettings = {}
 
-    def __init__(self, parent, config, core):
+    __publiccommands__ = []
+    __privatecommands__ = []
 
-        # Never override this function, override init() instead
-        self.parent = parent
-        self.config = config
-        self.core = core
-        self.frame = core.ui_callback
+    def __init__(self):
+        pass
 
     def init(self):
         # Custom enable function for plugins
@@ -727,7 +745,7 @@ class BasePlugin:
         self.core.chatrooms.say_chat_room(msg)
 
     def log(self, msg, msg_args=None):
-        log.add(self.__name__ + ": " + msg, msg_args)
+        log.add(self.name + ": " + msg, msg_args)
 
     def send_public(self, room, text):
         self.core.queue.append(slskmessages.SayChatroom(room, text))

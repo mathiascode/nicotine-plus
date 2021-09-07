@@ -26,8 +26,6 @@ from pynicotine.pluginsystem import returncode
 
 class Plugin(BasePlugin):
 
-    __name__ = "Port Checker"
-
     def init(self):
         # keys are users, value of 1 means pending requested scan, 2 means pending unrequested scan
         # and 3 means the user was scanned

@@ -25,7 +25,6 @@ from pynicotine.pluginsystem import BasePlugin, ResponseThrottle
 
 class Plugin(BasePlugin):
 
-    __name__ = "Test Replier"
     settings = {
         'replies': ['Test failed.']
     }

@@ -69,6 +69,7 @@ class WishList:
             render.connect('edited', self.cell_edited_callback, self.WishlistView, 0)
 
         if Gtk.get_major_version() == 4:
+            #frame.WishList.remove(frame.WishListLabel)
             button = frame.WishList.get_first_child()
             button.connect("clicked", self.on_show)
             button.set_child(frame.WishListLabel)

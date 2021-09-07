@@ -22,7 +22,6 @@ from pynicotine.pluginsystem import BasePlugin
 
 class Plugin(BasePlugin):
 
-    __name__ = "Anti SHOUT"
     settings = {
         'maxscore': 0.6,
         'minlength': 10,

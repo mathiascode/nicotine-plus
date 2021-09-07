@@ -24,7 +24,6 @@ from pynicotine.pluginsystem import returncode
 
 class Plugin(BasePlugin):
 
-    __name__ = "Multi Paste"
     settings = {
         'maxpubliclines': 4,
         'maxprivatelines': 8,

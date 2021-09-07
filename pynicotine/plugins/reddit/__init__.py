@@ -36,7 +36,6 @@ from pynicotine.utils import http_request
 
 class Plugin(BasePlugin):
 
-    __name__ = "Reddit"
     settings = {'reddit_links': 3}
     metasettings = {'reddit_links': {"description": 'Maximum number of links to provide', 'type': 'integer'}}
 

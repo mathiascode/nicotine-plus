@@ -20,8 +20,8 @@ from pynicotine.pluginsystem import BasePlugin
 
 
 class Plugin(BasePlugin):
+    """ Radio Button/Dropdown Example """
 
-    __name__ = "Radio Button/Dropdown Example"
     settings = {
         'player_radio': 2,                # id, starts from 0
         'player_dropdown': 'Clementine',  # can be either string or id starting from 0

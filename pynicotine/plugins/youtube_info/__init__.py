@@ -28,8 +28,6 @@ from pynicotine.utils import humanize
 
 class Plugin(BasePlugin):
 
-    __name__ = 'YouTube Info'
-
     settings = {
         'api_key': '',
         'color': 'Local',
