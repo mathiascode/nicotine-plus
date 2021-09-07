@@ -30,8 +30,7 @@ def install_pacman():
     arch = os.environ.get("ARCH") or "x86_64"
     prefix = "mingw-w64-" + str(arch) + "-"
     gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or 3
-    packages = [prefix + "gspell",
-                prefix + "gtk" + str(gtk_version),
+    packages = [prefix + "gtk" + str(gtk_version),
                 prefix + "python-flake8",
                 prefix + "python-pip",
                 prefix + "python-pylint",
