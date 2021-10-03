@@ -31,11 +31,8 @@ from gi.repository import Gtk
 from pynicotine import slskmessages
 from pynicotine.config import config
 from pynicotine.gtkgui.fileproperties import FileProperties
-from pynicotine.gtkgui.utils import connect_key_press_event
 from pynicotine.gtkgui.utils import copy_file_url
 from pynicotine.gtkgui.utils import copy_text
-from pynicotine.gtkgui.utils import get_key_press_event_args
-from pynicotine.gtkgui.utils import parse_accelerator
 from pynicotine.gtkgui.widgets.filechooser import choose_dir
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
 from pynicotine.gtkgui.widgets.infobar import InfoBar
@@ -201,7 +198,7 @@ class UserBrowse(UserInterface):
 
         self.dir_store = Gtk.TreeStore(str)
         self.FolderTreeView.set_model(self.dir_store)
-        self.folder_key_controller = connect_key_press_event(self.FolderTreeView, self.on_key_press_event_folder)
+        # self.folder_key_controller = connect_key_press_event(self.FolderTreeView, self.on_key_press_event_folder)
 
         self.dir_column_numbers = list(range(self.dir_store.get_n_columns()))
         cols = initialise_columns(
@@ -298,7 +295,7 @@ class UserBrowse(UserInterface):
         )
 
         self.FileTreeView.set_model(self.file_store)
-        self.file_key_controller = connect_key_press_event(self.FileTreeView, self.on_key_press_event_file)
+        # self.file_key_controller = connect_key_press_event(self.FileTreeView, self.on_key_press_event_file)
 
         self.file_column_numbers = [i for i in range(self.file_store.get_n_columns())]
         cols = initialise_columns(
@@ -371,15 +368,12 @@ class UserBrowse(UserInterface):
             return
 
         # Keyboard accessibility support for <Return> key behaviour
-        original_state = self.FolderTreeView.expand_row(path, False)
-        demanded_state = original_state
-
-        if original_state:
-            self.FolderTreeView.expand_row(path, False)
+        if self.FolderTreeView.row_expanded(path):
+            expandable = self.FolderTreeView.collapse_row(path)
         else:
-            demanded_state = self.FolderTreeView.collapse_row(path)
+            expandable = self.FolderTreeView.expand_row(path, False)
 
-        if (original_state == demanded_state is False) and int(len(self.file_store)) >= 1:
+        if not expandable and len(self.file_store) > 0:
             # This is the deepest level, so move focus over to Files if there are any
             self.FileTreeView.grab_focus()
 
@@ -945,100 +939,92 @@ class UserBrowse(UserInterface):
         return False
 
     def on_key_press_event_browse(self, *args):
+        """ Key Bindings (this UserBrowses Page) """
 
         keyval, keycode, state, widget = get_key_press_event_args(*args)
-
-        _keys, mods_primary = parse_accelerator("<Primary>")
-        _keys, mods_shift = parse_accelerator("<Shift>")
-        _keys, mods_alt = parse_accelerator("<Alt>")
-
-        prs_none = prs_ctrl = prs_shift = prs_alt = False
-
-        if state & mods_primary:  # <GDK_CONTROL_MASK>
-            prs_ctrl = True
-
-        if state & mods_shift:  # <GDK_SHIFT_MASK>
-            prs_shift = True
-
-        if state & mods_alt:  # <GDK_MOD1_MASK>
-            prs_alt = True
-
-        if prs_ctrl == prs_shift == prs_alt is False:
-            prs_none = True  # <GDK_MOD2_MASK> (plain)
-
-        """ Key Bindings (this UserBrowses Page) """
 
         # Ctrl+F: Focus Find TextEntry
         keycodes, mods = parse_accelerator("<Primary>f")
 
-        if state & mods and keycode in keycodes and (not prs_shift and not prs_alt):
+        if state == mods and keycode in keycodes:
             self.SearchEntry.grab_focus()
             return True
 
         # Ctrl+G or F3: Find Next Match
-        keycodes_g, _mods_g = parse_accelerator("<Primary>g")
-        keycodes_f3, _mods_f3 = parse_accelerator("F3")
+        keycodes_g, mods_g = parse_accelerator("<Primary>g")
+        keycodes_f3, mods_f3 = parse_accelerator("F3")
 
-        if (keycode in keycodes_g and prs_ctrl) or (keycode in keycodes_f3 and not prs_ctrl):
-            if (not prs_alt):  # Avoid any conflict
-                if (not prs_shift) and self.SearchEntry.get_text() != "":
-                    self.on_search()
+        if (state == mods_g and keycode in keycodes_g) or (state == mods_f3 and keycode in keycodes_f3):
+            # Shift+Ctrl+G or Shift+F3: Find Previous Match
+            # ToDo: {self.search_position = self.search_position - 2}
+            self.on_search()
+            return True
 
-                elif prs_shift:
-                    # Shift+Ctrl+G or Shift+F3: Find Previous Match
-                    # ToDo: {self.search_position = self.search_position - 2}
-                    self.on_search()
+        # Shift+Ctrl+G or Shift+F3: Find Previous Match
+        keycodes_g, mods_g = parse_accelerator("<Primary><Shift>g")
+        keycodes_f3, mods_f3 = parse_accelerator("<Shift>F3")
 
-                else:
-                    self.SearchEntry.grab_focus()
-
-                return True
+        if (state == mods_g and keycode in keycodes_g) or (state == mods_f3 and keycode in keycodes_f3):
+            # ToDo: {self.search_position = self.search_position - 2}
+            self.on_search()
+            return True
 
         # Ctrl+R or F5: Refresh
-        keycodes_r, _mods_r = parse_accelerator("<Primary>r")
-        keycodes_f5, _mods_f5 = parse_accelerator("F5")
+        keycodes_r, mods_r = parse_accelerator("<Primary>r")
+        keycodes_f5, mods_f5 = parse_accelerator("F5")
 
-        if (keycode in keycodes_r and prs_ctrl and not prs_shift) or (keycode in keycodes_f5 and prs_none):
-            if (not prs_alt):  # Avoid any conflict
-                self.on_refresh()
-                return True
+        if (state == mods_r and keycode in keycodes_r) or (state == mods_f5 and keycode in keycodes_f5):
+            self.on_refresh()
+            return True
 
         # Ctrl+S: Save List
         keycodes, mods = parse_accelerator("<Primary>s")
 
-        if state & mods and keycode in keycodes and (not prs_alt):
-            if (not prs_shift):
-                self.on_save()
-                return True
+        if state == mods and keycode in keycodes:
+            self.on_save()
+            return True
 
-            elif (prs_shift):
-                # Shift+Ctrl+S: Idea - Save List of all open tabs
-                return True
+        # Shift+Ctrl+S: Idea - Save List of all open tabs
+        keycodes, mods = parse_accelerator("<Primary><Shift>s")
+
+        if state == mods and keycode in keycodes:
+            return True
 
         # Ctrl+U: Upload To User...
         keycodes, mods = parse_accelerator("<Primary>u")
 
-        if state & mods and keycode in keycodes and (not prs_alt):
+        if state == mods and keycode in keycodes:
+            if self.user != config.sections["server"]["login"]:
+                return False
+
             self.select_files()
 
-            if self.user == config.sections["server"]["login"]:
-                if self.num_selected_files >= 1:
-                    if (not prs_shift):
-                        self.on_upload_files()
+            if self.num_selected_files >= 1:
+                self.on_upload_files()
 
-                    elif (prs_shift):
-                        self.on_upload_directory_to()
+            elif len(self.file_store) >= 1 and self.num_selected_files <= 0:
+                self.on_upload_directory_to()
 
-                elif int(len(self.file_store)) >= 1 and self.num_selected_files <= 0 and (not prs_shift):
-                    self.on_upload_directory_to()
+            elif len(self.file_store) <= 0:
+                self.on_upload_directory_recursive_to()
 
-                elif int(len(self.file_store)) <= 0 or (prs_shift):
-                    self.on_upload_directory_recursive_to()
+            return True
 
-                return True
+        # Shift+Ctrl+U: Upload Folder To User...
+        keycodes, mods = parse_accelerator("<Primary><Shift>u")
 
-            else:  # [user is not self]
+        if state == mods and keycode in keycodes:
+            if self.user != config.sections["server"]["login"]:
                 return False
+
+            self.select_files()
+
+            if self.num_selected_files >= 1:
+                self.on_upload_directory_to()
+            else:
+                self.on_upload_directory_recursive_to()
+
+            return True
 
         # Next key binding chain is self.Main
         return False
@@ -1338,6 +1324,7 @@ class UserBrowse(UserInterface):
 
     def on_search(self, *args):
 
+        self.SearchEntry.grab_focus()
         query = self.SearchEntry.get_text().lower()
 
         if not query:
