@@ -34,7 +34,7 @@ def install_pypi():
     """ Install dependencies from PyPi """
 
     packages = ["certifi",
-                "pyinstaller==4.3",
+                "git+https://github.com/mathiascode/pyinstaller@gtk4",
                 "stdlib_list"]
     subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
 

@@ -36,6 +36,10 @@ from stdlib_list import stdlib_list
 
 """ Add Contents """
 
+if os.getenv("NICOTINE_GTK_VERSION") == '4':
+    gtk_version = "4.0"
+else:
+    gtk_version = "3.0"
 
 # SSL support
 binaries = []
@@ -73,6 +77,15 @@ a = Analysis(['../../nicotine'],
              hiddenimports=hiddenimports,
              hookspath=[],
              runtime_hooks=[],
+             hooksconfig={
+                "gi": {
+                    "icons": ["Adwaita"],
+                    "themes": ["Adwaita", "Mac"],
+                    "module-versions": {
+                        "Gtk": gtk_version
+                    },
+                },
+             },
              excludes=['FixTk', 'idlelib', 'lib2to3', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter'],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,

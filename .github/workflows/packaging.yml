@@ -113,8 +113,14 @@ jobs:
 
   macos:
     runs-on: macos-10.15
+    strategy:
+      matrix:
+        include: [
+          { gtk: 3 },
+          { gtk: 4 }
+        ]
     env:
-      NICOTINE_GTK_VERSION: 3
+      NICOTINE_GTK_VERSION: ${{ matrix.gtk }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
