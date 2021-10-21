@@ -66,7 +66,9 @@ jobs:
       matrix:
         include: [
           { msystem: MINGW64, arch: x86_64, gtk: 3 },
-          { msystem: MINGW32, arch: i686, gtk: 3 }
+          { msystem: MINGW64, arch: x86_64, gtk: 4 },
+          { msystem: MINGW32, arch: i686, gtk: 3 },
+          { msystem: MINGW32, arch: i686, gtk: 4 }
         ]
     defaults:
       run:
@@ -113,8 +115,14 @@ jobs:
 
   macos:
     runs-on: macos-10.15
+    strategy:
+      matrix:
+        include: [
+          { gtk: 3 },
+          { gtk: 4 }
+        ]
     env:
-      NICOTINE_GTK_VERSION: 3
+      NICOTINE_GTK_VERSION: ${{ matrix.gtk }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -129,11 +137,10 @@ jobs:
       - name: Freeze application
         run: |
           python3 packaging/windows/setup.py build_exe
-          rm -rf dist/Nicotine+/
 
       - name: Ad-hoc signing
         run: |
-          codesign --deep --entitlements packaging/macos/entitlements.plist --options runtime --sign - dist/Nicotine+.app
+          codesign --deep --entitlements packaging/macos/entitlements.plist --options runtime --sign - dist/Nicotine+
 
       - name: Generate .dmg
         run: |

@@ -23,19 +23,12 @@ import os
 import ssl
 import sys
 
-# Provide access to the pynicotine module
-PYNICOTINE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
-sys.path.append(PYNICOTINE_PATH)
-
 from pkgutil import walk_packages
-
-import pynicotine.plugins
-
 from cx_Freeze import Executable, setup
-from pynicotine.config import config
-from pynicotine.i18n import generate_translations
 
 
+pynicotine_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or 3
 gui_base = None
 sys_base = None
 
@@ -43,12 +36,14 @@ include_files = []
 plugin_packages = []
 required_dlls = []
 
+sys.path.append(pynicotine_path)
+
 if sys.platform == "win32":
     gui_base = "Win32GUI"
     sys_base = sys.prefix
     required_dlls = [
-        'gtk-3-0',
-        'gdk-3-0',
+        'gtk-' + str(gtk_version) + '-0',
+        'gdk-' + str(gtk_version) + '-0',
         'epoxy-0',
         'gdk_pixbuf-2.0-0',
         'pango-1.0-0',
@@ -67,6 +62,8 @@ else:
     raise RuntimeError("Only Windows and macOS is supported")
 
 # Plugins
+import pynicotine.plugins
+
 for importer, name, ispkg in walk_packages(path=pynicotine.plugins.__path__, prefix="pynicotine.plugins."):
     if ispkg:
         plugin_packages.append(name)
@@ -79,12 +76,14 @@ if os.path.exists(ssl_paths.openssl_capath):
     include_files.append((ssl_paths.openssl_capath, "etc/ssl/certs"))
 
 # Translations
+from pynicotine.i18n import generate_translations
+
 _mo_entries, languages = generate_translations()
-include_files.append((os.path.join(PYNICOTINE_PATH, "mo"), "share/locale"))
+include_files.append((os.path.join(pynicotine_path, "mo"), "share/locale"))
 
 for language in languages:
-    mo_path = os.path.join("share/locale", language, "LC_MESSAGES/gtk30.mo")
-    full_path = os.path.join(sys.prefix, mo_path)
+    mo_path = os.path.join("share/locale", language, "LC_MESSAGES/gtk" + str(gtk_version) + "0.mo")
+    full_path = os.path.join(sys_base, mo_path)
 
     if os.path.exists(full_path):
         include_files.append((full_path, mo_path))
@@ -94,9 +93,9 @@ required_folders = [
     "lib/gdk-pixbuf-2.0"
 ]
 required_gi_namespaces = [
-    "Gtk-3.0",
+    "Gtk-" + str(gtk_version) + ".0",
     "Gio-2.0",
-    "Gdk-3.0",
+    "Gdk-" + str(gtk_version) + ".0",
     "GLib-2.0",
     "HarfBuzz-0.0",
     "Atk-1.0",
@@ -136,6 +135,8 @@ for path in glob.glob(os.path.join(themes_path, '**'), recursive=True):
         include_files.append((path, os.path.relpath(path, sys_base)))
 
 # Setup
+from pynicotine.config import config
+
 setup(
     name="Nicotine+",
     author="Nicotine+ Team",
@@ -150,7 +151,7 @@ setup(
     },
     executables=[
         Executable(
-            script=os.path.join(PYNICOTINE_PATH, "nicotine"),
+            script=os.path.join(pynicotine_path, "nicotine"),
             target_name="Nicotine+.exe",
             base=gui_base,
         )
