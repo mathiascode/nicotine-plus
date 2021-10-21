@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import glob
 import os
 import sys
 
@@ -49,7 +50,19 @@ for language in languages:
         include_files.append((full_path, mo_path))
 
 # GTK
-required_dlls = ['libgtk-3-0.dll']
+required_dlls = [
+    'gtk-3-0',
+    'gdk-3-0',
+    'epoxy-0',
+    'gdk_pixbuf-2.0-0',
+    'pango-1.0-0',
+    'pangocairo-1.0-0',
+    'pangoft2-1.0-0',
+    'pangowin32-1.0-0',
+    'atk-1.0-0',
+    'xml2-2',
+    'rsvg-2-2'
+]
 required_files = [
     "lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-png.dll",
     "lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-svg.dll",
@@ -72,28 +85,29 @@ icons_path = os.path.join(sys.prefix, "share/icons")
 themes_path = os.path.join(sys.prefix, "share/themes")
 
 for dll_name in required_dlls:
-    include_files.append((os.path.join(sys.prefix, "bin", dll_name), dll_name))
-
-for file_name in required_files:
-    include_files.append((os.path.join(sys.prefix, file_name), file_name))
+    filename = "lib" + dll_name + ".dll"
+    include_files.append((os.path.join(sys.prefix, "bin", filename), filename))
 
 for namespace in required_gi_namespaces:
     subpath = "lib/girepository-1.0/%s.typelib" % namespace
     include_files.append((os.path.join(sys.prefix, subpath), subpath))
 
-for path in glob.glob(icons_path):
+for filename in required_files:
+    include_files.append((os.path.join(sys.prefix, filename), filename))
+
+for path in glob.glob(os.path.join(icons_path, '**'), recursive=True):
     icon_path = os.path.relpath(path, icons_path)
 
     if not icon_path.startswith(("Adwaita", "hicolor")):
         continue
 
-    if path.endswith((".index", ".svg")):
+    if path.endswith((".theme", ".svg")):
         include_files.append((path, os.path.relpath(path, sys.prefix)))
 
-for path in glob.glob(themes_path):
+for path in glob.glob(os.path.join(themes_path, '**'), recursive=True):
     theme_path = os.path.relpath(path, themes_path)
 
-    if theme_path.startswith(("Adwaita", "Mac", "hicolor", "win32")):
+    if theme_path.startswith(("Default", "Mac")):
         include_files.append((path, os.path.relpath(path, sys.prefix)))
 
 # Setup
