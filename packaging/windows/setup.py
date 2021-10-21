@@ -27,25 +27,98 @@ from pkgutil import walk_packages
 from cx_Freeze import Executable, setup
 
 
+if sys.platform == "win32":
+    target_name = "Nicotine+.exe"
+    gui_base = "Win32GUI"
+    sys_base = sys.prefix
+
+elif sys.platform == "darwin":
+    target_name = "Nicotine+.app"
+    gui_base = None
+    sys_base = "/usr/local"
+
+else:
+    raise RuntimeError("Only Windows and macOS is supported")
+
 include_files = []
 plugin_packages = []
 
+gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or 3
+pynicotine_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+sys.path.append(pynicotine_path)
+
+
+def add_files_by_pattern(rel_path, starts_with, ends_with, output_path=None, recursive=False):
+
+    for full_path in glob.glob(os.path.join(sys_base, rel_path, '**'), recursive=recursive):
+        short_path = os.path.relpath(full_path, os.path.join(sys_base, rel_path))
+
+        if not short_path.startswith(starts_with):
+            continue
+
+        if not short_path.endswith(ends_with):
+            continue
+
+        if output_path is None:
+            output_path = rel_path
+
+        include_files.append((full_path, os.path.join(output_path, short_path)))
+
+
+def add_plugin_packages():
+
+    import pynicotine.plugins  # noqa: E402
+
+    for importer, name, ispkg in walk_packages(path=pynicotine.plugins.__path__, prefix="pynicotine.plugins."):
+        if ispkg:
+            plugin_packages.append(name)
+
+
+def add_translations():
+
+    from pynicotine.i18n import generate_translations  # noqa: E402
+    _mo_entries, languages = generate_translations()
+
+    include_files.append((os.path.join(pynicotine_path, "mo"), "share/locale"))
+    add_files_by_pattern("share/locale", tuple(languages), "gtk" + str(gtk_version) + "0.mo", recursive=True)
+
+
+def add_ssl_certs():
+
+    ssl_paths = ssl.get_default_verify_paths()
+    include_files.append((ssl_paths.openssl_cafile, "etc/ssl/cert.pem"))
+
+    if os.path.exists(ssl_paths.openssl_capath):
+        include_files.append((ssl_paths.openssl_capath, "etc/ssl/certs"))
+
+
+# Translations
+add_translations()
+
+# Plugins
+add_plugin_packages()
+
+# SSL support
+add_ssl_certs()
+
+# GTK-related files
 required_dlls = (
-    "gtk-",
-    "epoxy-",
-    "gdk_pixbuf-",
-    "pango-",
-    "pangocairo-",
-    "pangoft2-",
-    "pangowin32-",
-    "atk-",
-    "xml2-",
-    "rsvg-"
+    "libgtk-" + str(gtk_version),
+    "libgdk-" + str(gtk_version),
+    "libepoxy-",
+    "libgdk_pixbuf-",
+    "libpango-",
+    "libpangocairo-",
+    "libpangoft2-",
+    "libpangowin32-",
+    "libatk-",
+    "libxml2-",
+    "librsvg-"
 )
-required_gi_namespaces = (
-    "Gtk-",
+required_typelibs = (
+    "Gtk-" + str(gtk_version),
     "Gio-",
-    "Gdk-",
+    "Gdk-" + str(gtk_version),
     "GLib-",
     "Atk-",
     "HarfBuzz-",
@@ -64,85 +137,11 @@ required_themes = (
     "Mac"
 )
 
-pynicotine_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
-dlls_path = "bin"
-pixbuf_path = "lib/gdk-pixbuf-2.0"
-typelibs_path = "lib/girepository-1.0"
-locales_path = "share/locale"
-icons_path = "share/icons"
-themes_path = "share/themes"
-
-sys.path.append(pynicotine_path)
-
-if sys.platform == "win32":
-    target_name = "Nicotine+.exe"
-    gui_base = "Win32GUI"
-    sys_base = sys.prefix
-
-elif sys.platform == "darwin":
-    target_name = "Nicotine+.app"
-    gui_base = None
-    sys_base = "/usr/local"
-
-else:
-    raise RuntimeError("Only Windows and macOS is supported")
-
-# Translations
-from pynicotine.i18n import generate_translations  # noqa: E402
-
-_mo_entries, languages = generate_translations()
-include_files.append((os.path.join(pynicotine_path, "mo"), "share/locale"))
-
-for full_path in glob.glob(os.path.join(sys_base, locales_path, '**'), recursive=True):
-    locale_path = os.path.relpath(full_path, os.path.join(sys_base, locales_path))
-
-    if locale_path.startswith(tuple(languages)) and locale_path.contains("gtk") and locale_path.endswith("0.mo"):
-        include_files.append((full_path, locale_path))
-
-# Plugins
-import pynicotine.plugins  # noqa: E402
-
-for importer, name, ispkg in walk_packages(path=pynicotine.plugins.__path__, prefix="pynicotine.plugins."):
-    if ispkg:
-        plugin_packages.append(name)
-
-# SSL support
-ssl_paths = ssl.get_default_verify_paths()
-include_files.append((ssl_paths.openssl_cafile, "etc/ssl/cert.pem"))
-
-if os.path.exists(ssl_paths.openssl_capath):
-    include_files.append((ssl_paths.openssl_capath, "etc/ssl/certs"))
-
-# DLLs
-for full_path in glob.glob(os.path.join(sys_base, dlls_path, '**')):
-    dll_path = os.path.relpath(full_path, os.path.join(sys_base, dlls_path))
-
-    if dll_path.startswith(required_dlls) and dll_path.endswith(".dll"):
-        include_files.append((full_path, dll_path))
-
-# Pixbuf loaders
-include_files.append((os.path.join(sys_base, pixbuf_path), pixbuf_path))
-
-# Typelibs
-for full_path in glob.glob(os.path.join(sys_base, typelibs_path, '**')):
-    typelib_path = os.path.relpath(full_path, os.path.join(sys_base, typelibs_path))
-
-    if typelib_path.startswith(required_gi_namespaces) and typelib_path.endswith(".typelib"):
-        include_files.append((full_path, typelib_path))
-
-# Icons
-for full_path in glob.glob(os.path.join(sys_base, icons_path, '**'), recursive=True):
-    icon_path = os.path.relpath(full_path, os.path.join(sys_base, icons_path))
-
-    if icon_path.startswith(required_icon_packs) and icon_path.endswith((".theme", ".svg")):
-        include_files.append((full_path, icon_path))
-
-# Themes
-for full_path in glob.glob(os.path.join(sys_base, themes_path, '**'), recursive=True):
-    theme_path = os.path.relpath(full_path, os.path.join(sys_base, themes_path))
-
-    if theme_path.startswith(required_themes):
-        include_files.append((full_path, theme_path))
+add_files_by_pattern("bin", required_dlls, ".dll", output_path="")
+add_files_by_pattern("lib/girepository-1.0", required_typelibs, ".typelib")
+include_files.append((os.path.join(sys_base, "lib/gdk-pixbuf-2.0"), "lib/gdk-pixbuf-2.0"))
+add_files_by_pattern("share/icons", required_icon_packs, (".theme", ".svg"), recursive=True)
+add_files_by_pattern("share/themes", required_themes, ".css", recursive=True)
 
 # Setup
 from pynicotine.config import config  # noqa: E402
