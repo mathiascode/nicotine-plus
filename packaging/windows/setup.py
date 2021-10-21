@@ -158,10 +158,7 @@ setup(
         ),
         "bdist_mac": dict(
             iconfile=os.path.join(pynicotine_path, "packaging/macos/nicotine.icns"),
-            bundle_name="Nicotine+",
-            codesign_deep=True,
-            codesign_entitlements=os.path.join(pynicotine_path, "packaging/macos/entitlements.plist"),
-            codesign_identity="-"
+            bundle_name="Nicotine+"
         ),
         "bdist_dmg": dict(
             applications_shortcut=True
