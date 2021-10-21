@@ -63,10 +63,8 @@ required_dlls = [
     'xml2-2',
     'rsvg-2-2'
 ]
-required_files = [
-    "lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-png.dll",
-    "lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-svg.dll",
-    "lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+required_folders = [
+    "lib/gdk-pixbuf-2.0"
 ]
 required_gi_namespaces = [
     "Gtk-3.0",
@@ -92,8 +90,8 @@ for namespace in required_gi_namespaces:
     subpath = "lib/girepository-1.0/%s.typelib" % namespace
     include_files.append((os.path.join(sys.prefix, subpath), subpath))
 
-for filename in required_files:
-    include_files.append((os.path.join(sys.prefix, filename), filename))
+for folder in required_folders:
+    include_files.append((os.path.join(sys.prefix, folder), folder))
 
 for path in glob.glob(os.path.join(icons_path, '**'), recursive=True):
     icon_path = os.path.relpath(path, icons_path)
