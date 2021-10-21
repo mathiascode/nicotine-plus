@@ -35,7 +35,7 @@ def create_dmg():
                            "--window-size", "600", "400",
                            "--app-drop-link", "450", "185",
                            "Nicotine+.dmg",
-                           os.path.join(current_dir, "..", "..", "dist")])
+                           os.path.join(current_dir, "..", "..", "dist", "Nicotine+")])
 
 
 if __name__ == '__main__':

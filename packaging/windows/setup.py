@@ -31,6 +31,7 @@ pynicotine_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(
 gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or 3
 gui_base = None
 sys_base = None
+target_name = None
 
 include_files = []
 plugin_packages = []
@@ -39,6 +40,7 @@ required_dlls = []
 sys.path.append(pynicotine_path)
 
 if sys.platform == "win32":
+    target_name = "Nicotine+.exe"
     gui_base = "Win32GUI"
     sys_base = sys.prefix
     required_dlls = [
@@ -56,6 +58,7 @@ if sys.platform == "win32":
     ]
 
 elif sys.platform == "darwin":
+    target_name = "Nicotine+.app"
     sys_base = "/usr/local"
 
 else:
@@ -152,7 +155,7 @@ setup(
     executables=[
         Executable(
             script=os.path.join(pynicotine_path, "nicotine"),
-            target_name="Nicotine+.exe",
+            target_name=target_name,
             base=gui_base,
         )
     ],
