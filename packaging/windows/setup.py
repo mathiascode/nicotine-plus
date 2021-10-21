@@ -20,6 +20,7 @@
 
 import glob
 import os
+import ssl
 import sys
 
 # Provide access to the pynicotine module
@@ -35,8 +36,47 @@ from pynicotine.config import config
 from pynicotine.i18n import generate_translations
 
 
+gui_base = None
+sys_base = None
+
 include_files = []
-plugins = [name for importer, name, ispkg in walk_packages(path=pynicotine.plugins.__path__, prefix="pynicotine.plugins.") if ispkg]
+plugin_packages = []
+required_dlls = []
+
+if sys.platform == "win32":
+    gui_base = "Win32GUI"
+    sys_base = sys.prefix
+    required_dlls = [
+        'gtk-3-0',
+        'gdk-3-0',
+        'epoxy-0',
+        'gdk_pixbuf-2.0-0',
+        'pango-1.0-0',
+        'pangocairo-1.0-0',
+        'pangoft2-1.0-0',
+        'pangowin32-1.0-0',
+        'atk-1.0-0',
+        'xml2-2',
+        'rsvg-2-2'
+    ]
+
+elif sys.platform == "darwin":
+    sys_base = "/usr/local"
+
+else:
+    raise RuntimeError("Only Windows and macOS is supported")
+
+# Plugins
+for importer, name, ispkg in walk_packages(path=pynicotine.plugins.__path__, prefix="pynicotine.plugins."):
+    if ispkg:
+        plugin_packages.append(name)
+
+# SSL support
+ssl_paths = ssl.get_default_verify_paths()
+include_files.append((ssl_paths.openssl_cafile, "etc/ssl/cert.pem"))
+
+if os.path.exists(ssl_paths.openssl_capath):
+    include_files.append((ssl_paths.openssl_capath, "etc/ssl/certs"))
 
 # Translations
 _mo_entries, languages = generate_translations()
@@ -50,19 +90,6 @@ for language in languages:
         include_files.append((full_path, mo_path))
 
 # GTK
-required_dlls = [
-    'gtk-3-0',
-    'gdk-3-0',
-    'epoxy-0',
-    'gdk_pixbuf-2.0-0',
-    'pango-1.0-0',
-    'pangocairo-1.0-0',
-    'pangoft2-1.0-0',
-    'pangowin32-1.0-0',
-    'atk-1.0-0',
-    'xml2-2',
-    'rsvg-2-2'
-]
 required_folders = [
     "lib/gdk-pixbuf-2.0"
 ]
@@ -79,19 +106,19 @@ required_gi_namespaces = [
     "cairo-1.0",
     "GModule-2.0"
 ]
-icons_path = os.path.join(sys.prefix, "share/icons")
-themes_path = os.path.join(sys.prefix, "share/themes")
+icons_path = os.path.join(sys_base, "share/icons")
+themes_path = os.path.join(sys_base, "share/themes")
 
 for dll_name in required_dlls:
     filename = "lib" + dll_name + ".dll"
-    include_files.append((os.path.join(sys.prefix, "bin", filename), filename))
+    include_files.append((os.path.join(sys_base, "bin", filename), filename))
+
+for folder in required_folders:
+    include_files.append((os.path.join(sys_base, folder), folder))
 
 for namespace in required_gi_namespaces:
     subpath = "lib/girepository-1.0/%s.typelib" % namespace
-    include_files.append((os.path.join(sys.prefix, subpath), subpath))
-
-for folder in required_folders:
-    include_files.append((os.path.join(sys.prefix, folder), folder))
+    include_files.append((os.path.join(sys_base, subpath), subpath))
 
 for path in glob.glob(os.path.join(icons_path, '**'), recursive=True):
     icon_path = os.path.relpath(path, icons_path)
@@ -100,13 +127,13 @@ for path in glob.glob(os.path.join(icons_path, '**'), recursive=True):
         continue
 
     if path.endswith((".theme", ".svg")):
-        include_files.append((path, os.path.relpath(path, sys.prefix)))
+        include_files.append((path, os.path.relpath(path, sys_base)))
 
 for path in glob.glob(os.path.join(themes_path, '**'), recursive=True):
     theme_path = os.path.relpath(path, themes_path)
 
     if theme_path.startswith(("Default", "Mac")):
-        include_files.append((path, os.path.relpath(path, sys.prefix)))
+        include_files.append((path, os.path.relpath(path, sys_base)))
 
 # Setup
 setup(
@@ -116,16 +143,16 @@ setup(
     options={
         "build_exe": dict(
             build_exe="dist/Nicotine+",
-            packages=["certifi", "gi"] + plugins,
-            excludes=["lib2to3", "pygtkcompat", "tkinter"],
+            packages=["gi"] + plugin_packages,
+            excludes=["pygtkcompat", "tkinter"],
             include_files=include_files,
         ),
     },
     executables=[
         Executable(
             script=os.path.join(PYNICOTINE_PATH, "nicotine"),
-            targetName="Nicotine+.exe",
-            base="Win32GUI" if sys.platform == "win32" else None,
+            target_name="Nicotine+.exe",
+            base=gui_base,
         )
     ],
 )
