@@ -62,7 +62,7 @@ else:
     raise RuntimeError("Only Windows and macOS is supported")
 
 # Plugins
-import pynicotine.plugins
+import pynicotine.plugins  # noqa: E402
 
 for importer, name, ispkg in walk_packages(path=pynicotine.plugins.__path__, prefix="pynicotine.plugins."):
     if ispkg:
@@ -76,7 +76,7 @@ if os.path.exists(ssl_paths.openssl_capath):
     include_files.append((ssl_paths.openssl_capath, "etc/ssl/certs"))
 
 # Translations
-from pynicotine.i18n import generate_translations
+from pynicotine.i18n import generate_translations  # noqa: E402
 
 _mo_entries, languages = generate_translations()
 include_files.append((os.path.join(pynicotine_path, "mo"), "share/locale"))
@@ -135,7 +135,7 @@ for path in glob.glob(os.path.join(themes_path, '**'), recursive=True):
         include_files.append((path, os.path.relpath(path, sys_base)))
 
 # Setup
-from pynicotine.config import config
+from pynicotine.config import config  # noqa: E402
 
 setup(
     name="Nicotine+",
