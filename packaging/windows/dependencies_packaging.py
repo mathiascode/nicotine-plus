@@ -31,6 +31,7 @@ def install_pacman():
 
     prefix = "mingw-w64-" + str(ARCH) + "-"
     packages = [prefix + "nsis",
+                prefix + "python-certifi",
                 prefix + "python-cx-freeze"]
 
     subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)

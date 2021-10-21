@@ -50,10 +50,11 @@ for language in languages:
 
 # GTK
 required_dlls = ['libgtk-3-0.dll']
-
-for dll in required_dlls:
-    include_files.append((os.path.join(sys.prefix, "bin", dll), dll))
-
+required_files = [
+    "lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-png.dll",
+    "lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-svg.dll",
+    "lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+]
 required_gi_namespaces = [
     "Gtk-3.0",
     "Gio-2.0",
@@ -65,21 +66,35 @@ required_gi_namespaces = [
     "GObject-2.0",
     "GdkPixbuf-2.0",
     "cairo-1.0",
-    "GModule-2.0",
+    "GModule-2.0"
 ]
+icons_path = os.path.join(sys.prefix, "share/icons")
+themes_path = os.path.join(sys.prefix, "share/themes")
+
+for dll_name in required_dlls:
+    include_files.append((os.path.join(sys.prefix, "bin", dll_name), dll_name))
+
+for file_name in required_files:
+    include_files.append((os.path.join(sys.prefix, file_name), file_name))
 
 for namespace in required_gi_namespaces:
     subpath = "lib/girepository-1.0/%s.typelib" % namespace
     include_files.append((os.path.join(sys.prefix, subpath), subpath))
 
-gtk_files = [
-    "lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-png.dll",
-    "lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-svg.dll",
-    "lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
-]
+for path in glob.glob(icons_path):
+    icon_path = os.path.relpath(path, icons_path)
 
-for gtk_file in gtk_files:
-    include_files.append((os.path.join(sys.prefix, gtk_file), gtk_file))
+    if not icon_path.startswith(("Adwaita", "hicolor")):
+        continue
+
+    if path.endswith((".index", ".svg")):
+        include_files.append((path, os.path.relpath(path, sys.prefix)))
+
+for path in glob.glob(themes_path):
+    theme_path = os.path.relpath(path, themes_path)
+
+    if theme_path.startswith(("Adwaita", "Mac", "hicolor", "win32")):
+        include_files.append((path, os.path.relpath(path, sys.prefix)))
 
 # Setup
 setup(
@@ -89,7 +104,7 @@ setup(
     options={
         "build_exe": dict(
             build_exe="dist/Nicotine+",
-            packages=["gi"] + plugins,
+            packages=["certifi", "gi"] + plugins,
             excludes=["lib2to3", "pygtkcompat", "tkinter"],
             include_files=include_files,
         ),
