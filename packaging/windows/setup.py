@@ -43,9 +43,9 @@ if sys.platform == "win32":
     target_name = "Nicotine+.exe"
     gui_base = "Win32GUI"
     sys_base = sys.prefix
+
     required_dlls = [
-        'gtk-' + str(gtk_version) + '-0',
-        'gdk-' + str(gtk_version) + '-0',
+        'gtk-' + "4-1" if gtk_version == 4 else "3-0",
         'epoxy-0',
         'gdk_pixbuf-2.0-0',
         'pango-1.0-0',
