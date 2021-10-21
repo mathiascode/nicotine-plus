@@ -94,7 +94,7 @@ jobs:
 
       - name: Build installer
         run: |
-          pyinstaller packaging/windows/nicotine.spec
+          python3 packaging/windows/setup.py build_exe
           python3 packaging/windows/create_installer.py
           mkdir installer
           cp -r packaging/windows/Nicotine*.exe installer/
