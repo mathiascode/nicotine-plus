@@ -101,7 +101,6 @@ required_gi_namespaces = [
     "Gdk-" + str(gtk_version) + ".0",
     "GLib-2.0",
     "HarfBuzz-0.0",
-    "Atk-1.0",
     "Pango-1.0",
     "GObject-2.0",
     "GdkPixbuf-2.0",
@@ -110,6 +109,10 @@ required_gi_namespaces = [
 ]
 icons_path = os.path.join(sys_base, "share/icons")
 themes_path = os.path.join(sys_base, "share/themes")
+
+if gtk_version == 3:
+    # ATK removed in GTK 4
+    required_gi_namespaces.append("Atk-1.0")
 
 for dll_name in required_dlls:
     filename = "lib" + dll_name + ".dll"
