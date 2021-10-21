@@ -104,13 +104,13 @@ jobs:
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: windows-${{ matrix.arch }}-installer
+          name: windows-${{ matrix.arch }}-installer-gtk${{ matrix.gtk }}
           path: installer
 
       - name: Archive package artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: windows-${{ matrix.arch }}-package
+          name: windows-${{ matrix.arch }}-package-gtk${{ matrix.gtk }}
           path: dist
 
   macos:
@@ -149,5 +149,5 @@ jobs:
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: macos-installer
+          name: macos-installer-gtk${{ matrix.gtk }}
           path: dmg
