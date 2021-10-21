@@ -27,15 +27,50 @@ from pkgutil import walk_packages
 from cx_Freeze import Executable, setup
 
 
-pynicotine_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
-gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or 3
-gui_base = None
-sys_base = None
-target_name = None
-
 include_files = []
 plugin_packages = []
-required_dlls = []
+
+required_dlls = (
+    "gtk-",
+    "epoxy-",
+    "gdk_pixbuf-",
+    "pango-",
+    "pangocairo-",
+    "pangoft2-",
+    "pangowin32-",
+    "atk-",
+    "xml2-",
+    "rsvg-"
+)
+required_gi_namespaces = (
+    "Gtk-",
+    "Gio-",
+    "Gdk-",
+    "GLib-",
+    "Atk-",
+    "HarfBuzz-",
+    "Pango-",
+    "GObject-",
+    "GdkPixbuf-",
+    "cairo-",
+    "GModule-"
+)
+required_icon_packs = (
+    "Adwaita",
+    "hicolor"
+)
+required_themes = (
+    "Default",
+    "Mac"
+)
+
+pynicotine_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+dlls_path = "bin"
+pixbuf_path = "lib/gdk-pixbuf-2.0"
+typelibs_path = "lib/girepository-1.0"
+locales_path = "share/locale"
+icons_path = "share/icons"
+themes_path = "share/themes"
 
 sys.path.append(pynicotine_path)
 
@@ -44,25 +79,25 @@ if sys.platform == "win32":
     gui_base = "Win32GUI"
     sys_base = sys.prefix
 
-    required_dlls = [
-        'gtk-' + "4-1" if gtk_version == 4 else "3-0",
-        'epoxy-0',
-        'gdk_pixbuf-2.0-0',
-        'pango-1.0-0',
-        'pangocairo-1.0-0',
-        'pangoft2-1.0-0',
-        'pangowin32-1.0-0',
-        'atk-1.0-0',
-        'xml2-2',
-        'rsvg-2-2'
-    ]
-
 elif sys.platform == "darwin":
     target_name = "Nicotine+.app"
+    gui_base = None
     sys_base = "/usr/local"
 
 else:
     raise RuntimeError("Only Windows and macOS is supported")
+
+# Translations
+from pynicotine.i18n import generate_translations  # noqa: E402
+
+_mo_entries, languages = generate_translations()
+include_files.append((os.path.join(pynicotine_path, "mo"), "share/locale"))
+
+for full_path in glob.glob(os.path.join(sys_base, locales_path, '**'), recursive=True):
+    locale_path = os.path.relpath(full_path, os.path.join(sys_base, locales_path))
+
+    if locale_path.startswith(tuple(languages)) and locale_path.contains("gtk") and locale_path.endswith("0.mo"):
+        include_files.append((full_path, locale_path))
 
 # Plugins
 import pynicotine.plugins  # noqa: E402
@@ -78,67 +113,36 @@ include_files.append((ssl_paths.openssl_cafile, "etc/ssl/cert.pem"))
 if os.path.exists(ssl_paths.openssl_capath):
     include_files.append((ssl_paths.openssl_capath, "etc/ssl/certs"))
 
-# Translations
-from pynicotine.i18n import generate_translations  # noqa: E402
+# DLLs
+for full_path in glob.glob(os.path.join(sys_base, dlls_path, '**')):
+    dll_path = os.path.relpath(full_path, os.path.join(sys_base, dlls_path))
 
-_mo_entries, languages = generate_translations()
-include_files.append((os.path.join(pynicotine_path, "mo"), "share/locale"))
+    if dll_path.startswith(required_dlls) and dll_path.endswith(".dll"):
+        include_files.append((full_path, dll_path))
 
-for language in languages:
-    mo_path = os.path.join("share/locale", language, "LC_MESSAGES/gtk" + str(gtk_version) + "0.mo")
-    full_path = os.path.join(sys_base, mo_path)
+# Pixbuf loaders
+include_files.append((os.path.join(sys_base, pixbuf_path), pixbuf_path))
 
-    if os.path.exists(full_path):
-        include_files.append((full_path, mo_path))
+# Typelibs
+for full_path in glob.glob(os.path.join(sys_base, typelibs_path, '**')):
+    typelib_path = os.path.relpath(full_path, os.path.join(sys_base, typelibs_path))
 
-# GTK
-required_folders = [
-    "lib/gdk-pixbuf-2.0"
-]
-required_gi_namespaces = [
-    "Gtk-" + str(gtk_version) + ".0",
-    "Gio-2.0",
-    "Gdk-" + str(gtk_version) + ".0",
-    "GLib-2.0",
-    "HarfBuzz-0.0",
-    "Pango-1.0",
-    "GObject-2.0",
-    "GdkPixbuf-2.0",
-    "cairo-1.0",
-    "GModule-2.0"
-]
-icons_path = os.path.join(sys_base, "share/icons")
-themes_path = os.path.join(sys_base, "share/themes")
+    if typelib_path.startswith(required_gi_namespaces) and typelib_path.endswith(".typelib"):
+        include_files.append((full_path, typelib_path))
 
-if gtk_version == 3:
-    # ATK removed in GTK 4
-    required_gi_namespaces.append("Atk-1.0")
+# Icons
+for full_path in glob.glob(os.path.join(sys_base, icons_path, '**'), recursive=True):
+    icon_path = os.path.relpath(full_path, os.path.join(sys_base, icons_path))
 
-for dll_name in required_dlls:
-    filename = "lib" + dll_name + ".dll"
-    include_files.append((os.path.join(sys_base, "bin", filename), filename))
+    if icon_path.startswith(required_icon_packs) and icon_path.endswith((".theme", ".svg")):
+        include_files.append((full_path, icon_path))
 
-for folder in required_folders:
-    include_files.append((os.path.join(sys_base, folder), folder))
+# Themes
+for full_path in glob.glob(os.path.join(sys_base, themes_path, '**'), recursive=True):
+    theme_path = os.path.relpath(full_path, os.path.join(sys_base, themes_path))
 
-for namespace in required_gi_namespaces:
-    subpath = "lib/girepository-1.0/%s.typelib" % namespace
-    include_files.append((os.path.join(sys_base, subpath), subpath))
-
-for path in glob.glob(os.path.join(icons_path, '**'), recursive=True):
-    icon_path = os.path.relpath(path, icons_path)
-
-    if not icon_path.startswith(("Adwaita", "hicolor")):
-        continue
-
-    if path.endswith((".theme", ".svg")):
-        include_files.append((path, os.path.relpath(path, sys_base)))
-
-for path in glob.glob(os.path.join(themes_path, '**'), recursive=True):
-    theme_path = os.path.relpath(path, themes_path)
-
-    if theme_path.startswith(("Default", "Mac")):
-        include_files.append((path, os.path.relpath(path, sys_base)))
+    if theme_path.startswith(required_themes):
+        include_files.append((full_path, theme_path))
 
 # Setup
 from pynicotine.config import config  # noqa: E402
