@@ -3,9 +3,6 @@ import sys
 from cx_Freeze import setup, Executable
 
 
-assert sys.platform == "win32"
-
-
 common_include_files = []
 required_dll_search_paths = os.getenv("PATH", os.defpath).split(os.pathsep)
 required_dlls = [
@@ -66,6 +63,7 @@ setup(
             build_exe="dist/Nicotine+",
             packages=["gi"],
             includes=["gi"],
+            excludes=["lib2to3", "pygtkcompat", "tkinter"],
             include_files=common_include_files,
         ),
     },

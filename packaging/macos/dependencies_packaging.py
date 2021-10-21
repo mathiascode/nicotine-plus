@@ -23,6 +23,13 @@ import sys
 """ Script used to install packaging dependencies in Homebrew """
 
 
+def install_brew():
+    """ Install dependencies from the main Homebrew repos """
+
+    packages = ["create-dmg"]
+    subprocess.check_call(["brew", "install"] + packages)
+
+
 def install_pypi():
     """ Install dependencies from PyPi """
 
@@ -32,4 +39,5 @@ def install_pypi():
 
 
 if __name__ == '__main__':
+    install_brew()
     install_pypi()
