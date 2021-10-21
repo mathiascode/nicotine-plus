@@ -111,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: windows-${{ matrix.arch }}-package-gtk${{ matrix.gtk }}
-          path: dist
+          path: build
 
   macos:
     runs-on: macos-10.15
@@ -136,18 +136,10 @@ jobs:
 
       - name: Freeze application
         run: |
-          python3 packaging/windows/setup.py build_exe
-
-      - name: Ad-hoc signing
-        run: |
-          codesign --deep --entitlements packaging/macos/entitlements.plist --options runtime --sign - dist/Nicotine+/Nicotine+.app
-
-      - name: Generate .dmg
-        run: |
-          python3 packaging/macos/create_dmg.py
+          python3 packaging/macos/setup.py bdist_dmg
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v2
         with:
           name: macos-installer-gtk${{ matrix.gtk }}
-          path: dmg
+          path: build/dist

@@ -152,11 +152,20 @@ setup(
     version=config.version,
     options={
         "build_exe": dict(
-            build_exe="dist/Nicotine+",
             packages=["gi"] + plugin_packages,
             excludes=["pygtkcompat", "tkinter"],
             include_files=include_files,
         ),
+        "bdist_mac": dict(
+            iconfile=os.path.join(pynicotine_path, "packaging/macos/nicotine.icns"),
+            bundle_name="Nicotine+",
+            codesign_deep=True,
+            codesign_entitlements=os.path.join(pynicotine_path, "packaging/macos/entitlements.plist"),
+            codesign_identity="-"
+        ),
+        "bdist_dmg": dict(
+            applications_shortcut=True
+        )
     },
     executables=[
         Executable(
