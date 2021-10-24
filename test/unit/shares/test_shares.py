@@ -17,14 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import unittest
 
 from collections import deque
 
 from pynicotine.config import config
+from pynicotine.shares import LONG_PATH_PREFIX
+from pynicotine.shares import PATH_SEPARATOR
 from pynicotine.shares import Shares
 
-SHARES_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), ".sharedfiles")
+SHARES_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), ".sharedfiles") + PATH_SEPARATOR
+
+if sys.platform == "win32":
+    # Include long path prefix on Windows
+    SHARES_DIR = LONG_PATH_PREFIX + SHARES_DIR.replace('/', '\\')
 
 
 class SharesTest(unittest.TestCase):
@@ -46,7 +53,7 @@ class SharesTest(unittest.TestCase):
         shares.rescan_shares(use_thread=False)
 
         # Verify that modification time was saved for shares folder
-        self.assertIn(SHARES_DIR, list(shares.share_dbs["mtimes"]))
+        self.assertIn(SHARES_DIR.rstrip(PATH_SEPARATOR), list(shares.share_dbs["mtimes"]))
 
         # Verify that shared files were added
         self.assertIn(('dummy_file', 0, None, None), shares.share_dbs["files"]["Shares"])
@@ -85,13 +92,13 @@ class SharesTest(unittest.TestCase):
         # Check folders
         mtimes = list(shares.share_dbs["mtimes"])
 
-        self.assertNotIn(os.path.join(SHARES_DIR, ".abc"), mtimes)
-        self.assertNotIn(os.path.join(SHARES_DIR, ".xyz"), mtimes)
-        self.assertIn(os.path.join(SHARES_DIR, "folder1"), mtimes)
-        self.assertIn(os.path.join(SHARES_DIR, "folder2"), mtimes)
-        self.assertNotIn(os.path.join(SHARES_DIR, "folder2", ".poof"), mtimes)
-        self.assertIn(os.path.join(SHARES_DIR, "folder2", "test"), mtimes)
-        self.assertIn(os.path.join(SHARES_DIR, "something"), mtimes)
+        self.assertNotIn(SHARES_DIR + ".abc", mtimes)
+        self.assertNotIn(SHARES_DIR + ".xyz", mtimes)
+        self.assertIn(SHARES_DIR + "folder1", mtimes)
+        self.assertIn(SHARES_DIR + "folder2", mtimes)
+        self.assertNotIn(SHARES_DIR + "folder2" + PATH_SEPARATOR + ".poof", mtimes)
+        self.assertIn(SHARES_DIR + "folder2" + PATH_SEPARATOR + "test", mtimes)
+        self.assertIn(SHARES_DIR + "something", mtimes)
 
         # Check files
         files = shares.share_dbs["files"]["Shares"]
@@ -112,7 +119,7 @@ class SharesTest(unittest.TestCase):
         config.sections["transfers"]["sharedownloaddir"] = True
 
         shares = Shares(None, config, deque())
-        shares.add_file_to_shared(os.path.join(SHARES_DIR, 'nicotinetestdata.mp3'))
+        shares.add_file_to_shared(SHARES_DIR + 'nicotinetestdata.mp3')
 
         self.assertIn(('nicotinetestdata.mp3', 80919, None, None), shares.share_dbs["files"]["Downloaded"])
         self.assertIn(('Downloaded\\nicotinetestdata.mp3', 80919, None, None), shares.share_dbs["fileindex"].values())

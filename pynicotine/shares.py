@@ -22,6 +22,7 @@
 
 import gc
 import importlib.util
+import ntpath
 import os
 import pickle
 import shelve
@@ -60,6 +61,8 @@ else:
     })
     sys.exit()
 
+LONG_PATH_PREFIX = "\\\\?\\"
+PATH_SEPARATOR = '\\' if sys.platform == "win32" else os.sep
 UINT_LIMIT = 4294967295
 
 
@@ -175,6 +178,10 @@ class Scanner:
         new_mtimes = {}
 
         for folder in shared_folders:
+            # Support long paths on Windows
+            if sys.platform == "win32" and not folder.startswith(LONG_PATH_PREFIX):
+                folder = LONG_PATH_PREFIX + folder.replace('/', '\\')
+
             # Get mtimes for top-level shared folders, then every subfolder
             try:
                 mtime = os.stat(folder).st_mtime
@@ -228,7 +235,7 @@ class Scanner:
 
         # If the last folder in the path starts with a dot, we exclude it
         if filename is None:
-            last_folder = os.path.basename(os.path.normpath(folder.replace('\\', '/')))
+            last_folder = ntpath.basename(ntpath.normpath(folder))
 
             if last_folder.startswith("."):
                 return True
@@ -274,7 +281,7 @@ class Scanner:
         try:
             for entry in os.scandir(folder):
                 if entry.is_dir():
-                    path = self.get_utf8_path(entry.path).replace('\\', os.sep)
+                    path = self.get_utf8_path(entry.path)
 
                     if self.is_hidden(path):
                         continue
@@ -537,11 +544,15 @@ class Shares:
 
         path = path.replace('/', '\\')
 
+        # Remove long path prefix on Windows
+        if sys.platform == "win32" and path.startswith(LONG_PATH_PREFIX):
+            path = path[len(LONG_PATH_PREFIX):]
+
         for (virtual, real, *_unused) in cls._virtualmapping(config):
             # Remove slashes from share name to avoid path conflicts
             virtual = virtual.replace('/', '_').replace('\\', '_')
-
             real = real.replace('/', '\\')
+
             if path == real:
                 return virtual
 
@@ -556,16 +567,20 @@ class Shares:
 
     def virtual2real(self, path):
 
-        path = path.replace('/', os.sep).replace('\\', os.sep)
+        path = path.replace('/', PATH_SEPARATOR).replace('\\', PATH_SEPARATOR)
 
         for (virtual, real, *_unused) in self._virtualmapping(self.config):
             # Remove slashes from share name to avoid path conflicts
             virtual = virtual.replace('/', '_').replace('\\', '_')
 
+            # Add long path prefix on Windows
+            if sys.platform == "win32" and not real.startswith(LONG_PATH_PREFIX):
+                real = LONG_PATH_PREFIX + real.replace('/', '\\')
+
             if path == virtual:
                 return real
 
-            if path.startswith(virtual + os.sep):
+            if path.startswith(virtual + PATH_SEPARATOR):
                 realpath = real + path[len(virtual):]
                 return realpath
 
@@ -605,7 +620,11 @@ class Shares:
 
         def _convert_to_virtual(shared_folder):
             if isinstance(shared_folder, tuple):
-                return shared_folder
+                # Normalize paths
+                virtual, real, *_unused = shared_folder
+                real = os.path.abspath(real).replace('/', PATH_SEPARATOR)
+
+                return (virtual, real)
 
             virtual = shared_folder.replace('/', '_').replace('\\', '_').strip('_')
             log.add("Renaming shared folder '%s' to '%s'. A rescan of your share is required.",
@@ -713,12 +732,9 @@ class Shares:
             return
 
         try:
-            shareddirs = [path for _name, path in self.config.sections["transfers"]["shared"]]
-            shareddirs.append(self.config.sections["transfers"]["downloaddir"])
-
-            rdir = str(os.path.expanduser(os.path.dirname(name)))
+            rdir = os.path.expanduser(os.path.dirname(name))
             vdir = self.real2virtual(rdir)
-            file = str(os.path.basename(name))
+            file = ntpath.basename(name)
 
             if not shared.get(vdir):
                 shared[vdir] = []
@@ -759,13 +775,9 @@ class Shares:
             return
 
         try:
-            bshareddirs = [path for _name, path in self.config.sections["transfers"]["shared"]]
-            bshareddirs += [path for _name, path in self.config.sections["transfers"]["buddyshared"]]
-            bshareddirs.append(self.config.sections["transfers"]["downloaddir"])
-
-            rdir = str(os.path.expanduser(os.path.dirname(name)))
+            rdir = os.path.expanduser(os.path.dirname(name))
             vdir = self.real2virtual(rdir)
-            file = str(os.path.basename(name))
+            file = ntpath.basename(name)
 
             if not bshared.get(vdir):
                 bshared[vdir] = []

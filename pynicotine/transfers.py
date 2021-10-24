@@ -29,6 +29,7 @@ the transfer manager.
 """
 
 import json
+import ntpath
 import os
 import os.path
 import re
@@ -619,28 +620,7 @@ class Transfers:
 
         user = msg.conn.init.target_user
         addr = msg.conn.addr[0]
-
-        """ Under certain conditions, SoulseekQt will send a file name/path containing both
-        mojibake (utf-8 incorrectly decoded as latin-1) and correct utf-8. This was observed
-        when a file name contains special characters, and is downloaded directly from
-        a user share. In this case, the folder path is garbled, while the file name is correct.
-        Downloading from search results results in no such issue.
-
-        Decode the incorrect parts as utf-8, if necessary, otherwise Nicotine+ thinks the file
-        isn't shared. """
-
-        filename_parts = msg.file.replace('/', '\\').split('\\')
-
-        for i, part in enumerate(filename_parts):
-            try:
-                filename_parts[i] = part.encode('latin-1').decode('utf-8')
-
-            except Exception:
-                # Already utf-8
-                pass
-
-        filename_utf8 = '\\'.join(filename_parts)
-        real_path = self.core.shares.virtual2real(filename_utf8)
+        real_path = self.core.shares.virtual2real(msg.file)
 
         if not self.file_is_upload_queued(user, msg.file):
 
@@ -669,7 +649,7 @@ class Transfers:
                     slskmessages.UploadDenied(conn=msg.conn.conn, file=msg.file, reason="Too many files")
                 )
 
-            elif self.core.shares.file_is_shared(user, filename_utf8, real_path):
+            elif self.core.shares.file_is_shared(user, msg.file, real_path):
                 newupload = Transfer(
                     user=user, filename=msg.file,
                     path=os.path.dirname(real_path), status="Queued",
@@ -1069,7 +1049,7 @@ class Transfers:
                     md5sum = md5()
                     md5sum.update((i.filename + i.user).encode('utf-8'))
 
-                    base_name = clean_file(i.filename.replace('/', '\\').split('\\')[-1])
+                    base_name = clean_file(ntpath.basename(i.filename))
                     incomplete_name = os.path.join(incompletedir, "INCOMPLETE" + md5sum.hexdigest() + base_name)
                     file_handle = open(incomplete_name, 'ab+')
 
@@ -1795,7 +1775,7 @@ class Transfers:
         """ Returns the download destination of a virtual file path """
 
         folder_path = target_path if target_path else self.get_default_download_folder(user)
-        basename = clean_file(virtual_path.replace('/', '\\').split('\\')[-1])
+        basename = clean_file(ntpath.basename(virtual_path))
 
         return folder_path, basename
 
