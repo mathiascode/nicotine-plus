@@ -27,25 +27,13 @@ def check_gui_dependencies():
     else:
         gtk_version = pygobject_version = (3, 18, 0)
 
-    try:
-        import gi
-        gi.check_version(pygobject_version)
+    import gi
+    gi.check_version(pygobject_version)
 
-    except (ImportError, ValueError):
-        return _("Cannot find %s, please install it.") % ("pygobject >= " + '.'.join(map(str, pygobject_version)))
+    api_version = (gtk_version[0], 0)
+    gi.require_version('Gtk', '.'.join(map(str, api_version)))
 
-    try:
-        api_version = (gtk_version[0], 0)
-        gi.require_version('Gtk', '.'.join(map(str, api_version)))
-
-    except ValueError:
-        return _("Cannot find %s, please install it.") % ("GTK " + str(gtk_version[0]))
-
-    try:
-        from gi.repository import Gtk
-
-    except ImportError:
-        return _("Cannot import the Gtk module. Bad install of the python-gobject module?")
+    from gi.repository import Gtk
 
     if Gtk.check_version(*gtk_version):
         return _("You are using an unsupported version of GTK %(major_version)s. You should install "
