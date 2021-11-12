@@ -31,7 +31,7 @@ def check_gui_dependencies():
     gi.check_version(pygobject_version)
 
     api_version = (gtk_version[0], 0)
-    gi.require_version('Gtk', '.'.join(map(str, api_version)))
+    #gi.require_version('Gtk', '.'.join(map(str, api_version)))
 
     from gi.repository import Gtk
 
