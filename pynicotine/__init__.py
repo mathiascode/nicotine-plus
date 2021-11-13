@@ -197,7 +197,8 @@ def run():
 
         # Support SSL in frozen Windows and macOS binaries
         os.environ["SSL_CERT_FILE"] = "ssl/cert.pem"
-
+        os.environ['GI_TYPELIB_PATH'] = "lib/girepository-1.0"
+        
         # Support file scanning process in frozen Windows and macOS binaries
         multiprocessing.freeze_support()
 
