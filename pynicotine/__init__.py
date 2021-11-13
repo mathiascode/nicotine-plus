@@ -196,8 +196,9 @@ def run():
         import multiprocessing
 
         # Support SSL in frozen Windows and macOS binaries
-        os.environ["SSL_CERT_FILE"] = "ssl/cert.pem"
-        os.environ['GI_TYPELIB_PATH'] = "lib/girepository-1.0"
+        prefix = os.path.dirname(sys.executable)
+        os.environ["SSL_CERT_FILE"] = os.path.join(prefix, "ssl/cert.pem")
+        os.environ['GI_TYPELIB_PATH'] = os.path.join(prefix, "lib/girepository-1.0")
         
         # Support file scanning process in frozen Windows and macOS binaries
         multiprocessing.freeze_support()
