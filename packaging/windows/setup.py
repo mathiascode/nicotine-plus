@@ -73,7 +73,7 @@ def add_gtk_libraries():
         add_files_by_pattern("bin", required_dlls, ".dll", output_path="")
 
     elif sys.platform == "darwin":
-        add_files_by_pattern("lib", required_dlls, ".dylib", output_path="")
+        add_files_by_pattern("lib", required_dlls, ".dylib")
 
     add_files_by_pattern("share/glib-2.0/schemas", "gschemas", ".compiled")
 
