@@ -174,6 +174,9 @@ add_translations()
 # Plugins
 add_plugin_packages()
 
+if sys.platform == 'darwin':
+    include_files.append(('launcher', 'launcher'))
+
 # Setup
 from pynicotine.config import config  # noqa: E402
 
@@ -195,7 +198,8 @@ setup(
         ),
         "bdist_mac": dict(
             iconfile=os.path.join(pynicotine_path, "packaging/macos/nicotine.icns"),
-            bundle_name="Nicotine+"
+            bundle_name="Nicotine+",
+            plist_items=[('CFBundleExecutable', 'launcher')]
         ),
         "bdist_dmg": dict(
             applications_shortcut=True
