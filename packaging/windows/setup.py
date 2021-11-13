@@ -175,7 +175,7 @@ add_translations()
 add_plugin_packages()
 
 if sys.platform == 'darwin':
-    include_files.append(('launcher', 'launcher'))
+    include_files.append((os.path.join(pynicotine_path, "packaging/macos/launcher"), 'launcher'))
 
 # Setup
 from pynicotine.config import config  # noqa: E402
