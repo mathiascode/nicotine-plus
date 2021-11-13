@@ -197,7 +197,6 @@ def run():
 
         # Support SSL in frozen Windows and macOS binaries
         prefix = os.path.dirname(sys.executable)
-        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = prefix
         os.environ["SSL_CERT_FILE"] = os.path.join(prefix, "ssl/cert.pem")
         os.environ["GI_TYPELIB_PATH"] = os.path.join(prefix, "lib/girepository-1.0")
         
