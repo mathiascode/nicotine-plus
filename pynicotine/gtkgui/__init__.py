@@ -34,6 +34,9 @@ def check_gui_dependencies():
     #gi.require_version('Gtk', '.'.join(map(str, api_version)))
 
     from gi.repository import Gtk
+    print(Gtk.get_major_version())
+    print(Gtk.get_minor_version())
+    print(Gtk.get_micro_version())
 
     if Gtk.check_version(*gtk_version):
         return _("You are using an unsupported version of GTK %(major_version)s. You should install "
