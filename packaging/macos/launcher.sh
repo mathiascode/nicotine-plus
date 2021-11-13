@@ -1,7 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-dir=$(dirname $0)
-fulldir=$(pwd)/${dir}
+fulldir=$(pwd)
 
 export DYLD_LIBRARY_PATH=fulldir
 ./Nicotine+
