@@ -38,7 +38,7 @@ def check_gui_dependencies():
     if Gtk.check_version(*gtk_version):
         return _("You are using an unsupported version of GTK %(major_version)s. You should install "
                  "GTK %(complete_version)s or newer.") % {
-            "major_version": gtk_version,
+            "major_version": Gtk.check_version(*gtk_version),
             "complete_version": '.'.join(map(str, gtk_version))}
 
     return None
