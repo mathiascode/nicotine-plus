@@ -27,10 +27,12 @@ import sys
 def install_brew():
     """ Install dependencies from the main Homebrew repos """
 
-    gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or 3
+    gtk_major_version = os.environ.get("NICOTINE_GTK_VERSION") or 3
+    gtk_exact_version = "@3.24.30_1" if gtk_major_version == 3 else ""
+
     packages = ["adwaita-icon-theme",
                 "gettext",
-                "gtk+" + str(gtk_version)]
+                "gtk+" + str(gtk_major_version) + gtk_exact_version]
 
     subprocess.check_call(["brew", "install"] + packages)
 
