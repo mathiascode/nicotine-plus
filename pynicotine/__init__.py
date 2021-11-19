@@ -191,13 +191,17 @@ def run():
     if sys.stdout is not None:
         sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding="utf-8", line_buffering=True)
 
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         import os
         import multiprocessing
 
         # Support SSL in frozen Windows and macOS binaries
-        os.environ["SSL_CERT_FILE"] = os.path.join(os.path.dirname(sys.executable), "ssl/cert.pem")
-        print(os.environ["SSL_CERT_FILE"])
+        if hasattr(sys, "_MEIPASS"):
+            path = sys._MEIPASS
+        else:
+            path = os.path.dirname(sys.executable)
+
+        os.environ["SSL_CERT_FILE"] = os.path.join(path, "ssl", "cert.pem")
 
         # Support file scanning process in frozen Windows and macOS binaries
         multiprocessing.freeze_support()
