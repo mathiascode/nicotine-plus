@@ -53,7 +53,7 @@ for target_path, mo_files in mo_entries:
     datas.append(("../../" + mo_files[0], target_path))
 
 ssl_paths = ssl.get_default_verify_paths()
-datas.append((ssl_paths.openssl_cafile, "ssl/cert.pem"))
+datas.append((ssl_paths.cafile, "ssl/cert.pem"))
 
 
 # Analyze required files
