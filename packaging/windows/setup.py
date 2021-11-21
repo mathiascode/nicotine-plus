@@ -28,7 +28,7 @@ from cx_Freeze import Executable, setup
 
 
 if sys.platform == "win32":
-    gui_base = "Win32GUI"
+    gui_base = "Console"
     sys_base = sys.prefix
 
 elif sys.platform == "darwin":
