@@ -35,7 +35,6 @@ if sys.platform == "win32":
 else:
     raise RuntimeError("Only Windows is supported")
 
-data_files = []
 include_files = []
 plugin_packages = []
 
@@ -44,9 +43,7 @@ pynicotine_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(
 sys.path.append(pynicotine_path)
 
 
-def add_files_by_pattern(rel_path, starts_with, ends_with, output_path=None, recursive=False, data=True):
-
-    output_list = data_files if data else include_files
+def add_files_by_pattern(rel_path, starts_with, ends_with, output_path=None, recursive=False):
 
     for full_path in glob.glob(os.path.join(sys_base, rel_path, '**'), recursive=recursive):
         short_path = os.path.relpath(full_path, os.path.join(sys_base, rel_path))
@@ -60,19 +57,17 @@ def add_files_by_pattern(rel_path, starts_with, ends_with, output_path=None, rec
         if output_path is None:
             output_path = rel_path
 
-        output_list.append((full_path, os.path.join(output_path, short_path)))
+        include_files.append((full_path, os.path.join(output_path, short_path)))
 
 
 def add_gtk():
 
     # This also includes all dlls required by GTK
-    add_files_by_pattern("bin", "libgtk-" + str(gtk_version), ".dll", output_path="lib", data=False)
+    add_files_by_pattern("bin", "libgtk-" + str(gtk_version), ".dll", output_path="lib")
 
     # gdbus required for single-instance application
-    for rel_path in ("bin/gdbus.exe", "share/glib-2.0/schemas/gschemas.compiled"):
+    for rel_path in ("bin/gdbus.exe", "lib/gdk-pixbuf-2.0", "share/glib-2.0/schemas/gschemas.compiled"):
         include_files.append((os.path.join(sys_base, rel_path), rel_path))
-
-    data_files.append((os.path.join(sys_base, "lib/gdk-pixbuf-2.0"), "lib/gdk-pixbuf-2.0"))
 
     required_typelibs = (
         "Gtk-" + str(gtk_version),
@@ -119,7 +114,7 @@ def add_translations():
     from pynicotine.i18n import generate_translations  # noqa: E402
     _mo_entries, languages = generate_translations()
 
-    data_files.append((os.path.join(pynicotine_path, "mo"), "share/locale"))
+    include_files.append((os.path.join(pynicotine_path, "mo"), "share/locale"))
     add_files_by_pattern("share/locale", tuple(languages), "gtk" + str(gtk_version) + "0.mo", recursive=True)
 
 
@@ -153,7 +148,6 @@ setup(
     name="Nicotine+",
     author="Nicotine+ Team",
     version=re.sub(r".(dev|rc)(.*)", "", config.version),
-    data_files=data_files,
     options={
         "build_exe": dict(
             packages=["gi"] + plugin_packages,
