@@ -69,7 +69,7 @@ def add_gtk():
     add_files_by_pattern("bin", "libgtk-" + str(gtk_version), ".dll", output_path="lib", data=False)
 
     # gdbus required for single-instance application
-    for rel_path in ("bin/gdbus.exe", "share/glib-2.0/schemas/gschemas.complied"):
+    for rel_path in ("bin/gdbus.exe", "share/glib-2.0/schemas/gschemas.compiled"):
         include_files.append((os.path.join(sys_base, rel_path), rel_path))
 
     data_files.append((os.path.join(sys_base, "lib/gdk-pixbuf-2.0"), "lib/gdk-pixbuf-2.0"))
