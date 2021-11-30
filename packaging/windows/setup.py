@@ -35,6 +35,7 @@ if sys.platform == "win32":
 else:
     raise RuntimeError("Only Windows is supported")
 
+data_files = []
 include_files = []
 plugin_packages = []
 
@@ -64,9 +65,12 @@ def add_gtk():
 
     # This also includes all dlls required by GTK
     add_files_by_pattern("bin", "libgtk-" + str(gtk_version), ".dll", output_path="lib")
+    include_files.append((os.path.join(sys_base, "share/glib-2.0/schemas/gschemas.compiled"),
+                         "share/glib-2.0/schemas/gschemas.compiled"))
 
-    for rel_path in ("lib/gdk-pixbuf-2.0", "share/glib-2.0/schemas/gschemas.compiled"):
-        include_files.append((os.path.join(sys_base, rel_path), rel_path))
+    for full_path, dirs, files in os.walk(os.path.join(sys_base, "lib/gdk-pixbuf-2.0")):
+        short_path = os.path.relpath(full_path, os.path.join(sys_base))
+        data_files.append((short_path, [os.path.join(full_path, file) for file in files]))
 
     # gdbus required for single-instance application
     include_files.append((os.path.join(sys_base, "bin/gdbus.exe"), "lib/gdbus.exe"))
@@ -150,6 +154,7 @@ setup(
     name="Nicotine+",
     author="Nicotine+ Team",
     version=re.sub(r".(dev|rc)(.*)", "", config.version),
+    data_files=data_files,
     options={
         "build_exe": dict(
             packages=["gi"] + plugin_packages,
