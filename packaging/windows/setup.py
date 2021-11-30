@@ -35,7 +35,6 @@ if sys.platform == "win32":
 else:
     raise RuntimeError("Only Windows is supported")
 
-data_files = []
 include_files = []
 plugin_packages = []
 
@@ -68,13 +67,23 @@ def add_gtk():
     include_files.append((os.path.join(sys_base, "share/glib-2.0/schemas/gschemas.compiled"),
                          "share/glib-2.0/schemas/gschemas.compiled"))
 
-    for full_path, dirs, files in os.walk(os.path.join(sys_base, "lib/gdk-pixbuf-2.0")):
-        short_path = os.path.relpath(full_path, os.path.join(sys_base))
-        data_files.append((short_path, [os.path.join(full_path, file) for file in files]))
-
     # gdbus required for single-instance application
     include_files.append((os.path.join(sys_base, "bin/gdbus.exe"), "lib/gdbus.exe"))
 
+    # Pixbuf loaders
+    temp_dir = tempfile.mkdtemp()
+    loaders_file = "lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+    temp_loaders_file = os.path.join(temp_dir, "loaders.cache")
+
+    with open(temp_loaders_file, "w") as file_handle:
+        data = open(os.path.join(sys_base, loaders_file)).read()
+        data = data.replace("lib\\\\gdk-pixbuf-2.0\\\\2.10.0\\\\loaders\\\\", "lib\\\\")
+        file_handle.write(data)
+
+    include_files.append((temp_loaders_file, loaders_file))
+    add_files_by_pattern("lib/gdk-pixbuf-2.0/2.10.0/loaders", "libpixbufloader-", ".dll", output_path="lib")
+
+    # Typelibs
     required_typelibs = (
         "Gtk-" + str(gtk_version),
         "Gio-",
@@ -154,7 +163,6 @@ setup(
     name="Nicotine+",
     author="Nicotine+ Team",
     version=re.sub(r".(dev|rc)(.*)", "", config.version),
-    data_files=data_files,
     options={
         "build_exe": dict(
             packages=["gi"] + plugin_packages,
