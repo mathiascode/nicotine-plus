@@ -65,9 +65,11 @@ def add_gtk():
     # This also includes all dlls required by GTK
     add_files_by_pattern("bin", "libgtk-" + str(gtk_version), ".dll", output_path="lib")
 
-    # gdbus required for single-instance application
-    for rel_path in ("bin/gdbus.exe", "lib/gdk-pixbuf-2.0", "share/glib-2.0/schemas/gschemas.compiled"):
+    for rel_path in ("lib/gdk-pixbuf-2.0", "share/glib-2.0/schemas/gschemas.compiled"):
         include_files.append((os.path.join(sys_base, rel_path), rel_path))
+
+    # gdbus required for single-instance application
+    include_files.append((os.path.join(sys_base, "bin/gdbus.exe"), "lib/gdbus.exe"))
 
     required_typelibs = (
         "Gtk-" + str(gtk_version),
@@ -106,7 +108,7 @@ def add_themes():
 
 def add_ssl_certs():
     ssl_paths = ssl.get_default_verify_paths()
-    include_files.append((ssl_paths.openssl_cafile, "ssl/cert.pem"))
+    include_files.append((ssl_paths.openssl_cafile, "share/ssl/cert.pem"))
 
 
 def add_translations():
