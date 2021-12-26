@@ -51,7 +51,8 @@ def read_color_scheme():
 
     try:
         value = SETTINGS_PORTAL.call_sync("Read",
-                                          GLib.Variant("(ss)",
+                                          GLib.Variant(
+                                              "(ss)",
                                               ("org.freedesktop.appearance",
                                                "color-scheme")),
                                           Gio.DBusCallFlags.NONE,
@@ -64,7 +65,7 @@ def read_color_scheme():
         return None
 
 
-def on_color_scheme_changed(proxy, sender_name, signal_name, parameters):
+def on_color_scheme_changed(_proxy, _sender_name, signal_name, parameters):
 
     if signal_name != "SettingChanged":
         return
@@ -107,6 +108,7 @@ def set_use_header_bar(enabled):
 def set_visual_settings():
 
     if SETTINGS_PORTAL is not None:
+        # GNOME 42+ system-wide dark mode
         SETTINGS_PORTAL.connect("g-signal", on_color_scheme_changed)
 
     global_font = config.sections["ui"]["globalfont"]
