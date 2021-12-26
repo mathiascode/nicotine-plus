@@ -42,7 +42,7 @@ try:
                                                      "org.freedesktop.portal.Settings",
                                                      None)
 except Exception:
-    pass
+    SETTINGS_PORTAL = None
 
 GTK_SETTINGS = Gtk.Settings.get_default()
 
@@ -69,36 +69,24 @@ def on_color_scheme_changed(proxy, sender_name, signal_name, parameters):
     if signal_name != "SettingChanged":
         return
 
-    if config.sections["ui"]["dark_mode"]:
-        return
-
     namespace = parameters.get_child_value(0).get_string()
     name = parameters.get_child_value(1).get_string()
 
     if namespace != "org.freedesktop.appearance" or name != "color-scheme":
         return
 
-    color_scheme = parameters.get_child_value(2).get_variant().get_uint32()
-    set_dark_mode(bool(color_scheme), read_system_preference=False)
+    set_dark_mode()
 
 
-def initialize_portal():
+def set_dark_mode(force=False):
 
-    color_scheme = read_color_scheme()
+    enabled = force
 
-    if color_scheme is None:
-        return
+    if not force:
+        color_scheme = read_color_scheme()
 
-    SETTINGS_PORTAL.connect("g-signal", on_color_scheme_changed)
-
-    if not config.sections["ui"]["dark_mode"]:
-        set_dark_mode(bool(color_scheme), read_system_preference=False)
-
-
-def set_dark_mode(enabled, read_system_preference=True):
-
-    if read_system_preference and not enabled:
-        enabled = bool(read_color_scheme())
+        if color_scheme is not None:
+            enabled = bool(color_scheme)
 
     GTK_SETTINGS.set_property("gtk-application-prefer-dark-theme", enabled)
 
@@ -118,11 +106,11 @@ def set_use_header_bar(enabled):
 
 def set_visual_settings():
 
-    dark_mode = config.sections["ui"]["dark_mode"]
-    global_font = config.sections["ui"]["globalfont"]
+    if SETTINGS_PORTAL is not None:
+        SETTINGS_PORTAL.connect("g-signal", on_color_scheme_changed)
 
-    if dark_mode:
-        set_dark_mode(dark_mode)
+    global_font = config.sections["ui"]["globalfont"]
+    set_dark_mode(config.sections["ui"]["dark_mode"])
 
     if global_font and global_font != "Normal":
         set_global_font(global_font)
@@ -253,7 +241,6 @@ def set_global_css():
 
 
 def set_global_style():
-    initialize_portal()
     set_visual_settings()
     set_global_css()
 
