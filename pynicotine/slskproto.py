@@ -434,6 +434,7 @@ class SlskProtoThread(threading.Thread):
         self._queue = queue
         self._callback_msgs = []
         self._init_msgs = {}
+        self._out_msgs = defaultdict(list)
         self._want_abort = False
         self.server_disconnected = True
         self.bindip = bindip
@@ -476,7 +477,6 @@ class SlskProtoThread(threading.Thread):
         self._conns = {}
         self._connsinprogress = {}
         self.user_addresses = {}
-        self.msgs = defaultdict(list)
         self._token = 100
         self.exit = threading.Event()
         self.out_indirect_conn_request_times = {}
@@ -607,6 +607,8 @@ class SlskProtoThread(threading.Thread):
             self.close_connection(self._connsinprogress, connection)
 
         self._queue.clear()
+        self._init_msgs.clear()
+        self._out_msgs.clear()
 
         # Inform threads we've disconnected
         self.exit.set()
@@ -698,19 +700,20 @@ class SlskProtoThread(threading.Thread):
             curtime = time.time()
 
             if self.out_indirect_conn_request_times:
-                for conn, data in list(self.out_indirect_conn_request_times.items()):
-                    username, request_time = data
+                for conn, request_time in list(self.out_indirect_conn_request_times.items()):
+                    username = conn.init.target_user
 
                     if (curtime - request_time) >= 20:
                         log.add_conn(
                             "Indirect connect request of type %(type)s to user %(user)s expired, giving up", {
-                                'type': "test",
+                                'type': conn.init.conn_type,
                                 'user': username
                             }
                         )
 
+                        self._callback_msgs.append(ShowConnectionErrorMessage(username, self._out_msgs[conn.init]))
                         self._init_msgs.pop(conn.init.token, None)
-                        self._callback_msgs.append(ShowConnectionErrorMessage(username, self.msgs[username]))
+                        self._out_msgs.pop(conn.init, None)
                         del self.out_indirect_conn_request_times[conn]
 
             if self.exit.wait(1):
@@ -791,7 +794,7 @@ class SlskProtoThread(threading.Thread):
 
         username = conn.init.target_user
 
-        msgs = self.msgs.get(username)
+        msgs = self._out_msgs.get(conn.init)
 
         if msgs is None:
             return
@@ -804,7 +807,7 @@ class SlskProtoThread(threading.Thread):
             j.conn = conn.conn
             self._queue.append(j)
 
-        self.msgs[username] = []
+        msgs.clear()
 
     def send_message_to_peer(self, user, message, login, address=None):
         """ Sends message to a peer. Used primarily when we know the username of a peer,
@@ -827,19 +830,18 @@ class SlskProtoThread(threading.Thread):
         if conn is not None and conn.conn is not None:
             # We have initiated a connection previously, and it's ready
 
-            self.msgs[user].append(message)
+            self._out_msgs[conn.init].append(message)
             self.process_conn_messages(conn)
 
         elif conn is not None:
             # Connection exists but is not ready yet, add new messages to it
 
-            self.msgs[user].append(message)
+            self._out_msgs[conn.init].append(message)
 
         else:
             # This is a new peer, initiate a connection
 
             self.initiate_connection_to_peer(user, message, login, address)
-            self.msgs[user].append(message)
 
         log.add_conn("Sending message of type %(type)s to user %(user)s", {
             'type': message.__class__,
@@ -881,6 +883,8 @@ class SlskProtoThread(threading.Thread):
 
         else:
             self.connect_to_peer_direct(user, addr, init)
+
+        self._out_msgs[init].append(message)
 
     def connect_to_peer_direct(self, user, addr, init):
         """ Initiate a connection with a peer directly """
@@ -934,7 +938,7 @@ class SlskProtoThread(threading.Thread):
         if conn in self.out_indirect_conn_request_times:
             del self.out_indirect_conn_request_times[conn]
 
-        self.out_indirect_conn_request_times[conn] = (username, time.time())
+        self.out_indirect_conn_request_times[conn] = time.time()
 
         log.add_conn(
             """Direct connection of type %(type)s to user %(user)s failed, attempting indirect connection.
