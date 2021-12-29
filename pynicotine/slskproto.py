@@ -411,7 +411,7 @@ class SlskProtoThread(threading.Thread):
         DistribEmbeddedMessage: 93
     }
 
-    IN_PROGRESS_STALE_AFTER = 3
+    IN_PROGRESS_STALE_AFTER = 2
     CONNECTION_MAX_IDLE = 60
     CONNCOUNT_CALLBACK_INTERVAL = 0.5
 
