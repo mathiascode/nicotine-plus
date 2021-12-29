@@ -940,14 +940,13 @@ class SlskProtoThread(threading.Thread):
         self._out_indirect_conn_request_times[conn.init] = time.time()
         self._queue.append(ConnectToPeer(self._token, username, conn_type))
 
-        log.add_conn(
-            """Direct connection of type %(type)s to user %(user)s failed, attempting indirect connection.
-Error: %(error)s""", {
-                "type": conn_type,
-                "user": username,
-                "error": error
-            }
-        )
+        log.add_conn(("Direct connection of type %(type)s to user %(user)s failed, attempting indirect "
+                      "connection with token %(token)s. Error: %(error)s"), {
+            "type": conn_type,
+            "user": username,
+            "token": self._token,
+            "error": error
+        })
 
     def close_connection(self, connection_list, connection):
 
@@ -1204,9 +1203,10 @@ Error: %(error)s""", {
                         if conn.init is None:
                             log.add_conn(("Indirect connection attempt with token %s previously expired, "
                                           "closing connection"), msg.token)
+                            conn.init = PeerInit()
                             self._callback_msgs.append(ConnClose(conn))
                             self.close_connection(self._conns, conn)
-                            return
+                            break
 
                         conn.init.conn = conn.conn
                         self._out_indirect_conn_request_times.pop(conn.init, None)
@@ -1237,7 +1237,6 @@ Error: %(error)s""", {
 
                     self._callback_msgs.append(ConnClose(conn))
                     self.close_connection(self._conns, conn)
-                    return
 
                 break
 
@@ -1553,7 +1552,7 @@ Error: %(error)s""", {
                         {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[idx + 5:idx + msgsize_total]})
                 self._callback_msgs.append(ConnClose(conn))
                 self.close_connection(self._conns, conn)
-                return
+                break
 
             idx += msgsize_total
             buffer_len -= msgsize_total
