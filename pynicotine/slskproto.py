@@ -1206,7 +1206,7 @@ Error: %(error)s""", {
                                           "closing connection"), msg.token)
                             self._callback_msgs.append(ConnClose(conn))
                             self.close_connection(self._conns, conn)
-                            break
+                            return
 
                         conn.init.conn = conn.conn
                         self._out_indirect_conn_request_times.pop(conn.init, None)
@@ -1237,6 +1237,7 @@ Error: %(error)s""", {
 
                     self._callback_msgs.append(ConnClose(conn))
                     self.close_connection(self._conns, conn)
+                    return
 
                 break
 
@@ -1552,7 +1553,7 @@ Error: %(error)s""", {
                         {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[idx + 5:idx + msgsize_total]})
                 self._callback_msgs.append(ConnClose(conn))
                 self.close_connection(self._conns, conn)
-                break
+                return
 
             idx += msgsize_total
             buffer_len -= msgsize_total
