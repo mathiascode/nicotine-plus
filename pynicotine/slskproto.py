@@ -1193,32 +1193,36 @@ Error: %(error)s""", {
 
                 if msg is not None:
                     if self.peerinitclasses[msgtype] is PierceFireWall:
+                        log.add_conn("Received indirect connection attempt (PierceFireWall) with token %s", msg.token)
                         conn.piercefw = msg
 
                         if conn in self.out_indirect_conn_request_times:
                             del self.out_indirect_conn_request_times[conn]
 
+                        log.add_conn("List of stored PeerInit messages: %s", self._init_msgs)
+                        log.add_conn("Attempting to fetch PeerInit message for token %s", msg.token)
+
                         conn.init = self._init_msgs.pop(msg.token, None)
                         conn.init.conn = conn.conn
-                        self._queue.append(conn.init)
 
-                        self.process_conn_messages(conn)
-
-                        log.add_conn("User %s managed to connect to us indirectly, connection is established.",
+                        log.add_conn("User %s managed to connect to us indirectly, connection is established",
                                      conn.init.target_user)
+
+                        self._queue.append(conn.init)
+                        self.process_conn_messages(conn)
 
                     elif self.peerinitclasses[msgtype] is PeerInit:
                         conn.init = msg
-
-                        if conn in self.out_indirect_conn_request_times:
-                            del self.out_indirect_conn_request_times[conn]
-
-                        self.process_conn_messages(conn)
 
                         log.add_conn("Received incoming direct connection of type %(type)s from user %(user)s", {
                             'type': conn.init.conn_type,
                             'user': conn.init.target_user
                         })
+
+                        if conn in self.out_indirect_conn_request_times:
+                            del self.out_indirect_conn_request_times[conn]
+
+                        self.process_conn_messages(conn)
 
                     self._callback_msgs.append(msg)
 
