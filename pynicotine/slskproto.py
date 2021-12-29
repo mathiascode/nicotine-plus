@@ -700,13 +700,12 @@ class SlskProtoThread(threading.Thread):
                     conn_type = init.conn_type
 
                     if (curtime - request_time) >= 20:
-                        log.add_conn(
-                            "Indirect connect request of type %(type)s to user %(user)s with token %(token)s expired, giving up", {
-                                'type': conn_type,
-                                'user': username,
-                                'token': init.token
-                            }
-                        )
+                        log.add_conn(("Indirect connect request of type %(type)s to user %(user)s with "
+                                      "token %(token)s expired, giving up"), {
+                            'type': conn_type,
+                            'user': username,
+                            'token': init.token
+                        })
 
                         self._callback_msgs.append(ShowConnectionErrorMessage(username, init.outgoing_msgs))
 
@@ -1197,14 +1196,20 @@ Error: %(error)s""", {
                         log.add_conn("Received indirect connection attempt (PierceFireWall) with token %s", msg.token)
                         conn.piercefw = msg
 
-                        log.add_conn("List of stored PeerInit messages: %s", self._init_msgs)
+                        log.add_conn("List of stored PeerInit messages: %s", str(self._init_msgs))
                         log.add_conn("Attempting to fetch PeerInit message for token %s", msg.token)
 
                         conn.init = self._init_msgs.pop(msg.token, None)
-                        conn.init.conn = conn.conn
 
+                        if conn.init is None:
+                            log.add_conn(("Indirect connection attempt with token %s previously expired, "
+                                          "closing connection"), msg.token)
+                            self._callback_msgs.append(ConnClose(conn))
+                            self.close_connection(self._conns, conn)
+                            break
+
+                        conn.init.conn = conn.conn
                         self._out_indirect_conn_request_times.pop(conn.init, None)
-                        print(self._out_indirect_conn_request_times)
 
                         log.add_conn("User %s managed to connect to us indirectly, connection is established",
                                      conn.init.target_user)
