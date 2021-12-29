@@ -826,17 +826,32 @@ class SlskProtoThread(threading.Thread):
             for _, i in self._conns.items():
                 if i.init is not None and i.init.target_user == user and i.init.conn_type == conn_type:
                     init = i.init
-
-                    log.add_conn("Found existing connection of type %(type)s for user %(user)s, using it.", {
-                        'type': conn_type,
-                        'user': user
-                    })
                     break
 
+            if init is None:
+                for _, i in self._connsinprogress.items():
+                    if i.init is not None and i.init.target_user == user and i.init.conn_type == conn_type:
+                        init = i.init
+                        break
+
+            if init is None:
+                for _, i in self._init_msgs.items():
+                    if i.target_user == user and i.conn_type == conn_type:
+                        init = i
+                        break
+
         if init is not None:
-            # We have initiated a connection previously, and it's ready
+            log.add_conn("Found existing connection of type %(type)s for user %(user)s, using it.", {
+                'type': conn_type,
+                'user': user
+            })
+
             init.outgoing_msgs.append(message)
-            self.process_conn_messages(init)
+            print(init.outgoing_msgs)
+
+            if init.conn is not None:
+                # We have initiated a connection previously, and it's ready
+                self.process_conn_messages(init)
 
         else:
             # This is a new peer, initiate a connection
