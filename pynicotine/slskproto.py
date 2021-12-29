@@ -411,7 +411,7 @@ class SlskProtoThread(threading.Thread):
         DistribEmbeddedMessage: 93
     }
 
-    IN_PROGRESS_STALE_AFTER = 2
+    IN_PROGRESS_STALE_AFTER = 3
     CONNECTION_MAX_IDLE = 60
     CONNCOUNT_CALLBACK_INTERVAL = 0.5
 
@@ -1211,7 +1211,7 @@ class SlskProtoThread(threading.Thread):
                         if conn.init is None:
                             log.add_conn(("Indirect connection attempt with token %s previously expired, "
                                           "closing connection"), msg.token)
-                            conn.ibuf = None
+                            conn.ibuf = bytearray()
                             self._callback_msgs.append(ConnClose(conn))
                             self.close_connection(self._conns, conn)
                             return
@@ -1243,7 +1243,7 @@ class SlskProtoThread(threading.Thread):
                             {'type': msgtype, 'size': msgsize - 1,
                              'msg_buffer': msg_buffer[idx + 5:idx + msgsize_total]})
 
-                    conn.ibuf = None
+                    conn.ibuf = bytearray()
                     self._callback_msgs.append(ConnClose(conn))
                     self.close_connection(self._conns, conn)
                     return
@@ -1561,7 +1561,7 @@ class SlskProtoThread(threading.Thread):
                 log.add("Distrib message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
                         {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[idx + 5:idx + msgsize_total]})
 
-                conn.ibuf = None
+                conn.ibuf = bytearray()
                 self._callback_msgs.append(ConnClose(conn))
                 self.close_connection(self._conns, conn)
                 return
