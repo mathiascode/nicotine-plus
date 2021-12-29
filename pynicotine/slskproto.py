@@ -262,10 +262,10 @@ class PeerConnectionInProgress:
     """
     __slots__ = ("conn", "msg_obj", "lastactive", "init")
 
-    def __init__(self, conn=None, msg_obj=None):
+    def __init__(self, conn=None, msg_obj=None, init=None):
         self.conn = conn
         self.msg_obj = msg_obj
-        self.init = msg_obj.init
+        self.init = init
         self.lastactive = time.time()
 
 
@@ -885,7 +885,7 @@ class SlskProtoThread(threading.Thread):
     def connect_to_peer_direct(self, user, addr, init):
         """ Initiate a connection with a peer directly """
 
-        self._queue.append(InitPeerConn(None, addr, init))
+        self._queue.append(InitPeerConn(addr, init))
 
         log.add_conn("Initialising direct connection of type %(type)s to user %(user)s", {
             'type': init.conn_type,
@@ -1284,7 +1284,7 @@ Error: %(error)s""", {
 
         try:
             conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            conn_obj = PeerConnectionInProgress(conn, msg_obj)
+            conn_obj = PeerConnectionInProgress(conn, msg_obj, msg_obj.init)
 
             conn.setblocking(0)
 
@@ -1889,9 +1889,26 @@ Error: %(error)s""", {
 
                             self.server_address = addr
                             self.server_timeout_value = -1
+                            login, password = msg_obj.login
 
-                            self._callback_msgs.append(InitServerConn(self.server_socket, addr))
+                            self._queue.append(
+                                Login(
+                                    login, password,
+                                    # Soulseek client version
+                                    # NS and SoulseekQt use 157
+                                    # We use a custom version number for Nicotine+
+                                    160,
 
+                                    # Soulseek client minor version
+                                    # 17 stands for 157 ns 13c, 19 for 157 ns 13e
+                                    # SoulseekQt seems to go higher than this
+                                    # We use a custom minor version for Nicotine+
+                                    1
+                                )
+                            )
+
+                            if self.listenport is not None:
+                                self._queue.append(SetWaitPort(self.listenport))
                         else:
                             if self._network_filter.is_ip_blocked(addr[0]):
                                 log.add_conn("Ignoring connection request from blocked IP address %(ip)s:%(port)s", {

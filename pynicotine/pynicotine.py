@@ -121,7 +121,6 @@ class NicotineCore:
 
         # Callback handlers for messages
         self.events = {
-            slskmessages.InitServerConn: self.init_server_conn,
             slskmessages.ConnClose: self.conn_close,
             slskmessages.Login: self.login,
             slskmessages.ChangePassword: self.change_password,
@@ -351,8 +350,11 @@ class NicotineCore:
         self.queue.clear()
 
         server = config.sections["server"]["server"]
+        login = config.sections["server"]["login"]
+        password = config.sections["server"]["passw"]
+
         log.add(_("Connecting to %(host)s:%(port)s"), {'host': server[0], 'port': server[1]})
-        self.queue.append(slskmessages.InitServerConn(None, server))
+        self.queue.append(slskmessages.InitServerConn(server, login=(login, password)))
         return True
 
     def disconnect(self):
@@ -447,30 +449,6 @@ class NicotineCore:
 
             elif i.__class__ is slskmessages.UserInfoRequest:
                 self.userinfo.show_connection_error(msg.user)
-
-    def init_server_conn(self, msg):
-
-        log.add_msg_contents(msg)
-
-        self.queue.append(
-            slskmessages.Login(
-                config.sections["server"]["login"],
-                config.sections["server"]["passw"],
-
-                # Soulseek client version
-                # NS and SoulseekQt use 157
-                # We use a custom version number for Nicotine+
-                160,
-
-                # Soulseek client minor version
-                # 17 stands for 157 ns 13c, 19 for 157 ns 13e
-                # SoulseekQt seems to go higher than this
-                # We use a custom minor version for Nicotine+
-                1,
-            )
-        )
-        if self.protothread.listenport is not None:
-            self.queue.append(slskmessages.SetWaitPort(self.protothread.listenport))
 
     def server_disconnect(self):
 

@@ -48,26 +48,21 @@ class InternalMessage:
     pass
 
 
-class Conn(InternalMessage):
+class InitServerConn(InternalMessage):
+    """ NicotineCore sends this to make networking thread establish a server connection. """
 
-    __slots__ = ("conn", "addr", "init")
+    def __init__(self, addr=None, login=None):
+        self.addr = addr
+        self.login = login
 
-    def __init__(self, conn=None, addr=None, init=None):
-        self.conn = conn
+
+class InitPeerConn(InternalMessage):
+
+    __slots__ = ("addr", "init")
+
+    def __init__(self, addr=None, init=None):
         self.addr = addr
         self.init = init
-
-
-class InitServerConn(Conn):
-    """ NicotineCore sends this to make networking thread establish a server connection.
-    When a connection is established, networking thread returns an object of this type
-    to NicotineCore. """
-
-
-class InitPeerConn(Conn):
-    """ NicotineCore sends this to make networking thread establish a peer connection.
-    When a connection is established, networking thread returns an object of this type
-    to NicotineCore. """
 
 
 class ServerTimeout:
