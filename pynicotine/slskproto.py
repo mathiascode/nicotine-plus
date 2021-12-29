@@ -257,15 +257,15 @@ class PeerConnection(Connection):
 
 class PeerConnectionInProgress:
     """ As all p2p connect()s are non-blocking, this class is used to
-    hold data about a connection that is not yet established. msgObj is
-    a message to be sent after the connection has been established.
-    """
-    __slots__ = ("conn", "msg_obj", "lastactive", "init")
+    hold data about a connection that is not yet established """
 
-    def __init__(self, conn=None, msg_obj=None, init=None):
+    __slots__ = ("conn", "addr", "lastactive", "init", "login")
+
+    def __init__(self, conn=None, addr=None, init=None, login=None):
         self.conn = conn
-        self.msg_obj = msg_obj
+        self.addr = addr
         self.init = init
+        self.login = login
         self.lastactive = time.time()
 
 
@@ -477,7 +477,7 @@ class SlskProtoThread(threading.Thread):
         self._connsinprogress = {}
         self.user_addresses = {}
         self.msgs = defaultdict(list)
-        self.token = 100
+        self._token = 100
         self.exit = threading.Event()
         self.out_indirect_conn_request_times = {}
 
@@ -709,6 +709,7 @@ class SlskProtoThread(threading.Thread):
                             }
                         )
 
+                        self._init_msgs.pop(str(conn.addr) + str(conn.init.token), None)
                         self._callback_msgs.append(ShowConnectionErrorMessage(username, self.msgs[username]))
                         del self.out_indirect_conn_request_times[conn]
 
@@ -891,13 +892,13 @@ class SlskProtoThread(threading.Thread):
             'user': user
         })
 
-    def connect_error(self, msg_obj, error, conn_obj=None):
+    def connect_error(self, error, conn_obj):
 
-        if msg_obj.__class__ is InitServerConn:
+        if conn_obj.login:
             log.add(
                 _("Cannot connect to server %(host)s:%(port)s: %(error)s"), {
-                    'host': msg_obj.addr[0],
-                    'port': msg_obj.addr[1],
+                    'host': conn_obj.addr[0],
+                    'port': conn_obj.addr[1],
                     'error': error
                 }
             )
@@ -909,7 +910,7 @@ class SlskProtoThread(threading.Thread):
             self.connect_to_peer_indirect(conn_obj, error)
             return
 
-        self._init_msgs.pop(str(msg_obj.addr) + str(conn_obj.init.token), None)
+        self._init_msgs.pop(str(conn_obj.addr) + str(conn_obj.init.token), None)
 
         if conn_obj in self.out_indirect_conn_request_times:
             return
@@ -923,13 +924,14 @@ class SlskProtoThread(threading.Thread):
     def connect_to_peer_indirect(self, conn, error):
         """ Send a message to the server to ask the peer to connect to us instead (indirect connection) """
 
-        self.token += 1
+        self._token += 1
         username = conn.init.target_user
         conn_type = conn.init.conn_type
-        conn.init.token = self.token
+        conn.init.token = self._token
 
-        self._init_msgs[str(conn.msg_obj.addr) + str(self.token)] = conn.init
-        self._queue.append(ConnectToPeer(self.token, username, conn_type))
+        self._init_msgs[str(conn.addr) + str(self._token)] = conn.init
+        self._queue.append(ConnectToPeer(self._token, username, conn_type))
+        print(self._init_msgs)
 
         if conn in self.out_indirect_conn_request_times:
             del self.out_indirect_conn_request_times[conn]
@@ -1037,6 +1039,8 @@ Error: %(error)s""", {
 
         try:
             self.server_socket = server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            conn_obj = PeerConnectionInProgress(server_socket, msg_obj.addr, login=msg_obj.login)
+
             server_socket.setblocking(0)
 
             # Detect if our connection to the server is still alive
@@ -1051,11 +1055,11 @@ Error: %(error)s""", {
             server_socket.connect_ex(msg_obj.addr)
 
             self.selector.register(server_socket, selectors.EVENT_READ | selectors.EVENT_WRITE)
-            self._connsinprogress[server_socket] = PeerConnectionInProgress(server_socket, msg_obj)
+            self._connsinprogress[server_socket] = conn_obj
             self._numsockets += 1
 
         except socket.error as err:
-            self.connect_error(msg_obj, err)
+            self.connect_error(err, conn_obj)
             server_socket.close()
             self.server_disconnect()
 
@@ -1280,7 +1284,7 @@ Error: %(error)s""", {
 
         try:
             conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            conn_obj = PeerConnectionInProgress(conn, msg_obj, msg_obj.init)
+            conn_obj = PeerConnectionInProgress(conn, msg_obj.addr, msg_obj.init)
 
             conn.setblocking(0)
 
@@ -1297,7 +1301,7 @@ Error: %(error)s""", {
             self._numsockets += 1
 
         except socket.error as err:
-            self.connect_error(msg_obj, err, conn_obj)
+            self.connect_error(err, conn_obj)
             conn.close()
 
     def process_peer_input(self, conn, msg_buffer):
@@ -1847,12 +1851,10 @@ Error: %(error)s""", {
                     # Connection was removed, possibly disconnecting from the server
                     continue
 
-                msg_obj = conn_obj.msg_obj
-
                 if (current_time - conn_obj.lastactive) > self.IN_PROGRESS_STALE_AFTER:
                     # Connection failed
 
-                    self.connect_error(msg_obj, "Timed out", conn_obj)
+                    self.connect_error("Timed out", conn_obj)
                     self.close_connection(self._connsinprogress, connection_in_progress)
                     continue
 
@@ -1862,14 +1864,14 @@ Error: %(error)s""", {
                         connection_in_progress.recv(1, socket.MSG_PEEK)
 
                 except socket.error as err:
-                    self.connect_error(msg_obj, err, conn_obj)
+                    self.connect_error(err, conn_obj)
                     self.close_connection(self._connsinprogress, connection_in_progress)
 
                 else:
                     if connection_in_progress in output_list:
                         # Connection has been established
 
-                        addr = msg_obj.addr
+                        addr = conn_obj.addr
                         events = selectors.EVENT_READ | selectors.EVENT_WRITE
 
                         if connection_in_progress is self.server_socket:
@@ -1885,7 +1887,8 @@ Error: %(error)s""", {
 
                             self.server_address = addr
                             self.server_timeout_value = -1
-                            login, password = msg_obj.login
+                            login, password = conn_obj.login
+                            conn_obj.login = True
 
                             self._queue.append(
                                 Login(
@@ -1915,7 +1918,7 @@ Error: %(error)s""", {
                                 continue
 
                             self._conns[connection_in_progress] = conn_obj = PeerConnection(
-                                conn=connection_in_progress, addr=addr, events=events, init=msg_obj.init)
+                                conn=connection_in_progress, addr=addr, events=events, init=conn_obj.init)
 
                             if not conn_obj.init.token:
                                 conn_obj.init.conn = connection_in_progress

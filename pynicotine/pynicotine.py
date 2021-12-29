@@ -89,9 +89,6 @@ class NicotineCore:
         for signal_type in (signal.SIGINT, signal.SIGTERM):
             signal.signal(signal_type, self.quit)
 
-        # Tell threads when we're disconnecting
-        self.exit = threading.Event()
-
         self.bindip = bindip
         self.port = port
 
@@ -460,8 +457,6 @@ class NicotineCore:
                 'port': port
             })
 
-        # Inform threads we've disconnected
-        self.exit.set()
         self.logged_in = False
 
         # Clean up connections

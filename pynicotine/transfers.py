@@ -2015,7 +2015,7 @@ class Transfers:
                     if (current_time - start_time) >= 30:
                         self.network_callback([slskmessages.TransferTimeout(transfer)])
 
-            if self.core.exit.wait(1):
+            if self.core.protothread.exit.wait(1):
                 # Event set, we're exiting
                 return
 
@@ -2024,7 +2024,7 @@ class Transfers:
         while True:
             self.network_callback([slskmessages.CheckUploadQueue()])
 
-            if self.core.exit.wait(10):
+            if self.core.protothread.wait(10):
                 # Event set, we're exiting
                 return
 
@@ -2036,7 +2036,7 @@ class Transfers:
             self.download_queue_timer_count += 1
             self.network_callback([slskmessages.CheckDownloadQueue()])
 
-            if self.core.exit.wait(180):
+            if self.core.protothread.wait(180):
                 # Event set, we're exiting
                 return
 
