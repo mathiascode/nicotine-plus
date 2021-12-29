@@ -910,7 +910,7 @@ class SlskProtoThread(threading.Thread):
             self.connect_to_peer_indirect(conn_obj, error)
             return
 
-        self._init_msgs.pop(conn_obj.init.token, None)
+        self._init_msgs.pop(str(msg_obj.addr) + str(conn_obj.init.token), None)
 
         if conn_obj in self.out_indirect_conn_request_times:
             return
@@ -929,7 +929,7 @@ class SlskProtoThread(threading.Thread):
         conn_type = conn.init.conn_type
         conn.init.token = self.token
 
-        self._init_msgs[self.token] = conn.init
+        self._init_msgs[str(conn.msg_obj.addr) + str(self.token)] = conn.init
         self._queue.append(ConnectToPeer(self.token, username, conn_type))
 
         if conn in self.out_indirect_conn_request_times:
@@ -1192,7 +1192,7 @@ Error: %(error)s""", {
                         if conn in self.out_indirect_conn_request_times:
                             del self.out_indirect_conn_request_times[conn]
 
-                        conn.init = self._init_msgs.pop(msg.token, None)
+                        conn.init = self._init_msgs.pop(str(conn.addr) + str(msg.token), None)
                         conn.init.conn = conn.conn
                         self._queue.append(conn.init)
 
@@ -1202,7 +1202,7 @@ Error: %(error)s""", {
                                      conn.init.target_user)
 
                     elif self.peerinitclasses[msgtype] is PeerInit:
-                        self._init_msgs.pop(msg.token, None)
+                        self._init_msgs.pop(str(conn.addr) + str(msg.token), None)
 
                         conn.init = msg
                         conn.init.token = None
