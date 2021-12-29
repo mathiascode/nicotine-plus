@@ -702,18 +702,21 @@ class SlskProtoThread(threading.Thread):
             if self.out_indirect_conn_request_times:
                 for conn, request_time in list(self.out_indirect_conn_request_times.items()):
                     username = conn.init.target_user
+                    conn_type = conn.init.conn_type
 
                     if (curtime - request_time) >= 20:
                         log.add_conn(
                             "Indirect connect request of type %(type)s to user %(user)s expired, giving up", {
-                                'type': conn.init.conn_type,
+                                'type': conn_type,
                                 'user': username
                             }
                         )
 
-                        self._callback_msgs.append(ShowConnectionErrorMessage(username, self._out_msgs[conn.init]))
+                        self._callback_msgs.append(
+                            ShowConnectionErrorMessage(username, self._out_msgs[username + conn_type]))
+
                         self._init_msgs.pop(conn.init.token, None)
-                        self._out_msgs.pop(conn.init, None)
+                        self._out_msgs.pop(username + conn_type, None)
                         del self.out_indirect_conn_request_times[conn]
 
             if self.exit.wait(1):
@@ -793,8 +796,7 @@ class SlskProtoThread(threading.Thread):
         messages for delivery """
 
         username = conn.init.target_user
-
-        msgs = self._out_msgs.get(conn.init)
+        msgs = self._out_msgs.get(username + conn.init.conn_type)
 
         if msgs is None:
             return
@@ -815,52 +817,47 @@ class SlskProtoThread(threading.Thread):
 
         conn = None
 
-        if message.__class__ is not FileRequest:
+        if message.__class__ is FileRequest:
+            conn_type = 'F'
+
+        elif message.__class__ is DistribRequest:
+            conn_type = 'D'
+
+        else:
+            conn_type = 'P'
+
+        if conn_type != 'F':
             # Check if there's already a connection object for the specified username
 
             for _, i in self._conns.items():
-                if i.init is not None and i.init.target_user == user and i.init.conn_type == 'P':
+                if i.init is not None and i.init.target_user == user and i.init.conn_type == conn_type:
                     conn = i
+
                     log.add_conn("Found existing connection of type %(type)s for user %(user)s, using it.", {
-                        'type': i.init.conn_type,
+                        'type': conn_type,
                         'user': user
                     })
                     break
 
+        self._out_msgs[user + conn_type].append(message)
+
         if conn is not None and conn.conn is not None:
             # We have initiated a connection previously, and it's ready
-
-            self._out_msgs[conn.init].append(message)
             self.process_conn_messages(conn)
 
-        elif conn is not None:
-            # Connection exists but is not ready yet, add new messages to it
-
-            self._out_msgs[conn.init].append(message)
-
-        else:
+        elif conn is None:
             # This is a new peer, initiate a connection
-
-            self.initiate_connection_to_peer(user, message, login, address)
+            self.initiate_connection_to_peer(user, conn_type, login, address)
 
         log.add_conn("Sending message of type %(type)s to user %(user)s", {
             'type': message.__class__,
             'user': user
         })
 
-    def initiate_connection_to_peer(self, user, message, login, address=None):
+    def initiate_connection_to_peer(self, user, conn_type, login, address=None):
         """ Prepare to initiate a connection with a peer """
 
-        if message.__class__ is FileRequest:
-            message_type = 'F'
-
-        elif message.__class__ is DistribRequest:
-            message_type = 'D'
-
-        else:
-            message_type = 'P'
-
-        init = PeerInit(init_user=login, target_user=user, conn_type=message_type)
+        init = PeerInit(init_user=login, target_user=user, conn_type=conn_type)
         addr = None
 
         if user == login:
@@ -883,8 +880,6 @@ class SlskProtoThread(threading.Thread):
 
         else:
             self.connect_to_peer_direct(user, addr, init)
-
-        self._out_msgs[init].append(message)
 
     def connect_to_peer_direct(self, user, addr, init):
         """ Initiate a connection with a peer directly """
