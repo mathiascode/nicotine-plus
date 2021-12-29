@@ -2126,6 +2126,7 @@ class PeerInit(PeerInitMessage):
         self.target_user = target_user  # username of peer we're connected to
         self.conn_type = conn_type
         self.token = token
+        self.outgoing_msgs = []
 
     def make_network_message(self):
         msg = bytearray()
