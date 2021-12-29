@@ -709,7 +709,7 @@ class SlskProtoThread(threading.Thread):
                             }
                         )
 
-                        self._init_msgs.pop(str(conn.addr) + str(conn.init.token), None)
+                        self._init_msgs.pop(conn.init.token, None)
                         self._callback_msgs.append(ShowConnectionErrorMessage(username, self.msgs[username]))
                         del self.out_indirect_conn_request_times[conn]
 
@@ -910,8 +910,6 @@ class SlskProtoThread(threading.Thread):
             self.connect_to_peer_indirect(conn_obj, error)
             return
 
-        self._init_msgs.pop(str(conn_obj.addr) + str(conn_obj.init.token), None)
-
         if conn_obj in self.out_indirect_conn_request_times:
             return
 
@@ -925,13 +923,13 @@ class SlskProtoThread(threading.Thread):
         """ Send a message to the server to ask the peer to connect to us instead (indirect connection) """
 
         self._token += 1
+
         username = conn.init.target_user
         conn_type = conn.init.conn_type
         conn.init.token = self._token
 
-        self._init_msgs[str(conn.addr) + str(self._token)] = conn.init
+        self._init_msgs[self._token] = conn.init
         self._queue.append(ConnectToPeer(self._token, username, conn_type))
-        print(self._init_msgs)
 
         if conn in self.out_indirect_conn_request_times:
             del self.out_indirect_conn_request_times[conn]
@@ -1195,7 +1193,7 @@ Error: %(error)s""", {
                         if conn in self.out_indirect_conn_request_times:
                             del self.out_indirect_conn_request_times[conn]
 
-                        conn.init = self._init_msgs.pop(str(conn.addr) + str(msg.token), None)
+                        conn.init = self._init_msgs.pop(msg.token, None)
                         conn.init.conn = conn.conn
                         self._queue.append(conn.init)
 
