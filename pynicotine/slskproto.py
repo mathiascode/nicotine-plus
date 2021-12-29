@@ -857,8 +857,7 @@ class SlskProtoThread(threading.Thread):
         else:
             message_type = 'P'
 
-        init = PeerInit(
-            init_user=login, target_user=user, conn_type=message_type, token=0)
+        init = PeerInit(init_user=login, target_user=user, conn_type=message_type)
         addr = None
 
         if user == login:
@@ -1202,10 +1201,7 @@ Error: %(error)s""", {
                                      conn.init.target_user)
 
                     elif self.peerinitclasses[msgtype] is PeerInit:
-                        self._init_msgs.pop(str(conn.addr) + str(msg.token), None)
-
                         conn.init = msg
-                        conn.init.token = None
 
                         if conn in self.out_indirect_conn_request_times:
                             del self.out_indirect_conn_request_times[conn]
