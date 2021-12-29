@@ -921,7 +921,7 @@ class SlskProtoThread(threading.Thread):
             return
 
         log.add_conn(
-            "Can't respond to indirect connection request from user %(user)s. Error: %(error)s", {
+            "Cannot respond to indirect connection request from user %(user)s. Error: %(error)s", {
                 'user': conn_obj.init.target_user,
                 'error': error
             })
@@ -1155,7 +1155,7 @@ class SlskProtoThread(threading.Thread):
     def process_server_output(self, msg_obj):
 
         if self.server_socket not in self._conns:
-            log.add_conn("Can't send the message over the closed connection: %(type)s %(msg_obj)s", {
+            log.add_conn("Cannot send the message over the closed connection: %(type)s %(msg_obj)s", {
                 'type': msg_obj.__class__,
                 'msg_obj': vars(msg_obj)
             })
@@ -1196,7 +1196,7 @@ class SlskProtoThread(threading.Thread):
             if msgtype in self.peerinitclasses:
                 msg = self.unpack_network_message(
                     self.peerinitclasses[msgtype], msg_buffer_mem[idx + 5:idx + msgsize_total], msgsize - 1,
-                    "peer init", conn)
+                    "peer init", conn.conn)
 
                 if msg is not None:
                     if self.peerinitclasses[msgtype] is PierceFireWall:
@@ -1213,14 +1213,17 @@ class SlskProtoThread(threading.Thread):
                                           "closing connection"), msg.token)
                             conn.ibuf = bytearray()
                             self._callback_msgs.append(ConnClose(conn))
-                            self.close_connection(self._conns, conn)
+                            self.close_connection(self._conns, conn.conn)
                             return
 
                         conn.init.conn = conn.conn
                         self._out_indirect_conn_request_times.pop(conn.init, None)
 
-                        log.add_conn("User %s managed to connect to us indirectly, connection is established",
-                                     conn.init.target_user)
+                        log.add_conn(("User %(user)s managed to connect to us indirectly (token %(token)s), "
+                                      "connection is established"), {
+                            "user": conn.init.target_user,
+                            "token": msg.token
+                        })
 
                         self._queue.append(conn.init)
                         self.process_conn_messages(conn.init)
@@ -1245,7 +1248,7 @@ class SlskProtoThread(threading.Thread):
 
                     conn.ibuf = bytearray()
                     self._callback_msgs.append(ConnClose(conn))
-                    self.close_connection(self._conns, conn)
+                    self.close_connection(self._conns, conn.conn)
                     return
 
                 break
@@ -1258,7 +1261,7 @@ class SlskProtoThread(threading.Thread):
     def process_peer_init_output(self, msg_obj):
 
         if msg_obj.conn not in self._conns:
-            log.add_conn("Can't send the message over the closed connection: %(type)s %(msg_obj)s", {
+            log.add_conn("Cannot send the message over the closed connection: %(type)s %(msg_obj)s", {
                 'type': msg_obj.__class__,
                 'msg_obj': vars(msg_obj)
             })
@@ -1394,7 +1397,7 @@ class SlskProtoThread(threading.Thread):
     def process_peer_output(self, msg_obj):
 
         if msg_obj.conn not in self._conns:
-            log.add_conn("Can't send the message over the closed connection: %(type)s %(msg_obj)s", {
+            log.add_conn("Cannot send the message over the closed connection: %(type)s %(msg_obj)s", {
                 'type': msg_obj.__class__,
                 'msg_obj': vars(msg_obj)
             })
@@ -1424,7 +1427,7 @@ class SlskProtoThread(threading.Thread):
 
         if conn.filereq is None:
             msgsize = 4
-            msg = self.unpack_network_message(FileRequest, msg_buffer[:msgsize], msgsize, "file", conn.conn)
+            msg = self.unpack_network_message(FileRequest, msg_buffer[:msgsize], msgsize, "file", conn)
 
             if msg is not None and msg.req is not None:
                 self._callback_msgs.append(msg)
@@ -1493,7 +1496,7 @@ class SlskProtoThread(threading.Thread):
     def process_file_output(self, msg_obj):
 
         if msg_obj.conn not in self._conns:
-            log.add_conn("Can't send the message over the closed connection: %(type)s %(msg_obj)s", {
+            log.add_conn("Cannot send the message over the closed connection: %(type)s %(msg_obj)s", {
                 'type': msg_obj.__class__,
                 'msg_obj': vars(msg_obj)
             })
@@ -1563,7 +1566,7 @@ class SlskProtoThread(threading.Thread):
 
                 conn.ibuf = bytearray()
                 self._callback_msgs.append(ConnClose(conn))
-                self.close_connection(self._conns, conn)
+                self.close_connection(self._conns, conn.conn)
                 return
 
             idx += msgsize_total
@@ -1574,7 +1577,7 @@ class SlskProtoThread(threading.Thread):
     def process_distrib_output(self, msg_obj):
 
         if msg_obj.conn not in self._conns:
-            log.add_conn("Can't send the message over the closed connection: %(type)s %(msg_obj)s", {
+            log.add_conn("Cannot send the message over the closed connection: %(type)s %(msg_obj)s", {
                 'type': msg_obj.__class__,
                 'msg_obj': vars(msg_obj)
             })
