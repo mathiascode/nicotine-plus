@@ -488,11 +488,6 @@ class NicotineCore:
             self.server_disconnect()
             return
 
-        username = msg.conn.init.target_user
-        conn_type = msg.conn.init.conn_type
-        log.add_conn("Closed connection of type %(type)s to user %(user)s %(addr)s",
-                     {'type': conn_type, 'user': username, 'addr': msg.addr})
-
         self.transfers.conn_close(msg.conn.conn)
 
     def start_upnp_timer(self):

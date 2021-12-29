@@ -975,6 +975,15 @@ class SlskProtoThread(threading.Thread):
             # Disconnected from server, clean up connections and queue
             self.server_disconnect()
 
+        if conn_obj.init is None:
+            return
+
+        log.add_conn("Removed connection of type %(type)s to user %(user)s %(addr)s", {
+            'type': conn_obj.init.conn_type,
+            'user': conn_obj.init.target_user,
+            'addr': conn_obj.addr
+        })
+
     def close_connection_by_ip(self, ip_address):
 
         for connection in self._conns.copy():
@@ -1202,10 +1211,10 @@ class SlskProtoThread(threading.Thread):
                         if conn.init is None:
                             log.add_conn(("Indirect connection attempt with token %s previously expired, "
                                           "closing connection"), msg.token)
-                            conn.init = PeerInit()
+                            conn.ibuf = None
                             self._callback_msgs.append(ConnClose(conn))
                             self.close_connection(self._conns, conn)
-                            break
+                            return
 
                         conn.init.conn = conn.conn
                         self._out_indirect_conn_request_times.pop(conn.init, None)
@@ -1234,8 +1243,10 @@ class SlskProtoThread(threading.Thread):
                             {'type': msgtype, 'size': msgsize - 1,
                              'msg_buffer': msg_buffer[idx + 5:idx + msgsize_total]})
 
+                    conn.ibuf = None
                     self._callback_msgs.append(ConnClose(conn))
                     self.close_connection(self._conns, conn)
+                    return
 
                 break
 
@@ -1549,9 +1560,11 @@ class SlskProtoThread(threading.Thread):
             else:
                 log.add("Distrib message type %(type)i size %(size)i contents %(msg_buffer)s unknown",
                         {'type': msgtype, 'size': msgsize - 1, 'msg_buffer': msg_buffer[idx + 5:idx + msgsize_total]})
+
+                conn.ibuf = None
                 self._callback_msgs.append(ConnClose(conn))
                 self.close_connection(self._conns, conn)
-                break
+                return
 
             idx += msgsize_total
             buffer_len -= msgsize_total
