@@ -826,6 +826,8 @@ class SlskProtoThread(threading.Thread):
         else:
             conn_type = 'P'
 
+        new_connection = conn_type == 'F' or user + conn_type not in self._out_msgs
+
         if conn_type != 'F':
             # Check if there's already a connection object for the specified username
 
@@ -845,7 +847,7 @@ class SlskProtoThread(threading.Thread):
             # We have initiated a connection previously, and it's ready
             self.process_conn_messages(conn)
 
-        elif conn is None:
+        elif conn is None and new_connection:
             # This is a new peer, initiate a connection
             self.initiate_connection_to_peer(user, conn_type, login, address)
 
@@ -1117,6 +1119,10 @@ Error: %(error)s""", {
                                 'user': msg.user
                             }
                         )
+                        if init is not None:
+                            # Impossible to connect to user, discard outgoing messages
+                            self._out_msgs.pop(msg.user + init.conn_type, None)
+
                     else:
                         addr = (msg.ip_address, msg.port)
 
