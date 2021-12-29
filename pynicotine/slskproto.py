@@ -701,9 +701,10 @@ class SlskProtoThread(threading.Thread):
 
                     if (curtime - request_time) >= 20:
                         log.add_conn(
-                            "Indirect connect request of type %(type)s to user %(user)s expired, giving up", {
+                            "Indirect connect request of type %(type)s to user %(user)s with token %(token)s expired, giving up", {
                                 'type': conn_type,
-                                'user': username
+                                'user': username,
+                                'token': init.token
                             }
                         )
 
