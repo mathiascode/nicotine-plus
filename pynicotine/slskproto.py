@@ -707,7 +707,7 @@ class SlskProtoThread(threading.Thread):
                             'token': init.token
                         })
 
-                        self._callback_msgs.append(ShowConnectionErrorMessage(username, init.outgoing_msgs))
+                        self._callback_msgs.append(ShowConnectionErrorMessage(username, list(init.outgoing_msgs)))
 
                         self._init_msgs.pop(init.token, None)
                         init.outgoing_msgs.clear()
@@ -847,7 +847,6 @@ class SlskProtoThread(threading.Thread):
             })
 
             init.outgoing_msgs.append(message)
-            print(init.outgoing_msgs)
 
             if init.conn is not None:
                 # We have initiated a connection previously, and it's ready
