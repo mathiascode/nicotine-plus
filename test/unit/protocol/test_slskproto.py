@@ -94,7 +94,7 @@ class SlskProtoTest(unittest.TestCase):
             mock_socket.set_data(LOGIN_DATAFILE)
             proto.server_connect()
 
-            queue.append(ServerConnect(addr=('0.0.0.0', 0)))
+            queue.append(ServerConnect(addr=('0.0.0.0', 0), login=('dummy', 'dummy')))
             sleep(SLSKPROTO_RUN_TIME)
 
             if hasattr(socket, 'TCP_KEEPIDLE'):
@@ -124,7 +124,7 @@ class SlskProtoTest(unittest.TestCase):
             eventprocessor=Mock()
         )
         proto.server_connect()
-        queue.append(ServerConnect(addr=('0.0.0.0', 0)))
+        queue.append(ServerConnect(addr=('0.0.0.0', 0), login=('username', 'password')))
 
         sleep(SLSKPROTO_RUN_TIME / 2)
 
