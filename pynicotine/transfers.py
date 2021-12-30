@@ -596,7 +596,7 @@ class Transfers:
         """ When we got a contents of a folder, get all the files in it, but
         skip the files in subfolders"""
 
-        username = msg.conn.init.target_user
+        username = msg.init.target_user
         file_list = msg.list
 
         log.add_transfer("Received response for folder content request from user %s", username)
@@ -638,8 +638,9 @@ class Transfers:
         a TransferRequest with direction 0 (download request). We will initiate the upload of
         the queued file later. """
 
-        user = msg.conn.init.target_user
-        addr = msg.conn.addr[0]
+        init = msg.init
+        user = init.target_user
+        ip_address = init.sock.getpeername()[0]
         real_path = self.core.shares.virtual2real(msg.file)
 
         if not self.file_is_upload_queued(user, msg.file):
@@ -652,21 +653,21 @@ class Transfers:
                 if friend:
                     limits = False
 
-            checkuser, reason = self.core.network_filter.check_user(user, addr)
+            checkuser, reason = self.core.network_filter.check_user(user, ip_address)
 
             if not checkuser:
                 self.queue.append(
-                    slskmessages.UploadDenied(msg.conn.sock, msg.file, reason)
+                    slskmessages.UploadDenied(msg.init, msg.file, reason)
                 )
 
             elif limits and self.queue_limit_reached(user):
                 self.queue.append(
-                    slskmessages.UploadDenied(msg.conn.sock, msg.file, "Too many megabytes")
+                    slskmessages.UploadDenied(msg.init, msg.file, "Too many megabytes")
                 )
 
             elif limits and self.file_limit_reached(user):
                 self.queue.append(
-                    slskmessages.UploadDenied(msg.conn.sock, msg.file, "Too many files")
+                    slskmessages.UploadDenied(msg.init, msg.file, "Too many files")
                 )
 
             elif self.core.shares.file_is_shared(user, msg.file, real_path):
@@ -685,7 +686,7 @@ class Transfers:
 
             else:
                 self.queue.append(
-                    slskmessages.UploadDenied(msg.conn.sock, msg.file, "File not shared.")
+                    slskmessages.UploadDenied(msg.init, msg.file, "File not shared.")
                 )
 
         log.add_transfer("QueueUpload request: User %(user)s, %(msg)s", {
@@ -695,8 +696,9 @@ class Transfers:
 
     def transfer_request(self, msg):
 
-        user = msg.conn.init.target_user
-        addr = msg.conn.addr[0]
+        init = msg.init
+        user = init.target_user
+        ip_address = init.sock.getpeername()[0]
         response = None
 
         if msg.direction == 1:
@@ -723,7 +725,7 @@ class Transfers:
                 "user": user
             })
 
-            response = self.transfer_request_uploads(msg, user, addr)
+            response = self.transfer_request_uploads(msg, user, ip_address)
 
             log.add_transfer("Sending response to download request %(request)s for file %(filename)s "
                              + "from user %(user)s: %(allowed)s", {
@@ -811,22 +813,22 @@ class Transfers:
 
         return response
 
-    def transfer_request_uploads(self, msg, user, addr):
+    def transfer_request_uploads(self, msg, user, ip_address):
         """ Remote peer is requesting to download a file through your upload queue.
         Note that the QueueUpload peer message has replaced this method of requesting
         a download in most clients. """
 
-        response = self._transfer_request_uploads(msg, user, addr)
+        response = self._transfer_request_uploads(msg, user, ip_address)
         log.add_transfer("Legacy TransferRequest upload request: %(req)s Response: %(resp)s", {
             'req': str(vars(msg)),
             'resp': response
         })
         return response
 
-    def _transfer_request_uploads(self, msg, user, addr):
+    def _transfer_request_uploads(self, msg, user, ip_address):
 
         # Is user allowed to download?
-        checkuser, reason = self.core.network_filter.check_user(user, addr)
+        checkuser, reason = self.core.network_filter.check_user(user, ip_address)
 
         if not checkuser:
             return slskmessages.TransferResponse(None, 0, reason=reason, req=msg.req)
@@ -1216,7 +1218,7 @@ class Transfers:
 
     def upload_denied(self, msg):
 
-        user = msg.conn.init.target_user
+        user = msg.init.target_user
 
         for i in self.downloads:
             if i.user != user or i.filename != msg.file:
@@ -1256,7 +1258,7 @@ class Transfers:
 
     def upload_failed(self, msg):
 
-        user = msg.conn.init.target_user
+        user = msg.init.target_user
 
         for i in self.downloads:
             if i.user != user or i.filename != msg.file:
@@ -1449,7 +1451,7 @@ class Transfers:
 
     def place_in_queue_request(self, msg):
 
-        user = msg.conn.init.target_user
+        user = msg.init.target_user
         privileged_user = self.is_privileged(user)
         queue_position = 0
         transfer = None
@@ -1487,7 +1489,7 @@ class Transfers:
                     break
 
         if queue_position > 0:
-            self.queue.append(slskmessages.PlaceInQueue(msg.conn.sock, msg.file, queue_position))
+            self.queue.append(slskmessages.PlaceInQueue(msg.init, msg.file, queue_position))
 
         if transfer is None:
             return
@@ -1501,7 +1503,7 @@ class Transfers:
     def place_in_queue(self, msg):
         """ The server tells us our place in queue for a particular transfer."""
 
-        username = msg.conn.init.target_user
+        username = msg.init.target_user
         filename = msg.filename
 
         for i in self.downloads:

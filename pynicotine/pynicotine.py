@@ -1098,8 +1098,7 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
-        user = msg.conn.init.target_user
-        sock = msg.conn.sock
+        user = msg.init.target_user
         request_time = time.time()
 
         if user in self.requested_share_times and request_time < self.requested_share_times[user] + 0.4:
@@ -1111,7 +1110,7 @@ class NicotineCore:
 
         log.add(_("User %(user)s is browsing your list of shared files"), {'user': user})
 
-        ip_address, _port = msg.conn.addr
+        ip_address = msg.init.sock.getpeername()[0]
         checkuser, reason = self.network_filter.check_user(user, ip_address)
 
         if not checkuser:
@@ -1130,15 +1129,15 @@ class NicotineCore:
 
         if not shares_list:
             # Nyah, Nyah
-            shares_list = slskmessages.SharedFileList(sock, {})
+            shares_list = slskmessages.SharedFileList(msg.init, {})
 
-        shares_list.conn = sock
+        shares_list.init = msg.init
         self.queue.append(shares_list)
 
     def shared_file_list(self, msg):
         """ Peer code: 5 """
 
-        username = msg.conn.init.target_user
+        username = msg.init.target_user
         self.userbrowse.shared_file_list(username, msg)
 
     def file_search_result(self, msg):
@@ -1152,10 +1151,9 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
-        user = msg.conn.init.target_user
+        user = msg.init.target_user
         login_user = config.sections["server"]["login"]
-        sock = msg.conn.sock
-        addr = msg.conn.addr
+        ip_address = msg.init.sock.getpeername()[0]
         request_time = time.time()
 
         if user in self.requested_info_times and request_time < self.requested_info_times[user] + 0.4:
@@ -1168,7 +1166,7 @@ class NicotineCore:
         if login_user != user:
             log.add(_("User %(user)s is reading your user info"), {'user': user})
 
-        status, reason = self.network_filter.check_user(user, addr[0])
+        status, reason = self.network_filter.check_user(user, ip_address)
 
         if not status:
             pic = None
@@ -1198,14 +1196,14 @@ class NicotineCore:
             uploadallowed = 0
 
         self.queue.append(
-            slskmessages.UserInfoReply(sock, descr, pic, totalupl, queuesize, slotsavail, uploadallowed))
+            slskmessages.UserInfoReply(msg.init, descr, pic, totalupl, queuesize, slotsavail, uploadallowed))
 
     def user_info_reply(self, msg):
         """ Peer code: 16 """
 
         log.add_msg_contents(msg)
 
-        username = msg.conn.init.target_user
+        username = msg.init.target_user
         self.userinfo.user_info_reply(username, msg)
 
     def p_message_user(self, msg):
@@ -1213,7 +1211,7 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
-        username = msg.conn.init.target_user
+        username = msg.init.target_user
 
         if username != msg.user:
             msg.msg = _("(Warning: %(realuser)s is attempting to spoof %(fakeuser)s) ") % {
@@ -1227,9 +1225,9 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
-        sock = msg.conn.sock
-        ip_address, _port = msg.conn.addr
-        username = msg.conn.init.target_user
+        init = msg.init
+        ip_address = msg.init.sock.getpeername()[0]
+        username = msg.init.target_user
         checkuser, reason = self.network_filter.check_user(username, ip_address)
 
         if not checkuser:
@@ -1251,18 +1249,18 @@ class NicotineCore:
         if checkuser:
             try:
                 if msg.dir in shares:
-                    self.queue.append(slskmessages.FolderContentsResponse(sock, msg.dir, shares[msg.dir]))
+                    self.queue.append(slskmessages.FolderContentsResponse(init, msg.dir, shares[msg.dir]))
                     return
 
                 if msg.dir.rstrip('\\') in shares:
-                    self.queue.append(slskmessages.FolderContentsResponse(sock, msg.dir, shares[msg.dir.rstrip('\\')]))
+                    self.queue.append(slskmessages.FolderContentsResponse(init, msg.dir, shares[msg.dir.rstrip('\\')]))
                     return
 
             except Exception as error:
                 log.add(_("Failed to fetch the shared folder %(folder)s: %(error)s"),
                         {"folder": msg.dir, "error": error})
 
-            self.queue.append(slskmessages.FolderContentsResponse(sock, msg.dir, None))
+            self.queue.append(slskmessages.FolderContentsResponse(init, msg.dir, None))
 
     def folder_contents_response(self, msg):
         """ Peer code: 37 """
@@ -1282,7 +1280,7 @@ class NicotineCore:
                         folder = j
 
         if many:
-            username = msg.conn.init.target_user
+            username = msg.init.target_user
             self.transfers.downloadsview.download_large_folder(username, folder, numfiles, msg)
         else:
             self.transfers.folder_contents_response(msg)
@@ -1364,8 +1362,8 @@ class NicotineCore:
         parent. Tell the server who our parent is, and stop requesting new potential parents. """
 
         log.add_msg_contents(msg)
-        sock = msg.conn.sock
-        username = msg.conn.init.target_user
+        sock = msg.init.sock
+        username = msg.init.target_user
 
         if msg.value < 0:
             # There are rare cases of parents sending a branch level value of -1, presumably buggy clients
@@ -1397,7 +1395,7 @@ class NicotineCore:
         """ Distrib code: 5 """
 
         log.add_msg_contents(msg)
-        sock = msg.conn.sock
+        sock = msg.init.sock
 
         if sock != self.parent_socket:
             # Unwanted connection, close it

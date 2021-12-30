@@ -218,43 +218,7 @@ DOUBLE_UINT_UNPACK = struct.Struct("<II").unpack
 UINT_PACK = struct.Struct("<I").pack
 
 
-class Connection:
-    """
-    Holds data about a connection. conn is a socket object,
-    addr is (ip, port) pair, ibuf and obuf are input and output msgBuffer,
-    init is a PeerInit object (see slskmessages docstrings).
-    """
-
-    __slots__ = ("sock", "addr", "ibuf", "obuf", "events", "init", "lastactive", "lastreadlength")
-
-    def __init__(self, sock=None, addr=None, events=None):
-        self.sock = sock
-        self.addr = addr
-        self.events = events
-        self.ibuf = bytearray()
-        self.obuf = bytearray()
-        self.init = None
-        self.lastactive = time.time()
-        self.lastreadlength = 100 * 1024
-
-
-class PeerConnection(Connection):
-
-    __slots__ = ("filereq", "filedown", "fileupl", "filereadbytes", "bytestoread", "piercefw", "lastcallback")
-
-    def __init__(self, sock=None, addr=None, events=None, init=None):
-        Connection.__init__(self, sock, addr, events)
-        self.filereq = None
-        self.filedown = None
-        self.fileupl = None
-        self.filereadbytes = 0
-        self.bytestoread = 0
-        self.init = init
-        self.piercefw = None
-        self.lastcallback = time.time()
-
-
-class PeerConnectionInProgress:
+class ConnectionInProgress:
     """ As all p2p connect()s are non-blocking, this class is used to
     hold data about a connection that is not yet established """
 
@@ -266,6 +230,42 @@ class PeerConnectionInProgress:
         self.init = init
         self.login = login
         self.lastactive = time.time()
+
+
+class Connection:
+    """
+    Holds data about a connection. sock is a socket object,
+    addr is (ip, port) pair, ibuf and obuf are input and output msgBuffer,
+    init is a PeerInit object (see slskmessages docstrings).
+    """
+
+    __slots__ = ("sock", "addr", "init", "ibuf", "obuf", "events", "lastactive", "lastreadlength")
+
+    def __init__(self, sock=None, addr=None, events=None):
+        self.sock = sock
+        self.addr = addr
+        self.init = None
+        self.events = events
+        self.ibuf = bytearray()
+        self.obuf = bytearray()
+        self.lastactive = time.time()
+        self.lastreadlength = 100 * 1024
+
+
+class PeerConnection(Connection):
+
+    __slots__ = ("filereq", "filedown", "fileupl", "filereadbytes", "bytestoread", "piercefw", "lastcallback")
+
+    def __init__(self, sock=None, addr=None, events=None, init=None):
+        Connection.__init__(self, sock, addr, events)
+        self.init = init
+        self.filereq = None
+        self.filedown = None
+        self.fileupl = None
+        self.filereadbytes = 0
+        self.bytestoread = 0
+        self.piercefw = None
+        self.lastcallback = time.time()
 
 
 class SlskProtoThread(threading.Thread):
@@ -802,7 +802,7 @@ class SlskProtoThread(threading.Thread):
                      'messages': msgs})
 
         for j in msgs:
-            j.conn = init.sock
+            j.init = init
             self._queue.append(j)
 
         msgs.clear()
@@ -1050,7 +1050,7 @@ class SlskProtoThread(threading.Thread):
 
         try:
             self.server_socket = server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            conn_obj = PeerConnectionInProgress(server_socket, msg_obj.addr, login=msg_obj.login)
+            conn_obj = ConnectionInProgress(server_socket, msg_obj.addr, login=msg_obj.login)
 
             server_socket.setblocking(0)
 
@@ -1309,7 +1309,8 @@ class SlskProtoThread(threading.Thread):
 
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            conn_obj = PeerConnectionInProgress(sock, msg_obj.addr, msg_obj.init)
+            conn_obj = ConnectionInProgress(sock, msg_obj.addr, msg_obj.init)
+            msg_obj.init.sock = sock
 
             sock.setblocking(0)
 
@@ -1340,6 +1341,7 @@ class SlskProtoThread(threading.Thread):
         buffer_len = len(msg_buffer_mem)
         idx = 0
         search_result_received = False
+        sock = conn_obj.sock
 
         # Peer messages are 8 bytes or greater in length
         while buffer_len >= 8:
@@ -1364,19 +1366,18 @@ class SlskProtoThread(threading.Thread):
             # Unpack peer messages
             if msgtype in self.peerclasses:
                 msg = self.unpack_network_message(
-                    self.peerclasses[msgtype], msg_buffer_mem[idx + 8:idx + msgsize_total], msgsize - 4, "peer", conn_obj)
+                    self.peerclasses[msgtype], msg_buffer_mem[idx + 8:idx + msgsize_total], msgsize - 4,
+                    "peer", conn_obj.init)
 
                 if msg.__class__ is FileSearchResult:
                     search_result_received = True
+                    msg.ip_address = sock.getpeername()[0]
 
                 if msg is not None:
                     self._callback_msgs.append(msg)
 
             else:
-                host = port = "unknown"
-
-                if conn_obj.init.sock is not None and conn_obj.addr is not None:
-                    host, port = conn_obj.addr
+                host, port = conn_obj.addr
 
                 log.add(("Peer message type %(type)s size %(size)i contents %(msg_buffer)s unknown, "
                          "from user: %(user)s, %(host)s:%(port)s"),
@@ -1388,16 +1389,16 @@ class SlskProtoThread(threading.Thread):
 
         conn_obj.ibuf = msg_buffer[idx:]
 
-        if search_result_received and not self.socket_still_active(conn_obj.sock):
+        if search_result_received and not self.socket_still_active(sock):
             # Forcibly close peer connection. Only used after receiving a search result,
             # as we need to get rid of peer connections before they pile up.
 
-            self._callback_msgs.append(ConnClose(conn_obj.sock))
-            self.close_connection(self._conns, conn_obj.sock)
+            self._callback_msgs.append(ConnClose(sock))
+            self.close_connection(self._conns, sock)
 
     def process_peer_output(self, msg_obj):
 
-        if msg_obj.conn not in self._conns:
+        if msg_obj.init.sock not in self._conns:
             log.add_conn("Cannot send the message over the closed connection: %(type)s %(msg_obj)s", {
                 'type': msg_obj.__class__,
                 'msg_obj': vars(msg_obj)
@@ -1410,7 +1411,7 @@ class SlskProtoThread(threading.Thread):
         if msg is None:
             return
 
-        conn_obj = self._conns[msg_obj.conn]
+        conn_obj = self._conns[msg_obj.init.sock]
         conn_obj.obuf.extend(UINT_PACK(len(msg) + 4))
         conn_obj.obuf.extend(UINT_PACK(self.peercodes[msg_obj.__class__]))
         conn_obj.obuf.extend(msg)
@@ -1480,7 +1481,7 @@ class SlskProtoThread(threading.Thread):
                     self.modify_connection_events(conn_obj, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
                 except IOError as strerror:
-                    self._callback_msgs.append(FileError(conn_obj, conn_obj.fileupl.file, strerror))
+                    self._callback_msgs.append(FileError(conn_obj.sock, conn_obj.fileupl.file, strerror))
                     self._callback_msgs.append(ConnClose(conn_obj.sock))
                     self.close_connection(self._conns, conn_obj.sock)
 
@@ -1556,7 +1557,7 @@ class SlskProtoThread(threading.Thread):
             if msgtype in self.distribclasses:
                 msg = self.unpack_network_message(
                     self.distribclasses[msgtype], msg_buffer_mem[idx + 5:idx + msgsize_total], msgsize - 1,
-                    "distrib", conn_obj)
+                    "distrib", conn_obj.init)
 
                 if msg is not None:
                     self._callback_msgs.append(msg)
@@ -1577,7 +1578,7 @@ class SlskProtoThread(threading.Thread):
 
     def process_distrib_output(self, msg_obj):
 
-        if msg_obj.conn not in self._conns:
+        if msg_obj.init.sock not in self._conns:
             log.add_conn("Cannot send the message over the closed connection: %(type)s %(msg_obj)s", {
                 'type': msg_obj.__class__,
                 'msg_obj': vars(msg_obj)
@@ -1590,7 +1591,7 @@ class SlskProtoThread(threading.Thread):
         if msg is None:
             return
 
-        conn_obj = self._conns[msg_obj.conn]
+        conn_obj = self._conns[msg_obj.init.sock]
         conn_obj.obuf.extend(UINT_PACK(len(msg) + 1))
         conn_obj.obuf.extend(bytes([self.distribcodes[msg_obj.__class__]]))
         conn_obj.obuf.extend(msg)
@@ -1623,7 +1624,7 @@ class SlskProtoThread(threading.Thread):
     def process_conn_output(self):
         """ Processes messages sent by the main thread. queue holds the messages,
         conns and connsinprogress are dictionaries holding Connection and
-        PeerConnectionInProgress messages. """
+        ConnectionInProgress messages. """
 
         msg_list = self._queue.copy()
         self._queue.clear()
@@ -1660,7 +1661,7 @@ class SlskProtoThread(threading.Thread):
             elif msg_class is ConnClose and msg_obj.sock in self._conns:
                 sock = msg_obj.sock
 
-                self._callback_msgs.append(ConnClose(self._conns[sock]))
+                self._callback_msgs.append(ConnClose(sock))
                 self.close_connection(self._conns, sock)
 
             elif msg_class is ConnCloseIP:
@@ -1773,7 +1774,7 @@ class SlskProtoThread(threading.Thread):
                         self.modify_connection_events(conn_obj, selectors.EVENT_READ | selectors.EVENT_WRITE)
 
             except IOError as strerror:
-                self._callback_msgs.append(FileError(conn_obj, conn_obj.fileupl.file, strerror))
+                self._callback_msgs.append(FileError(sock, conn_obj.fileupl.file, strerror))
                 self._callback_msgs.append(ConnClose(sock))
                 self.close_connection(self._conns, sock)
 
