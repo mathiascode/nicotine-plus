@@ -52,7 +52,7 @@ from pynicotine.utils import write_file_and_backup
 
 
 class Transfer:
-    """ This class holds information about a single transfer. """
+    """ This class holds information about a single transfer """
 
     __slots__ = ("sock", "user", "filename",
                  "path", "req", "size", "file", "start_time", "last_update",
@@ -594,7 +594,7 @@ class Transfers:
 
     def folder_contents_response(self, msg):
         """ When we got a contents of a folder, get all the files in it, but
-        skip the files in subfolders"""
+        skip the files in subfolders """
 
         username = msg.init.target_user
         file_list = msg.list
@@ -638,9 +638,7 @@ class Transfers:
         a TransferRequest with direction 0 (download request). We will initiate the upload of
         the queued file later. """
 
-        init = msg.init
-        user = init.target_user
-        ip_address = init.addr
+        user = msg.init.target_user
         real_path = self.core.shares.virtual2real(msg.file)
 
         if not self.file_is_upload_queued(user, msg.file):
@@ -653,7 +651,7 @@ class Transfers:
                 if friend:
                     limits = False
 
-            checkuser, reason = self.core.network_filter.check_user(user, ip_address)
+            checkuser, reason = self.core.network_filter.check_user(user, msg.init.addr)
 
             if not checkuser:
                 self.queue.append(
@@ -696,9 +694,7 @@ class Transfers:
 
     def transfer_request(self, msg):
 
-        init = msg.init
-        user = init.target_user
-        ip_address = init.addr
+        user = msg.init.target_user
         response = None
 
         if msg.direction == 1:
@@ -708,7 +704,7 @@ class Transfers:
                 "user": user
             })
 
-            response = self.transfer_request_downloads(msg, user)
+            response = self.transfer_request_downloads(msg)
 
             log.add_transfer("Sending response to upload request %(request)s for file %(filename)s "
                              + "from user %(user)s: %(allowed)s", {
@@ -725,7 +721,7 @@ class Transfers:
                 "user": user
             })
 
-            response = self.transfer_request_uploads(msg, user, ip_address)
+            response = self.transfer_request_uploads(msg)
 
             log.add_transfer("Sending response to download request %(request)s for file %(filename)s "
                              + "from user %(user)s: %(allowed)s", {
@@ -737,8 +733,9 @@ class Transfers:
 
         self.core.send_message_to_peer(user, response)
 
-    def transfer_request_downloads(self, msg, user):
+    def transfer_request_downloads(self, msg):
 
+        user = msg.init.target_user
         filename = msg.file
         size = msg.filesize
 
@@ -761,10 +758,10 @@ class Transfers:
 
                 # Remote peer is signaling a transfer is ready, attempting to download it
 
-                """ If the file is larger than 2GB, the SoulseekQt client seems to
-                send a malformed file size (0 bytes) in the TransferRequest response.
-                In that case, we rely on the cached, correct file size we received when
-                we initially added the download. """
+                # If the file is larger than 2GB, the SoulseekQt client seems to
+                # send a malformed file size (0 bytes) in the TransferRequest response.
+                # In that case, we rely on the cached, correct file size we received when
+                # we initially added the download.
 
                 if msg.filesize > 0:
                     i.size = size
@@ -813,22 +810,23 @@ class Transfers:
 
         return response
 
-    def transfer_request_uploads(self, msg, user, ip_address):
+    def transfer_request_uploads(self, msg):
         """ Remote peer is requesting to download a file through your upload queue.
         Note that the QueueUpload peer message has replaced this method of requesting
         a download in most clients. """
 
-        response = self._transfer_request_uploads(msg, user, ip_address)
+        response = self._transfer_request_uploads(msg)
         log.add_transfer("Legacy TransferRequest upload request: %(req)s Response: %(resp)s", {
             'req': str(vars(msg)),
             'resp': response
         })
         return response
 
-    def _transfer_request_uploads(self, msg, user, ip_address):
+    def _transfer_request_uploads(self, msg):
 
         # Is user allowed to download?
-        checkuser, reason = self.core.network_filter.check_user(user, ip_address)
+        user = msg.init.target_user
+        checkuser, reason = self.core.network_filter.check_user(user, msg.init.addr)
 
         if not checkuser:
             return slskmessages.TransferResponse(None, 0, reason=reason, req=msg.req)
@@ -905,8 +903,7 @@ class Transfers:
         return response
 
     def transfer_response(self, msg):
-
-        """ Got a response to the file request from the peer."""
+        """ Received a response to the file request from the peer """
 
         log.add_transfer("Received response for transfer request %(request)s. Allowed: %(allowed)s. "
                          + "Reason: %(reason)s. Filesize: %(size)s", {
@@ -1020,17 +1017,19 @@ class Transfers:
         """ Got an incoming file request. Could be an upload request or a
         request to get the file that was previously queued """
 
+        req = msg.req
+
         log.add_transfer("Received file request %(request)s", {
-            "request": msg.req
+            "request": req
         })
 
         for i in self.downloads:
-            if msg.req == i.req:
+            if req == i.req:
                 self._file_request_download(msg, i)
                 return
 
         for i in self.uploads:
-            if msg.req == i.req:
+            if req == i.req:
                 self._file_request_upload(msg, i)
                 return
 
@@ -1048,7 +1047,7 @@ class Transfers:
         needupdate = True
 
         if i.sock is None and i.size is not None:
-            i.sock = msg.sock
+            i.sock = msg.init.sock
             i.req = None
 
             if i in self.transfer_request_times:
@@ -1113,7 +1112,7 @@ class Transfers:
                         i.status = "Transferring"
                         i.legacy_attempt = False
                         self.queue.append(slskmessages.DownloadFile(i.sock, file_handle))
-                        self.queue.append(slskmessages.FileOffset(i.sock, i.size, offset))
+                        self.queue.append(slskmessages.FileOffset(msg.init, i.size, offset))
 
                         log.add_download(
                             _("Download started: user %(user)s, file %(file)s"), {
@@ -1138,7 +1137,7 @@ class Transfers:
                 'file': i.filename
             })
 
-            self.queue.append(slskmessages.ConnClose(msg.sock))
+            self.queue.append(slskmessages.ConnClose(msg.init.sock))
 
     def _file_request_upload(self, msg, i):
 
@@ -1150,7 +1149,7 @@ class Transfers:
         needupdate = True
 
         if i.sock is None:
-            i.sock = msg.sock
+            i.sock = msg.init.sock
             i.req = None
             file_handle = None
 
@@ -1182,18 +1181,10 @@ class Transfers:
                     i.status = "Transferring"
                     self.queue.append(slskmessages.UploadFile(i.sock, file=file_handle, size=i.size))
 
-                    ip_address = None
-                    if i.sock is not None:
-                        try:
-                            ip_address = i.sock.getpeername()
-                        except OSError:
-                            # Connection already closed
-                            pass
-
                     log.add_upload(
                         _("Upload started: user %(user)s, IP address %(ip)s, file %(file)s"), {
                             "user": i.user,
-                            "ip": ip_address,
+                            "ip": msg.init.addr[0],
                             "file": i.filename
                         }
                     )
@@ -1214,7 +1205,7 @@ class Transfers:
                 'file': i.filename
             })
 
-            self.queue.append(slskmessages.ConnClose(msg.sock))
+            self.queue.append(slskmessages.ConnClose(msg.init.sock))
 
     def upload_denied(self, msg):
 
@@ -1225,8 +1216,8 @@ class Transfers:
                 continue
 
             if msg.reason in ("File not shared.", "File not shared", "Remote file error") and not i.legacy_attempt:
-                """ The peer is possibly using an old client that doesn't support Unicode
-                (Soulseek NS). Attempt to request file name encoded as latin-1 once. """
+                # The peer is possibly using an old client that doesn't support Unicode
+                # (Soulseek NS). Attempt to request file name encoded as latin-1 once.
 
                 log.add_transfer("User %(user)s responded with reason '%(reason)s' for download request %(filename)s. "
                                  "Attempting to request file as latin-1.", {
@@ -1268,15 +1259,14 @@ class Transfers:
                 continue
 
             if not i.legacy_attempt:
-                """ Attempt to request file name encoded as latin-1 once. """
+                # Attempt to request file name encoded as latin-1 once
 
                 self.abort_transfer(i)
                 i.legacy_attempt = True
                 self.get_file(i.user, i.filename, i.path, i)
                 break
 
-            """ Already failed once previously, give up """
-
+            # Already failed once previously, give up
             i.status = "Remote file error"
 
             if self.downloadsview:
@@ -1289,7 +1279,7 @@ class Transfers:
             })
 
     def file_download(self, msg):
-        """ A file download is in progress"""
+        """ A file download is in progress """
 
         needupdate = True
 
@@ -1396,8 +1386,8 @@ class Transfers:
             break
 
     def conn_close(self, sock):
-        """ The remote user has closed the connection either because
-        he logged off, or because there's a network problem. """
+        """ The remote user has closed the connection either because they logged off, or
+        because there's a network problem """
 
         for i in self.downloads:
             if i.sock == sock:
@@ -1428,10 +1418,9 @@ class Transfers:
                 else:
                     i.status = "Cancelled"
 
-                    """ Transfer ended abruptly. Tell the peer to re-queue the file. If the transfer was
-                    intentionally cancelled, the peer should ignore this message. """
-                    self.core.send_message_to_peer(
-                        i.user, slskmessages.UploadFailed(None, i.filename))
+                    # Transfer ended abruptly. Tell the peer to re-queue the file. If the transfer was
+                    # intentionally cancelled, the peer should ignore this message.
+                    self.core.send_message_to_peer(i.user, slskmessages.UploadFailed(None, i.filename))
 
                 auto_clear = True
 
@@ -1501,7 +1490,7 @@ class Transfers:
             self.uploadsview.update(transfer)
 
     def place_in_queue(self, msg):
-        """ The server tells us our place in queue for a particular transfer."""
+        """ The peer tells us our place in queue for a particular transfer """
 
         username = msg.init.target_user
         filename = msg.filename
@@ -2200,11 +2189,9 @@ class Transfers:
             return
 
     def ban_user(self, user, ban_message=None):
-        """
-        Ban a user, cancel all the user's uploads, send a 'Banned'
+        """ Ban a user, cancel all the user's uploads, send a 'Banned'
         message via the transfers, and clear the transfers from the
-        uploads list.
-        """
+        uploads list. """
 
         if ban_message:
             banmsg = "Banned (%s)" % ban_message

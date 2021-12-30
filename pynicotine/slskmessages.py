@@ -2817,8 +2817,8 @@ class FileRequest(FileMessage):
     start uploading a file. The token is the same as the one previously included
     in the TransferRequest message. """
 
-    def __init__(self, sock, req=None):
-        self.sock = sock
+    def __init__(self, init, req=None):
+        self.init = init
         self.req = req
 
     def make_network_message(self):
@@ -2834,8 +2834,8 @@ class FileOffset(FileMessage):
     to tell them how many bytes of the file we've previously downloaded. If none,
     the offset is 0. """
 
-    def __init__(self, sock, filesize=None, offset=None):
-        self.sock = sock
+    def __init__(self, init, filesize=None, offset=None):
+        self.init = init
         self.filesize = filesize
         self.offset = offset
 

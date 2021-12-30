@@ -372,14 +372,13 @@ class NicotineCore:
                 log.add("No handler for class %s %s", (i.__class__, dir(i)))
 
     def send_message_to_peer(self, user, message, address=None):
+        """ Sends message to a peer. Used when we know the username of a peer,
+        but don't have/know an active connection. """
 
-        """ Sends message to a peer. Used primarily when we know the username of a peer,
-        but don't have an active connection. """
-
-        self.queue.append(slskmessages.SendNetworkMessage(user, message, config.sections["server"]["login"], address))
+        self.queue.append(slskmessages.SendNetworkMessage(
+            user, message, config.sections["server"]["login"], address))
 
     def get_peer_address(self, msg):
-
         """ Server responds with the IP address and port of the user we requested """
 
         log.add_msg_contents(msg)
@@ -488,8 +487,8 @@ class NicotineCore:
         self.transfers.conn_close(msg.sock)
 
     def start_upnp_timer(self):
-        """ Port mapping entries last 24 hours, we need to regularly renew them """
-        """ The default interval is 4 hours """
+        """ Port mapping entries last 24 hours, we need to regularly renew them.
+        The default interval is 4 hours. """
 
         if self.upnp_timer:
             self.upnp_timer.cancel()
@@ -670,16 +669,16 @@ class NicotineCore:
             # Ask for a list of parents to connect to (distributed network)
             self.send_have_no_parent()
 
-            """ TODO: We can currently receive search requests from a parent connection, but
-            redirecting results to children is not implemented yet. Tell the server we don't accept
-            children for now. """
+            # TODO: We can currently receive search requests from a parent connection, but
+            # redirecting results to children is not implemented yet. Tell the server we don't accept
+            # children for now.
             self.queue.append(slskmessages.AcceptChildren(0))
 
             self.shares.send_num_shared_folders_files()
 
-            """ Request a complete room list. A limited room list not including blacklisted rooms and
-            rooms with few users is automatically sent when logging in, but subsequent room list
-            requests contain all rooms. """
+            # Request a complete room list. A limited room list not including blacklisted rooms and
+            # rooms with few users is automatically sent when logging in, but subsequent room list
+            # requests contain all rooms.
             self.queue.append(slskmessages.RoomList())
 
             self.queue.append(slskmessages.PrivateRoomToggle(config.sections["server"]["private_chatrooms"]))
@@ -934,7 +933,6 @@ class NicotineCore:
 
     def possible_parents(self, msg):
         """ Server code: 102 """
-
         """ Server sent a list of 10 potential parents, whose purpose is to forward us search requests.
         We attempt to connect to them all at once, since connection errors are fairly common. """
 
@@ -1357,7 +1355,6 @@ class NicotineCore:
 
     def distrib_branch_level(self, msg):
         """ Distrib code: 4 """
-
         """ This message is received when we have a successful connection with a potential
         parent. Tell the server who our parent is, and stop requesting new potential parents. """
 

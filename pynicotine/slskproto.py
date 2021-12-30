@@ -177,24 +177,22 @@ from pynicotine.slskmessages import WishlistInterval
 from pynicotine.slskmessages import WishlistSearch
 
 
-""" Set the maximum number of open files to the hard limit reported by the OS.
-Our MAXSOCKETS value needs to be lower than the file limit, otherwise our open
-sockets in combination with other file activity can exceed the file limit,
-effectively halting the program. """
+# Set the maximum number of open files to the hard limit reported by the OS.
+# Our MAXSOCKETS value needs to be lower than the file limit, otherwise our open
+# sockets in combination with other file activity can exceed the file limit,
+# effectively halting the program.
 
 if sys.platform == "win32":
-
-    """ For Windows, FD_SETSIZE is set to 512 in the Python source.
-    This limit is hardcoded, so we'll have to live with it for now. """
+    # For Windows, FD_SETSIZE is set to 512 in the Python source.
+    # This limit is hardcoded, so we'll have to live with it for now.
 
     MAXSOCKETS = 512
 else:
     import resource  # pylint: disable=import-error
 
     if sys.platform == "darwin":
-
-        """ Maximum number of files a process can open is 10240 on macOS.
-        macOS reports INFINITE as hard limit, so we need this special case. """
+        # Maximum number of files a process can open is 10240 on macOS.
+        # macOS reports INFINITE as hard limit, so we need this special case.
 
         MAXFILELIMIT = 10240
     else:
@@ -206,9 +204,9 @@ else:
     except Exception as rlimit_error:
         log.add("Failed to set RLIMIT_NOFILE: %s", rlimit_error)
 
-    """ Set the maximum number of open sockets to a lower value than the hard limit,
-    otherwise we just waste resources.
-    The maximum is 1024, but can be lower if the file limit is too low. """
+    # Set the maximum number of open sockets to a lower value than the hard limit,
+    # otherwise we just waste resources.
+    # The maximum is 1024, but can be lower if the file limit is too low.
 
     MAXSOCKETS = min(max(int(MAXFILELIMIT * 0.75), 50), 1024)
 
@@ -233,11 +231,9 @@ class ConnectionInProgress:
 
 
 class Connection:
-    """
-    Holds data about a connection. sock is a socket object,
+    """ Holds data about a connection. sock is a socket object,
     addr is (ip, port) pair, ibuf and obuf are input and output msgBuffer,
-    init is a PeerInit object (see slskmessages docstrings).
-    """
+    init is a PeerInit object (see slskmessages docstrings). """
 
     __slots__ = ("sock", "addr", "init", "ibuf", "obuf", "events", "lastactive", "lastreadlength")
 
@@ -273,9 +269,9 @@ class SlskProtoThread(threading.Thread):
     It sends data to the NicotineCore via a callback function and receives
     data via a deque object. """
 
-    """ Server and peers send each other small binary messages, that start
+    """ The server and peers send each other small binary messages that start
     with length and message code followed by the actual message data.
-    These are the codes."""
+    The codes are listed below. """
 
     servercodes = {
         Login: 1,
@@ -808,8 +804,6 @@ class SlskProtoThread(threading.Thread):
         msgs.clear()
 
     def send_message_to_peer(self, user, message, login, address=None):
-        """ Sends message to a peer. Used primarily when we know the username of a peer,
-        but don't have an active connection. """
 
         init = None
 
@@ -1036,9 +1030,9 @@ class SlskProtoThread(threading.Thread):
             server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPALIVE, idle)  # pylint: disable=maybe-no-member
 
         elif hasattr(socket, 'SIO_KEEPALIVE_VALS'):
-            """ Windows fallback
-            Probe count is set to 10 on a system level, and can't be modified.
-            https://docs.microsoft.com/en-us/windows/win32/winsock/so-keepalive """
+            # Windows fallback
+            # Probe count is set to 10 on a system level, and can't be modified.
+            # https://docs.microsoft.com/en-us/windows/win32/winsock/so-keepalive
 
             server_socket.ioctl(
                 socket.SIO_KEEPALIVE_VALS,  # pylint: disable=maybe-no-member
@@ -1080,8 +1074,7 @@ class SlskProtoThread(threading.Thread):
     def process_server_input(self, conn, msg_buffer):
         """ Server has sent us something, this function retrieves messages
         from the msg_buffer, creates message objects and returns them and the rest
-        of the msg_buffer.
-        """
+        of the msg_buffer. """
 
         msg_buffer_mem = memoryview(msg_buffer)
         buffer_len = len(msg_buffer_mem)
@@ -1339,8 +1332,7 @@ class SlskProtoThread(threading.Thread):
         """ We have a "P" connection (p2p exchange), peer has sent us
         something, this function retrieves messages
         from the msg_buffer, creates message objects and returns them
-        and the rest of the msg_buffer.
-        """
+        and the rest of the msg_buffer. """
 
         msg_buffer_mem = memoryview(msg_buffer)
         buffer_len = len(msg_buffer_mem)
@@ -1428,12 +1420,11 @@ class SlskProtoThread(threading.Thread):
         """ We have a "F" connection (filetransfer), peer has sent us
         something, this function retrieves messages
         from the msg_buffer, creates message objects and returns them
-        and the rest of the msg_buffer.
-        """
+        and the rest of the msg_buffer. """
 
         if conn_obj.filereq is None:
             msgsize = 4
-            msg = self.unpack_network_message(FileRequest, msg_buffer[:msgsize], msgsize, "file", conn_obj.sock)
+            msg = self.unpack_network_message(FileRequest, msg_buffer[:msgsize], msgsize, "file", conn_obj.init)
 
             if msg is not None and msg.req is not None:
                 self._callback_msgs.append(msg)
@@ -1477,7 +1468,7 @@ class SlskProtoThread(threading.Thread):
 
         elif conn_obj.fileupl is not None and conn_obj.fileupl.offset is None:
             msgsize = 8
-            msg = self.unpack_network_message(FileOffset, msg_buffer[:msgsize], msgsize, "file", conn_obj.sock)
+            msg = self.unpack_network_message(FileOffset, msg_buffer[:msgsize], msgsize, "file", conn_obj.init)
 
             if msg is not None and msg.offset is not None:
                 try:
@@ -1501,7 +1492,7 @@ class SlskProtoThread(threading.Thread):
 
     def process_file_output(self, msg_obj):
 
-        if msg_obj.sock not in self._conns:
+        if msg_obj.init.sock not in self._conns:
             log.add_conn("Cannot send the message over the closed connection: %(type)s %(msg_obj)s", {
                 'type': msg_obj.__class__,
                 'msg_obj': vars(msg_obj)
@@ -1515,7 +1506,7 @@ class SlskProtoThread(threading.Thread):
             if msg is None:
                 return
 
-            conn_obj = self._conns[msg_obj.sock]
+            conn_obj = self._conns[msg_obj.init.sock]
             conn_obj.filereq = msg_obj
             conn_obj.obuf.extend(msg)
 
@@ -1527,7 +1518,7 @@ class SlskProtoThread(threading.Thread):
             if msg is None:
                 return
 
-            conn_obj = self._conns[msg_obj.sock]
+            conn_obj = self._conns[msg_obj.init.sock]
             conn_obj.bytestoread = msg_obj.filesize - msg_obj.offset
             conn_obj.obuf.extend(msg)
 
@@ -1539,8 +1530,7 @@ class SlskProtoThread(threading.Thread):
         """ We have a distributed network connection, parent has sent us
         something, this function retrieves messages
         from the msg_buffer, creates message objects and returns them
-        and the rest of the msg_buffer.
-        """
+        and the rest of the msg_buffer. """
 
         msg_buffer_mem = memoryview(msg_buffer)
         buffer_len = len(msg_buffer_mem)
