@@ -889,6 +889,7 @@ class SlskProtoThread(threading.Thread):
             })
 
         else:
+            init.addr = addr
             self.connect_to_peer_direct(user, addr, init)
 
     def connect_to_peer_direct(self, user, addr, init):
@@ -904,10 +905,12 @@ class SlskProtoThread(threading.Thread):
     def connect_error(self, error, conn_obj):
 
         if conn_obj.login:
+            server_address, port = conn_obj.addr
+
             log.add(
                 _("Cannot connect to server %(host)s:%(port)s: %(error)s"), {
-                    'host': conn_obj.addr[0],
-                    'port': conn_obj.addr[1],
+                    'host': server_address,
+                    'port': port,
                     'error': error
                 }
             )
@@ -1113,7 +1116,7 @@ class SlskProtoThread(threading.Thread):
                     conn_type = msg.conn_type
                     token = msg.token
 
-                    init = PeerInit(init_user=user, target_user=user, conn_type=conn_type, token=token)
+                    init = PeerInit(addr=addr, init_user=user, target_user=user, conn_type=conn_type, token=token)
                     self.connect_to_peer_direct(user, addr, init)
 
                 if self.serverclasses[msgtype] is GetUserStatus:
@@ -1138,6 +1141,7 @@ class SlskProtoThread(threading.Thread):
                         if init is not None:
                             # We now have the IP address for a user we previously didn't know,
                             # attempt a direct connection to the peer/user
+                            init.addr = addr
                             self.connect_to_peer_direct(msg.user, addr, init)
 
                     self.user_addresses[msg.user] = (msg.ip_address, msg.port)
@@ -1232,6 +1236,7 @@ class SlskProtoThread(threading.Thread):
 
                     elif self.peerinitclasses[msgtype] is PeerInit:
                         conn_obj.init = msg
+                        conn_obj.init.addr = conn_obj.addr
 
                         log.add_conn("Received incoming direct connection of type %(type)s from user %(user)s", {
                             'type': msg.conn_type,
@@ -1371,7 +1376,6 @@ class SlskProtoThread(threading.Thread):
 
                 if msg.__class__ is FileSearchResult:
                     search_result_received = True
-                    msg.ip_address = sock.getpeername()[0]
 
                 if msg is not None:
                     self._callback_msgs.append(msg)

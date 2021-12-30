@@ -331,7 +331,7 @@ class Search:
             return
 
         username = msg.init.target_user
-        ip_address = msg.ip_address
+        ip_address = msg.init.addr[0]
 
         if ip_address:
             country = self.geoip.get_country_code(ip_address)

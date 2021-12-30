@@ -640,7 +640,7 @@ class Transfers:
 
         init = msg.init
         user = init.target_user
-        ip_address = init.sock.getpeername()[0]
+        ip_address = init.addr
         real_path = self.core.shares.virtual2real(msg.file)
 
         if not self.file_is_upload_queued(user, msg.file):
@@ -698,7 +698,7 @@ class Transfers:
 
         init = msg.init
         user = init.target_user
-        ip_address = init.sock.getpeername()[0]
+        ip_address = init.addr
         response = None
 
         if msg.direction == 1:

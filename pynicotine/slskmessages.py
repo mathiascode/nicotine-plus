@@ -86,8 +86,8 @@ class ConnCloseIP(InternalMessage):
     """ Sent by the main thread to the networking thread in order to close any connections
     using a certain IP address. """
 
-    def __init__(self, ip_address=None):
-        self.ip_address = ip_address
+    def __init__(self, addr=None):
+        self.addr = addr
 
 
 class SendNetworkMessage(InternalMessage):
@@ -2114,8 +2114,11 @@ class PeerInit(PeerInitMessage):
     can be anything. Type is 'P' if it's anything but filetransfer,
     'F' otherwise. """
 
-    def __init__(self, sock=None, init_user=None, target_user=None, conn_type=None, token=0):
+    __slots__ = ("sock", "addr", "init_user", "target_user", "conn_type", "token")
+
+    def __init__(self, sock=None, addr=None, init_user=None, target_user=None, conn_type=None, token=0):
         self.sock = sock
+        self.addr = addr
         self.init_user = init_user      # username of peer who initiated the message
         self.target_user = target_user  # username of peer we're connected to
         self.conn_type = conn_type
@@ -2312,14 +2315,13 @@ class FileSearchResult(PeerMessage):
     token/ticket is taken from original FileSearch, UserSearch or
     RoomSearch message. """
 
-    __slots__ = ("init", "user", "token", "ip_address", "list", "privatelist", "freeulslots",
+    __slots__ = ("init", "user", "token", "list", "privatelist", "freeulslots",
                  "ulspeed", "inqueue", "fifoqueue")
 
     def __init__(self, init=None, user=None, token=None, shares=None, freeulslots=None,
                  ulspeed=None, inqueue=None, fifoqueue=None):
         self.init = init
         self.user = user
-        self.ip_address = None
         self.token = token
         self.list = shares
         self.privatelist = []
