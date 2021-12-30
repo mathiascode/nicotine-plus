@@ -48,12 +48,20 @@ class InternalMessage:
     pass
 
 
-class InitServerConn(InternalMessage):
+class ServerConnect(InternalMessage):
     """ NicotineCore sends this to make networking thread establish a server connection. """
 
     def __init__(self, addr=None, login=None):
         self.addr = addr
         self.login = login
+
+
+class ServerDisconnect(InternalMessage):
+    pass
+
+
+class ServerTimeout(InternalMessage):
+    pass
 
 
 class InitPeerConn(InternalMessage):
@@ -65,19 +73,13 @@ class InitPeerConn(InternalMessage):
         self.init = init
 
 
-class ServerTimeout:
-    pass
-
-
 class ConnClose(InternalMessage):
     """ Sent by networking thread to indicate a connection has been closed."""
 
-    __slots__ = ("conn", "addr", "callback")
+    __slots__ = ("sock")
 
-    def __init__(self, conn=None, addr=None, callback=True):
-        self.conn = conn
-        self.addr = addr
-        self.callback = callback
+    def __init__(self, sock=None):
+        self.sock = sock
 
 
 class ConnCloseIP(InternalMessage):
@@ -104,7 +106,7 @@ class ShowConnectionErrorMessage(InternalMessage):
         self.msgs = msgs
 
 
-class ConnectToPeerTimeout:
+class ConnectToPeerTimeout(InternalMessage):
 
     __slots__ = ("conn",)
 
@@ -124,7 +126,7 @@ class MessageProgress(InternalMessage):
         self.total = total
 
 
-class TransferTimeout:
+class TransferTimeout(InternalMessage):
 
     __slots__ = ("transfer",)
 
@@ -146,19 +148,19 @@ class DownloadFile(InternalMessage):
     """ Sent by networking thread to indicate file transfer progress.
     Sent by UI to pass the file object to write. """
 
-    __slots__ = ("conn", "file")
+    __slots__ = ("sock", "file")
 
-    def __init__(self, conn=None, file=None):
-        self.conn = conn
+    def __init__(self, sock=None, file=None):
+        self.sock = sock
         self.file = file
 
 
 class UploadFile(InternalMessage):
 
-    __slots__ = ("conn", "file", "size", "sentbytes", "offset")
+    __slots__ = ("sock", "file", "size", "sentbytes", "offset")
 
-    def __init__(self, conn=None, file=None, size=None, sentbytes=0, offset=None):
-        self.conn = conn
+    def __init__(self, sock=None, file=None, size=None, sentbytes=0, offset=None):
+        self.sock = sock
         self.file = file
         self.size = size
         self.sentbytes = sentbytes
@@ -2100,8 +2102,8 @@ class PierceFireWall(PeerInitMessage):
     connection, if it has been asked by the other peer to do so. The token
     is taken from the ConnectToPeer server message. """
 
-    def __init__(self, conn=None, token=None):
-        self.conn = conn
+    def __init__(self, sock=None, token=None):
+        self.sock = sock
         self.token = token
 
     def make_network_message(self):
@@ -2120,8 +2122,8 @@ class PeerInit(PeerInitMessage):
     can be anything. Type is 'P' if it's anything but filetransfer,
     'F' otherwise. """
 
-    def __init__(self, conn=None, init_user=None, target_user=None, conn_type=None, token=0):
-        self.conn = conn
+    def __init__(self, sock=None, init_user=None, target_user=None, conn_type=None, token=0):
+        self.sock = sock
         self.init_user = init_user      # username of peer who initiated the message
         self.target_user = target_user  # username of peer we're connected to
         self.conn_type = conn_type
@@ -2820,8 +2822,8 @@ class FileRequest(FileMessage):
     start uploading a file. The token is the same as the one previously included
     in the TransferRequest message. """
 
-    def __init__(self, conn, req=None):
-        self.conn = conn
+    def __init__(self, sock, req=None):
+        self.sock = sock
         self.req = req
 
     def make_network_message(self):
@@ -2837,8 +2839,8 @@ class FileOffset(FileMessage):
     to tell them how many bytes of the file we've previously downloaded. If none,
     the offset is 0. """
 
-    def __init__(self, conn, filesize=None, offset=None):
-        self.conn = conn
+    def __init__(self, sock, filesize=None, offset=None):
+        self.sock = sock
         self.filesize = filesize
         self.offset = offset
 

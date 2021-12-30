@@ -54,7 +54,7 @@ from pynicotine.utils import write_file_and_backup
 class Transfer:
     """ This class holds information about a single transfer. """
 
-    __slots__ = ("conn", "user", "filename",
+    __slots__ = ("sock", "user", "filename",
                  "path", "req", "size", "file", "start_time", "last_update",
                  "current_byte_offset", "last_byte_offset", "speed", "time_elapsed",
                  "time_left", "modifier", "queue_position", "bitrate", "length",
@@ -73,7 +73,7 @@ class Transfer:
         self.bitrate = bitrate
         self.length = length
 
-        self.conn = None
+        self.sock = None
         self.modifier = None
         self.start_time = None
         self.last_update = None
@@ -459,7 +459,7 @@ class Transfers:
         now = time.time()
 
         for i in self.uploads:
-            if i.conn is not None and i.speed is not None:
+            if i.sock is not None and i.speed is not None:
                 # Currently transferring
                 in_progress_count += 1
 
@@ -467,7 +467,7 @@ class Transfers:
                 # Transfer initiating, changed within last 30 seconds
 
                 if (i.req is not None
-                        or i.conn is not None and i.speed is None
+                        or i.sock is not None and i.speed is None
                         or i.status == "Getting status"):
                     in_progress_count += 1
 
@@ -480,7 +480,7 @@ class Transfers:
         if not bandwidthlimit:
             return False
 
-        bandwidth_sum = sum(i.speed for i in self.uploads if i.conn is not None and i.speed is not None)
+        bandwidth_sum = sum(i.speed for i in self.uploads if i.sock is not None and i.speed is not None)
 
         return bandwidth_sum >= bandwidthlimit
 
@@ -656,17 +656,17 @@ class Transfers:
 
             if not checkuser:
                 self.queue.append(
-                    slskmessages.UploadDenied(conn=msg.conn.conn, file=msg.file, reason=reason)
+                    slskmessages.UploadDenied(msg.conn.sock, msg.file, reason)
                 )
 
             elif limits and self.queue_limit_reached(user):
                 self.queue.append(
-                    slskmessages.UploadDenied(conn=msg.conn.conn, file=msg.file, reason="Too many megabytes")
+                    slskmessages.UploadDenied(msg.conn.sock, msg.file, "Too many megabytes")
                 )
 
             elif limits and self.file_limit_reached(user):
                 self.queue.append(
-                    slskmessages.UploadDenied(conn=msg.conn.conn, file=msg.file, reason="Too many files")
+                    slskmessages.UploadDenied(msg.conn.sock, msg.file, "Too many files")
                 )
 
             elif self.core.shares.file_is_shared(user, msg.file, real_path):
@@ -685,7 +685,7 @@ class Transfers:
 
             else:
                 self.queue.append(
-                    slskmessages.UploadDenied(conn=msg.conn.conn, file=msg.file, reason="File not shared.")
+                    slskmessages.UploadDenied(msg.conn.sock, msg.file, "File not shared.")
                 )
 
         log.add_transfer("QueueUpload request: User %(user)s, %(msg)s", {
@@ -866,7 +866,7 @@ class Transfers:
             if i.user != user:
                 continue
 
-            if i.req is not None or i.conn is not None or i.status == "Getting status":
+            if i.req is not None or i.sock is not None or i.status == "Getting status":
                 already_downloading = True
 
         if not self.allow_new_uploads() or already_downloading:
@@ -997,7 +997,7 @@ class Transfers:
 
         for i in self.downloads + self.uploads:
 
-            if i.conn != msg.conn.conn:
+            if i.sock != msg.sock:
                 continue
 
             self.abort_transfer(i)
@@ -1032,7 +1032,7 @@ class Transfers:
                 self._file_request_upload(msg, i)
                 return
 
-        self.queue.append(slskmessages.ConnClose(msg.conn))
+        self.queue.append(slskmessages.ConnClose(msg.sock))
 
     def _file_request_download(self, msg, i):
 
@@ -1045,8 +1045,8 @@ class Transfers:
         incompletedir = self.config.sections["transfers"]["incompletedir"]
         needupdate = True
 
-        if i.conn is None and i.size is not None:
-            i.conn = msg.conn
+        if i.sock is None and i.size is not None:
+            i.sock = msg.sock
             i.req = None
 
             if i in self.transfer_request_times:
@@ -1110,8 +1110,8 @@ class Transfers:
                     if i.size > offset:
                         i.status = "Transferring"
                         i.legacy_attempt = False
-                        self.queue.append(slskmessages.DownloadFile(i.conn, file_handle))
-                        self.queue.append(slskmessages.FileOffset(i.conn, i.size, offset))
+                        self.queue.append(slskmessages.DownloadFile(i.sock, file_handle))
+                        self.queue.append(slskmessages.FileOffset(i.sock, i.size, offset))
 
                         log.add_download(
                             _("Download started: user %(user)s, file %(file)s"), {
@@ -1136,7 +1136,7 @@ class Transfers:
                 'file': i.filename
             })
 
-            self.queue.append(slskmessages.ConnClose(msg.conn))
+            self.queue.append(slskmessages.ConnClose(msg.sock))
 
     def _file_request_upload(self, msg, i):
 
@@ -1147,8 +1147,8 @@ class Transfers:
         })
         needupdate = True
 
-        if i.conn is None:
-            i.conn = msg.conn
+        if i.sock is None:
+            i.sock = msg.sock
             i.req = None
             file_handle = None
 
@@ -1178,12 +1178,12 @@ class Transfers:
 
                 if i.size > offset:
                     i.status = "Transferring"
-                    self.queue.append(slskmessages.UploadFile(i.conn, file=file_handle, size=i.size))
+                    self.queue.append(slskmessages.UploadFile(i.sock, file=file_handle, size=i.size))
 
                     ip_address = None
-                    if i.conn is not None:
+                    if i.sock is not None:
                         try:
-                            ip_address = i.conn.getpeername()
+                            ip_address = i.sock.getpeername()
                         except OSError:
                             # Connection already closed
                             pass
@@ -1212,7 +1212,7 @@ class Transfers:
                 'file': i.filename
             })
 
-            self.queue.append(slskmessages.ConnClose(msg.conn))
+            self.queue.append(slskmessages.ConnClose(msg.sock))
 
     def upload_denied(self, msg):
 
@@ -1293,7 +1293,7 @@ class Transfers:
 
         for i in self.downloads:
 
-            if i.conn != msg.conn:
+            if i.sock != msg.sock:
                 continue
 
             try:
@@ -1350,7 +1350,7 @@ class Transfers:
 
         for i in self.uploads:
 
-            if i.conn != msg.conn:
+            if i.sock != msg.sock:
                 continue
 
             if i in self.transfer_request_times:
@@ -1393,18 +1393,18 @@ class Transfers:
 
             break
 
-    def conn_close(self, conn):
+    def conn_close(self, sock):
         """ The remote user has closed the connection either because
         he logged off, or because there's a network problem. """
 
         for i in self.downloads:
-            if i.conn == conn:
+            if i.sock == sock:
                 self._conn_close(i, "download")
                 return
 
         # We need a copy due to upload auto-clearing modifying the deque during iteration
         for i in self.uploads.copy():
-            if i.conn == conn:
+            if i.sock == sock:
                 self._conn_close(i, "upload")
                 return
 
@@ -1487,7 +1487,7 @@ class Transfers:
                     break
 
         if queue_position > 0:
-            self.queue.append(slskmessages.PlaceInQueue(msg.conn.conn, msg.file, queue_position))
+            self.queue.append(slskmessages.PlaceInQueue(msg.conn.sock, msg.file, queue_position))
 
         if transfer is None:
             return
@@ -1743,7 +1743,7 @@ class Transfers:
 
             return maxupslots
 
-        lstlen = sum(1 for i in self.uploads if i.conn is not None)
+        lstlen = sum(1 for i in self.uploads if i.sock is not None)
 
         if self.allow_new_uploads():
             return lstlen + 1
@@ -1912,7 +1912,7 @@ class Transfers:
         i.current_byte_offset = i.size
         i.speed = None
         i.time_left = ""
-        i.conn = None
+        i.sock = None
 
         self.core.statistics.append_stat_value("completed_downloads", 1)
 
@@ -1948,9 +1948,9 @@ class Transfers:
         self.close_file(file_handle, i)
 
         ip_address = None
-        if i.conn is not None:
+        if i.sock is not None:
             try:
-                ip_address = i.conn.getpeername()
+                ip_address = i.sock.getpeername()
             except OSError:
                 # Connection already closed
                 pass
@@ -1959,7 +1959,7 @@ class Transfers:
         i.current_byte_offset = i.size
         i.speed = None
         i.time_left = ""
-        i.conn = None
+        i.sock = None
 
         self.user_update_times[i.user] = time.time()
 
@@ -2113,7 +2113,7 @@ class Transfers:
                 if privileged:
                     privileged_queue = True
 
-            elif i.req is not None or i.conn is not None or i.status == "Getting status":
+            elif i.req is not None or i.sock is not None or i.status == "Getting status":
                 # We're currently uploading a file to the user
                 user = i.user
 
@@ -2243,7 +2243,7 @@ class Transfers:
 
     def retry_upload(self, transfer):
 
-        if transfer.req is not None or transfer.conn is not None or transfer.status == "Finished":
+        if transfer.req is not None or transfer.sock is not None or transfer.status == "Finished":
             # Don't retry active or finished uploads
             return
 
@@ -2253,7 +2253,7 @@ class Transfers:
             if i.user != user:
                 continue
 
-            if i.req is not None or i.conn is not None or i.status == "Getting status":
+            if i.req is not None or i.sock is not None or i.status == "Getting status":
                 # User already has an active upload, queue the retry attempt
                 if transfer.status != "Queued":
                     transfer.status = "Queued"
@@ -2280,9 +2280,9 @@ class Transfers:
         transfer.queue_position = 0
         transfer.time_left = ""
 
-        if transfer.conn is not None:
-            self.queue.append(slskmessages.ConnClose(transfer.conn))
-            transfer.conn = None
+        if transfer.sock is not None:
+            self.queue.append(slskmessages.ConnClose(transfer.sock))
+            transfer.sock = None
 
         if transfer in self.transfer_request_times:
             del self.transfer_request_times[transfer]

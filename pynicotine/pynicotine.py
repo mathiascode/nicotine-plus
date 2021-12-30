@@ -104,7 +104,7 @@ class NicotineCore:
         self.privileges_left = None
         self.manual_disconnect = False
 
-        self.parent_conn = None
+        self.parent_socket = None
         self.potential_parents = {}
         self.distrib_parent_min_speed = 0
         self.distrib_parent_speed_ratio = 1
@@ -119,6 +119,7 @@ class NicotineCore:
         # Callback handlers for messages
         self.events = {
             slskmessages.ConnClose: self.conn_close,
+            slskmessages.ServerDisconnect: self.server_disconnect,
             slskmessages.Login: self.login,
             slskmessages.ChangePassword: self.change_password,
             slskmessages.MessageUser: self.message_user,
@@ -346,17 +347,17 @@ class NicotineCore:
         # Clear any potential messages queued up while offline
         self.queue.clear()
 
-        server = config.sections["server"]["server"]
+        addr = config.sections["server"]["server"]
         login = config.sections["server"]["login"]
         password = config.sections["server"]["passw"]
 
-        log.add(_("Connecting to %(host)s:%(port)s"), {'host': server[0], 'port': server[1]})
-        self.queue.append(slskmessages.InitServerConn(server, login=(login, password)))
+        log.add(_("Connecting to %(host)s:%(port)s"), {'host': addr[0], 'port': addr[1]})
+        self.queue.append(slskmessages.ServerConnect(addr, login=(login, password)))
         return True
 
     def disconnect(self):
         self.manual_disconnect = True
-        self.queue.append(slskmessages.ConnClose(self.protothread.server_socket))
+        self.queue.append(slskmessages.ServerDisconnect())
 
     def network_event(self, msgs):
 
@@ -447,7 +448,7 @@ class NicotineCore:
             elif i.__class__ is slskmessages.UserInfoRequest:
                 self.userinfo.show_connection_error(msg.user)
 
-    def server_disconnect(self):
+    def server_disconnect(self, *_args):
 
         host, port = self.protothread.server_address
 
@@ -481,14 +482,10 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
-        if msg.conn.conn == self.parent_conn:
+        if msg.sock == self.parent_socket:
             self.send_have_no_parent()
 
-        if msg.conn.addr == self.protothread.server_address:
-            self.server_disconnect()
-            return
-
-        self.transfers.conn_close(msg.conn.conn)
+        self.transfers.conn_close(msg.sock)
 
     def start_upnp_timer(self):
         """ Port mapping entries last 24 hours, we need to regularly renew them """
@@ -541,10 +538,7 @@ class NicotineCore:
         if self.ui_callback:
             self.ui_callback.set_away_mode(is_away)
 
-    def server_timeout(self, msg):
-
-        log.add_msg_contents(msg)
-
+    def server_timeout(self, *_args):
         if not config.need_config():
             self.connect()
 
@@ -692,7 +686,7 @@ class NicotineCore:
             self.pluginhandler.server_connect_notification()
 
         else:
-            self.queue.append(slskmessages.ConnClose(self.protothread.server_socket))
+            self.queue.append(slskmessages.ServerDisconnect())
 
             if msg.reason == "INVALIDPASS":
                 self.ui_callback.invalid_password()
@@ -949,7 +943,7 @@ class NicotineCore:
         self.potential_parents = msg.list
         log.add_conn("Server sent us a list of %s possible parents", len(msg.list))
 
-        if self.parent_conn is None and self.potential_parents:
+        if self.parent_socket is None and self.potential_parents:
 
             for user in self.potential_parents:
                 addr = self.potential_parents[user]
@@ -999,8 +993,8 @@ class NicotineCore:
         log.add_msg_contents(msg)
         log.add_conn("Received a reset request for distributed network")
 
-        if self.parent_conn is not None:
-            self.queue.append(slskmessages.ConnClose(self.parent_conn))
+        if self.parent_socket is not None:
+            self.queue.append(slskmessages.ConnClose(self.parent_socket))
 
         self.send_have_no_parent()
 
@@ -1105,7 +1099,7 @@ class NicotineCore:
         log.add_msg_contents(msg)
 
         user = msg.conn.init.target_user
-        conn = msg.conn.conn
+        sock = msg.conn.sock
         request_time = time.time()
 
         if user in self.requested_share_times and request_time < self.requested_share_times[user] + 0.4:
@@ -1136,9 +1130,9 @@ class NicotineCore:
 
         if not shares_list:
             # Nyah, Nyah
-            shares_list = slskmessages.SharedFileList(conn, {})
+            shares_list = slskmessages.SharedFileList(sock, {})
 
-        shares_list.conn = conn
+        shares_list.conn = sock
         self.queue.append(shares_list)
 
     def shared_file_list(self, msg):
@@ -1160,7 +1154,7 @@ class NicotineCore:
 
         user = msg.conn.init.target_user
         login_user = config.sections["server"]["login"]
-        conn = msg.conn.conn
+        sock = msg.conn.sock
         addr = msg.conn.addr
         request_time = time.time()
 
@@ -1204,7 +1198,7 @@ class NicotineCore:
             uploadallowed = 0
 
         self.queue.append(
-            slskmessages.UserInfoReply(conn, descr, pic, totalupl, queuesize, slotsavail, uploadallowed))
+            slskmessages.UserInfoReply(sock, descr, pic, totalupl, queuesize, slotsavail, uploadallowed))
 
     def user_info_reply(self, msg):
         """ Peer code: 16 """
@@ -1233,7 +1227,7 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
 
-        conn = msg.conn.conn
+        sock = msg.conn.sock
         ip_address, _port = msg.conn.addr
         username = msg.conn.init.target_user
         checkuser, reason = self.network_filter.check_user(username, ip_address)
@@ -1257,18 +1251,18 @@ class NicotineCore:
         if checkuser:
             try:
                 if msg.dir in shares:
-                    self.queue.append(slskmessages.FolderContentsResponse(conn, msg.dir, shares[msg.dir]))
+                    self.queue.append(slskmessages.FolderContentsResponse(sock, msg.dir, shares[msg.dir]))
                     return
 
                 if msg.dir.rstrip('\\') in shares:
-                    self.queue.append(slskmessages.FolderContentsResponse(conn, msg.dir, shares[msg.dir.rstrip('\\')]))
+                    self.queue.append(slskmessages.FolderContentsResponse(sock, msg.dir, shares[msg.dir.rstrip('\\')]))
                     return
 
             except Exception as error:
                 log.add(_("Failed to fetch the shared folder %(folder)s: %(error)s"),
                         {"folder": msg.dir, "error": error})
 
-            self.queue.append(slskmessages.FolderContentsResponse(conn, msg.dir, None))
+            self.queue.append(slskmessages.FolderContentsResponse(sock, msg.dir, None))
 
     def folder_contents_response(self, msg):
         """ Peer code: 37 """
@@ -1356,7 +1350,7 @@ class NicotineCore:
         """ Inform the server we have no parent. The server should either send
         us a PossibleParents message, or start sending us search requests. """
 
-        self.parent_conn = None
+        self.parent_socket = None
         log.add_conn("We have no parent, requesting a new one")
 
         self.queue.append(slskmessages.HaveNoParent(1))
@@ -1370,18 +1364,18 @@ class NicotineCore:
         parent. Tell the server who our parent is, and stop requesting new potential parents. """
 
         log.add_msg_contents(msg)
-        conn = msg.conn.conn
+        sock = msg.conn.sock
         username = msg.conn.init.target_user
 
         if msg.value < 0:
             # There are rare cases of parents sending a branch level value of -1, presumably buggy clients
             log.add_conn("Received an invalid branch level value %(level)s from user %(user)s. Closing connection." %
                          {"level": msg.value, "user": username})
-            self.queue.append(slskmessages.ConnClose(conn))
+            self.queue.append(slskmessages.ConnClose(sock))
             return
 
-        if self.parent_conn is None and username in self.potential_parents:
-            self.parent_conn = conn
+        if self.parent_socket is None and username in self.potential_parents:
+            self.parent_socket = sock
 
             self.queue.append(slskmessages.HaveNoParent(0))
             self.queue.append(slskmessages.BranchLevel(msg.value + 1))
@@ -1390,9 +1384,9 @@ class NicotineCore:
             log.add_conn("Our branch level is %s", msg.value + 1)
             return
 
-        if conn != self.parent_conn:
+        if sock != self.parent_socket:
             # Unwanted connection, close it
-            self.queue.append(slskmessages.ConnClose(conn))
+            self.queue.append(slskmessages.ConnClose(sock))
             return
 
         # Inform the server of our new branch level
@@ -1403,11 +1397,11 @@ class NicotineCore:
         """ Distrib code: 5 """
 
         log.add_msg_contents(msg)
-        conn = msg.conn.conn
+        sock = msg.conn.sock
 
-        if conn != self.parent_conn:
+        if sock != self.parent_socket:
             # Unwanted connection, close it
-            self.queue.append(slskmessages.ConnClose(conn))
+            self.queue.append(slskmessages.ConnClose(sock))
             return
 
         # Inform the server of our branch root
