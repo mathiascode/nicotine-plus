@@ -63,7 +63,7 @@ def verify_grouping_mode(mode):
 def create_grouping_menu(window, active_mode, callback):
 
     action_id = "grouping" + ''.join(random.choice(string.digits) for _ in range(8))
-    menu = Gio.Menu.new()
+    menu = Gio.Menu()
 
     menuitem = Gio.MenuItem.new(_("Ungrouped"), "win." + action_id + "::ungrouped")
     menu.append_item(menuitem)
@@ -223,7 +223,7 @@ def initialise_columns(frame, treeview_name, treeview, *args):
         column.set_reorderable(True)
         column.set_min_width(20)
 
-        column.set_widget(Gtk.Label.new(title))
+        column.set_widget(Gtk.Label(label=title))
         column.get_widget().set_margin_start(5)
         column.get_widget().show()
 

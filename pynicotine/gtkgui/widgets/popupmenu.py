@@ -425,8 +425,8 @@ class PopupMenu:
             setup_accelerator("<Shift>F10", parent, self._callback_menu)
 
         else:
-            self.gesture_click = Gtk.GestureMultiPress.new(parent)
-            self.gesture_press = Gtk.GestureLongPress.new(parent)
+            self.gesture_click = Gtk.GestureMultiPress(widget=parent)
+            self.gesture_press = Gtk.GestureLongPress(widget=parent)
 
             # Shift+F10
             parent.connect("popup-menu", self._callback_menu)

@@ -320,8 +320,7 @@ class NicotineFrame(UserInterface):
             self.MainWindow.add_controller(key_controller)
 
         else:
-            self.gesture_click = Gtk.GestureMultiPress.new(self.MainWindow)
-
+            self.gesture_click = Gtk.GestureMultiPress(widget=self.MainWindow)
             self.MainWindow.connect("key-release-event", self.on_cancel_auto_away)
 
         self.gesture_click.set_button(0)
@@ -373,7 +372,7 @@ class NicotineFrame(UserInterface):
         try:
             gi.require_version('Gspell', '1')
             from gi.repository import Gspell
-            self.spell_checker = Gspell.Checker.new()
+            self.spell_checker = Gspell.Checker()
 
         except (ImportError, ValueError):
             self.spell_checker = False
@@ -701,18 +700,18 @@ class NicotineFrame(UserInterface):
 
         # Menu Button
 
-        action = Gio.SimpleAction.new("menu", None)
+        action = Gio.SimpleAction(name="menu")
         action.connect("activate", self.on_menu)
         self.application.add_action(action)
 
         # File
 
-        self.connect_action = Gio.SimpleAction.new("connect", None)
+        self.connect_action = Gio.SimpleAction(name="connect")
         self.connect_action.connect("activate", self.on_connect)
         self.application.add_action(self.connect_action)
         self.application.set_accels_for_action("app.connect", ["<Shift><Primary>c"])
 
-        self.disconnect_action = Gio.SimpleAction.new("disconnect", None)
+        self.disconnect_action = Gio.SimpleAction(name="disconnect")
         self.disconnect_action.connect("activate", self.on_disconnect)
         self.application.add_action(self.disconnect_action)
         self.application.set_accels_for_action("app.disconnect", ["<Shift><Primary>d"])

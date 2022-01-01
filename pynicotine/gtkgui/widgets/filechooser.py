@@ -232,7 +232,7 @@ class FileChooserButton:
 
         box = Gtk.Box()
         box.set_spacing(6)
-        self.icon = Gtk.Image.new()
+        self.icon = Gtk.Image()
 
         if chooser_type == "folder":
             self.icon.set_property("icon-name", "folder-symbolic")
@@ -243,7 +243,7 @@ class FileChooserButton:
         else:
             self.icon.set_property("icon-name", "text-x-generic-symbolic")
 
-        self.label = Gtk.Label.new(_("(None)"))
+        self.label = Gtk.Label(_("(None)"))
         self.label.set_ellipsize(Pango.EllipsizeMode.END)
         self.label.set_width_chars(6)
         self.label.set_xalign(0)

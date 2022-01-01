@@ -1525,7 +1525,7 @@ class UserInterfaceFrame(UserInterface):
             icon.set_pixel_size(pixel_size)
             icon.show()
 
-            label = Gtk.Label.new(label)
+            label = Gtk.Label(label)
             label.show()
 
             box.add(icon)
@@ -2291,7 +2291,7 @@ class PluginsFrame(UserInterface):
         @staticmethod
         def generate_label(text):
 
-            label = Gtk.Label.new(text)
+            label = Gtk.Label(text)
             label.set_use_markup(True)
             label.set_hexpand(True)
             label.set_xalign(0)
@@ -2801,7 +2801,7 @@ class Preferences(UserInterface):
             icon.set_property("icon-name", icon_name)
             icon.show()
 
-            label = Gtk.Label.new(label)
+            label = Gtk.Label(label)
             label.set_xalign(0)
             label.show()
 

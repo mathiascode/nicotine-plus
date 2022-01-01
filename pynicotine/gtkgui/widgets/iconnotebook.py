@@ -260,7 +260,7 @@ class IconNotebook:
 
         self.frame = frame
         self.page_id = page_id
-        self.unread_button = Gtk.MenuButton.new()
+        self.unread_button = Gtk.MenuButton()
         self.pages = {}
 
         if Gtk.get_major_version() == 4:
@@ -337,7 +337,7 @@ class IconNotebook:
             label_tab.gesture_click = Gtk.GestureClick()
             label_tab.add_controller(label_tab.gesture_click)
         else:
-            label_tab.gesture_click = Gtk.GestureMultiPress.new(label_tab)
+            label_tab.gesture_click = Gtk.GestureMultiPress(widget=label_tab)
 
         label_tab.gesture_click.set_button(Gdk.BUTTON_MIDDLE)
         label_tab.gesture_click.connect("pressed", label_tab.close_callback, page)
