@@ -69,7 +69,7 @@ def apply_translations():
     Note: To the best of my knowledge when we are in a python venv
     falling back to the system path does not work."""
 
-    libintl = None
+    libintl_path = None
     _set_default_system_language()
 
     # Local path where to find translation (mo) files
@@ -78,21 +78,26 @@ def apply_translations():
 
     # Load library for translating non-Python content, e.g. GTK ui files
     if sys.platform == "win32":
-        import ctypes
-        libintl = ctypes.cdll.LoadLibrary("libintl-8.dll")
+        libintl_path = "libintl-8.dll"
 
     elif sys.platform == "darwin":
-        import ctypes
-        libintl = ctypes.cdll.LoadLibrary("libintl.8.dylib")
+        libintl_path = "libintl.8.dylib"
 
-    if libintl:
-        # Arguments need to be encoded, otherwise translations fail
+    if libintl_path:
+        import ctypes
+
+        if getattr(sys, 'frozen', False):
+            libintl_path = os.path.join(os.path.dirname(sys.executable), libintl_path)
+
+        libintl = ctypes.cdll.LoadLibrary(libintl_path)
+
         mo_path = local_mo_path if use_local_path else "share/locale"
         print(gettext.find(TRANSLATION_DOMAIN, localedir=local_mo_path))
         full_path = os.path.join(os.path.dirname(sys.executable), mo_path)
         print(full_path)
         print(gettext.find(TRANSLATION_DOMAIN, localedir=full_path))
 
+        # Arguments need to be encoded, otherwise translations fail
         libintl.bindtextdomain(TRANSLATION_DOMAIN.encode(), mo_path.encode(sys.getfilesystemencoding()))
         libintl.bind_textdomain_codeset(TRANSLATION_DOMAIN.encode(), b"UTF-8")
 
