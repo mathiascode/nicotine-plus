@@ -88,6 +88,8 @@ def apply_translations():
     if libintl:
         # Arguments need to be encoded, otherwise translations fail
         mo_path = local_mo_path if use_local_path else "share/locale"
+        print(gettext.find(TRANSLATION_DOMAIN, localedir=local_mo_path))
+        print(gettext.find(TRANSLATION_DOMAIN, localedir=mo_path))
 
         libintl.bindtextdomain(TRANSLATION_DOMAIN.encode(), mo_path.encode(sys.getfilesystemencoding()))
         libintl.bind_textdomain_codeset(TRANSLATION_DOMAIN.encode(), b"UTF-8")
