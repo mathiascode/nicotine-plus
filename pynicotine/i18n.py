@@ -88,9 +88,8 @@ def apply_translations():
         libintl = ctypes.cdll.LoadLibrary(libintl_path)
         mo_path = local_mo_path if use_local_path else "share/locale"
 
-        # Arguments need to be encoded, otherwise translations fail
-        libintl.bindtextdomain(TRANSLATION_DOMAIN.encode(), mo_path.encode(sys.getfilesystemencoding()))
-        libintl.bind_textdomain_codeset(TRANSLATION_DOMAIN.encode(), b"UTF-8")
+        libintl.bindtextdomain(TRANSLATION_DOMAIN, mo_path.encode(sys.getfilesystemencoding()))
+        libintl.bind_textdomain_codeset(TRANSLATION_DOMAIN, b"UTF-8")
 
     elif hasattr(locale, "bindtextdomain") and hasattr(locale, "textdomain"):
         if use_local_path:
