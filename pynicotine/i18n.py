@@ -88,9 +88,10 @@ def apply_translations():
         libintl = ctypes.cdll.LoadLibrary(libintl_path)
 
         if getattr(sys, 'frozen', False):
-            system_mo_path = os.path.join(sys.executable, "share", "locale")
+            system_mo_path = os.path.join(os.path.dirname(sys.executable), "share", "locale")
         else:
             system_mo_path = os.path.join(sys.prefix, "share", "locale")
+        print(os.path.join(sys.prefix, "share", "locale"))
         print(system_mo_path)
         mo_path = local_mo_path if use_local_path else system_mo_path
         libintl.bindtextdomain(TRANSLATION_DOMAIN.encode(), mo_path.encode(sys.getfilesystemencoding()))
