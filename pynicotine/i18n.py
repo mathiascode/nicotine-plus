@@ -73,7 +73,7 @@ def apply_translations():
     _set_default_system_language()
 
     # Local path where to find translation (mo) files
-    local_mo_path = "mo"
+    local_mo_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "mo"))
     use_local_path = gettext.find(TRANSLATION_DOMAIN, localedir=local_mo_path)
 
     # Load library for translating non-Python content, e.g. GTK ui files
@@ -86,7 +86,9 @@ def apply_translations():
     if libintl_path is not None:
         import ctypes
         libintl = ctypes.cdll.LoadLibrary(libintl_path)
-        mo_path = local_mo_path if use_local_path else os.path.join(sys.base_prefix, 'share', 'locale')
+        system_mo_path = os.path.join(sys.base_prefix, "share", "locale")
+        print(system_mo_path)
+        mo_path = local_mo_path if use_local_path else system_mo_path
 
         libintl.bindtextdomain(TRANSLATION_DOMAIN.encode(), mo_path.encode(sys.getfilesystemencoding()))
         libintl.bind_textdomain_codeset(TRANSLATION_DOMAIN.encode(), b"UTF-8")
