@@ -75,7 +75,7 @@ def apply_translations():
     _set_default_system_language()
 
     # Local path where to find translation (mo) files
-    local_mo_path = os.path.join(BASE_FOLDER, "mo")
+    local_mo_path = os.path.join(BASE_FOLDER, "build", "mo")
     use_local_path = gettext.find(TRANSLATION_DOMAIN, localedir=local_mo_path)
 
     # Load library for translating non-Python content, e.g. GTK ui files
@@ -127,7 +127,7 @@ def build_translations():
         lang = os.path.basename(po_file[:-3])
         languages.append(lang)
 
-        mo_dir = os.path.join("mo", lang, "LC_MESSAGES")
+        mo_dir = os.path.join("build", "mo", lang, "LC_MESSAGES")
         mo_file = os.path.join(mo_dir, "nicotine.mo")
 
         if not os.path.exists(mo_dir):
@@ -156,7 +156,7 @@ def get_translation_paths():
     for po_file in glob.glob(os.path.join(BASE_FOLDER, "po", "*.po")):
         lang = os.path.basename(po_file[:-3])
 
-        mo_dir = os.path.join("mo", lang, "LC_MESSAGES")
+        mo_dir = os.path.join("build", "mo", lang, "LC_MESSAGES")
         mo_file = os.path.join(mo_dir, "nicotine.mo")
 
         targetpath = os.path.join("share", "locale", lang, "LC_MESSAGES")
