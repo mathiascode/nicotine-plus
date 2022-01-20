@@ -35,4 +35,4 @@ class I18nTest(unittest.TestCase):
 
         for lang in LANGUAGES:
             assert lang in languages
-            assert ("share/locale/" + lang + "/LC_MESSAGES", ["build/mo/" + lang + "/LC_MESSAGES/nicotine.mo"]) in mo_files
+            assert ("share/locale/" + lang + "/LC_MESSAGES", ["mo/" + lang + "/LC_MESSAGES/nicotine.mo"]) in mo_files
