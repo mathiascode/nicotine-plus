@@ -9,6 +9,10 @@ Copyright: 2001-2003 PySoulSeek Contributors
            2004-2022 Nicotine+ Team
 License: GPL-3+
 
+Files: po/*
+Copyright: 2003-2022 Nicotine+ Translators
+License: GPL-3+
+
 Files: pynicotine/geoip/ip2location.py
 Copyright: 2017 IP2Location.com
            2021 Nicotine+ Team
@@ -18,14 +22,14 @@ Files: pynicotine/geoip/ipcountrydb.bin
 Copyright: 2001-2018 Hexasoft Development Sdn. Bhd.
 License: CC-BY-SA-4.0
 
-Files: pynicotine/gtkgui/icons/flags/*
+Files: pynicotine/gtkgui/icons/hicolor/scalable/intl/nplus-flag-*.svg
 Copyright: 2016-2017 Bowtie AB
            2018-2020 Jack Marsh
 License: MIT
 
-Files: pynicotine/metadata/*
+Files: pynicotine/metadata/tinytag.py
 Copyright: 2014-2021 Tom Wallroth
-           2020-2021 Nicotine+ Team
+           2020-2022 Nicotine+ Team
 License: MIT
 
 License: GPL-3+

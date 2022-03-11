@@ -19,6 +19,7 @@
 from pynicotine.gtkgui.widgets.ui import UserInterface
 from pynicotine.gtkgui.widgets.dialogs import dialog_show
 from pynicotine.gtkgui.widgets.dialogs import generic_dialog
+from pynicotine.utils import human_length
 from pynicotine.utils import human_size
 from pynicotine.utils import human_speed
 from pynicotine.utils import humanize
@@ -26,12 +27,14 @@ from pynicotine.utils import humanize
 
 class FileProperties(UserInterface):
 
-    def __init__(self, frame, properties, download_button=True):
+    def __init__(self, frame, properties, total_size=0, total_length=0, download_button=True):
 
         super().__init__("ui/dialogs/fileproperties.ui")
 
         self.frame = frame
         self.properties = properties
+        self.total_size = total_size
+        self.total_length = total_length
 
         self.dialog = generic_dialog(
             parent=frame.MainWindow,
@@ -71,10 +74,19 @@ class FileProperties(UserInterface):
 
     def update_title(self):
 
-        self.dialog.set_title(_("File Properties (%(num)i of %(total)i)") % {
-            'num': self.current_index + 1,
-            'total': len(self.properties)
-        })
+        index = self.current_index + 1
+        total_files = len(self.properties)
+        total_size = str(human_size(self.total_size))
+
+        if self.total_length:
+            self.dialog.set_title(_("File Properties (%(num)i of %(total)i  /  %(size)s  /  %(length)s)") % {
+                'num': index, 'total': total_files, 'size': total_size,
+                'length': str(human_length(self.total_length))
+            })
+            return
+
+        self.dialog.set_title(_("File Properties (%(num)i of %(total)i  /  %(size)s)") % {
+                              'num': index, 'total': total_files, 'size': total_size})
 
     def update_current_file(self):
         """ Updates the UI with properties for the selected file """
@@ -86,7 +98,7 @@ class FileProperties(UserInterface):
 
         self.filename_value.set_text(str(properties["filename"]))
         self.folder_value.set_text(str(properties["directory"]))
-        self.filesize_value.set_text(str(human_size(properties["size"])))
+        self.filesize_value.set_text("%s (%s B)" % (human_size(properties["size"]), humanize(properties["size"])))
         self.username_value.set_text(str(properties["user"]))
 
         path = properties.get("path") or ""
@@ -97,28 +109,22 @@ class FileProperties(UserInterface):
         country = properties.get("country") or ""
 
         self.path_value.set_text(str(path))
-        self.path_label.get_parent().set_visible(bool(path))
-        self.path_value.get_parent().set_visible(bool(path))
+        self.path.set_visible(bool(path))
 
         self.bitrate_value.set_text(str(bitrate))
-        self.bitrate_label.get_parent().set_visible(bool(bitrate))
-        self.bitrate_value.get_parent().set_visible(bool(bitrate))
+        self.bitrate.set_visible(bool(bitrate))
 
         self.length_value.set_text(str(length))
-        self.length_label.get_parent().set_visible(bool(length))
-        self.length_value.get_parent().set_visible(bool(length))
+        self.length.set_visible(bool(length))
 
         self.queue_value.set_text(str(humanize(queue_position)))
-        self.queue_label.get_parent().set_visible(bool(queue_position))
-        self.queue_value.get_parent().set_visible(bool(queue_position))
+        self.queue.set_visible(bool(queue_position))
 
         self.speed_value.set_text(str(human_speed(speed)))
-        self.speed_label.get_parent().set_visible(bool(speed))
-        self.speed_value.get_parent().set_visible(bool(speed))
+        self.speed.set_visible(bool(speed))
 
         self.country_value.set_text(str(country))
-        self.country_label.get_parent().set_visible(bool(country))
-        self.country_value.get_parent().set_visible(bool(country))
+        self.country.set_visible(bool(country))
 
         self.update_title()
 

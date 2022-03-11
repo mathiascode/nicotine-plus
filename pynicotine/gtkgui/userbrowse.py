@@ -134,6 +134,7 @@ class UserBrowse(UserInterface):
         self.file_iters = {}
 
         self.selected_folder = None
+        self.selected_folder_size = 0
         self.selected_files = {}
         self.num_selected_files = 0
 
@@ -150,6 +151,7 @@ class UserBrowse(UserInterface):
             self.frame, None, self.FolderTreeView,
             ["folder", _("Folder"), -1, "text", None]
         )
+        cols["folder"].set_sort_column_id(0)
 
         self.FolderTreeView.get_selection().connect("changed", self.on_select_dir)
         self.FolderTreeView.set_model(self.dir_store)
@@ -172,6 +174,7 @@ class UserBrowse(UserInterface):
                 ("#" + _("Upload Folder & Subfolder(s)…"), self.on_upload_directory_recursive_to),
                 ("", None),
                 ("#" + _("Open in File _Manager"), self.on_file_manager),
+                ("#" + _("F_ile Properties"), self.on_file_properties, True),
                 ("", None),
                 ("#" + _("Copy _Folder Path"), self.on_copy_folder_path),
                 ("#" + _("Copy _URL"), self.on_copy_dir_url),
@@ -184,6 +187,8 @@ class UserBrowse(UserInterface):
                 ("#" + _("Download Folder _To…"), self.on_download_directory_to),
                 ("#" + _("Download Folder & Subfolder(s)"), self.on_download_directory_recursive),
                 ("#" + _("Download Folder & Subfolder(s) To…"), self.on_download_directory_recursive_to),
+                ("", None),
+                ("#" + _("F_ile Properties"), self.on_file_properties, True),
                 ("", None),
                 ("#" + _("Copy _Folder Path"), self.on_copy_folder_path),
                 ("#" + _("Copy _URL"), self.on_copy_dir_url),
@@ -272,6 +277,7 @@ class UserBrowse(UserInterface):
         Accelerator("<Primary>Return", self.FolderTreeView, self.on_folder_transfer_to_accelerator)  # w/to prompt
         Accelerator("<Shift><Primary>Return", self.FolderTreeView, self.on_folder_transfer_accelerator)  # no prmt
         Accelerator("<Primary><Alt>Return", self.FolderTreeView, self.on_folder_open_manager_accelerator)
+        Accelerator("<Alt>Return", self.FolderTreeView, self.on_file_properties_accelerator, True)
 
         # Key Bindings (FileTreeView)
         for accelerator in ("<Shift>Tab", "BackSpace", "backslash"):  # Avoid header, navigate up, "\"
@@ -399,7 +405,7 @@ class UserBrowse(UserInterface):
                     subfolder = '\\'
 
                 if private:
-                    subfolder = "[PRIVATE FOLDER]  " + subfolder
+                    subfolder = _("[PRIVATE]  %s") % subfolder
 
                 self.dir_iters[current_path] = iterator = self.dir_store.insert_with_values(
                     parent, -1, self.dir_column_numbers, [subfolder]
@@ -512,10 +518,13 @@ class UserBrowse(UserInterface):
         self.file_store.set_default_sort_func(lambda *_args: 0)
         self.file_store.set_sort_column_id(-1, Gtk.SortType.ASCENDING)
 
+        selected_folder_size = 0
+
         for file in files:
             # Filename, HSize, Bitrate, HLength, Size, Length
             filename = file[1]
             size = file[2]
+            selected_folder_size += size
             h_bitrate, bitrate, h_length, length = get_result_bitrate_length(size, file[4])
 
             file_row = [filename, human_size(size), h_bitrate, h_length,
@@ -524,6 +533,8 @@ class UserBrowse(UserInterface):
                         GObject.Value(GObject.TYPE_UINT64, length)]
 
             self.file_iters[filename] = self.file_store.insert_with_valuesv(-1, self.file_column_numbers, file_row)
+
+        self.selected_folder_size = selected_folder_size
 
         if sort_column is not None and sort_type is not None:
             self.file_store.set_sort_column_id(sort_column, sort_type)
@@ -547,65 +558,6 @@ class UserBrowse(UserInterface):
             return
 
         self.FolderTreeView.grab_focus()
-
-    """ Download/Upload """
-
-    def download_directory(self, folder, prefix="", recurse=False):
-
-        if folder is None:
-            return
-
-        # Remember custom download location
-        self.frame.np.transfers.requested_folders[self.user][folder] = prefix
-
-        # Get final download destination
-        destination = self.frame.np.transfers.get_folder_destination(self.user, folder)
-
-        files = self.shares.get(folder)
-
-        if files:
-            if config.sections["transfers"]["reverseorder"]:
-                files.sort(key=lambda x: x[1], reverse=True)
-
-            for file_data in files:
-                virtualpath = "\\".join([folder, file_data[1]])
-                size = file_data[2]
-                h_bitrate, _bitrate, h_length, _length = get_result_bitrate_length(size, file_data[4])
-
-                self.frame.np.transfers.get_file(
-                    self.user, virtualpath, destination,
-                    size=size, bitrate=h_bitrate, length=h_length)
-
-        if not recurse:
-            return
-
-        for subdir, _subf in self.shares.items():
-            if folder in subdir and folder != subdir:
-                self.download_directory(subdir, prefix=os.path.join(destination, ""))
-
-    def upload_directory_to(self, user, folder, recurse=False):
-
-        if not folder or not user:
-            return
-
-        ldir = folder.split("\\")[-1]
-        files = self.shares.get(folder)
-
-        if files:
-            locally_queued = False
-
-            for file_data in files:
-                filename = "\\".join([folder, file_data[1]])
-                size = file_data[2]
-                self.frame.np.transfers.push_file(user, filename, size, ldir, locally_queued=locally_queued)
-                locally_queued = True
-
-        if not recurse:
-            return
-
-        for subdir, _subf in self.shares.items():
-            if folder in subdir and folder != subdir:
-                self.upload_directory_to(user, subdir, recurse)
 
     """ Search """
 
@@ -703,21 +655,23 @@ class UserBrowse(UserInterface):
 
         self.set_directory(iterator.user_data)
 
-    def on_folder_popup_menu(self, *_args):
+    def on_folder_popup_menu(self, menu, _treeview):
         self.user_popup.toggle_user_items()
+        menu.actions[_("F_ile Properties")].set_enabled(bool(self.shares.get(self.selected_folder)))
 
     def on_download_directory(self, *_args):
 
         if self.selected_folder is not None:
-            self.download_directory(self.selected_folder)
+            self.frame.np.userbrowse.download_folder(self.user, self.selected_folder, self.shares)
 
     def on_download_directory_recursive(self, *_args):
-        self.download_directory(self.selected_folder, prefix="", recurse=True)
+        self.frame.np.userbrowse.download_folder(self.user, self.selected_folder, self.shares, prefix="", recurse=True)
 
     def on_download_directory_to_selected(self, selected, recurse):
 
         try:
-            self.download_directory(self.selected_folder, prefix=os.path.join(selected, ""), recurse=recurse)
+            self.frame.np.userbrowse.download_folder(self.user, self.selected_folder, self.shares,
+                                                     prefix=os.path.join(selected, ""), recurse=recurse)
         except OSError:  # failed to open
             log.add('Failed to open %r for reading', selected)  # notify user
 
@@ -753,7 +707,7 @@ class UserBrowse(UserInterface):
             return
 
         self.frame.np.userbrowse.send_upload_attempt_notification(user)
-        self.upload_directory_to(user, folder, recurse)
+        self.frame.np.userbrowse.upload_folder(user, folder, self.shares, recurse=recurse)
 
     def on_upload_directory_to(self, *_args, recurse=False):
 
@@ -963,14 +917,7 @@ class UserBrowse(UserInterface):
             if file_data[1] not in self.selected_files:
                 continue
 
-            virtualpath = "\\".join([folder, file_data[1]])
-            size = file_data[2]
-            h_bitrate, _bitrate, h_length, _length = get_result_bitrate_length(size, file_data[4])
-
-            # Get the file
-            self.frame.np.transfers.get_file(
-                self.user, virtualpath, prefix,
-                size=size, bitrate=h_bitrate, length=h_length)
+            self.frame.np.userbrowse.download_file(self.user, folder, file_data, prefix=prefix)
 
     def on_download_files_to_selected(self, selected, _data):
 
@@ -1014,13 +961,8 @@ class UserBrowse(UserInterface):
 
         self.frame.np.userbrowse.send_upload_attempt_notification(user)
 
-        locally_queued = False
-        prefix = ""
-
         for basename, size in self.selected_files.items():
-            self.frame.np.transfers.push_file(
-                user, "\\".join([folder, basename]), size, prefix, locally_queued=locally_queued)
-            locally_queued = True
+            self.frame.np.userbrowse.upload_file(user, folder, (None, basename, size))
 
     def on_upload_files(self, *_args):
 
@@ -1061,28 +1003,47 @@ class UserBrowse(UserInterface):
 
         open_file_path(path, command)
 
-    def on_file_properties(self, *_args):
+    def on_file_properties(self, _action, _state, all_files=False):
 
         data = []
-        model, paths = self.FileTreeView.get_selection().get_selected_rows()
+        folder = self.selected_folder
+        selected_size = 0
+        selected_length = 0
 
-        for path in paths:
-            iterator = model.get_iter(path)
-            filename = model.get_value(iterator, 0)
-            virtual_path = "\\".join([self.selected_folder, filename])
+        if all_files:
+            files = self.shares.get(folder)
 
-            data.append({
-                "user": self.user,
-                "fn": virtual_path,
-                "filename": filename,
-                "directory": self.selected_folder,
-                "size": model.get_value(iterator, 4),
-                "bitrate": model.get_value(iterator, 2),
-                "length": model.get_value(iterator, 3)
-            })
+            if not files:
+                return
+
+            for file_data in files:
+                filename = file_data[1]
+                file_size = file_data[2]
+                virtual_path = "\\".join([folder, filename])
+                h_bitrate, _bitrate, h_length, length = get_result_bitrate_length(file_size, file_data[4])
+                selected_size += file_size
+                selected_length += length
+
+                data.append({"user": self.user, "fn": virtual_path, "filename": filename,
+                             "directory": folder, "size": file_size, "bitrate": h_bitrate, "length": h_length})
+
+        else:
+            model, paths = self.FileTreeView.get_selection().get_selected_rows()
+
+            for path in paths:
+                iterator = model.get_iter(path)
+                filename = model.get_value(iterator, 0)
+                file_size = model.get_value(iterator, 4)
+                virtual_path = "\\".join([folder, filename])
+                selected_size += file_size
+                selected_length += model.get_value(iterator, 6)
+
+                data.append({"user": self.user, "fn": virtual_path, "filename": filename,
+                             "directory": folder, "size": file_size, "bitrate": model.get_value(iterator, 2),
+                             "length": model.get_value(iterator, 3)})
 
         if data:
-            FileProperties(self.frame, data).show()
+            FileProperties(self.frame, data, selected_size, selected_length).show()
 
     def on_copy_file_path(self, *_args):
 
@@ -1211,9 +1172,7 @@ class UserBrowse(UserInterface):
         if len(self.file_store) <= 0:
             self.FolderTreeView.grab_focus()  # avoid nav trap
 
-        if self.num_selected_files >= 1:
-            self.on_file_properties()
-
+        self.on_file_properties(*_args)
         return True
 
     """ Callbacks (General) """

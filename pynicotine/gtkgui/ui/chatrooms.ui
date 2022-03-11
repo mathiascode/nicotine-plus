@@ -113,7 +113,7 @@
                           <object class="GtkEntry" id="ChatEntry">
                             <property name="visible">True</property>
                             <property name="hexpand">True</property>
-                            <property name="width-chars">5</property>
+                            <property name="width-chars">8</property>
                           </object>
                         </child>
                         <child>
@@ -237,7 +237,7 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkBox">
+                  <object class="GtkBox" id="RoomOptions">
                     <property name="visible">True</property>
                     <property name="orientation">vertical</property>
                     <property name="margin-start">8</property>

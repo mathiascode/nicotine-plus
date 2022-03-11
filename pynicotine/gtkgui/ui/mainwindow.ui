@@ -326,6 +326,7 @@
                                       <object class="GtkBox" id="downloads_title">
                                         <property name="visible">True</property>
                                         <property name="hexpand">True</property>
+                                        <property name="halign">start</property>
                                         <property name="spacing">6</property>
                                         <property name="valign">center</property>
                                         <child>
@@ -566,6 +567,7 @@
                                       <object class="GtkBox" id="uploads_title">
                                         <property name="visible">True</property>
                                         <property name="hexpand">True</property>
+                                        <property name="halign">start</property>
                                         <property name="spacing">6</property>
                                         <property name="valign">center</property>
                                         <child>
@@ -807,11 +809,11 @@
                                         <property name="visible">True</property>
                                         <property name="sensitive" bind-source="UserStatusButton" bind-property="sensitive" bind-flags="sync-create"/>
                                         <property name="hexpand">True</property>
+                                        <property name="halign">start</property>
                                         <property name="valign">center</property>
                                         <child>
                                           <object class="GtkComboBoxText" id="UserBrowseCombo">
                                             <property name="visible">True</property>
-                                            <property name="halign">start</property>
                                             <property name="has-entry">True</property>
                                             <child internal-child="entry">
                                               <object class="GtkEntry" id="UserBrowseEntry">
@@ -986,11 +988,11 @@
                                         <property name="visible">True</property>
                                         <property name="sensitive" bind-source="UserStatusButton" bind-property="sensitive" bind-flags="sync-create"/>
                                         <property name="hexpand">True</property>
+                                        <property name="halign">start</property>
                                         <property name="valign">center</property>
                                         <child>
                                           <object class="GtkComboBoxText" id="UserInfoCombo">
                                             <property name="visible">True</property>
-                                            <property name="halign">start</property>
                                             <property name="has-entry">True</property>
                                             <child internal-child="entry">
                                               <object class="GtkEntry" id="UserInfoEntry">
@@ -1147,15 +1149,16 @@
                                       <object class="GtkBox" id="private_title">
                                         <property name="visible">True</property>
                                         <property name="hexpand">True</property>
+                                        <property name="halign">start</property>
+                                        <property name="spacing">4</property>
                                         <property name="valign">center</property>
                                         <child>
                                           <object class="GtkComboBoxText" id="PrivateChatCombo">
                                             <property name="visible">True</property>
-                                            <property name="halign">start</property>
                                             <property name="has-entry">True</property>
                                             <child internal-child="entry">
                                               <object class="GtkEntry" id="PrivateChatEntry">
-                                                <property name="max-width-chars">45</property>
+                                                <property name="max-width-chars">38</property>
                                                 <property name="width-chars">5</property>
                                                 <property name="placeholder-text" translatable="yes">Username…</property>
                                                 <property name="tooltip-text" translatable="yes">Enter the username of the person you want to send a message to</property>
@@ -1167,6 +1170,30 @@
                                             <child internal-child="button">
                                               <object class="GtkButton">
                                                 <signal name="clicked" handler="focus_combobox"/>
+                                              </object>
+                                            </child>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkMenuButton" id="PrivateChatHistory">
+                                            <property name="visible">True</property>
+                                            <child>
+                                              <object class="GtkBox">
+                                                <property name="visible">True</property>
+                                                <property name="spacing">6</property>
+                                                <child>
+                                                  <object class="GtkLabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="label" translatable="yes">Chat _History</property>
+                                                    <property name="use-underline">True</property>
+                                                  </object>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkImage">
+                                                    <property name="visible">True</property>
+                                                    <property name="icon-name">pan-down-symbolic</property>
+                                                  </object>
+                                                </child>
                                               </object>
                                             </child>
                                           </object>
@@ -1222,7 +1249,7 @@
                                     <child>
                                       <object class="GtkImage">
                                         <property name="visible">True</property>
-                                        <property name="icon-name">mail-send-symbolic</property>
+                                        <property name="icon-name">mail-unread-symbolic</property>
                                         <property name="pixel-size">128</property>
                                         <style>
                                           <class name="dim-label"/>
@@ -1296,6 +1323,7 @@
                                       <object class="GtkBox" id="userlist_title">
                                         <property name="visible">True</property>
                                         <property name="hexpand">True</property>
+                                        <property name="halign">start</property>
                                         <property name="valign">center</property>
                                         <child>
                                           <object class="GtkEntry" id="AddUserEntry">
@@ -1419,6 +1447,7 @@
                                             <property name="visible">True</property>
                                             <property name="sensitive" bind-source="UserStatusButton" bind-property="sensitive" bind-flags="sync-create"/>
                                             <property name="hexpand">True</property>
+                                            <property name="halign">start</property>
                                             <property name="spacing">4</property>
                                             <property name="valign">center</property>
                                             <child>
@@ -1717,12 +1746,14 @@
                           <object class="GtkLabel" id="SocketStatus">
                             <property name="visible">True</property>
                             <property name="label">0</property>
+                            <attributes>
+                              <attribute name="weight" value="normal"/>
+                            </attributes>
                           </object>
                         </child>
                       </object>
                     </child>
                     <style>
-                      <class name="body"/>
                       <class name="flat"/>
                     </style>
                   </object>
@@ -1745,12 +1776,14 @@
                         <child>
                           <object class="GtkLabel" id="download_status">
                             <property name="visible">True</property>
+                            <attributes>
+                              <attribute name="weight" value="normal"/>
+                            </attributes>
                           </object>
                         </child>
                       </object>
                     </child>
                     <style>
-                      <class name="body"/>
                       <class name="flat"/>
                     </style>
                   </object>
@@ -1773,12 +1806,14 @@
                         <child>
                           <object class="GtkLabel" id="upload_status">
                             <property name="visible">True</property>
+                            <attributes>
+                              <attribute name="weight" value="normal"/>
+                            </attributes>
                           </object>
                         </child>
                       </object>
                     </child>
                     <style>
-                      <class name="body"/>
                       <class name="flat"/>
                     </style>
                   </object>

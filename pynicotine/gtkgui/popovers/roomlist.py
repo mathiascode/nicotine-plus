@@ -35,6 +35,7 @@ class RoomList(UserInterface):
 
         self.frame = frame
         self.room_iters = {}
+        self.initializing_feed = False
 
         self.room_model = Gtk.ListStore(
             str,
@@ -67,8 +68,6 @@ class RoomList(UserInterface):
             ("#" + _("Disown Private Room"), self.on_popup_private_room_disown),
             ("#" + _("Cancel Room Membership"), self.on_popup_private_room_dismember)
         )
-
-        self.list_view.set_headers_clickable(True)
 
         self.private_room_check.set_active(config.sections["server"]["private_chatrooms"])
         self.private_room_check.connect("toggled", self.on_toggle_accept_private_room)
@@ -146,9 +145,9 @@ class RoomList(UserInterface):
 
     def toggle_feed_check(self, active):
 
-        self.feed_check.handler_block_by_func(self.on_show_chat_feed)
+        self.initializing_feed = True
         self.feed_check.set_active(active)
-        self.feed_check.handler_unblock_by_func(self.on_show_chat_feed)
+        self.initializing_feed = False
 
     def update_room(self, room, user_count, private=False, owned=False):
 
@@ -191,11 +190,16 @@ class RoomList(UserInterface):
 
     def on_popup_join(self, *_args):
         self.frame.np.chatrooms.request_join_room(self.popup_room)
+        self.popover.hide()
 
     def on_show_chat_feed(self, *_args):
 
+        if self.initializing_feed:
+            return
+
         if self.feed_check.get_active():
             self.frame.np.chatrooms.request_join_public_room()
+            self.popover.hide()
             return
 
         self.frame.np.chatrooms.request_leave_public_room()

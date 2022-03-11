@@ -1,4 +1,4 @@
-# COPYRIGHT (C) 2021 Nicotine+ Team
+# COPYRIGHT (C) 2021-2022 Nicotine+ Team
 #
 # GNU GENERAL PUBLIC LICENSE
 #    Version 3, 29 June 2007
@@ -132,6 +132,10 @@ class Interests:
     def similar_users(self, msg):
         if self.ui_callback:
             self.ui_callback.similar_users(msg)
+
+    def item_similar_users(self, msg):
+        if self.ui_callback:
+            self.ui_callback.item_similar_users(msg)
 
     def get_user_status(self, msg):
         if self.ui_callback:

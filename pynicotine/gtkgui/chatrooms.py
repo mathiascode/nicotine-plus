@@ -22,6 +22,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 from collections import deque
 
 from gi.repository import Gio
@@ -55,10 +57,10 @@ from pynicotine.gtkgui.widgets.ui import UserInterface
 from pynicotine.logfacility import log
 from pynicotine.utils import clean_file
 from pynicotine.utils import delete_log
-from pynicotine.utils import get_path
 from pynicotine.utils import humanize
 from pynicotine.utils import human_speed
 from pynicotine.utils import open_log
+from pynicotine.utils import PUNCTUATION
 
 
 class ChatRooms(IconNotebook):
@@ -244,7 +246,7 @@ class ChatRooms(IconNotebook):
 
     def get_user_status(self, msg):
         for page in self.pages.values():
-            page.get_user_status(msg.user, msg.status)
+            page.get_user_status(msg)
 
     def set_user_country(self, user, country):
         for page in self.pages.values():
@@ -404,8 +406,8 @@ class ChatRoom(UserInterface):
             str,                  # (3)  h_speed
             str,                  # (4)  h_files
             int,                  # (5)  status
-            GObject.TYPE_UINT64,  # (6)  avgspeed
-            GObject.TYPE_UINT64,  # (7)  files
+            GObject.TYPE_UINT,    # (6)  avgspeed
+            GObject.TYPE_UINT,    # (7)  files
             str,                  # (8)  country
             Pango.Weight,         # (9)  username_weight
             Pango.Underline       # (10) username_underline
@@ -484,6 +486,7 @@ class ChatRoom(UserInterface):
             ("#" + _("_Leave Room"), self.on_leave_room)
         )
 
+        self.setup_public_feed()
         self.ChatEntry.grab_focus()
 
         self.count_users()
@@ -494,12 +497,27 @@ class ChatRoom(UserInterface):
     def set_label(self, label):
         self.tab_menu.set_parent(label)
 
+    def setup_public_feed(self):
+
+        if self.room != "Public ":
+            return
+
+        for widget in (self.ActivityView, self.UserView, self.ChatEntry, self.ShowRoomWall, self.ShowChatHelp):
+            widget.hide()
+
+        for widget in (self.AutoJoin, self.Log):
+            self.RoomOptions.remove(widget)
+            self.ChatEntryBox.add(widget)
+
+        self.ChatEntry.set_sensitive(False)
+        self.ChatEntryBox.set_halign(Gtk.Align.END)
+
     def add_user_row(self, userdata):
 
         username = userdata.username
         status = userdata.status
         country = userdata.country or ""  # country can be None, ensure string is used
-        status_icon = get_status_icon(status)
+        status_icon = get_status_icon(status) or get_status_icon(0)
         flag_icon = get_flag_icon_name(country)
 
         # Request user's IP address, so we can get the country and ignore messages by IP
@@ -535,8 +553,8 @@ class ChatRoom(UserInterface):
                 h_speed,
                 h_files,
                 status,
-                GObject.Value(GObject.TYPE_UINT64, avgspeed),
-                GObject.Value(GObject.TYPE_UINT64, files),
+                GObject.Value(GObject.TYPE_UINT, avgspeed),
+                GObject.Value(GObject.TYPE_UINT, files),
                 country,
                 weight,
                 underline
@@ -547,15 +565,16 @@ class ChatRoom(UserInterface):
 
     def read_room_logs(self):
 
-        if not config.sections["logging"]["readroomlogs"]:
+        numlines = config.sections["logging"]["readroomlines"]
+
+        if not numlines:
             return
 
         filename = clean_file(self.room) + ".log"
-        numlines = config.sections["logging"]["readroomlines"]
+        path = os.path.join(config.sections["logging"]["roomlogsdir"], filename)
 
         try:
-            get_path(config.sections["logging"]["roomlogsdir"], filename, self.append_log_lines, numlines)
-
+            self.append_log_lines(path, numlines)
         except OSError:
             pass
 
@@ -613,9 +632,7 @@ class ChatRoom(UserInterface):
         menu.toggle_user_items()
         menu.populate_private_rooms(menu_private_rooms)
 
-        private_rooms_enabled = (menu_private_rooms.items
-                                 and menu.user != self.frame.np.login_username)
-
+        private_rooms_enabled = (menu_private_rooms.items and menu.user != self.frame.np.login_username)
         menu.actions[_("Private Rooms")].set_enabled(private_rooms_enabled)
 
     def on_find_activity_log(self, *_args):
@@ -681,7 +698,7 @@ class ChatRoom(UserInterface):
     def ticker_remove(self, msg):
         self.tickers.remove_ticker(msg.user)
 
-    def show_notification(self, login, user, text, tag):
+    def show_notification(self, login, user, text, tag, public=False):
 
         if user == login:
             return
@@ -707,17 +724,37 @@ class ChatRoom(UserInterface):
             self.frame.notifications.add("rooms", user, self.room)
             return
 
-        if config.sections["notifications"]["notification_popup_chatroom"]:
+        if not public and config.sections["notifications"]["notification_popup_chatroom"]:
+            # Don't show notifications for "Public " room, they're too noisy
             self.frame.notifications.new_text_notification(
                 text,
                 title=_("Message by %(user)s in the %(room)s room") % {"user": user, "room": self.room},
                 priority=Gio.NotificationPriority.HIGH
             )
 
+    @staticmethod
+    def find_whole_word(word, text, after=0):
+        """ Return the position of the first mention of word that is not a subword """
+
+        if word not in text:
+            return -1
+
+        word_boundaries = [' '] + PUNCTUATION
+        whole = False
+        start = 0
+
+        while not whole and start > -1:
+            start = text.find(word, after)
+            after = start + len(word)
+
+            whole = ((text[after] if after < len(text) else " ") in word_boundaries
+                     and (text[start - 1] if start > 0 else " ") in word_boundaries)
+
+        return start if whole else -1
+
     def say_chat_room(self, msg, public=False):
 
         user = msg.user
-        text = msg.msg
 
         if self.frame.np.network_filter.is_user_ignored(user):
             return
@@ -726,39 +763,27 @@ class ChatRoom(UserInterface):
             return
 
         login_username = self.frame.np.login_username
+        text = msg.msg
 
         if user == login_username:
             tag = self.tag_local
-        elif text.upper().find(login_username.upper()) > -1:
+        elif self.find_whole_word(login_username.lower(), text.lower()) > -1:
             tag = self.tag_hilite
         else:
             tag = self.tag_remote
 
-        self.show_notification(login_username, user, text, tag)
-
         if text.startswith("/me "):
-            if public:
-                line = "%s | * %s %s" % (msg.room, user, text[4:])
-            else:
-                line = "* %s %s" % (user, text[4:])
-
-            speech = line[2:]
             tag = self.tag_action
-
+            line = "* %s %s" % (user, text[4:])
+            speech = line[2:]
         else:
-            if public:
-                line = "%s | [%s] %s" % (msg.room, user, text)
-            else:
-                line = "[%s] %s" % (user, text)
-
+            line = "[%s] %s" % (user, text)
             speech = text
 
-        line = "\n-- ".join(line.split("\n"))
-        if self.Log.get_active():
-            timestamp_format = config.sections["logging"]["log_timestamp"]
-            log.write_log(config.sections["logging"]["roomlogsdir"], self.room, line,
-                          timestamp_format=timestamp_format)
+        if public:
+            line = "%s | %s" % (msg.room, line)
 
+        line = "\n-- ".join(line.split("\n"))
         usertag = self.get_user_tag(user)
         timestamp_format = config.sections["logging"]["rooms_timestamp"]
 
@@ -769,19 +794,23 @@ class ChatRoom(UserInterface):
             )
 
             if self.Speech.get_active():
-
                 self.frame.np.notifications.new_tts(
-                    config.sections["ui"]["speechrooms"], {
-                        "room": self.room,
-                        "user": user,
-                        "message": speech
-                    }
+                    config.sections["ui"]["speechrooms"], {"room": msg.room, "user": user, "message": speech}
                 )
+
         else:
             self.chat_textview.append_line(
                 line, tag,
                 username=user, usertag=usertag, timestamp_format=timestamp_format
             )
+
+        self.show_notification(login_username, user, speech, tag, public)
+
+        if self.Log.get_active():
+            timestamp_format = config.sections["logging"]["log_timestamp"]
+
+            log.write_log(config.sections["logging"]["roomlogsdir"], self.room, line,
+                          timestamp_format=timestamp_format)
 
     def echo_message(self, text, message_type):
 
@@ -839,7 +868,9 @@ class ChatRoom(UserInterface):
 
     def get_user_stats(self, user, avgspeed, files):
 
-        if user not in self.users:
+        iterator = self.users.get(user)
+
+        if iterator is None:
             return
 
         h_speed = ""
@@ -847,18 +878,27 @@ class ChatRoom(UserInterface):
         if avgspeed > 0:
             h_speed = human_speed(avgspeed)
 
-        self.usersmodel.set_value(self.users[user], 3, h_speed)
-        self.usersmodel.set_value(self.users[user], 4, humanize(files))
-        self.usersmodel.set_value(self.users[user], 6, GObject.Value(GObject.TYPE_UINT64, avgspeed))
-        self.usersmodel.set_value(self.users[user], 7, GObject.Value(GObject.TYPE_UINT64, files))
+        self.usersmodel.set_value(iterator, 3, h_speed)
+        self.usersmodel.set_value(iterator, 4, humanize(files))
+        self.usersmodel.set_value(iterator, 6, GObject.Value(GObject.TYPE_UINT, avgspeed))
+        self.usersmodel.set_value(iterator, 7, GObject.Value(GObject.TYPE_UINT, files))
 
-    def get_user_status(self, user, status):
+    def get_user_status(self, msg):
 
-        if user not in self.users:
+        user = msg.user
+        iterator = self.users.get(user)
+
+        if iterator is None:
+            return
+
+        status = msg.status
+
+        if status == self.usersmodel.get_value(iterator, 5):
             return
 
         status_icon = get_status_icon(status)
-        if status_icon == self.usersmodel.get_value(self.users[user], 0):
+
+        if status_icon is None:
             return
 
         if status == 1:
@@ -874,17 +914,19 @@ class ChatRoom(UserInterface):
                 not self.frame.np.network_filter.is_user_ip_ignored(user):
             self.log_textview.append_line(action % user, self.tag_log)
 
-        self.usersmodel.set_value(self.users[user], 0, status_icon)
-        self.usersmodel.set_value(self.users[user], 5, status)
+        self.usersmodel.set_value(iterator, 0, status_icon)
+        self.usersmodel.set_value(iterator, 5, status)
 
         self.update_user_tag(user)
 
     def set_user_country(self, user, country):
 
-        if user not in self.users:
+        iterator = self.users.get(user)
+
+        if iterator is None:
             return
 
-        if self.usersmodel.get_value(self.users[user], 8) == country:
+        if self.usersmodel.get_value(iterator, 8) == country:
             # Country didn't change, no need to update
             return
 
@@ -893,8 +935,8 @@ class ChatRoom(UserInterface):
         if not flag_icon:
             return
 
-        self.usersmodel.set_value(self.users[user], 1, flag_icon)
-        self.usersmodel.set_value(self.users[user], 8, country)
+        self.usersmodel.set_value(iterator, 1, flag_icon)
+        self.usersmodel.set_value(iterator, 8, country)
 
     def update_visuals(self):
 

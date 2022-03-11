@@ -127,7 +127,7 @@ class NicotineCore:
             slskmessages.UserInfoReply: self.user_info_reply,
             slskmessages.UserInfoRequest: self.user_info_request,
             slskmessages.PierceFireWall: self.dummy_message,
-            slskmessages.ConnectToPeer: self.dummy_message,
+            slskmessages.ConnectToPeer: self.connect_to_peer,
             slskmessages.CantConnectToPeer: self.dummy_message,
             slskmessages.MessageProgress: self.message_progress,
             slskmessages.SharedFileList: self.shared_file_list,
@@ -142,15 +142,18 @@ class NicotineCore:
             slskmessages.CheckUploadQueue: self.check_upload_queue,
             slskmessages.DownloadFile: self.file_download,
             slskmessages.UploadFile: self.file_upload,
-            slskmessages.FileRequest: self.file_request,
+            slskmessages.FileDownloadInit: self.file_download_init,
+            slskmessages.FileUploadInit: self.file_upload_init,
             slskmessages.TransferRequest: self.transfer_request,
             slskmessages.TransferResponse: self.transfer_response,
             slskmessages.QueueUpload: self.queue_upload,
             slskmessages.UploadDenied: self.upload_denied,
             slskmessages.UploadFailed: self.upload_failed,
             slskmessages.PlaceInQueue: self.place_in_queue,
-            slskmessages.FileError: self.file_error,
-            slskmessages.FileConnClose: self.file_conn_close,
+            slskmessages.DownloadFileError: self.download_file_error,
+            slskmessages.UploadFileError: self.upload_file_error,
+            slskmessages.DownloadConnClose: self.download_conn_close,
+            slskmessages.UploadConnClose: self.upload_conn_close,
             slskmessages.FolderContentsResponse: self.folder_contents_response,
             slskmessages.FolderContentsRequest: self.folder_contents_request,
             slskmessages.RoomList: self.room_list,
@@ -191,7 +194,7 @@ class NicotineCore:
             slskmessages.Recommendations: self.recommendations,
             slskmessages.ItemRecommendations: self.item_recommendations,
             slskmessages.SimilarUsers: self.similar_users,
-            slskmessages.ItemSimilarUsers: self.similar_users,
+            slskmessages.ItemSimilarUsers: self.item_similar_users,
             slskmessages.UserInterests: self.user_interests,
             slskmessages.RoomTickerState: self.room_ticker_state,
             slskmessages.RoomTickerAdd: self.room_ticker_add,
@@ -219,22 +222,22 @@ class NicotineCore:
 
     def start(self, ui_callback=None, network_callback=None):
 
-        log.add(_("Loading %(program)s %(version)s"), {"program": "Python", "version": config.python_version})
-        log.add(_("Loading %(program)s %(version)s"), {"program": config.application_name, "version": config.version})
-        log.add_debug("Using Python executable: %s", str(sys.executable))
-
         self.ui_callback = ui_callback
         self.network_callback = network_callback if network_callback else self.network_event
-
         script_dir = os.path.dirname(__file__)
-        self.geoip = GeoIP(os.path.join(script_dir, "geoip/ipcountrydb.bin"))
 
+        log.add(_("Loading %(program)s %(version)s"), {"program": "Python", "version": config.python_version})
+        log.add_debug("Using %(program)s executable: %(exe)s", {"program": "Python", "exe": str(sys.executable)})
+        log.add_debug("Using %(program)s executable: %(exe)s", {"program": config.application_name, "exe": script_dir})
+        log.add(_("Loading %(program)s %(version)s"), {"program": config.application_name, "version": config.version})
+
+        self.geoip = GeoIP(os.path.join(script_dir, "geoip/ipcountrydb.bin"))
         self.notifications = Notifications(config, ui_callback)
         self.network_filter = NetworkFilter(self, config, self.queue, self.geoip)
         self.now_playing = NowPlaying(config)
         self.statistics = Statistics(config, ui_callback)
 
-        self.shares = Shares(self, config, self.queue, ui_callback=ui_callback)
+        self.shares = Shares(self, config, self.queue, self.network_callback, ui_callback)
         self.search = Search(self, config, self.queue, self.shares.share_dbs, self.geoip, ui_callback)
         self.transfers = Transfers(self, config, self.queue, self.network_callback, ui_callback)
         self.interests = Interests(self, config, self.queue, ui_callback)
@@ -250,7 +253,7 @@ class NicotineCore:
         port_range = config.sections["server"]["portrange"]
         interface = config.sections["server"]["interface"]
         self.protothread = slskproto.SlskProtoThread(
-            self.network_callback, self.queue, self.bindip, interface, self.port, port_range, self.network_filter, self)
+            self.network_callback, self.queue, self.bindip, interface, self.port, port_range, self)
         self.upnp = UPnP(self, config)
         self.pluginhandler = PluginHandler(self, config)
 
@@ -460,12 +463,14 @@ class NicotineCore:
             else:
                 log.add("No handler for class %s %s", (i.__class__, dir(i)))
 
+        msgs.clear()
+
     def show_connection_error_message(self, msg):
         """ Request UI to show error messages related to connectivity """
 
         for i in msg.msgs:
-            if i.__class__ in (slskmessages.FileRequest, slskmessages.TransferRequest):
-                self.transfers.get_cant_connect_request(i.token)
+            if i.__class__ in (slskmessages.TransferRequest, slskmessages.FileUploadInit):
+                self.transfers.get_cant_connect_upload(i.token)
 
             elif i.__class__ is slskmessages.QueueUpload:
                 self.transfers.get_cant_connect_queue_file(msg.user, i.file)
@@ -502,13 +507,21 @@ class NicotineCore:
         log.add_msg_contents(msg)
         self.transfers.file_upload(msg)
 
-    def file_error(self, msg):
+    def download_file_error(self, msg):
         log.add_msg_contents(msg)
-        self.transfers.file_error(msg)
+        self.transfers.download_file_error(msg)
 
-    def file_conn_close(self, msg):
+    def upload_file_error(self, msg):
         log.add_msg_contents(msg)
-        self.transfers.file_conn_close(msg.sock)
+        self.transfers.upload_file_error(msg)
+
+    def download_conn_close(self, msg):
+        log.add_msg_contents(msg)
+        self.transfers.download_conn_close(msg)
+
+    def upload_conn_close(self, msg):
+        log.add_msg_contents(msg)
+        self.transfers.upload_conn_close(msg)
 
     def transfer_timeout(self, msg):
         self.transfers.transfer_timeout(msg)
@@ -693,6 +706,17 @@ class NicotineCore:
         log.add_msg_contents(msg)
         self.chatrooms.user_left_room(msg)
 
+    def connect_to_peer(self, msg):
+        """ Server code: 18 """
+
+        log.add_msg_contents(msg)
+
+        if msg.privileged == 1:
+            self.transfers.add_to_privileged(msg.user)
+
+        elif msg.privileged == 0:
+            self.transfers.remove_from_privileged(msg.user)
+
     def message_user(self, msg):
         """ Server code: 22 """
 
@@ -815,7 +839,7 @@ class NicotineCore:
         self.search.set_wishlist_interval(msg)
 
     def similar_users(self, msg):
-        """ Server code: 110 and 112 """
+        """ Server code: 110 """
 
         log.add_msg_contents(msg)
         self.interests.similar_users(msg)
@@ -825,6 +849,12 @@ class NicotineCore:
 
         log.add_msg_contents(msg)
         self.interests.item_recommendations(msg)
+
+    def item_similar_users(self, msg):
+        """ Server code: 112 """
+
+        log.add_msg_contents(msg)
+        self.interests.item_similar_users(msg)
 
     def room_ticker_state(self, msg):
         """ Server code: 113 """
@@ -1172,10 +1202,17 @@ class NicotineCore:
         log.add_msg_contents(msg)
         self.transfers.place_in_queue_request(msg)
 
-    def file_request(self, msg):
+    """
+    Incoming File Messages
+    """
 
+    def file_download_init(self, msg):
         log.add_msg_contents(msg)
-        self.transfers.file_request(msg)
+        self.transfers.file_download_init(msg)
+
+    def file_upload_init(self, msg):
+        log.add_msg_contents(msg)
+        self.transfers.file_upload_init(msg)
 
     """
     Incoming Distributed Messages
