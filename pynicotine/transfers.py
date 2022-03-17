@@ -58,7 +58,7 @@ class Transfer:
                  "path", "token", "size", "file", "start_time", "last_update",
                  "current_byte_offset", "last_byte_offset", "speed", "time_elapsed",
                  "time_left", "modifier", "queue_position", "bitrate", "length",
-                 "iterator", "status", "legacy_attempt")
+                 "iterator", "status", "legacy_attempt", "size_changed")
 
     def __init__(self, user=None, filename=None, path=None, status=None, token=None, size=0,
                  current_byte_offset=None, bitrate=None, length=None):
@@ -84,6 +84,7 @@ class Transfer:
         self.time_left = None
         self.iterator = None
         self.legacy_attempt = False
+        self.size_changed = False
 
 
 class Transfers:
@@ -764,7 +765,11 @@ class Transfers:
             # In that case, we rely on the cached, correct file size we received when
             # we initially added the download.
 
-            if msg.filesize > 0:
+            if size > 0:
+                if i.size != size:
+                    # The remote user's file contents have changed since we queued the download
+                    i.size_changed = True
+
                 i.size = size
 
             i.token = msg.token
@@ -788,7 +793,7 @@ class Transfers:
                 path = os.path.join(self.config.sections["transfers"]["uploaddir"], user, parentdir)
 
             transfer = Transfer(user=user, filename=filename, path=path, status="Queued",
-                                size=msg.filesize, token=msg.token)
+                                size=size, token=msg.token)
             self.downloads.appendleft(transfer)
             self.update_download(transfer)
             self.core.watch_user(user)
@@ -1041,6 +1046,11 @@ class Transfers:
                         except ImportError:
                             pass
 
+                    if i.size_changed:
+                        # Remote user sent a different file size than we originally requested,
+                        # wipe any existing data in the incomplete file to avoid corruption
+                        file_handle.truncate(0)
+
                     file_handle.seek(0, 2)
                     offset = file_handle.tell()
 
@@ -1060,7 +1070,6 @@ class Transfers:
 
                     if i.size > offset:
                         i.status = "Transferring"
-                        i.legacy_attempt = False
                         self.queue.append(slskmessages.DownloadFile(i.sock, file_handle))
                         self.queue.append(slskmessages.FileOffset(msg.init, i.size, offset))
 
@@ -1217,10 +1226,12 @@ class Transfers:
                 # Check if there are more transfers with the same virtual path
                 continue
 
-            if not i.legacy_attempt:
+            should_retry = not i.legacy_attempt
+            self.abort_transfer(i)
+
+            if should_retry:
                 # Attempt to request file name encoded as latin-1 once
 
-                self.abort_transfer(i)
                 i.legacy_attempt = True
                 self.get_file(i.user, filename, i.path, i)
                 break
@@ -1605,7 +1616,8 @@ class Transfers:
                     transferobj.queue_position = i.queue_position
                     previously_queued = True
 
-                transferobj.current_byte_offset = i.current_byte_offset
+                if i.status != "Finished":
+                    transferobj.current_byte_offset = i.current_byte_offset
 
                 if i in self.transfer_request_times:
                     del self.transfer_request_times[i]
@@ -1791,10 +1803,12 @@ class Transfers:
             )
 
         if config["transfers"]["afterfinish"]:
-            if not execute_command(config["transfers"]["afterfinish"], filepath):
-                log.add(_("Trouble executing '%s'"), config["transfers"]["afterfinish"])
-            else:
+            try:
+                execute_command(config["transfers"]["afterfinish"], filepath)
                 log.add(_("Executed: %s"), config["transfers"]["afterfinish"])
+
+            except Exception:
+                log.add(_("Trouble executing '%s'"), config["transfers"]["afterfinish"])
 
     def folder_downloaded_actions(self, user, folderpath):
 
@@ -1818,10 +1832,12 @@ class Transfers:
             )
 
         if config["transfers"]["afterfolder"]:
-            if not execute_command(config["transfers"]["afterfolder"], folderpath):
-                log.add(_("Trouble executing on folder: %s"), config["transfers"]["afterfolder"])
-            else:
+            try:
+                execute_command(config["transfers"]["afterfolder"], folderpath)
                 log.add(_("Executed on folder: %s"), config["transfers"]["afterfolder"])
+
+            except Exception:
+                log.add(_("Trouble executing on folder: %s"), config["transfers"]["afterfolder"])
 
     def download_folder_error(self, transfer, error):
 
@@ -2278,6 +2294,7 @@ class Transfers:
     def abort_transfer(self, transfer, reason="Cancelled", send_fail_message=False):
 
         transfer.legacy_attempt = False
+        transfer.size_changed = False
         transfer.token = None
         transfer.speed = None
         transfer.queue_position = 0
