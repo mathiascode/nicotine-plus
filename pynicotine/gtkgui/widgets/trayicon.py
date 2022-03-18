@@ -34,59 +34,73 @@ from pynicotine.logfacility import log
 
 class BaseImplementation:
 
-    def __init__(self, frame):
+    def __init__(self, frame, menu=None):
 
         self.frame = frame
-        self.menu = None
+        self.menu = menu
         self.status = "disconnect"
         self.custom_icons = False
+        self.blocked = False
 
         # If custom icon path was found, use it, otherwise we fall back to system icons
         self.final_icon_path = self.get_final_icon_path()
 
         self.create_menu()
 
-    def create_item(self, text, callback, check=False):
+    def create_item(self, text, callback=None, checked=None, default=False):
 
-        if check:
-            item = Gtk.CheckMenuItem.new_with_label(text)
+        if text == "separator":
+            item = Gtk.SeparatorMenuItem()
+
         else:
-            item = Gtk.MenuItem.new_with_label(text)
+            if checked:
+                item = Gtk.CheckMenuItem.new_with_label(text)
+            else:
+                item = Gtk.MenuItem.new_with_label(text)
 
-        handler = item.connect("activate", callback)
+            item.connect("activate", callback)
+
         self.menu.append(item)
         item.show()
 
-        return item, handler
+        return item
+
+    def set_item_enabled(self, item, enabled):
+        item.set_sensitive(enabled)
+
+    def set_item_checked(self, item, checked):
+        item.set_active(checked)
+
+    def set_item_label(self, item, label):
+        item.set_label(label)
 
     def create_menu(self):
 
         if Gtk.get_major_version() == 4:
             return
 
-        self.menu = Gtk.Menu()
-        self.hide_show_item, _handler = self.create_item(_("Show Nicotine+"), self.frame.on_window_hide_unhide)
-        self.alt_speed_item, self.alt_speed_handler = self.create_item(
-            _("Alternative Speed Limits"), self.frame.on_alternative_speed_limit, check=True)
+        self.hide_show_item = self.create_item(_("Show Nicotine+"), self.frame.on_window_hide_unhide, default=True)
+        self.alt_speed_item = self.create_item(
+            _("Alternative Speed Limits"), self.on_alternative_speed_limit, checked=True)
 
-        self.menu.append(Gtk.SeparatorMenuItem())
+        self.create_item("separator")
 
-        self.downloads_item, _handler = self.create_item(_("Downloads"), self.on_downloads)
-        self.uploads_item, _handler = self.create_item(_("Uploads"), self.on_uploads)
+        self.downloads_item = self.create_item(_("Downloads"), self.on_downloads)
+        self.uploads_item = self.create_item(_("Uploads"), self.on_uploads)
 
-        self.menu.append(Gtk.SeparatorMenuItem())
+        self.create_item("separator")
 
-        self.connect_item, _handler = self.create_item(_("Connect"), self.frame.on_connect)
-        self.disconnect_item, _handler = self.create_item(_("Disconnect"), self.frame.on_disconnect)
-        self.away_item, self.away_handler = self.create_item(_("Away"), self.frame.on_away, check=True)
+        self.connect_item = self.create_item(_("Connect"), self.frame.on_connect)
+        self.disconnect_item = self.create_item(_("Disconnect"), self.frame.on_disconnect)
+        self.away_item = self.create_item(_("Away"), self.on_away, checked=True)
 
-        self.menu.append(Gtk.SeparatorMenuItem())
+        self.create_item("separator")
 
-        self.send_message_item, _handler = self.create_item(_("Send Message"), self.on_open_private_chat)
-        self.lookup_info_item, _handler = self.create_item(_("Request User's Info"), self.on_get_a_users_info)
-        self.lookup_shares_item, _handler = self.create_item(_("Request User's Shares"), self.on_get_a_users_shares)
+        self.send_message_item = self.create_item(_("Send Message"), self.on_open_private_chat)
+        self.lookup_info_item = self.create_item(_("Request User's Info"), self.on_get_a_users_info)
+        self.lookup_shares_item = self.create_item(_("Request User's Shares"), self.on_get_a_users_shares)
 
-        self.menu.append(Gtk.SeparatorMenuItem())
+        self.create_item("separator")
 
         self.create_item(_("Preferences"), self.frame.on_settings)
         self.create_item(_("Quit"), self.frame.np.quit)
@@ -101,7 +115,7 @@ class BaseImplementation:
         else:
             text = _("Show Nicotine+")
 
-        self.hide_show_item.set_label(text)
+        self.set_item_label(self.hide_show_item, text)
 
     def set_server_actions_sensitive(self, status):
 
@@ -112,9 +126,9 @@ class BaseImplementation:
                      self.lookup_info_item, self.lookup_shares_item):
 
             # Disable menu items when disconnected from server
-            item.set_sensitive(status)
+            self.set_item_enabled(item, status)
 
-        self.connect_item.set_sensitive(not status)
+        self.set_item_enabled(self.connect_item, not status)
 
     def set_connected(self, enable):
         self.set_icon("connect" if enable else "disconnect")
@@ -126,32 +140,32 @@ class BaseImplementation:
         if self.menu is None:
             return
 
-        with self.away_item.handler_block(self.away_handler):
-            # Temporarily disable handler, we only want to change the visual checkbox appearance
-            self.away_item.set_active(enable)
+        self.blocked = True
+        self.set_item_checked(self.away_item, enable)
+        self.blocked = False
 
     def set_download_status(self, status):
 
         if self.menu is None:
             return
 
-        self.downloads_item.set_label(status)
+        self.set_item_label(self.downloads_item, status)
 
     def set_upload_status(self, status):
 
         if self.menu is None:
             return
 
-        self.uploads_item.set_label(status)
+        self.set_item_label(self.uploads_item, status)
 
     def set_alternative_speed_limit(self, enable):
 
         if self.menu is None:
             return
 
-        with self.alt_speed_item.handler_block(self.alt_speed_handler):
-            # Temporarily disable handler, we only want to change the visual checkbox appearance
-            self.alt_speed_item.set_active(enable)
+        self.blocked = True
+        self.set_item_checked(self.alt_speed_item, enable)
+        self.blocked = False
 
     @staticmethod
     def check_icon_path(icon_name, icon_path, icon_type="local"):
@@ -203,6 +217,20 @@ class BaseImplementation:
                 return local_icon_path
 
         return None
+
+    def on_away(self):
+
+        if self.blocked:
+            return
+
+        self.frame.on_away()
+
+    def on_alternative_speed_limit(self):
+
+        if self.blocked:
+            return
+
+        self.frame.on_alternative_speed_limit()
 
     def on_downloads(self, *_args):
         self.frame.change_main_page("downloads")
@@ -317,11 +345,115 @@ class BaseImplementation:
         pass
 
 
+class PystrayImplementation(BaseImplementation):
+
+    def __init__(self, frame):
+
+        try:
+            import cairosvg
+            import pystray
+            import threading
+
+        except ImportError as error:
+            raise AttributeError("Pystray implementation not available") from error
+
+        self.menu_items = []
+        self.menu_text = {}
+        self.menu_enabled = {}
+        self.menu_checked = {}
+
+        super().__init__(frame)
+
+        self.tray_icon = pystray.Icon(config.application_name)
+        self.set_icon(self.status, force_update=True)
+        self.menu = self.tray_icon.menu = pystray.Menu(self.menu_items)
+
+        thread = threading.Thread(target=self.tray_icon.run)
+        thread.name = "TrayIcon"
+        thread.daemon = True
+        thread.start()
+
+    def svg_to_png(self, file_path):
+
+        from PIL import Image
+
+        import cairosvg
+        import io
+
+        with open(file_path, "rb") as file_handle:
+            bytes = io.BytesIO()
+            cairosvg.svg2png(bytestring=file_handle.read(), write_to=bytes)
+
+            return Image.open(io.BytesIO(bytes.getvalue()))
+
+    def create_item(self, text, callback=None, checked=None, default=False):
+
+        import pystray
+        enabled = True
+
+        if text == "separator":
+            item = pystray.Menu.SEPARATOR
+        else:
+            item = pystray.MenuItem(lambda text: text, callback,
+                                    checked=lambda checked: checked, enabled=lambda enabled: enabled, default=default)
+
+        self.menu_text[item] = text
+        self.menu_enabled[item] = enabled
+        self.menu_checked[item] = checked
+
+        self.menu_items.append(item)
+        return item
+
+    def set_item_checked(self, item, checked):
+        self.menu_checked[item] = checked
+        self.tray_icon.update_menu()
+
+    def set_item_enabled(self, item, enabled):
+        self.menu_enabled[item] = enabled
+        self.tray_icon.update_menu()
+
+    def set_item_label(self, item, label):
+        self.menu_text[item] = label
+        self.tray_icon.update_menu()
+
+    def set_icon_name(self, icon_name):
+
+        from PIL import Image
+        import fnmatch
+
+        for fullname in os.listdir(self.final_icon_path):
+            if fnmatch.fnmatch(fullname, icon_name + '.*'):
+                file_path = os.path.join(self.final_icon_path, fullname)
+
+                if fullname.lower().endswith(".svg"):
+                    self.tray_icon.icon = self.svg_to_png(file_path)
+                    return
+
+                self.tray_icon.icon = Image.open(file_path)
+
+    def is_visible(self):
+        return self.tray_icon.visible
+
+    def show(self):
+
+        if self.is_visible():
+            return
+
+        self.tray_icon.visible = True
+
+    def hide(self):
+
+        if self.is_visible():
+            return
+
+        self.tray_icon.visible = False
+
+
 class AppIndicatorImplementation(BaseImplementation):
 
     def __init__(self, frame):
 
-        super().__init__(frame)
+        super().__init__(frame, Gtk.Menu())
 
         try:
             # Check if AyatanaAppIndicator3 is available
@@ -378,7 +510,7 @@ class StatusIconImplementation(BaseImplementation):
 
     def __init__(self, frame):
 
-        super().__init__(frame)
+        super().__init__(frame, Gtk.Menu())
 
         if not hasattr(Gtk, "StatusIcon") or sys.platform == "darwin":
             # Tray icons don't work as expected on macOS
@@ -443,16 +575,7 @@ class TrayIcon:
             return
 
         if self.implementation is None:
-            try:
-                self.implementation = AppIndicatorImplementation(self.frame)
-
-            except AttributeError:
-                try:
-                    self.implementation = StatusIconImplementation(self.frame)
-
-                except AttributeError:
-                    self.implementation = BaseImplementation(self.frame)
-                    self.available = False
+            self.implementation = PystrayImplementation(self.frame)
 
             self.set_server_actions_sensitive(False)
             self.set_alternative_speed_limit(config.sections["transfers"]["usealtlimits"])
