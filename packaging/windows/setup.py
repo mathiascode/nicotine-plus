@@ -29,7 +29,7 @@ from cx_Freeze import Executable, setup
 
 
 if sys.platform == "win32":
-    gui_base = "Win32GUI"
+    gui_base = None
     sys_base = sys.prefix
 
 else:
