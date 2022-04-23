@@ -167,11 +167,14 @@ def run():
         import os
         import multiprocessing
 
-        # Support SSL in frozen Windows binaries
-        if sys.platform == "win32":
-            os.environ["SSL_CERT_FILE"] = os.path.join(os.path.dirname(sys.executable), "share/ssl/cert.pem")
+        # Set up paths for frozen binaries (Windows and macOS)
+        executable = os.path.dirname(sys.executable)
+        os.environ["XDG_DATA_DIRS"] = os.path.join(executable, "share")
+        os.environ["GDK_PIXBUF_MODULE_FILE"] = os.path.join(executable, "lib/gdk-pixbuf-2.0/2.10.0/loaders.cache")
+        os.environ["GI_TYPELIB_PATH"] = os.path.join(executable, "lib/girepository-1.0")
+        os.environ["SSL_CERT_FILE"] = os.path.join(executable, "share/ssl/cert.pem")
 
-        # Support file scanning process in frozen Windows and macOS binaries
+        # Support file scanning process in frozen binaries
         multiprocessing.freeze_support()
 
     from pynicotine.logfacility import log

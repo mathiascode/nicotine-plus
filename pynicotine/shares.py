@@ -731,7 +731,8 @@ class Shares:
 
         import multiprocessing
 
-        multiprocessing.set_start_method("spawn", force=True)
+        start_method = "fork" if sys.platform == "darwin" else "spawn"
+        multiprocessing.set_start_method(start_method, force=True)
 
         scanner_queue = multiprocessing.Queue()
         scanner = Scanner(
