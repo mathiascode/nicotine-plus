@@ -258,7 +258,8 @@ setup(
             excludes=["pygtkcompat", "tkinter"],
             include_files=include_files,
             zip_include_packages=["*"],
-            zip_exclude_packages=["pynicotine"]
+            zip_exclude_packages=["pynicotine"],
+            optimize=2
         ),
         "bdist_msi": dict(
             all_users=True,
