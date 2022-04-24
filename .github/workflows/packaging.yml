@@ -59,8 +59,8 @@ jobs:
     strategy:
       matrix:
         include: [
-          { msystem: MINGW64, arch: x86_64 },
-          { msystem: MINGW32, arch: i686 },
+          { msystem: mingw64, arch: x86_64 },
+          { msystem: mingw32, arch: i686 },
         ]
     defaults:
       run:
@@ -79,7 +79,6 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.msystem }}
-          update: true
 
       - name: Install build dependencies
         run: |
@@ -120,7 +119,6 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          brew update
           python3 packaging/macos/dependencies_core.py
           python3 packaging/macos/dependencies_packaging.py
 
