@@ -14,13 +14,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
           sudo apt update
           sudo apt build-dep .
 
       - name: Build Debian package
         run: |
-          python setup.py sdist
+          python3 setup.py sdist
           mk-origtargz dist/nicotine-plus-*.tar.gz
           debuild -sa -us -uc
 
