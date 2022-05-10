@@ -249,6 +249,7 @@ class NicotineCore:
 
         self.transfers.init_transfers()
         self.privatechats.load_users()
+        self.userlist.load_users()
 
         port_range = config.sections["server"]["portrange"]
         interface = config.sections["server"]["interface"]

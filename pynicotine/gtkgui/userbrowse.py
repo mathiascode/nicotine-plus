@@ -750,14 +750,6 @@ class UserBrowse(UserInterface):
         if folder is None:
             return
 
-        users = []
-        for row in config.sections["server"]["userlist"]:
-            if row and isinstance(row, list):
-                user = str(row[0])
-                users.append(user)
-
-        users.sort()
-
         if recurse:
             str_title = _("Upload Folder (with Subfolders) To User")
         else:
@@ -769,7 +761,7 @@ class UserBrowse(UserInterface):
             message=_('Enter the name of the user you want to upload to:'),
             callback=self.on_upload_directory_to_response,
             callback_data=recurse,
-            droplist=users
+            droplist=self.core.userlist.users
         ).show()
 
     def on_upload_directory_recursive_to(self, *_args):
@@ -999,20 +991,12 @@ class UserBrowse(UserInterface):
 
     def on_upload_files(self, *_args):
 
-        users = []
-
-        for row in config.sections["server"]["userlist"]:
-            if row and isinstance(row, list):
-                user = str(row[0])
-                users.append(user)
-
-        users.sort()
         EntryDialog(
             parent=self.frame.window,
             title=_('Upload File(s) To User'),
             message=_('Enter the name of the user you want to upload to:'),
             callback=self.on_upload_files_response,
-            droplist=users
+            droplist=self.core.userlist.users
         ).show()
 
     def on_play_files(self, *_args):

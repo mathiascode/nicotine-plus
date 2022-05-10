@@ -102,7 +102,7 @@ class Plugin(BasePlugin):
             self.probed[user] = 'okay'
             return
 
-        if user in (i[0] for i in self.config.sections["server"]["userlist"]):
+        if user in self.core.userlist.users:
             self.log("Buddy %s is only sharing %s files in %s folders. Not complaining.",
                      (user, stats['files'], stats['dirs']))
             self.probed[user] = 'buddy'

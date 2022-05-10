@@ -230,13 +230,12 @@ class BaseImplementation:
 
     def on_open_private_chat(self, *_args):
 
-        users = (i[0] for i in config.sections["server"]["userlist"])
         EntryDialog(
             parent=self.frame.application.get_active_window(),
             title=config.application_name + ": " + _("Start Messaging"),
             message=_('Enter the name of the user whom you want to send a message:'),
             callback=self.on_open_private_chat_response,
-            droplist=users
+            droplist=self.core.userlist.users
         ).show()
 
     def on_get_a_users_info_response(self, dialog, response_id, _data):
@@ -252,13 +251,12 @@ class BaseImplementation:
 
     def on_get_a_users_info(self, *_args):
 
-        users = (i[0] for i in config.sections["server"]["userlist"])
         EntryDialog(
             parent=self.frame.application.get_active_window(),
             title=config.application_name + ": " + _("Request User Info"),
             message=_('Enter the name of the user whose info you want to see:'),
             callback=self.on_get_a_users_info_response,
-            droplist=users
+            droplist=self.core.userlist.users
         ).show()
 
     def on_get_a_users_shares_response(self, dialog, response_id, _data):
@@ -274,13 +272,12 @@ class BaseImplementation:
 
     def on_get_a_users_shares(self, *_args):
 
-        users = (i[0] for i in config.sections["server"]["userlist"])
         EntryDialog(
             parent=self.frame.application.get_active_window(),
             title=config.application_name + ": " + _("Request Shares List"),
             message=_('Enter the name of the user whose shares you want to see:'),
             callback=self.on_get_a_users_shares_response,
-            droplist=users
+            droplist=self.core.userlist.users
         ).show()
 
     def set_icon(self, status=None, force_update=False):

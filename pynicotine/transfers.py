@@ -371,20 +371,15 @@ class Transfers:
         if not user:
             return False
 
-        for row in self.config.sections["server"]["userlist"]:
-            if not row or not isinstance(row, list):
-                continue
+        user_row = self.core.userlist.users.get(user)
 
-            if user == str(row[0]):
-                # All users
-                if self.config.sections["transfers"]["preferfriends"]:
-                    return True
+        if user_row:
+            # All users
+            if self.config.sections["transfers"]["preferfriends"]:
+                return True
 
-                # Only explicitly prioritized users
-                try:
-                    return bool(row[3])  # Prioritized column
-                except IndexError:
-                    return False
+            # Only explicitly prioritized users
+            return bool(user_row[3])  # Prioritized column
 
         return False
 
@@ -1660,16 +1655,16 @@ class Transfers:
                 # Everyone can sent files to you
                 return True
 
-            if (transfers["uploadallowed"] == 2
-                    and user in (i[0] for i in self.config.sections["server"]["userlist"])):
+            if transfers["uploadallowed"] == 2 and user in self.core.userlist.users:
                 # Users in userlist
                 return True
 
             if transfers["uploadallowed"] == 3:
                 # Trusted buddies
-                for row in self.config.sections["server"]["userlist"]:
-                    if row[0] == user and row[4]:
-                        return True
+                user_row = self.core.userlist.users.get(user)
+
+                if user_row and user_row[4]:
+                    return True
 
         return False
 
@@ -2046,9 +2041,7 @@ class Transfers:
         limits = True
 
         if self.config.sections["transfers"]["friendsnolimits"]:
-            friend = user in (i[0] for i in self.config.sections["server"]["userlist"])
-
-            if friend:
+            if user in self.core.userlist.users:
                 limits = False
 
         if limits and self.queue_limit_reached(user):

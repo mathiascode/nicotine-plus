@@ -101,7 +101,7 @@ class Interests(UserInterface):
             columns=[
                 # Visible columns
                 {"column_id": "status", "title": _("Status"), "width": 25,
-                 "column_type": "icon", "sort_column": 4, "hide_header": True},
+                 "column_type": "icon_data", "sort_column": 4, "hide_header": True},
                 {"column_id": "user", "title": _("User"), "width": 135,
                  "column_type": "text", "sort_column": 1, "expand_header": True},
                 {"column_id": "speed", "title": _("Speed"), "width": 60,

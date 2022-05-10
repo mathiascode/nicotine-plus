@@ -876,7 +876,7 @@ class ChatRoom(UserInterface):
             return
 
         # Remove from completion list, and completion drop-down
-        if username not in (i[0] for i in config.sections["server"]["userlist"]):
+        if username not in self.core.userlist.users:
             self.chatrooms.completion.remove_completion(username)
 
         if not self.core.network_filter.is_user_ignored(username) and \

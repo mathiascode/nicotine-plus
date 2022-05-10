@@ -242,11 +242,8 @@ class Search:
                 self.queue.append(slskmessages.RoomSearch(joined_room, self.token, text))
 
     def do_buddies_search(self, text):
-
-        for row in self.config.sections["server"]["userlist"]:
-            if row and isinstance(row, list):
-                user = str(row[0])
-                self.queue.append(slskmessages.UserSearch(user, self.token, text))
+        for user in self.core.userlist.users:
+            self.queue.append(slskmessages.UserSearch(user, self.token, text))
 
     def do_peer_search(self, text, users):
         for user in users:

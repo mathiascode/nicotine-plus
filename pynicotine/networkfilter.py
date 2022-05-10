@@ -160,11 +160,10 @@ class NetworkFilter:
 
             return 0, "Banned"
 
-        for row in self.config.sections["server"]["userlist"]:
-            if row[0] != user:
-                continue
+        user_row = self.core.userlist.users.get(user)
 
-            if self.config.sections["transfers"]["buddysharestrustedonly"] and not row[4]:
+        if user_row:
+            if self.config.sections["transfers"]["buddysharestrustedonly"] and not user_row[4]:
                 # Only trusted buddies allowed, and user isn't trusted
                 return 1, ""
 
