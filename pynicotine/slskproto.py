@@ -478,6 +478,7 @@ class SlskProtoThread(threading.Thread):
 
         self._conns = {}
         self._connsinprogress = {}
+        self._distrib_child_conns = {}
         self._out_indirect_conn_request_times = {}
         self._token = 0
         self.exit = threading.Event()
@@ -1017,6 +1018,9 @@ class SlskProtoThread(threading.Thread):
             })
             self._queue.append(PierceFireWall(sock, token))
 
+            if conn_type == 'D':
+                self._distrib_child_conns[user] = conn_obj
+
         else:
             # Direct connection established
             log.add_conn("Sending PeerInit message of type %(type)s to user %(user)s", {
@@ -1143,6 +1147,9 @@ class SlskProtoThread(threading.Thread):
 
         conn_type = conn_obj.init.conn_type
         user = conn_obj.init.target_user
+
+        if conn_type == 'D' and user in self._distrib_child_conns:
+            del self._distrib_child_conns[user]
 
         log.add_conn("Removed connection of type %(type)s to user %(user)s %(addr)s", {
             'type': conn_type,
@@ -1302,11 +1309,6 @@ class SlskProtoThread(threading.Thread):
 
                             # Ask for a list of parents to connect to (distributed network)
                             self.send_have_no_parent()
-
-                            # TODO: We can currently receive search requests from a parent connection, but
-                            # redirecting results to children is not implemented yet. Tell the server we don't accept
-                            # children for now.
-                            self._queue.append(AcceptChildren(0))
 
                             # Request a complete room list. A limited room list not including blacklisted rooms and
                             # rooms with few users is automatically sent when logging in, but subsequent room list
@@ -1482,12 +1484,15 @@ class SlskProtoThread(threading.Thread):
                             self.close_connection(self._conns, conn_obj.sock)
                             return
 
-                        self._init_msgs[conn_obj.init.target_user + conn_obj.init.conn_type] = conn_obj.init
+                        user = conn_obj.init.target_user
+                        conn_type = conn_obj.init.target_user
+
+                        self._init_msgs[user + conn_type] = conn_obj.init
                         conn_obj.init.sock = conn_obj.sock
                         self._out_indirect_conn_request_times.pop(conn_obj.init, None)
 
                         log.add_conn("Indirect connection to user %(user)s with token %(token)s established", {
-                            "user": conn_obj.init.target_user,
+                            "user": user,
                             "token": msg.token
                         })
 
@@ -1511,6 +1516,9 @@ class SlskProtoThread(threading.Thread):
                         conn_obj.init = msg
                         conn_obj.init.addr = addr
                         self._init_msgs[user + conn_type] = msg
+
+                        if conn_type == 'D':
+                            self._distrib_child_conns[user] = conn_obj
 
                         self.process_conn_messages(msg)
 
@@ -1800,6 +1808,7 @@ class SlskProtoThread(threading.Thread):
         log.add_conn("We have no parent, requesting a new one")
 
         self._queue.append(HaveNoParent(1))
+        self._queue.append(AcceptChildren(0))
         self._queue.append(BranchRoot(self.server_username))
         self._queue.append(BranchLevel(0))
 
@@ -1834,6 +1843,13 @@ class SlskProtoThread(threading.Thread):
                     if msg_class is DistribEmbeddedMessage:
                         msg = self.unpack_embedded_message(msg)
 
+                        print(self._distrib_child_conns)
+                        print(msg)
+                        for conn_obj in self._distrib_child_conns.values():
+                            init = conn_obj.init
+                            init.outgoing_msgs.append(msg)
+                            self.process_conn_messages(init)
+
                     elif msg_class is DistribBranchLevel:
                         if msg.value < 0:
                             # There are rare cases of parents sending a branch level value of -1,
@@ -1851,6 +1867,7 @@ class SlskProtoThread(threading.Thread):
 
                             self._queue.append(HaveNoParent(0))
                             self._queue.append(BranchLevel(msg.value + 1))
+                            self._queue.append(AcceptChildren(1))
 
                             log.add_conn("Adopting user %s as parent", msg.init.target_user)
                             log.add_conn("Our branch level is %s", msg.value + 1)
