@@ -40,7 +40,6 @@ from pynicotine.gtkgui.widgets.dialogs import EntryDialog
 
 
 class PopupMenu:
-
     def __init__(self, frame, parent=None, callback=None, connect_events=True):
 
         self.model = Gio.Menu()
@@ -65,7 +64,7 @@ class PopupMenu:
         self.menu_section = None
         self.editing = False
 
-        self.popup_id = ''.join(random.choice(string.digits) for _ in range(8))
+        self.popup_id = "".join(random.choice(string.digits) for _ in range(8))
 
         self.user = None
         self.useritem = None
@@ -86,8 +85,9 @@ class PopupMenu:
             parent = parent.get_parent()
 
         if GTK_API_VERSION >= 4:
-            self.popup_menu = Gtk.PopoverMenu.new_from_model_full(self.model,  # pylint: disable=no-member
-                                                                  Gtk.PopoverMenuFlags.NESTED)
+            self.popup_menu = Gtk.PopoverMenu.new_from_model_full(
+                self.model, Gtk.PopoverMenuFlags.NESTED  # pylint: disable=no-member
+            )
             self.popup_menu.set_parent(parent)
             self.popup_menu.set_halign(Gtk.Align.START)
             self.popup_menu.set_has_arrow(False)
@@ -136,7 +136,8 @@ class PopupMenu:
 
         else:
             action_id = "win." + (label + self.popup_id).replace(" ", "").lower().translate(
-                str.maketrans(dict.fromkeys(string.punctuation)))
+                str.maketrans(dict.fromkeys(string.punctuation))
+            )
 
             action = self._create_action(action_id[4:], (boolean or choice))
 
@@ -184,8 +185,8 @@ class PopupMenu:
         self.menu_section.append_item(menuitem)
 
     def update_model(self):
-        """ This function is called before a menu model needs to be manipulated
-        (enabling/disabling actions, showing a menu in the GUI) """
+        """This function is called before a menu model needs to be manipulated
+        (enabling/disabling actions, showing a menu in the GUI)"""
 
         if not self.pending_items:
             return
@@ -315,7 +316,6 @@ class PopupMenu:
 
 
 class FilePopupMenu(PopupMenu):
-
     def set_num_selected_files(self, num_files):
 
         self.actions["selected_files"].set_enabled(False)
@@ -325,7 +325,6 @@ class FilePopupMenu(PopupMenu):
 
 
 class UserPopupMenu(PopupMenu):
-
     def setup_user_menu(self, user=None, page=""):
 
         user_label = "U"
@@ -334,10 +333,7 @@ class UserPopupMenu(PopupMenu):
             self.user = user
             user_label += self.user
 
-        self.add_items(
-            (user_label, self.on_copy_user),
-            ("", None)
-        )
+        self.add_items((user_label, self.on_copy_user), ("", None))
 
         if page != "privatechat":
             self.add_items(("#" + _("Send M_essage"), self.on_send_message))
@@ -359,7 +355,7 @@ class UserPopupMenu(PopupMenu):
             ("", None),
             ("$" + _("Ban IP Address"), self.on_block_user),
             ("$" + _("Ignore IP Address"), self.on_ignore_ip),
-            ("#" + _("Show IP A_ddress"), self.on_show_ip_address)
+            ("#" + _("Show IP A_ddress"), self.on_show_ip_address),
         )
 
     def set_user(self, user):
@@ -388,16 +384,26 @@ class UserPopupMenu(PopupMenu):
 
         if add_to_list in self.actions:
             self.actions[add_to_list].set_state(
-                GLib.Variant("b", self.user in (i[0] for i in config.sections["server"]["userlist"]))
+                GLib.Variant(
+                    "b",
+                    self.user in (i[0] for i in config.sections["server"]["userlist"]),
+                )
             )
 
         self.actions[_("Ban User")].set_state(GLib.Variant("b", self.core.network_filter.is_user_banned(self.user)))
-        self.actions[_("Ignore User")].set_state(
-            GLib.Variant("b", self.core.network_filter.is_user_ignored(self.user)))
+        self.actions[_("Ignore User")].set_state(GLib.Variant("b", self.core.network_filter.is_user_ignored(self.user)))
         self.actions[_("Ban IP Address")].set_state(
-            GLib.Variant("b", self.core.network_filter.get_cached_blocked_user_ip(self.user) or False))
+            GLib.Variant(
+                "b",
+                self.core.network_filter.get_cached_blocked_user_ip(self.user) or False,
+            )
+        )
         self.actions[_("Ignore IP Address")].set_state(
-            GLib.Variant("b", self.core.network_filter.get_cached_ignored_user_ip(self.user) or False))
+            GLib.Variant(
+                "b",
+                self.core.network_filter.get_cached_ignored_user_ip(self.user) or False,
+            )
+        )
 
         self.editing = False
 
@@ -419,18 +425,40 @@ class UserPopupMenu(PopupMenu):
 
             if self.user in data["users"]:
                 popup.add_items(
-                    ("#" + _("Remove from Private Room %s") % room, popup.on_private_room_remove_user, room))
+                    (
+                        "#" + _("Remove from Private Room %s") % room,
+                        popup.on_private_room_remove_user,
+                        room,
+                    )
+                )
             else:
-                popup.add_items(("#" + _("Add to Private Room %s") % room, popup.on_private_room_add_user, room))
+                popup.add_items(
+                    (
+                        "#" + _("Add to Private Room %s") % room,
+                        popup.on_private_room_add_user,
+                        room,
+                    )
+                )
 
             if not is_owned:
                 continue
 
             if self.user in data["operators"]:
                 popup.add_items(
-                    ("#" + _("Remove as Operator of %s") % room, popup.on_private_room_remove_operator, room))
+                    (
+                        "#" + _("Remove as Operator of %s") % room,
+                        popup.on_private_room_remove_operator,
+                        room,
+                    )
+                )
             else:
-                popup.add_items(("#" + _("Add as Operator of %s") % room, popup.on_private_room_add_operator, room))
+                popup.add_items(
+                    (
+                        "#" + _("Add as Operator of %s") % room,
+                        popup.on_private_room_add_operator,
+                        room,
+                    )
+                )
 
             popup.add_items(("", None))
 
@@ -560,8 +588,10 @@ class UserPopupMenu(PopupMenu):
         else:
             days = self.core.privileges_left // 60 // 60 // 24
 
-        message = (_("Gift days of your Soulseek privileges to user %(user)s (%(days_left)s):") %
-                   {"user": self.user, "days_left": _("%(days)s days left") % {"days": days}})
+        message = _("Gift days of your Soulseek privileges to user %(user)s (%(days_left)s):") % {
+            "user": self.user,
+            "days_left": _("%(days)s days left") % {"days": days},
+        }
 
         if error:
             message += "\n\n" + error
@@ -570,5 +600,5 @@ class UserPopupMenu(PopupMenu):
             parent=self.frame.window,
             title=_("Gift Privileges"),
             message=message,
-            callback=self.on_give_privileges_response
+            callback=self.on_give_privileges_response,
         ).show()

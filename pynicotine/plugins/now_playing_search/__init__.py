@@ -20,7 +20,6 @@ from pynicotine.pluginsystem import BasePlugin
 
 
 class Plugin(BasePlugin):
-
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)

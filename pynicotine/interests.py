@@ -20,7 +20,6 @@ from pynicotine import slskmessages
 
 
 class Interests:
-
     def __init__(self, core, config, queue, ui_callback=None):
 
         self.core = core

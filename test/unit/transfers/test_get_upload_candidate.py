@@ -27,7 +27,6 @@ from pynicotine.transfers import Transfers, Transfer
 
 
 class GetUploadCandidateTest(unittest.TestCase):
-
     def setUp(self):
 
         config.data_dir = os.path.dirname(os.path.realpath(__file__))
@@ -127,67 +126,29 @@ class GetUploadCandidateTest(unittest.TestCase):
     def test_round_robin_basic(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user1",
-                "user2",
-                "user2",
-                "user3",
-                "user3"
-            ],
+            queued=["user1", "user1", "user2", "user2", "user3", "user3"],
             in_progress=[],
-            expected=[
-                "user1",
-                "user2",
-                "user3",
-                "user1",
-                "user2",
-                "user3",
-                None
-            ],
-            round_robin=True
+            expected=["user1", "user2", "user3", "user1", "user2", "user3", None],
+            round_robin=True,
         )
 
     def test_round_robin_no_contention(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user1",
-                "user2",
-                "user2",
-                "user3",
-                "user3"
-            ],
+            queued=["user1", "user1", "user2", "user2", "user3", "user3"],
             in_progress=[],
-            expected=[
-                "user1",
-                "user2",
-                "user3",
-                "user1",
-                "user2",
-                "user3",
-                None
-            ],
+            expected=["user1", "user2", "user3", "user1", "user2", "user3", None],
             round_robin=True,
-            clear_first=True
+            clear_first=True,
         )
 
     def test_round_robin_one_user(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user1"
-            ],
+            queued=["user1", "user1"],
             in_progress=[],
-            expected=[
-                "user1",
-                None,
-                "user1",
-                None
-            ],
-            round_robin=True
+            expected=["user1", None, "user1", None],
+            round_robin=True,
         )
 
     def test_round_robin_returning_user(self):
@@ -203,7 +164,7 @@ class GetUploadCandidateTest(unittest.TestCase):
                 "user3",
                 "user3",
                 "user1",
-                "user1"
+                "user1",
             ],
             in_progress=[],
             expected=[
@@ -217,117 +178,52 @@ class GetUploadCandidateTest(unittest.TestCase):
                 "user2",
                 "user3",
                 "user1",
-                None
+                None,
             ],
-            round_robin=True
+            round_robin=True,
         )
 
     def test_round_robin_in_progress(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user1",
-                "user2",
-                "user2"
-            ],
-            in_progress=[
-                "user1"
-            ],
-            expected=[
-                "user2",
-                "user1",
-                "user2",
-                "user1",
-                None
-            ],
-            round_robin=True
+            queued=["user1", "user1", "user2", "user2"],
+            in_progress=["user1"],
+            expected=["user2", "user1", "user2", "user1", None],
+            round_robin=True,
         )
 
     def test_round_robin_privileged(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user2",
-                "puser1",
-                "puser1",
-                "puser2"
-            ],
+            queued=["user1", "user2", "puser1", "puser1", "puser2"],
             in_progress=[],
-            expected=[
-                "puser1",
-                "puser2",
-                "puser1",
-                "user1",
-                "user2",
-                None
-            ],
-            round_robin=True
+            expected=["puser1", "puser2", "puser1", "user1", "user2", None],
+            round_robin=True,
         )
 
     def test_fifo_basic(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user1",
-                "user2",
-                "user2",
-                "user3",
-                "user3"
-            ],
+            queued=["user1", "user1", "user2", "user2", "user3", "user3"],
             in_progress=[],
-            expected=[
-                "user1",
-                "user2",
-                "user1",
-                "user2",
-                "user3",
-                None,
-                "user3",
-                None
-            ]
+            expected=["user1", "user2", "user1", "user2", "user3", None, "user3", None],
         )
 
     def test_fifo_robin_no_contention(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user1",
-                "user2",
-                "user2",
-                "user3",
-                "user3"
-            ],
+            queued=["user1", "user1", "user2", "user2", "user3", "user3"],
             in_progress=[],
-            expected=[
-                "user1",
-                "user1",
-                "user2",
-                "user2",
-                "user3",
-                "user3",
-                None
-            ],
-            clear_first=True
+            expected=["user1", "user1", "user2", "user2", "user3", "user3", None],
+            clear_first=True,
         )
 
     def test_fifo_one_user(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user1"
-            ],
+            queued=["user1", "user1"],
             in_progress=[],
-            expected=[
-                "user1",
-                None,
-                "user1",
-                None
-            ]
+            expected=["user1", None, "user1", None],
         )
 
     def test_fifo_returning_user(self):
@@ -343,7 +239,7 @@ class GetUploadCandidateTest(unittest.TestCase):
                 "user3",
                 "user3",
                 "user1",
-                "user1"
+                "user1",
             ],
             in_progress=[],
             expected=[
@@ -357,48 +253,22 @@ class GetUploadCandidateTest(unittest.TestCase):
                 "user1",
                 "user3",
                 "user1",
-                None
-            ]
+                None,
+            ],
         )
 
     def test_fifo_in_progress(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user1",
-                "user2",
-                "user2"
-            ],
-            in_progress=[
-                "user1"
-            ],
-            expected=[
-                "user2",
-                "user1",
-                "user2",
-                "user1",
-                None
-            ]
+            queued=["user1", "user1", "user2", "user2"],
+            in_progress=["user1"],
+            expected=["user2", "user1", "user2", "user1", None],
         )
 
     def test_fifo_privileged(self):
 
         self.base_test(
-            queued=[
-                "user1",
-                "user2",
-                "puser1",
-                "puser1",
-                "puser2"
-            ],
+            queued=["user1", "user2", "puser1", "puser1", "puser2"],
             in_progress=[],
-            expected=[
-                "puser1",
-                "puser2",
-                "puser1",
-                "user1",
-                "user2",
-                None
-            ]
+            expected=["puser1", "puser2", "puser1", "user1", "user2", None],
         )

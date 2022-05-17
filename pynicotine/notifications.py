@@ -23,16 +23,12 @@ from pynicotine.utils import execute_command
 
 
 class Notifications:
-
     def __init__(self, config, ui_callback=None):
 
         self.config = config
         self.ui_callback = None
 
-        self.chat_hilites = {
-            "rooms": [],
-            "private": []
-        }
+        self.chat_hilites = {"rooms": [], "private": []}
 
         self.tts = []
         self.tts_playing = False

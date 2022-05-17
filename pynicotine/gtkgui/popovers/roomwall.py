@@ -25,7 +25,6 @@ from pynicotine.gtkgui.widgets.ui import UserInterface
 
 
 class RoomWall(UserInterface):
-
     def __init__(self, frame, core, room):
 
         super().__init__("ui/popovers/roomwall.ui")
@@ -33,7 +32,7 @@ class RoomWall(UserInterface):
             self.list_view,
             self.message_entry,
             self.message_view,
-            self.popover
+            self.popover,
         ) = self.widgets
 
         self.frame = frame
@@ -48,7 +47,9 @@ class RoomWall(UserInterface):
         tickers = self.room.tickers.get_tickers()
         self.room_wall_textview.append_line(
             "%s" % ("\n".join(["> [%s] %s" % (user, msg) for user, msg in tickers])),
-            showstamp=False, scroll=False)
+            showstamp=False,
+            scroll=False,
+        )
 
     def clear_room_wall_message(self, update_list=True):
 

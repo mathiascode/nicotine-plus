@@ -75,7 +75,6 @@ from pynicotine.utils import open_uri
 
 
 class NicotineFrame(UserInterface):
-
     def __init__(self, application, core, use_trayicon, start_hidden, ci_mode):
 
         if not ci_mode:
@@ -213,7 +212,7 @@ class NicotineFrame(UserInterface):
             self.userlist_toolbar,
             self.userlist_toolbar_contents,
             self.vertical_paned,
-            self.window
+            self.window,
         ) = self.widgets
 
         self.header_bar.pack_end(self.header_end)
@@ -253,8 +252,15 @@ class NicotineFrame(UserInterface):
         """ Configuration """
 
         config.load_config()
-        config.gtk_version = "%s.%s.%s" % (GTK_API_VERSION, Gtk.get_minor_version(), Gtk.get_micro_version())
-        log.add(_("Loading %(program)s %(version)s"), {"program": "GTK", "version": config.gtk_version})
+        config.gtk_version = "%s.%s.%s" % (
+            GTK_API_VERSION,
+            Gtk.get_minor_version(),
+            Gtk.get_micro_version(),
+        )
+        log.add(
+            _("Loading %(program)s %(version)s"),
+            {"program": "GTK", "version": config.gtk_version},
+        )
 
         """ Icons """
 
@@ -315,8 +321,7 @@ class NicotineFrame(UserInterface):
             self.window.set_default_icon_name(config.application_id)
 
         # Set main window size
-        self.window.set_default_size(width=config.sections["ui"]["width"],
-                                     height=config.sections["ui"]["height"])
+        self.window.set_default_size(width=config.sections["ui"]["width"], height=config.sections["ui"]["height"])
 
         # Set main window position
         if GTK_API_VERSION == 3:
@@ -427,8 +432,9 @@ class NicotineFrame(UserInterface):
     def init_spell_checker(self):
 
         try:
-            gi.require_version('Gspell', '1')
+            gi.require_version("Gspell", "1")
             from gi.repository import Gspell
+
             self.spell_checker = Gspell.Checker()
 
         except (ImportError, ValueError):
@@ -514,15 +520,20 @@ class NicotineFrame(UserInterface):
     def invalid_password_response(self, dialog, response_id, _data):
 
         if response_id == 2:
-            self.on_settings(page='Network')
+            self.on_settings(page="Network")
 
         dialog.destroy()
 
     def invalid_password(self):
 
         title = _("Invalid Password")
-        msg = _("User %s already exists, and the password you entered is invalid. Please choose another username "
-                "if this is your first time logging in.") % config.sections["server"]["login"]
+        msg = (
+            _(
+                "User %s already exists, and the password you entered is invalid. Please choose another username "
+                "if this is your first time logging in."
+            )
+            % config.sections["server"]["login"]
+        )
 
         OptionDialog(
             parent=self.application.get_active_window(),
@@ -530,7 +541,7 @@ class NicotineFrame(UserInterface):
             message=msg,
             first_button=_("_Cancel"),
             second_button=_("Change _Login Details"),
-            callback=self.invalid_password_response
+            callback=self.invalid_password_response,
         ).show()
 
     def set_widget_online_status(self, status):
@@ -699,7 +710,7 @@ class NicotineFrame(UserInterface):
             self.show_tab(self.userlist_page)
 
     def on_toggle_buddy_list(self, action, state):
-        """ Function used to switch around the UI the BuddyList position """
+        """Function used to switch around the UI the BuddyList position"""
 
         mode = state.get_string()
 
@@ -711,7 +722,7 @@ class NicotineFrame(UserInterface):
     # Shares
 
     def on_configure_shares(self, *_args):
-        self.on_settings(page='Shares')
+        self.on_settings(page="Shares")
 
     def on_rescan_shares(self, *_args):
         self.core.shares.rescan_shares()
@@ -743,7 +754,6 @@ class NicotineFrame(UserInterface):
         open_uri(config.translations_url)
 
     def _on_check_latest(self):
-
         def create_dialog(title, message):
             MessageDialog(parent=self.window, title=title, message=message).show()
 
@@ -765,11 +775,18 @@ class NicotineFrame(UserInterface):
             GLib.idle_add(create_dialog, _("Out of date"), version_label)
 
         elif myversion > latest:
-            GLib.idle_add(create_dialog, _("Up to date"),
-                          _("You appear to be using a development version of Nicotine+."))
+            GLib.idle_add(
+                create_dialog,
+                _("Up to date"),
+                _("You appear to be using a development version of Nicotine+."),
+            )
 
         else:
-            GLib.idle_add(create_dialog, _("Up to date"), _("You are using the latest version of Nicotine+."))
+            GLib.idle_add(
+                create_dialog,
+                _("Up to date"),
+                _("You are using the latest version of Nicotine+."),
+            )
 
         self.checking_update = False
 
@@ -856,7 +873,10 @@ class NicotineFrame(UserInterface):
             state = "tab"
 
         self.toggle_buddy_list_action = Gio.SimpleAction(
-            name="togglebuddylist", parameter_type=GLib.VariantType("s"), state=GLib.Variant("s", state))
+            name="togglebuddylist",
+            parameter_type=GLib.VariantType("s"),
+            state=GLib.Variant("s", state),
+        )
         self.toggle_buddy_list_action.connect("change-state", self.on_toggle_buddy_list)
         self.window.add_action(self.toggle_buddy_list_action)
         self.set_toggle_buddy_list(state, force_show=False)
@@ -910,7 +930,10 @@ class NicotineFrame(UserInterface):
         # Search
 
         self.search_mode_action = Gio.SimpleAction(
-            name="searchmode", parameter_type=GLib.VariantType("s"), state=GLib.Variant("s", "global"))
+            name="searchmode",
+            parameter_type=GLib.VariantType("s"),
+            state=GLib.Variant("s", "global"),
+        )
         self.search_mode_action.connect("change-state", self.search.on_search_mode)
         self.window.add_action(self.search_mode_action)
 
@@ -940,47 +963,49 @@ class NicotineFrame(UserInterface):
             action = Gio.SimpleAction(name="primarytab" + str(num))
             action.connect("activate", self.on_change_primary_tab, num)
             self.window.add_action(action)
-            self.application.set_accels_for_action("win.primarytab" + str(num),
-                                                   ["<Primary>" + str(num), "<Alt>" + str(num)])
+            self.application.set_accels_for_action(
+                "win.primarytab" + str(num),
+                ["<Primary>" + str(num), "<Alt>" + str(num)],
+            )
 
         # Logging
 
-        state = ("download" in config.sections["logging"]["debugmodes"])
+        state = "download" in config.sections["logging"]["debugmodes"]
         action = Gio.SimpleAction(name="logdownloads", state=GLib.Variant("b", state))
         action.connect("change-state", self.on_debug_downloads)
         self.window.add_action(action)
 
-        state = ("upload" in config.sections["logging"]["debugmodes"])
+        state = "upload" in config.sections["logging"]["debugmodes"]
         action = Gio.SimpleAction(name="loguploads", state=GLib.Variant("b", state))
         action.connect("change-state", self.on_debug_uploads)
         self.window.add_action(action)
 
-        state = ("search" in config.sections["logging"]["debugmodes"])
+        state = "search" in config.sections["logging"]["debugmodes"]
         action = Gio.SimpleAction(name="logsearches", state=GLib.Variant("b", state))
         action.connect("change-state", self.on_debug_searches)
         self.window.add_action(action)
 
-        state = ("chat" in config.sections["logging"]["debugmodes"])
+        state = "chat" in config.sections["logging"]["debugmodes"]
         action = Gio.SimpleAction(name="logchat", state=GLib.Variant("b", state))
         action.connect("change-state", self.on_debug_chat)
         self.window.add_action(action)
 
-        state = ("connection" in config.sections["logging"]["debugmodes"])
+        state = "connection" in config.sections["logging"]["debugmodes"]
         action = Gio.SimpleAction(name="logconnections", state=GLib.Variant("b", state))
         action.connect("change-state", self.on_debug_connections)
         self.window.add_action(action)
 
-        state = ("message" in config.sections["logging"]["debugmodes"])
+        state = "message" in config.sections["logging"]["debugmodes"]
         action = Gio.SimpleAction(name="logmessages", state=GLib.Variant("b", state))
         action.connect("change-state", self.on_debug_messages)
         self.window.add_action(action)
 
-        state = ("transfer" in config.sections["logging"]["debugmodes"])
+        state = "transfer" in config.sections["logging"]["debugmodes"]
         action = Gio.SimpleAction(name="logtransfers", state=GLib.Variant("b", state))
         action.connect("change-state", self.on_debug_transfers)
         self.window.add_action(action)
 
-        state = ("miscellaneous" in config.sections["logging"]["debugmodes"])
+        state = "miscellaneous" in config.sections["logging"]["debugmodes"]
         action = Gio.SimpleAction(name="logmiscellaneous", state=GLib.Variant("b", state))
         action.connect("change-state", self.on_debug_miscellaneous)
         self.window.add_action(action)
@@ -1015,7 +1040,7 @@ class NicotineFrame(UserInterface):
             ("#" + _("_Disconnect"), "app.disconnect"),
             ("#" + _("_Away"), "win.away"),
             ("#" + _("Soulseek _Privileges"), "app.getprivileges"),
-            ("", None)
+            ("", None),
         )
 
     @staticmethod
@@ -1027,10 +1052,7 @@ class NicotineFrame(UserInterface):
 
         label = _("_Quit…") if config.sections["ui"]["exitdialog"] else _("_Quit")
 
-        menu.add_items(
-            ("", None),
-            ("#" + label, "app.quit")
-        )
+        menu.add_items(("", None), ("#" + label, "app.quit"))
 
     def create_file_menu(self):
 
@@ -1051,7 +1073,7 @@ class NicotineFrame(UserInterface):
             ("", None),
             ("O" + _("Buddy List in Separate Tab"), "win.togglebuddylist", "tab"),
             ("O" + _("Buddy List in Chat Rooms"), "win.togglebuddylist", "chatrooms"),
-            ("O" + _("Buddy List Always Visible"), "win.togglebuddylist", "always")
+            ("O" + _("Buddy List Always Visible"), "win.togglebuddylist", "always"),
         )
 
         return menu
@@ -1062,7 +1084,7 @@ class NicotineFrame(UserInterface):
         menu.add_items(
             ("#" + _("_Rescan Shares"), "app.rescanshares"),
             ("#" + _("_Configure Shares"), "app.configureshares"),
-            ("", None)
+            ("", None),
         )
 
     @staticmethod
@@ -1071,7 +1093,7 @@ class NicotineFrame(UserInterface):
         menu.add_items(
             ("#" + _("_Browse Public Shares"), "app.browsepublicshares"),
             ("#" + _("Bro_wse Buddy Shares"), "app.browsebuddyshares"),
-            ("", None)
+            ("", None),
         )
 
     def create_shares_menu(self):
@@ -1094,21 +1116,18 @@ class NicotineFrame(UserInterface):
             ("#" + _("Improve T_ranslations"), "app.improvetranslations"),
             ("#" + _("Check _Latest Version"), "app.checklatest"),
             ("", None),
-            ("#" + _("_About Nicotine+"), "app.about")
+            ("#" + _("_About Nicotine+"), "app.about"),
         )
 
         return menu
 
     def create_hamburger_menu(self):
-        """ Menu button menu (header bar enabled) """
+        """Menu button menu (header bar enabled)"""
 
         menu = PopupMenu(self)
         self.add_connection_section(menu)
 
-        menu.add_items(
-            (">" + _("_View"), self.create_view_menu()),
-            ("", None)
-        )
+        menu.add_items((">" + _("_View"), self.create_view_menu()), ("", None))
 
         self.add_configure_shares_section(menu)
         self.add_browse_shares_section(menu)
@@ -1121,14 +1140,14 @@ class NicotineFrame(UserInterface):
         return menu
 
     def create_menu_bar(self):
-        """ Classic menu bar (header bar disabled) """
+        """Classic menu bar (header bar disabled)"""
 
         menu = PopupMenu(self)
         menu.add_items(
             (">" + _("_File"), self.create_file_menu()),
             (">" + _("_View"), self.create_view_menu()),
             (">" + _("_Shares"), self.create_shares_menu()),
-            (">" + _("_Help"), self.create_help_menu())
+            (">" + _("_Help"), self.create_help_menu()),
         )
 
         menu.update_model()
@@ -1152,7 +1171,7 @@ class NicotineFrame(UserInterface):
     """ Headerbar/toolbar """
 
     def show_header_bar(self, page_id):
-        """ Set a headerbar for the main window (client side decorations enabled) """
+        """Set a headerbar for the main window (client side decorations enabled)"""
 
         if self.window.get_titlebar() != self.header_bar:
             self.window.set_titlebar(self.header_bar)
@@ -1178,7 +1197,7 @@ class NicotineFrame(UserInterface):
             self.header_end_container.add(end_widget)
 
     def hide_current_header_bar(self):
-        """ Hide the current CSD headerbar """
+        """Hide the current CSD headerbar"""
 
         if not self.current_page_id:
             return
@@ -1198,7 +1217,7 @@ class NicotineFrame(UserInterface):
             toolbar.add(end_widget)
 
     def show_toolbar(self, page_id):
-        """ Show the non-CSD toolbar """
+        """Show the non-CSD toolbar"""
 
         if not self.window.get_show_menubar():
             self.window.set_show_menubar(True)
@@ -1216,7 +1235,7 @@ class NicotineFrame(UserInterface):
         toolbar.show()
 
     def hide_current_toolbar(self):
-        """ Hide the current toolbar """
+        """Hide the current toolbar"""
 
         if not self.current_page_id:
             return
@@ -1225,8 +1244,8 @@ class NicotineFrame(UserInterface):
         toolbar.hide()
 
     def set_active_header_bar(self, page_id):
-        """ Switch out the active headerbar for another one. This is used when
-        changing the active notebook tab. """
+        """Switch out the active headerbar for another one. This is used when
+        changing the active notebook tab."""
 
         if config.sections["ui"]["header_bar"]:
             self.hide_current_header_bar()
@@ -1254,7 +1273,7 @@ class NicotineFrame(UserInterface):
             ("private", _("Private Chat"), "mail-unread-symbolic"),
             ("userlist", _("Buddies"), "contact-new-symbolic"),
             ("chatrooms", _("Chat Rooms"), "user-available-symbolic"),
-            ("interests", _("Interests"), "emblem-default-symbolic")
+            ("interests", _("Interests"), "emblem-default-symbolic"),
         ]
 
         # Initialize tabs labels
@@ -1370,7 +1389,7 @@ class NicotineFrame(UserInterface):
         config.sections["ui"]["modes_order"] = page_ids
 
     def on_tab_close(self, *_args):
-        """ Ctrl+W and Ctrl+F4: close current secondary tab """
+        """Ctrl+W and Ctrl+F4: close current secondary tab"""
 
         try:
             notebook = getattr(self, self.current_page_id + "_notebook")
@@ -1388,7 +1407,7 @@ class NicotineFrame(UserInterface):
         return True
 
     def on_tab_cycle(self, _widget, _state, backwards=False):
-        """ Ctrl+Tab and Shift+Ctrl+Tab: cycle through secondary tabs """
+        """Ctrl+Tab and Shift+Ctrl+Tab: cycle through secondary tabs"""
 
         try:
             notebook = getattr(self, self.current_page_id + "_notebook")
@@ -1415,7 +1434,7 @@ class NicotineFrame(UserInterface):
         return True
 
     def on_change_primary_tab(self, _widget, _state, tab_num=1):
-        """ Alt+1-9 or Ctrl+1-9: change main tab """
+        """Alt+1-9 or Ctrl+1-9: change main tab"""
 
         visible_pages = []
 
@@ -1530,7 +1549,7 @@ class NicotineFrame(UserInterface):
             "Top": Gtk.PositionType.TOP,
             "Bottom": Gtk.PositionType.BOTTOM,
             "Left": Gtk.PositionType.LEFT,
-            "Right": Gtk.PositionType.RIGHT
+            "Right": Gtk.PositionType.RIGHT,
         }
 
         # Main notebook
@@ -1546,7 +1565,7 @@ class NicotineFrame(UserInterface):
     """ Search """
 
     def on_settings_searches(self, *_args):
-        self.on_settings(page='Searches')
+        self.on_settings(page="Searches")
 
     def on_search(self, *_args):
         self.search.on_search()
@@ -1555,7 +1574,7 @@ class NicotineFrame(UserInterface):
     """ User Info """
 
     def on_settings_userinfo(self, *_args):
-        self.on_settings(page='UserInfo')
+        self.on_settings(page="UserInfo")
 
     def on_get_user_info(self, widget, *_args):
 
@@ -1596,7 +1615,7 @@ class NicotineFrame(UserInterface):
             title=_("Select a Saved Shares List File"),
             callback=self.on_load_from_disk_selected,
             initial_folder=shares_folder,
-            multiple=True
+            multiple=True,
         ).show()
 
     """ Chat """
@@ -1633,11 +1652,11 @@ class NicotineFrame(UserInterface):
         if room not in self.core.chatrooms.server_rooms and room not in self.core.chatrooms.private_rooms:
             OptionDialog(
                 parent=self.window,
-                title=_('Create New Room?'),
+                title=_("Create New Room?"),
                 message=_('Do you really want to create a new room "%s"?') % room,
                 option_label=_("Make room private"),
                 callback=self.on_create_room_response,
-                callback_data=room
+                callback_data=room,
             ).show()
 
         else:
@@ -1727,10 +1746,10 @@ class NicotineFrame(UserInterface):
         entry.grab_focus()
 
     def on_settings_downloads(self, *_args):
-        self.on_settings(page='Downloads')
+        self.on_settings(page="Downloads")
 
     def on_settings_uploads(self, *_args):
-        self.on_settings(page='Uploads')
+        self.on_settings(page="Uploads")
 
     """ Log Pane """
 
@@ -1760,7 +1779,7 @@ class NicotineFrame(UserInterface):
             ("", None),
             (">" + _("_Log Categories"), popup_menu_log_categories),
             ("", None),
-            ("#" + _("Clear Log View"), self.log_view.on_clear_all_text)
+            ("#" + _("Clear Log View"), self.log_view.on_clear_all_text),
         )
 
     def log_callback(self, _timestamp_format, msg, level):
@@ -1854,14 +1873,14 @@ class NicotineFrame(UserInterface):
             self.connections_label.set_text(repr(msg.total_conns))
 
         download_bandwidth = human_speed(msg.download_bandwidth)
-        self.download_status_label.set_text("%(speed)s (%(num)i)" % {
-            'num': msg.download_conns, 'speed': download_bandwidth})
-        self.tray_icon.set_download_status(_("Downloads: %(speed)s") % {'speed': download_bandwidth})
+        self.download_status_label.set_text(
+            "%(speed)s (%(num)i)" % {"num": msg.download_conns, "speed": download_bandwidth}
+        )
+        self.tray_icon.set_download_status(_("Downloads: %(speed)s") % {"speed": download_bandwidth})
 
         upload_bandwidth = human_speed(msg.upload_bandwidth)
-        self.upload_status_label.set_text("%(speed)s (%(num)i)" % {
-            'num': msg.upload_conns, 'speed': upload_bandwidth})
-        self.tray_icon.set_upload_status(_("Uploads: %(speed)s") % {'speed': upload_bandwidth})
+        self.upload_status_label.set_text("%(speed)s (%(num)i)" % {"num": msg.upload_conns, "speed": upload_bandwidth})
+        self.tray_icon.set_upload_status(_("Uploads: %(speed)s") % {"speed": upload_bandwidth})
 
     def show_scan_progress(self):
         self.scan_progress_indeterminate = True
@@ -1936,28 +1955,38 @@ class NicotineFrame(UserInterface):
                     path = self.core.pluginhandler.get_plugin_path(plugin_name)
 
                     if filename.startswith(path):
-                        self.core.pluginhandler.show_plugin_error(
-                            plugin_name, exc_type, exc_value, exc_traceback)
+                        self.core.pluginhandler.show_plugin_error(plugin_name, exc_type, exc_value, exc_traceback)
                         return
 
                 traceback = traceback.tb_next
 
         # Show critical error dialog
         loop = GLib.MainLoop()
-        error = ("\n\nNicotine+ Version: %s\nGTK Version: %s\nPython Version: %s\n\n"
-                 "Type: %s\nValue: %s\nTraceback: %s" %
-                 (config.version, config.gtk_version, config.python_version, exc_type,
-                  exc_value, ''.join(format_tb(exc_traceback))))
+        error = (
+            "\n\nNicotine+ Version: %s\nGTK Version: %s\nPython Version: %s\n\n"
+            "Type: %s\nValue: %s\nTraceback: %s"
+            % (
+                config.version,
+                config.gtk_version,
+                config.python_version,
+                exc_type,
+                exc_value,
+                "".join(format_tb(exc_traceback)),
+            )
+        )
 
         OptionDialog(
             parent=self.application.get_active_window(),
             title=_("Critical Error"),
-            message=_("Nicotine+ has encountered a critical error and needs to exit. "
-                      "Please copy the following message and include it in a bug report:") + error,
+            message=_(
+                "Nicotine+ has encountered a critical error and needs to exit. "
+                "Please copy the following message and include it in a bug report:"
+            )
+            + error,
             first_button=_("_Quit Nicotine+"),
             second_button=_("_Copy & Report Bug"),
             callback=self.on_critical_error_response,
-            callback_data=(loop, error)
+            callback_data=(loop, error),
         ).show()
 
         # Keep dialog open if error occurs on startup
@@ -1970,8 +1999,8 @@ class NicotineFrame(UserInterface):
         raise args.exc_value
 
     def on_critical_error_threading(self, args):
-        """ Exception that originated in a thread.
-        Raising an exception here calls sys.excepthook(), which in turn shows an error dialog. """
+        """Exception that originated in a thread.
+        Raising an exception here calls sys.excepthook(), which in turn shows an error dialog."""
 
         GLib.idle_add(self._on_critical_error_threading, args)
 
@@ -1999,12 +2028,12 @@ class NicotineFrame(UserInterface):
 
         OptionDialog(
             parent=self.window,
-            title=_('Quit Nicotine+'),
-            message=_('Do you really want to exit?'),
+            title=_("Quit Nicotine+"),
+            message=_("Do you really want to exit?"),
             second_button=_("_Quit"),
             third_button=_("_Run in Background") if self.window.get_property("visible") else None,
             option_label=_("Remember choice") if remember else None,
-            callback=self.show_exit_dialog_response
+            callback=self.show_exit_dialog_response,
         ).show()
 
     def on_close_request(self, *_args):

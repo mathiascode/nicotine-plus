@@ -28,8 +28,15 @@ from pynicotine.utils import humanize
 
 
 class FileProperties(UserInterface):
-
-    def __init__(self, frame, core, properties, total_size=0, total_length=0, download_button=True):
+    def __init__(
+        self,
+        frame,
+        core,
+        properties,
+        total_size=0,
+        total_length=0,
+        download_button=True,
+    ):
 
         super().__init__("ui/dialogs/fileproperties.ui")
         (
@@ -62,7 +69,7 @@ class FileProperties(UserInterface):
             self.speed_row,
             self.speed_value_label,
             self.username_label,
-            self.username_value_label
+            self.username_value_label,
         ) = self.widgets
 
         self.frame = frame
@@ -72,8 +79,10 @@ class FileProperties(UserInterface):
         self.total_length = total_length
         self.current_index = 0
 
-        buttons = [(self.previous_button, Gtk.ResponseType.HELP),
-                   (self.next_button, Gtk.ResponseType.HELP)]
+        buttons = [
+            (self.previous_button, Gtk.ResponseType.HELP),
+            (self.next_button, Gtk.ResponseType.HELP),
+        ]
 
         if download_button:
             buttons.append((self.download_button, Gtk.ResponseType.NONE))
@@ -84,7 +93,7 @@ class FileProperties(UserInterface):
             buttons=buttons,
             title=_("File Properties"),
             width=600,
-            height=0
+            height=0,
         )
 
     def on_previous(self, *_args):
@@ -107,8 +116,13 @@ class FileProperties(UserInterface):
 
     def on_download_item(self, *_args):
         properties = self.properties[self.current_index]
-        self.core.transfers.get_file(properties["user"], properties["fn"], size=properties["size"],
-                                     bitrate=properties.get("bitrate"), length=properties.get("length"))
+        self.core.transfers.get_file(
+            properties["user"],
+            properties["fn"],
+            size=properties["size"],
+            bitrate=properties.get("bitrate"),
+            length=properties.get("length"),
+        )
 
     def update_title(self):
 
@@ -117,17 +131,24 @@ class FileProperties(UserInterface):
         total_size = str(human_size(self.total_size))
 
         if self.total_length:
-            self.dialog.set_title(_("File Properties (%(num)i of %(total)i  /  %(size)s  /  %(length)s)") % {
-                'num': index, 'total': total_files, 'size': total_size,
-                'length': str(human_length(self.total_length))
-            })
+            self.dialog.set_title(
+                _("File Properties (%(num)i of %(total)i  /  %(size)s  /  %(length)s)")
+                % {
+                    "num": index,
+                    "total": total_files,
+                    "size": total_size,
+                    "length": str(human_length(self.total_length)),
+                }
+            )
             return
 
-        self.dialog.set_title(_("File Properties (%(num)i of %(total)i  /  %(size)s)") % {
-                              'num': index, 'total': total_files, 'size': total_size})
+        self.dialog.set_title(
+            _("File Properties (%(num)i of %(total)i  /  %(size)s)")
+            % {"num": index, "total": total_files, "size": total_size}
+        )
 
     def update_current_file(self):
-        """ Updates the UI with properties for the selected file """
+        """Updates the UI with properties for the selected file"""
 
         properties = self.properties[self.current_index]
 

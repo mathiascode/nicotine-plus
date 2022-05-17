@@ -22,7 +22,7 @@ from pynicotine.gtkgui.application import GTK_API_VERSION
 
 
 class InfoBar:
-    """ Wrapper for setting up a GtkInfoBar """
+    """Wrapper for setting up a GtkInfoBar"""
 
     def __init__(self, info_bar, message_type):
 

@@ -36,7 +36,6 @@ from pynicotine.utils import open_uri
 
 
 class FastConfigure(UserInterface):
-
     def __init__(self, frame, core):
 
         super().__init__("ui/dialogs/fastconfigure.ui")
@@ -55,23 +54,31 @@ class FastConfigure(UserInterface):
             self.stack,
             self.summary_page,
             self.username_entry,
-            self.welcome_page
+            self.welcome_page,
         ) = self.widgets
 
         self.frame = frame
         self.core = core
-        self.pages = [self.welcome_page, self.account_page, self.port_page, self.share_page, self.summary_page]
+        self.pages = [
+            self.welcome_page,
+            self.account_page,
+            self.port_page,
+            self.share_page,
+            self.summary_page,
+        ]
         self.finished = False
 
         self.dialog = generic_dialog(
             parent=frame.window,
             content_box=self.stack,
-            buttons=[(self.previous_button, Gtk.ResponseType.HELP),
-                     (self.next_button, Gtk.ResponseType.APPLY)],
+            buttons=[
+                (self.previous_button, Gtk.ResponseType.HELP),
+                (self.next_button, Gtk.ResponseType.APPLY),
+            ],
             quit_callback=self.hide,
             title=_("Setup Assistant"),
             width=720,
-            height=450
+            height=450,
         )
 
         if GTK_API_VERSION == 3:
@@ -87,28 +94,40 @@ class FastConfigure(UserInterface):
             self.main_icon.set_property("icon-name", config.application_id)
 
         # Page specific, share_page
-        self.download_folder_button = FileChooserButton(
-            self.download_folder_button, self.dialog, "folder")
+        self.download_folder_button = FileChooserButton(self.download_folder_button, self.dialog, "folder")
 
         self.shared_folders = None
         self.shares_list_view = TreeView(
-            frame, parent=self.shares_list_container, multi_select=True,
+            frame,
+            parent=self.shares_list_container,
+            multi_select=True,
             columns=[
-                {"column_id": "virtual_folder", "column_type": "text", "title": _("Virtual Folder"), "width": 125,
-                 "sort_column": 0, "expand_column": True},
-                {"column_id": "folder", "column_type": "text", "title": _("Folder"), "sort_column": 1,
-                 "expand_column": True}
-            ]
+                {
+                    "column_id": "virtual_folder",
+                    "column_type": "text",
+                    "title": _("Virtual Folder"),
+                    "width": 125,
+                    "sort_column": 0,
+                    "expand_column": True,
+                },
+                {
+                    "column_id": "folder",
+                    "column_type": "text",
+                    "title": _("Folder"),
+                    "sort_column": 1,
+                    "expand_column": True,
+                },
+            ],
         )
 
         self.reset_completeness()
 
     def reset_completeness(self):
-        """ Turns on the complete flag if everything required is filled in. """
+        """Turns on the complete flag if everything required is filled in."""
 
         page_complete = False
         page = self.stack.get_visible_child()
-        self.finished = (page == self.summary_page)
+        self.finished = page == self.summary_page
         next_label = _("_Finish") if page == self.summary_page else _("_Next")
 
         if page in (self.welcome_page, self.port_page, self.summary_page):
@@ -147,7 +166,7 @@ class FastConfigure(UserInterface):
             virtual = os.path.basename(os.path.normpath(folder))
 
             # Remove slashes from share name to avoid path conflicts
-            virtual = virtual.replace('/', '_').replace('\\', '_')
+            virtual = virtual.replace("/", "_").replace("\\", "_")
             virtual_final = virtual
 
             counter = 1
@@ -165,7 +184,7 @@ class FastConfigure(UserInterface):
             parent=self.dialog,
             title=_("Add a Shared Folder"),
             callback=self.on_add_share_selected,
-            multiple=True
+            multiple=True,
         ).show()
 
     def on_remove_share(self, *_args):
@@ -210,7 +229,7 @@ class FastConfigure(UserInterface):
         config.sections["server"]["passw"] = self.password_entry.get_text()
 
         # share_page
-        config.sections['transfers']['downloaddir'] = self.download_folder_button.get_path()
+        config.sections["transfers"]["downloaddir"] = self.download_folder_button.get_path()
         config.sections["transfers"]["shared"] = self.shared_folders
 
         # Rescan shares
@@ -235,10 +254,8 @@ class FastConfigure(UserInterface):
         # share_page
         self.shared_folders = config.sections["transfers"]["shared"][:]
 
-        if config.sections['transfers']['downloaddir']:
-            self.download_folder_button.set_path(
-                config.sections['transfers']['downloaddir']
-            )
+        if config.sections["transfers"]["downloaddir"]:
+            self.download_folder_button.set_path(config.sections["transfers"]["downloaddir"])
 
         self.shares_list_view.clear()
 

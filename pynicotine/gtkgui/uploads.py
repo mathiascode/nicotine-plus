@@ -33,10 +33,9 @@ from pynicotine.utils import open_file_path
 
 
 class Uploads(TransferList):
-
     def __init__(self, frame, core):
 
-        self.path_separator = '\\'
+        self.path_separator = "\\"
         self.path_label = _("Folder")
         self.retry_label = _("_Retry")
         self.abort_label = _("_Abort")
@@ -77,18 +76,18 @@ class Uploads(TransferList):
 
         OptionDialog(
             parent=self.frame.window,
-            title=_('Clear Queued Uploads'),
-            message=_('Do you really want to clear all queued uploads?'),
-            callback=self.on_clear_queued_response
+            title=_("Clear Queued Uploads"),
+            message=_("Do you really want to clear all queued uploads?"),
+            callback=self.on_clear_queued_response,
         ).show()
 
     def on_try_clear_all(self, *_args):
 
         OptionDialog(
             parent=self.frame.window,
-            title=_('Clear All Uploads'),
-            message=_('Do you really want to clear all uploads?'),
-            callback=self.on_clear_all_response
+            title=_("Clear All Uploads"),
+            message=_("Do you really want to clear all uploads?"),
+            callback=self.on_clear_all_response,
         ).show()
 
     def on_copy_url(self, *_args):
@@ -106,7 +105,7 @@ class Uploads(TransferList):
 
         if transfer:
             user = config.sections["server"]["login"]
-            url = self.core.userbrowse.get_soulseek_url(user, transfer.filename.rsplit('\\', 1)[0] + '\\')
+            url = self.core.userbrowse.get_soulseek_url(user, transfer.filename.rsplit("\\", 1)[0] + "\\")
             copy_text(url)
 
     def on_open_file_manager(self, *_args):
@@ -119,10 +118,12 @@ class Uploads(TransferList):
     def on_play_files(self, *_args):
 
         for transfer in self.selected_transfers:
-            base_name = str.split(transfer.filename, '\\')[-1]
+            base_name = str.split(transfer.filename, "\\")[-1]
 
-            open_file_path(file_path=os.path.join(transfer.path, base_name),
-                           command=config.sections["players"]["default"])
+            open_file_path(
+                file_path=os.path.join(transfer.path, base_name),
+                command=config.sections["players"]["default"],
+            )
 
     def on_browse_folder(self, *_args):
 
@@ -132,7 +133,7 @@ class Uploads(TransferList):
             return
 
         user = config.sections["server"]["login"]
-        folder = transfer.filename.rsplit('\\', 1)[0] + '\\'
+        folder = transfer.filename.rsplit("\\", 1)[0] + "\\"
 
         self.core.userbrowse.browse_user(user, path=folder)
 
@@ -154,8 +155,26 @@ class Uploads(TransferList):
         self.clear_transfers(["Connection timeout", "Local file error", "Remote file error"])
 
     def on_clear_finished_aborted(self, *_args):
-        self.clear_transfers(["Aborted", "Cancelled", "Disallowed extension", "User logged off", "Finished"])
+        self.clear_transfers(
+            [
+                "Aborted",
+                "Cancelled",
+                "Disallowed extension",
+                "User logged off",
+                "Finished",
+            ]
+        )
 
     def on_clear_finished_failed(self, *_args):
-        self.clear_transfers(["Aborted", "Cancelled", "Disallowed extension", "User logged off", "Finished",
-                              "Connection timeout", "Local file error", "Remote file error"])
+        self.clear_transfers(
+            [
+                "Aborted",
+                "Cancelled",
+                "Disallowed extension",
+                "User logged off",
+                "Finished",
+                "Connection timeout",
+                "Local file error",
+                "Remote file error",
+            ]
+        )

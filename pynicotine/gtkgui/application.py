@@ -29,7 +29,6 @@ GTK_GUI_DIR = os.path.normpath(os.path.dirname(os.path.realpath(__file__)))
 
 
 class Application(Gtk.Application):
-
     def __init__(self, core, tray_icon, start_hidden, ci_mode, multi_instance):
 
         super().__init__(application_id=config.application_id)
@@ -57,6 +56,7 @@ class Application(Gtk.Application):
         Gtk.Application.do_startup(self)
 
         from pynicotine.gtkgui.frame import NicotineFrame
+
         self.frame = NicotineFrame(self, self.core, self.tray_icon, self.start_hidden, self.ci_mode)
         self.frame.on_startup()
 

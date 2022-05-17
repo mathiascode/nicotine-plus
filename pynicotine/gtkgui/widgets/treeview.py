@@ -42,9 +42,19 @@ from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 
 
 class TreeView:
-
-    def __init__(self, frame, parent, columns, search_column=0, multi_select=False, always_select=False,
-                 tree_view_name=None, activate_row_callback=None, select_row_callback=None, tooltip_callback=None):
+    def __init__(
+        self,
+        frame,
+        parent,
+        columns,
+        search_column=0,
+        multi_select=False,
+        always_select=False,
+        tree_view_name=None,
+        activate_row_callback=None,
+        select_row_callback=None,
+        tooltip_callback=None,
+    ):
 
         self.frame = frame
         self.widget = Gtk.TreeView(search_column=search_column, visible=True)
@@ -177,9 +187,7 @@ class TreeView:
             if title == "":
                 title = _("Column #%i") % pos
 
-            menu.add_items(
-                ("$" + title, None)
-            )
+            menu.add_items(("$" + title, None))
             menu.update_model()
             menu.actions[title].set_state(GLib.Variant("b", column in visible_columns))
 
@@ -400,7 +408,16 @@ class TreeView:
         self.model.clear()
         self.iterators.clear()
 
-    def show_tooltip(self, pos_x, pos_y, tooltip, sourcecolumn, column_titles, text_function, strip_prefix=""):
+    def show_tooltip(
+        self,
+        pos_x,
+        pos_y,
+        tooltip,
+        sourcecolumn,
+        column_titles,
+        text_function,
+        strip_prefix="",
+    ):
 
         try:
             bin_x, bin_y = self.widget.convert_widget_to_bin_window_coords(pos_x, pos_y)
@@ -437,7 +454,14 @@ class TreeView:
         return _("Offline")
 
     def show_user_status_tooltip(self, pos_x, pos_y, tooltip, column):
-        return self.show_tooltip(pos_x, pos_y, tooltip, column, ("status",), self.get_user_status_tooltip_text)
+        return self.show_tooltip(
+            pos_x,
+            pos_y,
+            tooltip,
+            column,
+            ("status",),
+            self.get_user_status_tooltip_text,
+        )
 
     def on_toggle(self, _widget, path, callback):
         callback(self, self.model.get_iter(path))
@@ -453,7 +477,7 @@ class TreeView:
         return callback(self, pos_x, pos_y, keyboard_mode, tooltip)
 
     def on_copy_cell_data_accelerator(self, *_args):
-        """ Ctrl+C: copy cell data """
+        """Ctrl+C: copy cell data"""
 
         path, column = self.widget.get_cursor()
         model = self.widget.get_model()
@@ -492,7 +516,7 @@ def verify_grouping_mode(mode):
 
 def create_grouping_menu(window, active_mode, callback):
 
-    action_id = "grouping" + ''.join(random.choice(string.digits) for _ in range(8))
+    action_id = "grouping" + "".join(random.choice(string.digits) for _ in range(8))
     menu = Gio.Menu()
 
     menuitem = Gio.MenuItem.new(_("Ungrouped"), "win." + action_id + "::ungrouped")
@@ -671,7 +695,7 @@ def initialise_columns(frame, treeview_name, treeview, *args):
 
 
 def on_copy_cell_data_accelerator(treeview, *_args):
-    """ Ctrl+C: copy cell data """
+    """Ctrl+C: copy cell data"""
 
     path, column = treeview.get_cursor()
     model = treeview.get_model()
@@ -757,7 +781,7 @@ def hide_columns(_treeview, cols, column_config):
 
 
 def save_columns(treeview_name, columns, subpage=None):
-    """ Save a treeview's column widths and visibilities for the next session """
+    """Save a treeview's column widths and visibilities for the next session"""
 
     saved_columns = {}
     column_config = config.sections["columns"]
@@ -776,7 +800,7 @@ def save_columns(treeview_name, columns, subpage=None):
                 if not visible:
                     saved_columns[title] = {
                         "visible": visible,
-                        "width": column_config[treeview_name][title]["width"]
+                        "width": column_config[treeview_name][title]["width"],
                     }
 
                 continue
@@ -816,9 +840,7 @@ def press_header(menu, treeview):
         if title == "":
             title = _("Column #%i") % pos
 
-        menu.add_items(
-            ("$" + title, None)
-        )
+        menu.add_items(("$" + title, None))
         menu.update_model()
         menu.actions[title].set_state(GLib.Variant("b", column in visible_columns))
 
@@ -839,7 +861,7 @@ def header_toggle(_action, _state, treeview, columns, index):
 
 
 def set_treeview_selected_row(treeview, bin_x, bin_y):
-    """ Handles row selection when right-clicking in a treeview """
+    """Handles row selection when right-clicking in a treeview"""
 
     pathinfo = treeview.get_path_at_pos(bin_x, bin_y)
     selection = treeview.get_selection()
@@ -856,7 +878,16 @@ def set_treeview_selected_row(treeview, bin_x, bin_y):
         selection.unselect_all()
 
 
-def show_tooltip(treeview, pos_x, pos_y, tooltip, sourcecolumn, column_titles, text_function, strip_prefix=""):
+def show_tooltip(
+    treeview,
+    pos_x,
+    pos_y,
+    tooltip,
+    sourcecolumn,
+    column_titles,
+    text_function,
+    strip_prefix="",
+):
 
     try:
         bin_x, bin_y = treeview.convert_widget_to_bin_window_coords(pos_x, pos_y)
@@ -888,7 +919,7 @@ def get_country_tooltip_text(column_value, strip_prefix):
     if not column_value.startswith(strip_prefix):
         return _("Unknown")
 
-    country_code = column_value[len(strip_prefix):]
+    country_code = column_value[len(strip_prefix) :]
 
     if country_code:
         country = GeoIP.country_code_to_name(country_code)
@@ -916,9 +947,17 @@ def get_user_status_tooltip_text(column_value, _strip_prefix):
     return _("Offline")
 
 
-def show_country_tooltip(treeview, pos_x, pos_y, tooltip, sourcecolumn, strip_prefix='flag_'):
-    return show_tooltip(treeview, pos_x, pos_y, tooltip, sourcecolumn,
-                        ("country",), get_country_tooltip_text, strip_prefix)
+def show_country_tooltip(treeview, pos_x, pos_y, tooltip, sourcecolumn, strip_prefix="flag_"):
+    return show_tooltip(
+        treeview,
+        pos_x,
+        pos_y,
+        tooltip,
+        sourcecolumn,
+        ("country",),
+        get_country_tooltip_text,
+        strip_prefix,
+    )
 
 
 def show_file_path_tooltip(treeview, pos_x, pos_y, tooltip, sourcecolumn, transfer=False):
@@ -928,9 +967,24 @@ def show_file_path_tooltip(treeview, pos_x, pos_y, tooltip, sourcecolumn, transf
 
     function = get_file_path_tooltip_text if not transfer else get_transfer_file_path_tooltip_text
 
-    return show_tooltip(treeview, pos_x, pos_y, tooltip, sourcecolumn,
-                        ("folder", "filename", "path"), function)
+    return show_tooltip(
+        treeview,
+        pos_x,
+        pos_y,
+        tooltip,
+        sourcecolumn,
+        ("folder", "filename", "path"),
+        function,
+    )
 
 
 def show_user_status_tooltip(treeview, pos_x, pos_y, tooltip, sourcecolumn):
-    return show_tooltip(treeview, pos_x, pos_y, tooltip, sourcecolumn, ("status",), get_user_status_tooltip_text)
+    return show_tooltip(
+        treeview,
+        pos_x,
+        pos_y,
+        tooltip,
+        sourcecolumn,
+        ("status",),
+        get_user_status_tooltip_text,
+    )

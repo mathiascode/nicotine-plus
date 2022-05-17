@@ -32,7 +32,6 @@ from pynicotine.logfacility import log
 
 
 class Notifications:
-
     def __init__(self, frame, core):
 
         self.frame = frame
@@ -49,8 +48,7 @@ class Notifications:
         if self.core.notifications.add_hilite_item(location, item):
             self.frame.tray_icon.set_icon()
 
-        if (GTK_API_VERSION == 3 and config.sections["ui"]["urgencyhint"]
-                and not self.frame.window.is_active()):
+        if GTK_API_VERSION == 3 and config.sections["ui"]["urgencyhint"] and not self.frame.window.is_active():
             self.frame.window.set_urgency_hint(True)
 
         self.set_title(user)
@@ -67,8 +65,7 @@ class Notifications:
 
         app_name = config.application_name
 
-        if (not self.core.notifications.chat_hilites["rooms"]
-                and not self.core.notifications.chat_hilites["private"]):
+        if not self.core.notifications.chat_hilites["rooms"] and not self.core.notifications.chat_hilites["private"]:
             # Reset Title
             self.frame.window.set_title(app_name)
             return
@@ -80,9 +77,7 @@ class Notifications:
             # Private Chats have a higher priority
             user = self.core.notifications.chat_hilites["private"][-1]
 
-            self.frame.window.set_title(
-                app_name + " - " + _("Private Message from %(user)s") % {'user': user}
-            )
+            self.frame.window.set_title(app_name + " - " + _("Private Message from %(user)s") % {"user": user})
 
         elif self.core.notifications.chat_hilites["rooms"]:
             # Allow for the possibility the username is not available
@@ -90,11 +85,11 @@ class Notifications:
 
             if user is None:
                 self.frame.window.set_title(
-                    app_name + " - " + _("You've been mentioned in the %(room)s room") % {'room': room}
+                    app_name + " - " + _("You've been mentioned in the %(room)s room") % {"room": room}
                 )
             else:
                 self.frame.window.set_title(
-                    app_name + " - " + _("%(user)s mentioned you in the %(room)s room") % {'user': user, 'room': room}
+                    app_name + " - " + _("%(user)s mentioned you in the %(room)s room") % {"user": user, "room": room}
                 )
 
     def new_text_notification(self, message, title=None, priority=Gio.NotificationPriority.NORMAL):
@@ -107,13 +102,11 @@ class Notifications:
 
         try:
             if sys.platform == "win32":
-                self.win_notification.notify(
-                    title=title,
-                    message=message
-                )
+                self.win_notification.notify(title=title, message=message)
 
                 if config.sections["notifications"]["notification_popup_sound"]:
                     import winsound  # pylint:disable=import-error
+
                     winsound.PlaySound("SystemAsterisk", winsound.SND_ALIAS)
 
                 return
@@ -137,7 +130,7 @@ class Notifications:
 
 
 class WinNotify:
-    """ Implements a Windows balloon tip for GtkStatusIcon """
+    """Implements a Windows balloon tip for GtkStatusIcon"""
 
     NIF_INFO = NIIF_NOSOUND = 0x10
     NIM_MODIFY = 1
@@ -161,7 +154,7 @@ class WinNotify:
                 ("sz_info", WCHAR * 256),
                 ("u_version", UINT),
                 ("sz_info_title", WCHAR * 64),
-                ("dw_info_flags", DWORD)
+                ("dw_info_flags", DWORD),
             ]
 
         self.tray_icon = tray_icon
@@ -197,6 +190,7 @@ class WinNotify:
     def _notify(self, title="", message="", timeout=10):
 
         from ctypes import windll
+
         has_tray_icon = config.sections["ui"]["trayicon"]
 
         if not has_tray_icon:

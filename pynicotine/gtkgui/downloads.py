@@ -32,10 +32,9 @@ from pynicotine.utils import open_file_path
 
 
 class Downloads(TransferList):
-
     def __init__(self, frame, core):
 
-        self.path_separator = '/'
+        self.path_separator = "/"
         self.path_label = _("Path")
         self.retry_label = _("_Resume")
         self.abort_label = _("P_ause")
@@ -76,18 +75,18 @@ class Downloads(TransferList):
 
         OptionDialog(
             parent=self.frame.window,
-            title=_('Clear Queued Downloads'),
-            message=_('Do you really want to clear all queued downloads?'),
-            callback=self.on_clear_queued_response
+            title=_("Clear Queued Downloads"),
+            message=_("Do you really want to clear all queued downloads?"),
+            callback=self.on_clear_queued_response,
         ).show()
 
     def on_try_clear_all(self, *_args):
 
         OptionDialog(
             parent=self.frame.window,
-            title=_('Clear All Downloads'),
-            message=_('Do you really want to clear all downloads?'),
-            callback=self.on_clear_all_response
+            title=_("Clear All Downloads"),
+            message=_("Do you really want to clear all downloads?"),
+            callback=self.on_clear_all_response,
         ).show()
 
     def folder_download_response(self, dialog, response_id, msg):
@@ -101,11 +100,11 @@ class Downloads(TransferList):
 
         OptionDialog(
             parent=self.frame.window,
-            title=_("Download %(num)i files?") % {'num': numfiles},
-            message=_("Do you really want to download %(num)i files from %(user)s's folder %(folder)s?") % {
-                'num': numfiles, 'user': username, 'folder': folder},
+            title=_("Download %(num)i files?") % {"num": numfiles},
+            message=_("Do you really want to download %(num)i files from %(user)s's folder %(folder)s?")
+            % {"num": numfiles, "user": username, "folder": folder},
             callback=self.folder_download_response,
-            callback_data=msg
+            callback_data=msg,
         ).show()
 
     def on_copy_url(self, *_args):
@@ -121,8 +120,7 @@ class Downloads(TransferList):
         transfer = next(iter(self.selected_transfers), None)
 
         if transfer:
-            url = self.core.userbrowse.get_soulseek_url(
-                transfer.user, transfer.filename.rsplit('\\', 1)[0] + '\\')
+            url = self.core.userbrowse.get_soulseek_url(transfer.user, transfer.filename.rsplit("\\", 1)[0] + "\\")
             copy_text(url)
 
     def on_open_file_manager(self, *_args):
@@ -152,7 +150,8 @@ class Downloads(TransferList):
                 # Try looking in the download directory and match the original filename and size.
 
                 file_path = self.core.transfers.get_existing_download_path(
-                    transfer.user, transfer.filename, transfer.path, transfer.size)
+                    transfer.user, transfer.filename, transfer.path, transfer.size
+                )
 
             open_file_path(file_path, command=config.sections["players"]["default"])
 
@@ -163,7 +162,7 @@ class Downloads(TransferList):
 
         for transfer in self.selected_transfers:
             user = transfer.user
-            folder = transfer.filename.rsplit('\\', 1)[0] + '\\'
+            folder = transfer.filename.rsplit("\\", 1)[0] + "\\"
 
             if user not in requested_users and folder not in requested_folders:
                 self.core.userbrowse.browse_user(user, path=folder)
@@ -178,7 +177,14 @@ class Downloads(TransferList):
         self.clear_transfers(["Finished", "Filtered"])
 
     def on_clear_failed(self, *_args):
-        self.clear_transfers(["Connection timeout", "Local file error", "Remote file error", "File not shared"])
+        self.clear_transfers(
+            [
+                "Connection timeout",
+                "Local file error",
+                "Remote file error",
+                "File not shared",
+            ]
+        )
 
     def on_clear_filtered(self, *_args):
         self.clear_transfers(["Filtered"])

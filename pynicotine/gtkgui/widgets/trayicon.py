@@ -34,7 +34,6 @@ from pynicotine.logfacility import log
 
 
 class BaseImplementation:
-
     def __init__(self, frame, core):
 
         self.frame = frame
@@ -69,7 +68,10 @@ class BaseImplementation:
         self.menu = Gtk.Menu()
         self.hide_show_item, _handler = self.create_item(_("Show Nicotine+"), self.frame.on_window_hide_unhide)
         self.alt_speed_item, self.alt_speed_handler = self.create_item(
-            _("Alternative Speed Limits"), self.frame.on_alternative_speed_limit, check=True)
+            _("Alternative Speed Limits"),
+            self.frame.on_alternative_speed_limit,
+            check=True,
+        )
 
         self.menu.append(Gtk.SeparatorMenuItem())
 
@@ -110,8 +112,13 @@ class BaseImplementation:
         if self.menu is None:
             return
 
-        for item in (self.disconnect_item, self.away_item, self.send_message_item,
-                     self.lookup_info_item, self.lookup_shares_item):
+        for item in (
+            self.disconnect_item,
+            self.away_item,
+            self.send_message_item,
+            self.lookup_info_item,
+            self.lookup_shares_item,
+        ):
 
             # Disable menu items when disconnected from server
             item.set_sensitive(status)
@@ -178,14 +185,16 @@ class BaseImplementation:
                     return True
 
         except OSError as error:
-            log.add_debug("Error accessing %(type)s tray icon path %(path)s: %(error)s" %
-                          {"type": icon_type, "path": icon_path, "error": error})
+            log.add_debug(
+                "Error accessing %(type)s tray icon path %(path)s: %(error)s"
+                % {"type": icon_type, "path": icon_path, "error": error}
+            )
 
         return False
 
     def get_final_icon_path(self):
-        """ Returns an icon path to use for tray icons, or None to fall back to
-        system-wide icons. """
+        """Returns an icon path to use for tray icons, or None to fall back to
+        system-wide icons."""
 
         custom_icon_path = config.sections["ui"]["icontheme"]
 
@@ -235,9 +244,9 @@ class BaseImplementation:
         EntryDialog(
             parent=self.frame.application.get_active_window(),
             title=config.application_name + ": " + _("Start Messaging"),
-            message=_('Enter the name of the user whom you want to send a message:'),
+            message=_("Enter the name of the user whom you want to send a message:"),
             callback=self.on_open_private_chat_response,
-            droplist=users
+            droplist=users,
         ).show()
 
     def on_get_a_users_info_response(self, dialog, response_id, _data):
@@ -257,9 +266,9 @@ class BaseImplementation:
         EntryDialog(
             parent=self.frame.application.get_active_window(),
             title=config.application_name + ": " + _("Request User Info"),
-            message=_('Enter the name of the user whose info you want to see:'),
+            message=_("Enter the name of the user whose info you want to see:"),
             callback=self.on_get_a_users_info_response,
-            droplist=users
+            droplist=users,
         ).show()
 
     def on_get_a_users_shares_response(self, dialog, response_id, _data):
@@ -279,9 +288,9 @@ class BaseImplementation:
         EntryDialog(
             parent=self.frame.application.get_active_window(),
             title=config.application_name + ": " + _("Request Shares List"),
-            message=_('Enter the name of the user whose shares you want to see:'),
+            message=_("Enter the name of the user whose shares you want to see:"),
             callback=self.on_get_a_users_shares_response,
-            droplist=users
+            droplist=users,
         ).show()
 
     def set_icon(self, status=None, force_update=False):
@@ -293,9 +302,9 @@ class BaseImplementation:
             self.status = status
 
         # Check for hilites, and display hilite icon if there is a room or private hilite
-        if (self.core.notifications
-                and (self.core.notifications.chat_hilites["rooms"]
-                     or self.core.notifications.chat_hilites["private"])):
+        if self.core.notifications and (
+            self.core.notifications.chat_hilites["rooms"] or self.core.notifications.chat_hilites["private"]
+        ):
             icon_name = "msg"
         else:
             # If there is no hilite, display the status
@@ -322,22 +331,23 @@ class BaseImplementation:
 
 
 class AppIndicatorImplementation(BaseImplementation):
-
     def __init__(self, frame, core):
 
         super().__init__(frame, core)
 
         try:
             # Check if AyatanaAppIndicator3 is available
-            gi.require_version('AyatanaAppIndicator3', '0.1')
+            gi.require_version("AyatanaAppIndicator3", "0.1")
             from gi.repository import AyatanaAppIndicator3
+
             self.implementation_class = AyatanaAppIndicator3
 
         except (ImportError, ValueError):
             try:
                 # Check if AppIndicator3 is available
-                gi.require_version('AppIndicator3', '0.1')
+                gi.require_version("AppIndicator3", "0.1")
                 from gi.repository import AppIndicator3
+
                 self.implementation_class = AppIndicator3
 
             except (ImportError, ValueError) as error:
@@ -346,7 +356,8 @@ class AppIndicatorImplementation(BaseImplementation):
         self.tray_icon = self.implementation_class.Indicator.new(
             id=config.application_name,
             icon_name="",
-            category=self.implementation_class.IndicatorCategory.APPLICATION_STATUS)
+            category=self.implementation_class.IndicatorCategory.APPLICATION_STATUS,
+        )
 
         self.tray_icon.set_menu(self.menu)
 
@@ -379,7 +390,6 @@ class AppIndicatorImplementation(BaseImplementation):
 
 
 class StatusIconImplementation(BaseImplementation):
-
     def __init__(self, frame, core):
 
         super().__init__(frame, core)
@@ -424,7 +434,6 @@ class StatusIconImplementation(BaseImplementation):
 
 
 class TrayIcon:
-
     def __init__(self, frame, core, use_trayicon):
 
         self.frame = frame

@@ -29,8 +29,8 @@ from pynicotine.utils import human_length
 
 
 class NowPlaying:
-    """ This class contains code for retrieving information about the song currently
-    playing in a media player """
+    """This class contains code for retrieving information about the song currently
+    playing in a media player"""
 
     def __init__(self, config):
 
@@ -49,10 +49,17 @@ class NowPlaying:
             "length": "",
             "nowplaying": "",
             "bitrate": "",
-            "filename": ""
+            "filename": "",
         }
 
-    def display_now_playing(self, _obj=None, callback=None, get_player=None, get_command=None, get_format=None):
+    def display_now_playing(
+        self,
+        _obj=None,
+        callback=None,
+        get_player=None,
+        get_command=None,
+        get_format=None,
+    ):
 
         self.get_np(callback, get_player, get_command, get_format)
 
@@ -116,7 +123,7 @@ class NowPlaying:
         title = title.replace("$p", "%(program)s")
 
         title = title % self.title
-        title = ' '.join(x for x in title.replace('\r', '\n').split('\n') if x)
+        title = " ".join(x for x in title.replace("\r", "\n").split("\n") if x)
 
         if title:
             if callback:
@@ -127,10 +134,10 @@ class NowPlaying:
         return None
 
     def lastfm(self, user):
-        """ Function to get the last song played via Last.fm API """
+        """Function to get the last song played via Last.fm API"""
 
         try:
-            user, apikey = user.split(';')
+            user, apikey = user.split(";")
 
         except ValueError:
             log.add_important_error(_("Last.fm: Please provide both your Last.fm username and API key"))
@@ -138,12 +145,17 @@ class NowPlaying:
 
         try:
             response = http_request(
-                "https", "ws.audioscrobbler.com",
+                "https",
+                "ws.audioscrobbler.com",
                 "/2.0/?method=user.getrecenttracks&user=" + user + "&api_key=" + apikey + "&limit=1&format=json",
-                headers={"User-Agent": self.config.application_name})
+                headers={"User-Agent": self.config.application_name},
+            )
 
         except Exception as error:
-            log.add_important_error(_("Last.fm: Could not connect to Audioscrobbler: %(error)s"), {"error": error})
+            log.add_important_error(
+                _("Last.fm: Could not connect to Audioscrobbler: %(error)s"),
+                {"error": error},
+            )
             return None
 
         try:
@@ -162,32 +174,44 @@ class NowPlaying:
             self.title["title"] = lastplayed["name"]
             self.title["album"] = lastplayed["album"]["#text"]
             self.title["nowplaying"] = "%s: %s - %s - %s" % (
-                _("Last played"), self.title["artist"], self.title["album"], self.title["title"])
+                _("Last played"),
+                self.title["artist"],
+                self.title["album"],
+                self.title["title"],
+            )
 
         except Exception:
-            log.add_important_error(_("Last.fm: Could not get recent track from Audioscrobbler: %(error)s"),
-                                    {"error": response})
+            log.add_important_error(
+                _("Last.fm: Could not get recent track from Audioscrobbler: %(error)s"),
+                {"error": response},
+            )
             return None
 
         return True
 
     def mpris(self, player):
-        """ Function to get the currently playing song via DBus MPRIS v2 interface """
+        """Function to get the currently playing song via DBus MPRIS v2 interface"""
 
         # https://media.readthedocs.org/pdf/mpris2/latest/mpris2.pdf
 
         from gi.repository import Gio  # pylint: disable=import-error
+
         self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
 
-        dbus_mpris_service = 'org.mpris.MediaPlayer2.'
-        dbus_mpris_player_service = 'org.mpris.MediaPlayer2.Player'
-        dbus_mpris_path = '/org/mpris/MediaPlayer2'
-        dbus_property = 'org.freedesktop.DBus.Properties'
+        dbus_mpris_service = "org.mpris.MediaPlayer2."
+        dbus_mpris_player_service = "org.mpris.MediaPlayer2.Player"
+        dbus_mpris_path = "/org/mpris/MediaPlayer2"
+        dbus_property = "org.freedesktop.DBus.Properties"
 
         if not player:
             dbus_proxy = Gio.DBusProxy.new_sync(
-                self.bus, Gio.DBusProxyFlags.NONE, None,
-                'org.freedesktop.DBus', '/org/freedesktop/DBus', 'org.freedesktop.DBus', None
+                self.bus,
+                Gio.DBusProxyFlags.NONE,
+                None,
+                "org.freedesktop.DBus",
+                "/org/freedesktop/DBus",
+                "org.freedesktop.DBus",
+                None,
             )
 
             names = dbus_proxy.ListNames()
@@ -195,7 +219,7 @@ class NowPlaying:
 
             for name in names:
                 if name.startswith(dbus_mpris_service):
-                    players.append(name[len(dbus_mpris_service):])
+                    players.append(name[len(dbus_mpris_service) :])
 
             if not players:
                 log.add_important_error(_("MPRIS: Could not find a suitable MPRIS player"))
@@ -203,99 +227,120 @@ class NowPlaying:
 
             player = players[0]
             if len(players) > 1:
-                log.add(_("Found multiple MPRIS players: %(players)s. Using: %(player)s"),
-                        {'players': players, 'player': player})
+                log.add(
+                    _("Found multiple MPRIS players: %(players)s. Using: %(player)s"),
+                    {"players": players, "player": player},
+                )
             else:
                 log.add(_("Auto-detected MPRIS player: %s"), player)
 
         try:
             dbus_proxy = Gio.DBusProxy.new_sync(
-                self.bus, Gio.DBusProxyFlags.NONE, None,
-                dbus_mpris_service + player, dbus_mpris_path, dbus_property, None
+                self.bus,
+                Gio.DBusProxyFlags.NONE,
+                None,
+                dbus_mpris_service + player,
+                dbus_mpris_path,
+                dbus_property,
+                None,
             )
 
-            metadata = dbus_proxy.Get('(ss)', dbus_mpris_player_service, 'Metadata')
+            metadata = dbus_proxy.Get("(ss)", dbus_mpris_player_service, "Metadata")
 
         except Exception as error:
-            log.add_important_error(_("MPRIS: Something went wrong while querying %(player)s: %(exception)s"),
-                                    {'player': player, 'exception': error})
+            log.add_important_error(
+                _("MPRIS: Something went wrong while querying %(player)s: %(exception)s"),
+                {"player": player, "exception": error},
+            )
             return None
 
-        self.title['program'] = player
-        list_mapping = [('xesam:artist', 'artist')]
+        self.title["program"] = player
+        list_mapping = [("xesam:artist", "artist")]
 
         for source, dest in list_mapping:
             try:
-                self.title[dest] = '+'.join(metadata[source])
+                self.title[dest] = "+".join(metadata[source])
             except KeyError:
-                self.title[dest] = '?'
+                self.title[dest] = "?"
 
         mapping = [
-            ('xesam:title', 'title'),
-            ('xesam:album', 'album'),
-            ('xesam:contentCreated', 'year'),
-            ('xesam:comment', 'comment'),
-            ('xesam:audioBitrate', 'bitrate'),
-            ('xesam:url', 'filename'),
-            ('xesak:trackNumber', 'track')
+            ("xesam:title", "title"),
+            ("xesam:album", "album"),
+            ("xesam:contentCreated", "year"),
+            ("xesam:comment", "comment"),
+            ("xesam:audioBitrate", "bitrate"),
+            ("xesam:url", "filename"),
+            ("xesak:trackNumber", "track"),
         ]
 
         for source, dest in mapping:
             try:
                 self.title[dest] = str(metadata[source])
             except KeyError:
-                self.title[dest] = '?'
+                self.title[dest] = "?"
 
         # The length is in microseconds, and be represented as a signed 64-bit integer.
         try:
-            self.title['length'] = human_length(metadata['mpris:length'] // 1000000)
+            self.title["length"] = human_length(metadata["mpris:length"] // 1000000)
         except KeyError:
-            self.title['length'] = '?'
+            self.title["length"] = "?"
 
-        if self.title['artist'] != "":
-            self.title['nowplaying'] += self.title['artist']
+        if self.title["artist"] != "":
+            self.title["nowplaying"] += self.title["artist"]
 
-        if self.title['title'] != "":
-            self.title['nowplaying'] += " - " + self.title['title']
+        if self.title["title"] != "":
+            self.title["nowplaying"] += " - " + self.title["title"]
 
         return True
 
     def listenbrainz(self, username):
-        """ Function to get the currently playing song via ListenBrainz API """
+        """Function to get the currently playing song via ListenBrainz API"""
 
         if not username:
             log.add_important_error(_("ListenBrainz: Please provide your ListenBrainz username"))
             return None
 
         try:
-            response = http_request('https', 'api.listenbrainz.org',
-                                    '/1/user/{}/playing-now'.format(username),
-                                    headers={'User-Agent': self.config.application_name})
+            response = http_request(
+                "https",
+                "api.listenbrainz.org",
+                "/1/user/{}/playing-now".format(username),
+                headers={"User-Agent": self.config.application_name},
+            )
 
         except Exception as error:
-            log.add_important_error(_("ListenBrainz: Could not connect to ListenBrainz: %(error)s"), {'error': error})
+            log.add_important_error(
+                _("ListenBrainz: Could not connect to ListenBrainz: %(error)s"),
+                {"error": error},
+            )
             return None
 
         try:
-            json_api = json.loads(response)['payload']
+            json_api = json.loads(response)["payload"]
 
-            if not json_api['playing_now']:
-                log.add_important_error(_("ListenBrainz: You don\'t seem to be listening to anything right now"))
+            if not json_api["playing_now"]:
+                log.add_important_error(_("ListenBrainz: You don't seem to be listening to anything right now"))
                 return None
 
-            track = json_api['listens'][0]['track_metadata']
+            track = json_api["listens"][0]["track_metadata"]
 
-            self.title['artist'] = track['artist_name']
-            self.title['title'] = track['track_name']
-            self.title['album'] = track['release_name']
-            self.title['nowplaying'] = '%s: %s - %s - %s' % (
-                _('Playing now'), self.title['artist'], self.title['album'], self.title['title'])
+            self.title["artist"] = track["artist_name"]
+            self.title["title"] = track["track_name"]
+            self.title["album"] = track["release_name"]
+            self.title["nowplaying"] = "%s: %s - %s - %s" % (
+                _("Playing now"),
+                self.title["artist"],
+                self.title["album"],
+                self.title["title"],
+            )
 
             return True
 
         except Exception:
-            log.add_important_error(_("ListenBrainz: Could not get current track from ListenBrainz: %(error)s"),
-                                    {'error': str(response)})
+            log.add_important_error(
+                _("ListenBrainz: Could not get current track from ListenBrainz: %(error)s"),
+                {"error": str(response)},
+            )
         return None
 
     def other(self, command):
@@ -309,6 +354,8 @@ class NowPlaying:
             return True
 
         except Exception as error:
-            log.add_important_error(_("Executing '%(command)s' failed: %(error)s"),
-                                    {"command": command, "error": error})
+            log.add_important_error(
+                _("Executing '%(command)s' failed: %(error)s"),
+                {"command": command, "error": error},
+            )
             return None

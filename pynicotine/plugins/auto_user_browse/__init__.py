@@ -20,25 +20,17 @@ from pynicotine.pluginsystem import BasePlugin
 
 
 class Plugin(BasePlugin):
-
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-        self.settings = {
-            'users': []
-        }
-        self.metasettings = {
-            'users': {
-                'description': 'Username',
-                'type': 'list string'
-            }
-        }
+        self.settings = {"users": []}
+        self.metasettings = {"users": {"description": "Username", "type": "list string"}}
         self.user_statuses = {}
 
     def user_status_notification(self, user, status, _privileged):
 
-        if user not in self.settings['users']:
+        if user not in self.settings["users"]:
             return
 
         if status <= 0:

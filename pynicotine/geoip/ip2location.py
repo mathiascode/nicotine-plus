@@ -30,51 +30,51 @@ MAX_IPV4_RANGE = 4294967295
 
 
 class IP2Location:
-    """ IP2Location country database """
+    """IP2Location country database"""
 
     def __init__(self, filename):
 
-        with open(filename, 'rb') as db1:
+        with open(filename, "rb") as db1:
             try:
                 self._f = mmap.mmap(db1.fileno(), 0, prot=mmap.PROT_READ)
             except AttributeError:
                 self._f = mmap.mmap(db1.fileno(), 0, access=mmap.ACCESS_READ)
 
-        self._dbtype = struct.unpack('B', self._f.read(1))[0]
-        self._dbcolumn = struct.unpack('B', self._f.read(1))[0]
-        self._dbyear = struct.unpack('B', self._f.read(1))[0]
-        self._dbmonth = struct.unpack('B', self._f.read(1))[0]
-        self._dbday = struct.unpack('B', self._f.read(1))[0]
-        self._ipv4dbcount = struct.unpack('<I', self._f.read(4))[0]
-        self._ipv4dbaddr = struct.unpack('<I', self._f.read(4))[0]
-        self._ipv6dbcount = struct.unpack('<I', self._f.read(4))[0]
-        self._ipv6dbaddr = struct.unpack('<I', self._f.read(4))[0]
-        self._ipv4indexbaseaddr = struct.unpack('<I', self._f.read(4))[0]
-        self._ipv6indexbaseaddr = struct.unpack('<I', self._f.read(4))[0]
+        self._dbtype = struct.unpack("B", self._f.read(1))[0]
+        self._dbcolumn = struct.unpack("B", self._f.read(1))[0]
+        self._dbyear = struct.unpack("B", self._f.read(1))[0]
+        self._dbmonth = struct.unpack("B", self._f.read(1))[0]
+        self._dbday = struct.unpack("B", self._f.read(1))[0]
+        self._ipv4dbcount = struct.unpack("<I", self._f.read(4))[0]
+        self._ipv4dbaddr = struct.unpack("<I", self._f.read(4))[0]
+        self._ipv6dbcount = struct.unpack("<I", self._f.read(4))[0]
+        self._ipv6dbaddr = struct.unpack("<I", self._f.read(4))[0]
+        self._ipv4indexbaseaddr = struct.unpack("<I", self._f.read(4))[0]
+        self._ipv6indexbaseaddr = struct.unpack("<I", self._f.read(4))[0]
 
     def get_country_code(self, addr):
         return self._get_record(addr)
 
     def _readi(self, offset):
         self._f.seek(offset - 1)
-        return struct.unpack('<I', self._f.read(4))[0]
+        return struct.unpack("<I", self._f.read(4))[0]
 
     def _read_record(self, mid):
 
         baseaddr = self._ipv4dbaddr
         col_offset = baseaddr + mid * (self._dbcolumn * 4) + 4 - 1
-        country_offset = struct.unpack('<I', self._f[col_offset:col_offset + 4])[0]
+        country_offset = struct.unpack("<I", self._f[col_offset : col_offset + 4])[0]
 
         self._f.seek(country_offset)
-        length = struct.unpack('B', self._f.read(1))[0]
-        country_code = self._f.read(length).decode('utf-8')
+        length = struct.unpack("B", self._f.read(1))[0]
+        country_code = self._f.read(length).decode("utf-8")
 
         return country_code
 
     def _get_record(self, ip_address):
 
         low = 0
-        ipnum = struct.unpack('!L', socket.inet_aton(ip_address))[0]
+        ipnum = struct.unpack("!L", socket.inet_aton(ip_address))[0]
 
         if ipnum == MAX_IPV4_RANGE:
             ipno = ipnum - 1

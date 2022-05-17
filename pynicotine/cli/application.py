@@ -23,7 +23,6 @@ from pynicotine.logfacility import log
 
 
 class Application:
-
     def __init__(self, core, ci_mode):
 
         self.core = core

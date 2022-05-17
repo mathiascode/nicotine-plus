@@ -81,13 +81,13 @@ class Config:
 
     @staticmethod
     def get_user_directories():
-        """ Returns a tuple:
+        """Returns a tuple:
         - the config directory
-        - the data directory """
+        - the data directory"""
 
         if sys.platform == "win32":
             try:
-                data_dir = os.path.join(os.environ['APPDATA'], 'nicotine')
+                data_dir = os.path.join(os.environ["APPDATA"], "nicotine")
             except KeyError:
                 data_dir, _filename = os.path.split(sys.argv[0])
 
@@ -96,7 +96,7 @@ class Config:
 
         home = os.path.expanduser("~")
 
-        legacy_dir = os.path.join(home, '.nicotine')
+        legacy_dir = os.path.join(home, ".nicotine")
 
         if os.path.isdir(legacy_dir.encode("utf-8")):
             return legacy_dir, legacy_dir
@@ -104,18 +104,18 @@ class Config:
         def xdg_path(xdg, default):
             path = os.environ.get(xdg)
 
-            path = path.split(':')[0] if path else default
+            path = path.split(":")[0] if path else default
 
-            return os.path.join(path, 'nicotine')
+            return os.path.join(path, "nicotine")
 
-        config_dir = xdg_path('XDG_CONFIG_HOME', os.path.join(home, '.config'))
-        data_dir = xdg_path('XDG_DATA_HOME', os.path.join(home, '.local', 'share'))
+        config_dir = xdg_path("XDG_CONFIG_HOME", os.path.join(home, ".config"))
+        data_dir = xdg_path("XDG_DATA_HOME", os.path.join(home, ".local", "share"))
 
         return config_dir, data_dir
 
     def create_config_folder(self):
-        """ Create the folder for storing the config file in, if the folder
-        doesn't exist """
+        """Create the folder for storing the config file in, if the folder
+        doesn't exist"""
 
         path, _filename = os.path.split(self.filename)
 
@@ -130,15 +130,17 @@ class Config:
         except OSError as msg:
             from pynicotine.logfacility import log
 
-            log.add(_("Can't create directory '%(path)s', reported error: %(error)s"),
-                    {'path': path, 'error': msg})
+            log.add(
+                _("Can't create directory '%(path)s', reported error: %(error)s"),
+                {"path": path, "error": msg},
+            )
             return False
 
         return True
 
     def create_data_folder(self):
-        """ Create the folder for storing data in (aliases, shared files etc.),
-        if the folder doesn't exist """
+        """Create the folder for storing data in (aliases, shared files etc.),
+        if the folder doesn't exist"""
 
         try:
             if not os.path.isdir(self.data_dir.encode("utf-8")):
@@ -147,8 +149,10 @@ class Config:
         except OSError as msg:
             from pynicotine.logfacility import log
 
-            log.add(_("Can't create directory '%(path)s', reported error: %(error)s"),
-                    {'path': self.data_dir, 'error': msg})
+            log.add(
+                _("Can't create directory '%(path)s', reported error: %(error)s"),
+                {"path": self.data_dir, "error": msg},
+            )
 
     def load_config(self):
 
@@ -177,12 +181,12 @@ class Config:
                 "autoaway": 15,
                 "away": False,
                 "private_chatrooms": False,
-                "command_aliases": {}
+                "command_aliases": {},
             },
             "transfers": {
-                "incompletedir": os.path.join(self.data_dir, 'incomplete'),
-                "downloaddir": os.path.join(self.data_dir, 'downloads'),
-                "uploaddir": os.path.join(self.data_dir, 'received'),
+                "incompletedir": os.path.join(self.data_dir, "incomplete"),
+                "downloaddir": os.path.join(self.data_dir, "downloads"),
+                "uploaddir": os.path.join(self.data_dir, "received"),
                 "usernamesubfolders": False,
                 "shared": [],
                 "buddyshared": [],
@@ -227,17 +231,17 @@ class Config:
                     ["folder.jpg", 1],
                     ["*.url", 1],
                     ["thumbs.db", 1],
-                    ["albumart(_{........-....-....-....-............}_)?(_?(large|small))?\\.jpg", 0]
+                    [
+                        "albumart(_{........-....-....-....-............}_)?(_?(large|small))?\\.jpg",
+                        0,
+                    ],
                 ],
                 "download_doubleclick": 1,
                 "upload_doubleclick": 1,
                 "downloadsexpanded": True,
-                "uploadsexpanded": True
+                "uploadsexpanded": True,
             },
-            "userinfo": {
-                "descr": "''",
-                "pic": ""
-            },
+            "userinfo": {"descr": "''", "pic": ""},
             "words": {
                 "censored": [],
                 "autoreplaced": {
@@ -247,7 +251,7 @@ class Config:
                     "youre": "you're",
                     "jsut": "just",
                     "thier": "their",
-                    "tihs": "this"
+                    "tihs": "this",
                 },
                 "censorfill": "*",
                 "censorwords": False,
@@ -261,7 +265,7 @@ class Config:
                 "roomusers": True,
                 "commands": True,
                 "aliases": True,
-                "onematch": False
+                "onematch": False,
             },
             "logging": {
                 "debug": False,
@@ -282,19 +286,16 @@ class Config:
                 "readroomlogs": True,
                 "readroomlines": 15,
                 "readprivatelines": 15,
-                "rooms": []
+                "rooms": [],
             },
-            "privatechat": {
-                "store": True,
-                "users": []
-            },
+            "privatechat": {"store": True, "users": []},
             "columns": {
                 "file_search": {},
                 "download": {},
                 "upload": {},
                 "user_browse": {},
                 "buddy_list": {},
-                "chat_room": {}
+                "chat_room": {},
             },
             "searches": {
                 "expand_searches": True,
@@ -316,7 +317,7 @@ class Config:
                 "max_displayed_results": 1500,
                 "min_search_chars": 3,
                 "remove_special_chars": True,
-                "private_search_results": True
+                "private_search_results": True,
             },
             "ui": {
                 "dark_mode": False,
@@ -365,7 +366,7 @@ class Config:
                     "userinfo": True,
                     "private": True,
                     "chatrooms": True,
-                    "interests": True
+                    "interests": True,
                 },
                 "modes_order": [
                     "search",
@@ -376,7 +377,7 @@ class Config:
                     "private",
                     "userlist",
                     "chatrooms",
-                    "interests"
+                    "interests",
                 ],
                 "buddylistinchatrooms": "tab",
                 "trayicon": True,
@@ -393,24 +394,17 @@ class Config:
                 "maximized": True,
                 "urgencyhint": True,
                 "file_path_tooltips": True,
-                "reverse_file_paths": True
+                "reverse_file_paths": True,
             },
-            "private_rooms": {
-                "rooms": {}
-            },
-            "urls": {
-                "protocols": {}
-            },
-            "interests": {
-                "likes": [],
-                "dislikes": []
-            },
+            "private_rooms": {"rooms": {}},
+            "urls": {"protocols": {}},
+            "interests": {"likes": [], "dislikes": []},
             "players": {
                 "default": "",
                 "npothercommand": "",
                 "npplayer": "mpris",
                 "npformatlist": [],
-                "npformat": ""
+                "npformat": "",
             },
             "notifications": {
                 "notification_window_title": True,
@@ -420,20 +414,17 @@ class Config:
                 "notification_popup_folder": True,
                 "notification_popup_private_message": True,
                 "notification_popup_chatroom": False,
-                "notification_popup_chatroom_mention": True
+                "notification_popup_chatroom_mention": True,
             },
-            "plugins": {
-                "enable": True,
-                "enabled": []
-            },
+            "plugins": {"enable": True, "enabled": []},
             "statistics": {
                 "started_downloads": 0,
                 "completed_downloads": 0,
                 "downloaded_size": 0,
                 "started_uploads": 0,
                 "completed_uploads": 0,
-                "uploaded_size": 0
-            }
+                "uploaded_size": 0,
+            },
         }
 
         self.removed_options = {
@@ -447,7 +438,7 @@ class Config:
                 "geopanic",
                 "enablebuddyshares",
                 "friendsonly",
-                "enabletransferbuttons"
+                "enabletransferbuttons",
             ),
             "server": (
                 "lastportstatuscheck",
@@ -456,7 +447,7 @@ class Config:
                 "fallbackencodings",
                 "roomencoding",
                 "userencoding",
-                "firewalled"
+                "firewalled",
             ),
             "ui": (
                 "enabletrans",
@@ -485,7 +476,7 @@ class Config:
                 "notexists",
                 "roomlistcollapsed",
                 "showaway",
-                "decimalsep"
+                "decimalsep",
             ),
             "columns": (
                 "downloads",
@@ -508,45 +499,27 @@ class Config:
                 "upload_widths",
                 "filesearch_columns",
                 "filesearch_widths",
-                "hideflags"
+                "hideflags",
             ),
             "searches": (
                 "distrib_timer",
                 "distrib_ignore",
                 "reopen_tabs",
                 "max_stored_results",
-                "re_filter"
+                "re_filter",
             ),
-            "userinfo": (
-                "descrutf8"
-            ),
-            "private_rooms": (
-                "enabled"
-            ),
-            "logging": (
-                "logsdir"
-            ),
-            "ticker": (
-                "default",
-                "rooms",
-                "hide"
-            ),
-            "language": (
-                "language",
-                "setlanguage"
-            ),
-            "urls": (
-                "urlcatching",
-                "humanizeurls"
-            ),
-            "notifications": (
-                "notification_tab_icons"
-            )
+            "userinfo": ("descrutf8"),
+            "private_rooms": ("enabled"),
+            "logging": ("logsdir"),
+            "ticker": ("default", "rooms", "hide"),
+            "language": ("language", "setlanguage"),
+            "urls": ("urlcatching", "humanizeurls"),
+            "notifications": ("notification_tab_icons"),
         }
 
         # Windows specific stuff
         if sys.platform == "win32":
-            self.defaults['players']['npplayer'] = 'other'
+            self.defaults["players"]["npplayer"] = "other"
 
         # Initialize config with default values
         for key, value in self.defaults.items():
@@ -571,12 +544,15 @@ class Config:
 
         # Load command aliases from legacy file
         try:
-            if (not self.sections["server"]["command_aliases"]
-                    and os.path.exists((self.filename + ".alias").encode("utf-8"))):
-                with open((self.filename + ".alias").encode("utf-8"), 'rb') as file_handle:
+            if not self.sections["server"]["command_aliases"] and os.path.exists(
+                (self.filename + ".alias").encode("utf-8")
+            ):
+                with open((self.filename + ".alias").encode("utf-8"), "rb") as file_handle:
                     from pynicotine.utils import RestrictedUnpickler
+
                     self.sections["server"]["command_aliases"] = RestrictedUnpickler(
-                        file_handle, encoding='utf-8').load()
+                        file_handle, encoding="utf-8"
+                    ).load()
 
         except Exception:
             pass
@@ -584,13 +560,14 @@ class Config:
         self.config_loaded = True
 
         from pynicotine.logfacility import log
+
         log.add_debug("Using configuration: %(file)s", {"file": self.filename})
 
     def parse_config(self, filename):
-        """ Parses the config file """
+        """Parses the config file"""
 
         try:
-            with open(filename.encode("utf-8"), 'a+', encoding="utf-8") as file_handle:
+            with open(filename.encode("utf-8"), "a+", encoding="utf-8") as file_handle:
                 file_handle.seek(0)
                 self.parser.read_file(file_handle)
 
@@ -599,8 +576,8 @@ class Config:
             self.parse_config(filename)
 
     def convert_config(self):
-        """ Converts the config to utf-8.
-        Mainly for upgrading Windows build. (22 July, 2020) """
+        """Converts the config to utf-8.
+        Mainly for upgrading Windows build. (22 July, 2020)"""
 
         try:
             from chardet import detect
@@ -608,22 +585,24 @@ class Config:
         except ImportError:
             from pynicotine.logfacility import log
 
-            log.add("Failed to convert config file to UTF-8. Please install python3-chardet and start "
-                    "the application again.")
+            log.add(
+                "Failed to convert config file to UTF-8. Please install python3-chardet and start "
+                "the application again."
+            )
             sys.exit()
 
         conv_filename = (self.filename + ".conv").encode("utf-8")
         os.replace(self.filename, conv_filename)
 
-        with open(conv_filename, 'rb') as file_handle:
+        with open(conv_filename, "rb") as file_handle:
             rawdata = file_handle.read()
 
-        from_encoding = detect(rawdata)['encoding']
+        from_encoding = detect(rawdata)["encoding"]
 
         with open(conv_filename, encoding=from_encoding) as file_read:
-            with open(self.filename.encode("utf-8"), 'w', encoding="utf-8") as file_write:
+            with open(self.filename.encode("utf-8"), "w", encoding="utf-8") as file_write:
                 for line in file_read:
-                    file_write.write(line[:-1] + '\r\n')
+                    file_write.write(line[:-1] + "\r\n")
 
         os.remove(conv_filename)
 
@@ -636,7 +615,7 @@ class Config:
         return False
 
     def set_config(self):
-        """ Set config values parsed from file earlier """
+        """Set config values parsed from file earlier"""
 
         from pynicotine.logfacility import log
 
@@ -648,14 +627,20 @@ class Config:
                     log.add(_("Unknown config section '%s'"), i)
 
                 # Check if config option exists in defaults
-                elif (j not in self.defaults.get(i, "") and j not in self.removed_options.get(i, "")
-                        and i != "plugins" and j != "filter"):
-                    log.add(_("Unknown config option '%(option)s' in section '%(section)s'"),
-                            {'option': j, 'section': i})
+                elif (
+                    j not in self.defaults.get(i, "")
+                    and j not in self.removed_options.get(i, "")
+                    and i != "plugins"
+                    and j != "filter"
+                ):
+                    log.add(
+                        _("Unknown config option '%(option)s' in section '%(section)s'"),
+                        {"option": j, "section": i},
+                    )
 
                 else:
-                    """ Attempt to get the default value for a config option. If there's no default
-                    value, it's a custom option from a plugin, so no checks are needed. """
+                    """Attempt to get the default value for a config option. If there's no default
+                    value, it's a custom option from a plugin, so no checks are needed."""
 
                     try:
                         default_val = self.defaults[i][j]
@@ -682,9 +667,9 @@ class Config:
                             eval_val = val
 
                         if i != "plugins" and j != "filter":
-                            if (isinstance(eval_val, type(default_val))
-                                    or (isinstance(default_val, bool)
-                                        and isinstance(eval_val, int) and eval_val in (0, 1))):
+                            if isinstance(eval_val, type(default_val)) or (
+                                isinstance(default_val, bool) and isinstance(eval_val, int) and eval_val in (0, 1)
+                            ):
                                 # Value is valid
                                 pass
 
@@ -697,24 +682,28 @@ class Config:
                         # Value was unexpected, reset option
                         self.sections[i][j] = default_val
 
-                        log.add("Config error: Couldn't decode '%s' section '%s' value '%s', value has been reset", (
-                            (i[:120] + '…') if len(i) > 120 else i,
-                            (j[:120] + '…') if len(j) > 120 else j,
-                            (val[:120] + '…') if len(val) > 120 else val
-                        ))
+                        log.add(
+                            "Config error: Couldn't decode '%s' section '%s' value '%s', value has been reset",
+                            (
+                                (i[:120] + "…") if len(i) > 120 else i,
+                                (j[:120] + "…") if len(j) > 120 else j,
+                                (val[:120] + "…") if len(val) > 120 else val,
+                            ),
+                        )
 
         server = self.sections["server"]
 
         # Check if server value is valid
-        if (len(server["server"]) != 2
-                or not isinstance(server["server"][0], str)
-                or not isinstance(server["server"][1], int)):
+        if (
+            len(server["server"]) != 2
+            or not isinstance(server["server"][0], str)
+            or not isinstance(server["server"][1], int)
+        ):
 
             server["server"] = self.defaults["server"]["server"]
 
         # Check if port range value is valid
-        if (len(server["portrange"]) != 2
-                or not all(isinstance(i, int) for i in server["portrange"])):
+        if len(server["portrange"]) != 2 or not all(isinstance(i, int) for i in server["portrange"]):
 
             server["portrange"] = self.defaults["server"]["portrange"]
 
@@ -767,6 +756,7 @@ class Config:
                 raise FileExistsError("File %s exists" % filename)
 
             import tarfile
+
             with tarfile.open(filename.encode("utf-8"), "w:bz2") as tar:
                 if not os.path.exists(self.filename.encode("utf-8")):
                     raise FileNotFoundError("Config file missing")

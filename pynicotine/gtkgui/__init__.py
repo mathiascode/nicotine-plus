@@ -24,18 +24,18 @@ def check_gui_dependencies():
 
     # Defaults for different operating systems
     components = {
-        "gtk": {"win32": '4', "darwin": '4'},
-        "libadwaita": {"win32": '1', "darwin": '1'}
+        "gtk": {"win32": "4", "darwin": "4"},
+        "libadwaita": {"win32": "1", "darwin": "1"},
     }
 
     if os.getenv("NICOTINE_GTK_VERSION") is None:
-        os.environ["NICOTINE_GTK_VERSION"] = components.get("gtk").get(sys.platform, '3')
+        os.environ["NICOTINE_GTK_VERSION"] = components.get("gtk").get(sys.platform, "3")
 
     if os.getenv("NICOTINE_LIBADWAITA") is None:
-        os.environ["NICOTINE_LIBADWAITA"] = components.get("libadwaita").get(sys.platform, '0')
+        os.environ["NICOTINE_LIBADWAITA"] = components.get("libadwaita").get(sys.platform, "0")
 
     # Require minor version of GTK
-    if os.getenv("NICOTINE_GTK_VERSION") == '4':
+    if os.getenv("NICOTINE_GTK_VERSION") == "4":
         gtk_version = (4, 6, 2)
         pygobject_version = (3, 42, 0)
     else:
@@ -44,14 +44,15 @@ def check_gui_dependencies():
 
     try:
         import gi
+
         gi.check_version(pygobject_version)
 
     except (ImportError, ValueError):
-        return _("Cannot find %s, please install it.") % ("pygobject >= " + '.'.join(map(str, pygobject_version)))
+        return _("Cannot find %s, please install it.") % ("pygobject >= " + ".".join(map(str, pygobject_version)))
 
     try:
         api_version = (gtk_version[0], 0)
-        gi.require_version('Gtk', '.'.join(map(str, api_version)))
+        gi.require_version("Gtk", ".".join(map(str, api_version)))
 
     except ValueError:
         return _("Cannot find %s, please install it.") % ("GTK " + str(gtk_version[0]))
@@ -63,16 +64,20 @@ def check_gui_dependencies():
         return _("Cannot import the Gtk module. Bad install of the python-gobject module?")
 
     if Gtk.check_version(*gtk_version):
-        return _("You are using an unsupported version of GTK %(major_version)s. You should install "
-                 "GTK %(complete_version)s or newer.") % {
+        return _(
+            "You are using an unsupported version of GTK %(major_version)s. You should install "
+            "GTK %(complete_version)s or newer."
+        ) % {
             "major_version": gtk_version[0],
-            "complete_version": '.'.join(map(str, gtk_version))}
+            "complete_version": ".".join(map(str, gtk_version)),
+        }
 
     try:
-        if gtk_version[0] == 4 and os.getenv("NICOTINE_LIBADWAITA") == '1':
-            gi.require_version('Adw', '1')
+        if gtk_version[0] == 4 and os.getenv("NICOTINE_LIBADWAITA") == "1":
+            gi.require_version("Adw", "1")
 
             from gi.repository import Adw
+
             Adw.init()
 
     except (ImportError, ValueError):
@@ -82,9 +87,10 @@ def check_gui_dependencies():
 
 
 def run_gui(core, trayicon, hidden, ci_mode, multi_instance):
-    """ Run Nicotine+ GTK GUI """
+    """Run Nicotine+ GTK GUI"""
 
     from pynicotine.logfacility import log
+
     error = check_gui_dependencies()
 
     if error:
@@ -98,4 +104,5 @@ def run_gui(core, trayicon, hidden, ci_mode, multi_instance):
         return None
 
     from pynicotine.gtkgui.application import Application
+
     return Application(core, trayicon, hidden, ci_mode, multi_instance).run()

@@ -33,15 +33,10 @@ from pynicotine.gtkgui.widgets.ui import UserInterface
 
 
 class WishList(UserInterface):
-
     def __init__(self, frame, core, searches):
 
         super().__init__("ui/dialogs/wishlist.ui")
-        (
-            self.container,
-            self.list_container,
-            self.wish_entry
-        ) = self.widgets
+        (self.container, self.list_container, self.wish_entry) = self.widgets
 
         self.dialog = generic_dialog(
             parent=frame.window,
@@ -50,7 +45,7 @@ class WishList(UserInterface):
             quit_callback=self.hide,
             title=_("Wishlist"),
             width=600,
-            height=600
+            height=600,
         )
 
         self.frame = frame
@@ -59,11 +54,19 @@ class WishList(UserInterface):
         self.timer = None
 
         self.list_view = TreeView(
-            frame, parent=self.list_container, multi_select=True, activate_row_callback=self.on_edit_wish,
+            frame,
+            parent=self.list_container,
+            multi_select=True,
+            activate_row_callback=self.on_edit_wish,
             columns=[
-                {"column_id": "wish", "column_type": "text", "title": _("Wish"), "sort_column": 0,
-                 "default_sort_column": "ascending"}
-            ]
+                {
+                    "column_id": "wish",
+                    "column_type": "text",
+                    "title": _("Wish"),
+                    "sort_column": 0,
+                    "default_sort_column": "ascending",
+                }
+            ],
         )
 
         for wish in config.sections["server"]["autosearch"]:
@@ -82,7 +85,7 @@ class WishList(UserInterface):
     def on_add_wish(self, *_args):
 
         wish = self.wish_entry.get_text()
-        wish_exists = (wish in self.list_view.iterators)
+        wish_exists = wish in self.list_view.iterators
         self.wish_entry.set_text("")
 
         self.core.search.add_wish(wish)
@@ -118,7 +121,7 @@ class WishList(UserInterface):
                 message=_("Enter new value for wish '%s':") % old_wish,
                 default=old_wish,
                 callback=self.on_edit_wish_response,
-                callback_data=old_wish
+                callback_data=old_wish,
             ).show()
             return
 
@@ -145,9 +148,9 @@ class WishList(UserInterface):
 
         OptionDialog(
             parent=self.dialog,
-            title=_('Clear Wishlist?'),
-            message=_('Do you really want to clear your wishlist?'),
-            callback=self.clear_wishlist_response
+            title=_("Clear Wishlist?"),
+            message=_("Do you really want to clear your wishlist?"),
+            callback=self.clear_wishlist_response,
         ).show()
 
     def add_wish(self, wish):

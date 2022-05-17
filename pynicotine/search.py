@@ -32,7 +32,6 @@ from pynicotine.utils import PUNCTUATION
 
 
 class Search:
-
     def __init__(self, core, config, queue, share_dbs, geoip, ui_callback=None):
 
         self.core = core
@@ -40,16 +39,21 @@ class Search:
         self.queue = queue
         self.ui_callback = None
         self.searches = {}
-        self.token = int(random.random() * (2 ** 31 - 1))
+        self.token = int(random.random() * (2**31 - 1))
         self.wishlist_interval = 0
         self.share_dbs = share_dbs
         self.geoip = geoip
-        self.translatepunctuation = str.maketrans(dict.fromkeys(PUNCTUATION, ' '))
+        self.translatepunctuation = str.maketrans(dict.fromkeys(PUNCTUATION, " "))
 
         # Create wishlist searches
         for term in config.sections["server"]["autosearch"]:
             self.token = increment_token(self.token)
-            self.searches[self.token] = {"id": self.token, "term": term, "mode": "wishlist", "ignore": True}
+            self.searches[self.token] = {
+                "id": self.token,
+                "term": term,
+                "mode": "wishlist",
+                "ignore": True,
+            }
 
         if hasattr(ui_callback, "search"):
             self.ui_callback = ui_callback.search
@@ -74,9 +78,7 @@ class Search:
         for file in visible_files:
             user, fullpath, destination, size, bitrate, length = file
 
-            self.core.transfers.get_file(
-                user, fullpath, destination,
-                size=size, bitrate=bitrate, length=length)
+            self.core.transfers.get_file(user, fullpath, destination, size=size, bitrate=bitrate, length=length)
 
         # Ask for the rest of the files in the folder
         self.core.transfers.get_folder(user, folder)
@@ -85,16 +87,21 @@ class Search:
 
     @staticmethod
     def add_allowed_token(token):
-        """ Allow parsing search result messages for a search ID """
+        """Allow parsing search result messages for a search ID"""
         slskmessages.SEARCH_TOKENS_ALLOWED.add(token)
 
     @staticmethod
     def remove_allowed_token(token):
-        """ Disallow parsing search result messages for a search ID """
+        """Disallow parsing search result messages for a search ID"""
         slskmessages.SEARCH_TOKENS_ALLOWED.discard(token)
 
     def add_search(self, term, mode, ignore):
-        self.searches[self.token] = {"id": self.token, "term": term, "mode": mode, "ignore": ignore}
+        self.searches[self.token] = {
+            "id": self.token,
+            "term": term,
+            "mode": mode,
+            "ignore": ignore,
+        }
         self.add_allowed_token(self.token)
 
     def remove_search(self, token):
@@ -170,17 +177,17 @@ class Search:
 
         # Get excluded words (starting with "-")
         searchterm_words = text.split()
-        searchterm_words_special = (p for p in searchterm_words if p.startswith(('-', '*')) and len(p) > 1)
+        searchterm_words_special = (p for p in searchterm_words if p.startswith(("-", "*")) and len(p) > 1)
 
         # Remove words starting with "-", results containing these are excluded by us later
-        searchterm_without_special = ' '.join(p for p in searchterm_words if not p.startswith(('-', '*')))
+        searchterm_without_special = " ".join(p for p in searchterm_words if not p.startswith(("-", "*")))
 
         if self.config.sections["searches"]["remove_special_chars"]:
             """
             Remove special characters from search term
             SoulseekQt doesn't seem to send search results if special characters are included (July 7, 2020)
             """
-            stripped_searchterm = ' '.join(searchterm_without_special.translate(self.translatepunctuation).split())
+            stripped_searchterm = " ".join(searchterm_without_special.translate(self.translatepunctuation).split())
 
             # Only modify search term if string also contains non-special characters
             if stripped_searchterm:
@@ -353,7 +360,7 @@ class Search:
 
     @staticmethod
     def update_search_results(results, word_indices, exclude_word=False):
-        """ Updates the search result list with indices for a new word """
+        """Updates the search result list with indices for a new word"""
 
         if word_indices is None:
             if exclude_word:
@@ -381,7 +388,7 @@ class Search:
         return results
 
     def create_search_result_list(self, searchterm, wordindex, excluded_words, partial_words):
-        """ Returns a list of common file indices for each word in a search term """
+        """Returns a list of common file indices for each word in a search term"""
 
         try:
             words = searchterm.split()
@@ -430,8 +437,8 @@ class Search:
             return None
 
     def process_search_request(self, searchterm, user, token, direct=False):
-        """ Note: since this section is accessed every time a search request arrives several
-            times per second, please keep it as optimized and memory sparse as possible! """
+        """Note: since this section is accessed every time a search request arrives several
+        times per second, please keep it as optimized and memory sparse as possible!"""
 
         if not searchterm:
             return
@@ -454,16 +461,16 @@ class Search:
         excluded_words = []
         partial_words = []
 
-        if '-' in searchterm or '*' in searchterm:
+        if "-" in searchterm or "*" in searchterm:
             for word in searchterm.split():
                 if len(word) < 1:
                     continue
 
-                if word.startswith('-'):
+                if word.startswith("-"):
                     for subword in word.translate(self.translatepunctuation).split():
                         excluded_words.append(subword)
 
-                elif word.startswith('*'):
+                elif word.startswith("*"):
                     for subword in word.translate(self.translatepunctuation).split():
                         partial_words.append(subword)
 
@@ -512,12 +519,17 @@ class Search:
                 fileinfos.append(fileinfo)
 
         if numresults != len(fileinfos):
-            log.add_debug(("Error: File index inconsistency while responding to search request \"%(query)s\". "
-                           "Expected %(expected_num)i results, but found %(total_num)i results in database."), {
-                "query": searchterm_old,
-                "expected_num": numresults,
-                "total_num": len(fileinfos)
-            })
+            log.add_debug(
+                (
+                    'Error: File index inconsistency while responding to search request "%(query)s". '
+                    "Expected %(expected_num)i results, but found %(total_num)i results in database."
+                ),
+                {
+                    "query": searchterm_old,
+                    "expected_num": numresults,
+                    "total_num": len(fileinfos),
+                },
+            )
             numresults = len(fileinfos)
 
         if not numresults:
@@ -529,13 +541,19 @@ class Search:
         fifoqueue = self.config.sections["transfers"]["fifoqueue"]
 
         message = slskmessages.FileSearchResult(
-            None, self.core.login_username,
-            token, fileinfos, slotsavail, uploadspeed, queuesize, fifoqueue)
+            None,
+            self.core.login_username,
+            token,
+            fileinfos,
+            slotsavail,
+            uploadspeed,
+            queuesize,
+            fifoqueue,
+        )
 
         self.core.send_message_to_peer(user, message)
 
-        log.add_search(_("User %(user)s is searching for \"%(query)s\", found %(num)i results"), {
-            'user': user,
-            'query': searchterm_old,
-            'num': numresults
-        })
+        log.add_search(
+            _('User %(user)s is searching for "%(query)s", found %(num)i results'),
+            {"user": user, "query": searchterm_old, "num": numresults},
+        )

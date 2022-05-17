@@ -25,14 +25,12 @@ import sys
 
 
 def install_brew():
-    """ Install dependencies from the main Homebrew repos """
+    """Install dependencies from the main Homebrew repos"""
 
-    gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or '3'
-    use_libadwaita = gtk_version == '4' and os.environ.get("NICOTINE_LIBADWAITA") == '1'
+    gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or "3"
+    use_libadwaita = gtk_version == "4" and os.environ.get("NICOTINE_LIBADWAITA") == "1"
 
-    packages = ["adwaita-icon-theme",
-                "gettext",
-                "gtk+" + gtk_version]
+    packages = ["adwaita-icon-theme", "gettext", "gtk+" + gtk_version]
 
     if use_libadwaita:
         packages.append("libadwaita")
@@ -41,14 +39,12 @@ def install_brew():
 
 
 def install_pypi():
-    """ Install dependencies from PyPi """
+    """Install dependencies from PyPi"""
 
-    packages = ["flake8",
-                "pygobject",
-                "pylint"]
+    packages = ["black", "flake8", "pygobject", "pylint"]
     subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     install_brew()
     install_pypi()

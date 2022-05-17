@@ -35,18 +35,15 @@ from pynicotine.utils import http_request
 
 
 class Plugin(BasePlugin):
-
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-        self.settings = {
-            'reddit_links': 3
-        }
+        self.settings = {"reddit_links": 3}
         self.metasettings = {
-            'reddit_links': {
-                'description': 'Maximum number of links to provide',
-                'type': 'integer'
+            "reddit_links": {
+                "description": "Maximum number of links to provide",
+                "type": "integer",
             }
         }
 
@@ -65,8 +62,12 @@ class Plugin(BasePlugin):
             return
 
         try:
-            response = http_request('https', 'www.reddit.com', '/r/' + subreddit + '/.json',
-                                    headers={"User-Agent": self.config.application_name})
+            response = http_request(
+                "https",
+                "www.reddit.com",
+                "/r/" + subreddit + "/.json",
+                headers={"User-Agent": self.config.application_name},
+            )
 
         except Exception as error:
             self.log("Could not connect to Reddit: %(error)s", {"error": error})
@@ -75,9 +76,9 @@ class Plugin(BasePlugin):
         try:
             response = json.loads(response)
 
-            for post in islice(response['data']['children'], self.settings['reddit_links']):
-                post_data = post['data']
-                self.send_public(room, "/me {}: {}".format(post_data['title'], post_data['url']))
+            for post in islice(response["data"]["children"], self.settings["reddit_links"]):
+                post_data = post["data"]
+                self.send_public(room, "/me {}: {}".format(post_data["title"], post_data["url"]))
 
         except Exception as error:
             self.log("Failed to parse response from Reddit: %(error)s", {"error": error})

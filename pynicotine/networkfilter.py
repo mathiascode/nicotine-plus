@@ -20,7 +20,7 @@ from pynicotine import slskmessages
 
 
 class NetworkFilter:
-    """ Functions related to banning, blocking and ignoring users """
+    """Functions related to banning, blocking and ignoring users"""
 
     def __init__(self, core, config, queue, geoip):
 
@@ -34,9 +34,9 @@ class NetworkFilter:
     """ General """
 
     def _request_ip(self, user, action, list_type):
-        """ Ask for the IP address of a user. Once a GetPeerAddress response arrives,
+        """Ask for the IP address of a user. Once a GetPeerAddress response arrives,
         either block_unblock_user_ip_callback or ignore_unignore_user_ip_callback
-        is called. """
+        is called."""
 
         if list_type == "block":
             request_list = self.ipblock_requested
@@ -53,7 +53,7 @@ class NetworkFilter:
         return False
 
     def _add_user_ip_to_list(self, user, list_type):
-        """ Add the current IP of a user to a list. """
+        """Add the current IP of a user to a list."""
 
         if list_type == "block":
             ip_list = self.config.sections["server"]["ipblocklist"]
@@ -72,7 +72,7 @@ class NetworkFilter:
         return ip_address
 
     def _remove_user_ip_from_list(self, user, list_type):
-        """ Attempt to remove the previously saved IP address of a user from a list. """
+        """Attempt to remove the previously saved IP address of a user from a list."""
 
         if list_type == "block":
             cached_ip = self.get_cached_blocked_user_ip(user)
@@ -96,7 +96,7 @@ class NetworkFilter:
             self.config.write_configuration()
 
     def _get_cached_user_ip(self, user, list_type):
-        """ Retrieve the IP address of a user previously saved in a list. """
+        """Retrieve the IP address of a user previously saved in a list."""
 
         if list_type == "block":
             ip_list = self.config.sections["server"]["ipblocklist"]
@@ -110,8 +110,8 @@ class NetworkFilter:
         return None
 
     def _is_ip_in_list(self, address, list_type):
-        """ Check if an IP address exists in a list, disregarding the username
-        the address is paired with. """
+        """Check if an IP address exists in a list, disregarding the username
+        the address is paired with."""
 
         if address is None:
             return True
@@ -151,8 +151,8 @@ class NetworkFilter:
         return False
 
     def check_user(self, user, ip_address):
-        """ Check if this user is banned, geoip-blocked, and which shares
-        it is allowed to access based on transfer and shares settings. """
+        """Check if this user is banned, geoip-blocked, and which shares
+        it is allowed to access based on transfer and shares settings."""
 
         if self.is_user_banned(user) or (ip_address is not None and self.is_ip_blocked(ip_address)):
             if self.config.sections["transfers"]["usecustomban"]:
@@ -181,21 +181,24 @@ class NetworkFilter:
 
         if country_code and self.config.sections["transfers"]["geoblockcc"][0].find(country_code) >= 0:
             if self.config.sections["transfers"]["usecustomgeoblock"]:
-                return 0, "Banned (%s)" % self.config.sections["transfers"]["customgeoblock"]
+                return (
+                    0,
+                    "Banned (%s)" % self.config.sections["transfers"]["customgeoblock"],
+                )
 
             return 0, "Banned"
 
         return 1, ""
 
     def close_blocked_ip_connections(self):
-        """ Close all connections whose IP address exists in the block list """
+        """Close all connections whose IP address exists in the block list"""
 
         for ip_address in self.config.sections["server"]["ipblocklist"]:
             self.queue.append(slskmessages.ConnCloseIP(ip_address))
 
     def update_saved_user_ip_filters(self, user):
-        """ When we know a user's IP address has changed, we call this function to
-        update the IP saved in lists. """
+        """When we know a user's IP address has changed, we call this function to
+        update the IP saved in lists."""
 
         user_address = self.core.protothread.user_addresses.get(user)
 

@@ -44,7 +44,6 @@ from pynicotine.utils import human_speed
 
 
 class UserInfos(IconNotebook):
-
     def __init__(self, frame, core):
 
         IconNotebook.__init__(self, frame, core, frame.userinfo_notebook, frame.userinfo_page)
@@ -58,7 +57,8 @@ class UserInfos(IconNotebook):
         for tab in self.pages.values():
             if tab.container == page:
                 GLib.idle_add(
-                    lambda: tab.description_view.textview.grab_focus() == -1)  # pylint:disable=cell-var-from-loop
+                    lambda: tab.description_view.textview.grab_focus() == -1
+                )  # pylint:disable=cell-var-from-loop
                 break
 
     def show_user(self, user, switch_page=True):
@@ -123,7 +123,6 @@ class UserInfos(IconNotebook):
 
 
 class UserInfo(UserInterface):
-
     def __init__(self, userinfos, user):
 
         super().__init__("ui/userinfo.ui")
@@ -145,7 +144,7 @@ class UserInfo(UserInterface):
             self.shared_folders_label,
             self.upload_slots_label,
             self.upload_speed_label,
-            self.user_label
+            self.user_label,
         ) = self.widgets
 
         self.userinfos = userinfos
@@ -176,20 +175,32 @@ class UserInfo(UserInterface):
 
         # Set up likes list
         self.likes_list_view = TreeView(
-            self.frame, parent=self.likes_list_container,
+            self.frame,
+            parent=self.likes_list_container,
             columns=[
-                {"column_id": "likes", "column_type": "text", "title": _("Likes"), "sort_column": 0,
-                 "default_sort_column": "ascending"}
-            ]
+                {
+                    "column_id": "likes",
+                    "column_type": "text",
+                    "title": _("Likes"),
+                    "sort_column": 0,
+                    "default_sort_column": "ascending",
+                }
+            ],
         )
 
         # Set up dislikes list
         self.dislikes_list_view = TreeView(
-            self.frame, parent=self.dislikes_list_container,
+            self.frame,
+            parent=self.dislikes_list_container,
             columns=[
-                {"column_id": "dislikes", "column_type": "text", "title": _("Dislikes"), "sort_column": 0,
-                 "default_sort_column": "ascending"}
-            ]
+                {
+                    "column_id": "dislikes",
+                    "column_type": "text",
+                    "title": _("Dislikes"),
+                    "sort_column": 0,
+                    "default_sort_column": "ascending",
+                }
+            ],
         )
 
         # Popup menus
@@ -198,14 +209,28 @@ class UserInfo(UserInterface):
         popup.add_items(
             ("", None),
             ("#" + _("Close All Tabs…"), self.on_close_all_tabs),
-            ("#" + _("_Close Tab"), self.on_close)
+            ("#" + _("_Close Tab"), self.on_close),
         )
 
         def get_interest_items(list_view):
-            return (("$" + _("I _Like This"), self.frame.interests.on_like_recommendation, list_view),
-                    ("$" + _("I _Dislike This"), self.frame.interests.on_dislike_recommendation, list_view),
-                    ("", None),
-                    ("#" + _("_Search for Item"), self.frame.interests.on_recommend_search, list_view))
+            return (
+                (
+                    "$" + _("I _Like This"),
+                    self.frame.interests.on_like_recommendation,
+                    list_view,
+                ),
+                (
+                    "$" + _("I _Dislike This"),
+                    self.frame.interests.on_dislike_recommendation,
+                    list_view,
+                ),
+                ("", None),
+                (
+                    "#" + _("_Search for Item"),
+                    self.frame.interests.on_recommend_search,
+                    list_view,
+                ),
+            )
 
         popup = PopupMenu(self.frame, self.likes_list_view.widget, self.on_popup_likes_menu)
         popup.add_items(*get_interest_items(self.likes_list_view))
@@ -219,7 +244,7 @@ class UserInfo(UserInterface):
             ("#" + _("Zoom In"), self.make_zoom_in),
             ("#" + _("Zoom Out"), self.make_zoom_out),
             ("", None),
-            ("#" + _("Save Picture"), self.on_save_picture)
+            ("#" + _("Save Picture"), self.on_save_picture),
         )
 
         self.update_visuals()
@@ -276,7 +301,10 @@ class UserInfo(UserInterface):
                 # Resize picture to fit container
                 ratio = min(max_width / picture_width, max_height / picture_height)
                 self.picture_data = self.picture_data.scale_simple(
-                    ratio * picture_width, ratio * picture_height, GdkPixbuf.InterpType.BILINEAR)
+                    ratio * picture_width,
+                    ratio * picture_height,
+                    GdkPixbuf.InterpType.BILINEAR,
+                )
 
                 if GTK_API_VERSION >= 4:
                     self.picture.set_pixbuf(self.picture_data)
@@ -289,16 +317,15 @@ class UserInfo(UserInterface):
             self.picture_view.show()
 
         except Exception as error:
-            log.add(_("Failed to load picture for user %(user)s: %(error)s"), {
-                "user": self.user,
-                "error": error
-            })
+            log.add(
+                _("Failed to load picture for user %(user)s: %(error)s"),
+                {"user": self.user, "error": error},
+            )
 
     def make_zoom_normal(self, *_args):
         self.make_zoom_in(zoom=True)
 
     def make_zoom_in(self, *_args, zoom=None):
-
         def calc_zoom_in(w_h):
             return w_h + w_h * self.actual_zoom / 100 + w_h * self.zoom_factor / 100
 
@@ -317,7 +344,8 @@ class UserInfo(UserInterface):
         else:
             self.actual_zoom += self.zoom_factor
             picture_zoomed = self.picture_data.scale_simple(
-                calc_zoom_in(width), calc_zoom_in(height), GdkPixbuf.InterpType.BILINEAR)
+                calc_zoom_in(width), calc_zoom_in(height), GdkPixbuf.InterpType.BILINEAR
+            )
 
         if GTK_API_VERSION >= 4:
             self.picture.set_pixbuf(picture_zoomed)
@@ -328,7 +356,6 @@ class UserInfo(UserInterface):
         gc.collect()
 
     def make_zoom_out(self, *_args):
-
         def calc_zoom_out(w_h):
             return w_h + w_h * self.actual_zoom / 100 - w_h * self.zoom_factor / 100
 
@@ -347,7 +374,8 @@ class UserInfo(UserInterface):
             return
 
         picture_zoomed = self.picture_data.scale_simple(
-            calc_zoom_out(width), calc_zoom_out(height), GdkPixbuf.InterpType.BILINEAR)
+            calc_zoom_out(width), calc_zoom_out(height), GdkPixbuf.InterpType.BILINEAR
+        )
 
         if GTK_API_VERSION >= 4:
             self.picture.set_pixbuf(picture_zoomed)
@@ -360,8 +388,10 @@ class UserInfo(UserInterface):
     def show_connection_error(self):
 
         self.info_bar.show_message(
-            _("Unable to request information from user. Either you both have a closed listening "
-              "port, the user is offline, or there's a temporary connectivity issue.")
+            _(
+                "Unable to request information from user. Either you both have a closed listening "
+                "port, the user is offline, or there's a temporary connectivity issue."
+            )
         )
 
         self.set_finished()
@@ -474,7 +504,7 @@ class UserInfo(UserInterface):
             parent=self.frame.window,
             callback=self.on_save_picture_response,
             initial_folder=config.sections["transfers"]["downloaddir"],
-            initial_file="%s %s.jpg" % (self.user, time.strftime("%Y-%m-%d %H_%M_%S"))
+            initial_file="%s %s.jpg" % (self.user, time.strftime("%Y-%m-%d %H_%M_%S")),
         ).show()
 
     def on_scroll(self, _controller, _scroll_x, scroll_y):

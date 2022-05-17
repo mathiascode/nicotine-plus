@@ -35,12 +35,51 @@ from pynicotine.config import config
 from pynicotine.logfacility import log
 from pynicotine.slskmessages import UINT_LIMIT
 
-FILE_SIZE_SUFFIXES = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
-PUNCTUATION = ['!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>',
-               '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~', '–', '—', '‐', '’', '“', '”', '…']
-ILLEGALPATHCHARS = ['?', ':', '>', '<', '|', '*', '"']
-ILLEGALFILECHARS = ILLEGALPATHCHARS + ['\\', '/']
-REPLACEMENTCHAR = '_'
+FILE_SIZE_SUFFIXES = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+PUNCTUATION = [
+    "!",
+    '"',
+    "#",
+    "$",
+    "%",
+    "&",
+    "'",
+    "(",
+    ")",
+    "*",
+    "+",
+    ",",
+    "-",
+    ".",
+    "/",
+    ":",
+    ";",
+    "<",
+    "=",
+    ">",
+    "?",
+    "@",
+    "[",
+    "\\",
+    "]",
+    "^",
+    "_",
+    "`",
+    "{",
+    "|",
+    "}",
+    "~",
+    "–",
+    "—",
+    "‐",
+    "’",
+    "“",
+    "”",
+    "…",
+]
+ILLEGALPATHCHARS = ["?", ":", ">", "<", "|", "*", '"']
+ILLEGALFILECHARS = ILLEGALPATHCHARS + ["\\", "/"]
+REPLACEMENTCHAR = "_"
 OPEN_SOULSEEK_URL = None
 
 
@@ -51,6 +90,7 @@ def rename_process(new_name, debug_info=False):
     # Renaming ourselves for pkill et al.
     try:
         import ctypes
+
         # GNU/Linux style
         libc = ctypes.CDLL(None)
         libc.prctl(15, new_name, 0, 0, 0)
@@ -61,6 +101,7 @@ def rename_process(new_name, debug_info=False):
 
         try:
             import ctypes
+
             # BSD style
             libc = ctypes.CDLL(None)
             libc.setproctitle(new_name)
@@ -73,7 +114,7 @@ def rename_process(new_name, debug_info=False):
         msg = ["Errors occurred while trying to change process name:"]
         for i in errors:
             msg.append("%s" % (i,))
-        log.add('\n'.join(msg))
+        log.add("\n".join(msg))
 
 
 def clean_file(filename):
@@ -89,18 +130,18 @@ def clean_path(path, absolute=False):
     # Without hacks it is (up to Vista) not possible to have more
     # than 26 drives mounted, so we can assume a '[a-zA-Z]:\' prefix
     # for drives - we shouldn't escape that
-    drive = ''
-    if absolute and path[1:3] == ':\\' and path[0:1] and path[0].isalpha():
+    drive = ""
+    if absolute and path[1:3] == ":\\" and path[0:1] and path[0].isalpha():
         drive = path[:3]
         path = path[3:]
 
     for char in ILLEGALPATHCHARS:
         path = path.replace(char, REPLACEMENTCHAR)
 
-    path = ''.join([drive, path])
+    path = "".join([drive, path])
 
     # Path can never end with a period or space on Windows machines
-    path = path.rstrip('. ')
+    path = path.rstrip(". ")
 
     return path
 
@@ -110,6 +151,7 @@ def _try_open_uri(uri):
     if sys.platform not in ("darwin", "win32"):
         try:
             from gi.repository import Gio  # pylint: disable=import-error
+
             Gio.AppInfo.launch_default_for_uri(uri)
             return
 
@@ -122,9 +164,9 @@ def _try_open_uri(uri):
 
 
 def open_file_path(file_path, command=None, create_folder=False, create_file=False):
-    """ Currently used to either open a folder or play an audio file
+    """Currently used to either open a folder or play an audio file
     Tries to run a user-specified command first, and falls back to
-    the system default. """
+    the system default."""
 
     if file_path is None:
         return False
@@ -156,19 +198,22 @@ def open_file_path(file_path, command=None, create_folder=False, create_file=Fal
             _try_open_uri("file:///" + file_path)
 
     except Exception as error:
-        log.add(_("Cannot open file path %(path)s: %(error)s"), {"path": file_path, "error": error})
+        log.add(
+            _("Cannot open file path %(path)s: %(error)s"),
+            {"path": file_path, "error": error},
+        )
         return False
 
     return True
 
 
 def open_uri(uri):
-    """ Open a URI in an external (web) browser. The given argument has
-    to be a properly formed URI including the scheme (fe. HTTP). """
+    """Open a URI in an external (web) browser. The given argument has
+    to be a properly formed URI including the scheme (fe. HTTP)."""
 
     try:
         # Situation 1, user defined a way of handling the protocol
-        protocol = uri[:uri.find(":")]
+        protocol = uri[: uri.find(":")]
         protocol_handlers = config.sections["urls"]["protocols"]
 
         if protocol in protocol_handlers and protocol_handlers[protocol]:
@@ -209,7 +254,10 @@ def _handle_log(folder, filename, callback):
         callback(path)
 
     except Exception as error:
-        log.add(_("Cannot access log file %(path)s: %(error)s"), {"path": path, "error": error})
+        log.add(
+            _("Cannot access log file %(path)s: %(error)s"),
+            {"path": path, "error": error},
+        )
 
 
 def open_log_callback(path):
@@ -223,16 +271,18 @@ def delete_log_callback(path):
 def get_latest_version():
 
     response = http_request(
-        "https", "pypi.org", "/pypi/nicotine-plus/json",
-        headers={"User-Agent": config.application_name}
+        "https",
+        "pypi.org",
+        "/pypi/nicotine-plus/json",
+        headers={"User-Agent": config.application_name},
     )
     data = json.loads(response)
 
-    hlatest = data['info']['version']
+    hlatest = data["info"]["version"]
     latest = int(make_version(hlatest))
 
     try:
-        date = data['releases'][hlatest][0]['upload_time']
+        date = data["releases"][hlatest][0]["upload_time"]
     except Exception:
         date = None
 
@@ -259,18 +309,18 @@ def human_length(seconds):
     days, hours = divmod(hours, 24)
 
     if days > 0:
-        ret = '%i:%02i:%02i:%02i' % (days, hours, minutes, seconds)
+        ret = "%i:%02i:%02i:%02i" % (days, hours, minutes, seconds)
     elif hours > 0:
-        ret = '%i:%02i:%02i' % (hours, minutes, seconds)
+        ret = "%i:%02i:%02i" % (hours, minutes, seconds)
     else:
-        ret = '%i:%02i' % (minutes, seconds)
+        ret = "%i:%02i" % (minutes, seconds)
 
     return ret
 
 
 def get_result_bitrate_length(filesize, attributes):
-    """ Used to get the audio bitrate and length of search results and
-    user browse files """
+    """Used to get the audio bitrate and length of search results and
+    user browse files"""
 
     bitrate = attributes.get(0)
     length = attributes.get(1)
@@ -348,17 +398,17 @@ def humanize(number):
 
 
 def factorize(filesize, base=1024):
-    """ Converts filesize string with a given unit into raw integer size,
-        defaults to binary for "k", "m", "g" suffixes (KiB, MiB, GiB) """
+    """Converts filesize string with a given unit into raw integer size,
+    defaults to binary for "k", "m", "g" suffixes (KiB, MiB, GiB)"""
 
     if not filesize:
         return None, None
 
-    if filesize[-1:].lower() == 'b':
+    if filesize[-1:].lower() == "b":
         base = 1000  # Byte suffix detected, prepare to use decimal if necessary
         filesize = filesize[:-1]
 
-    if filesize[-1:].lower() == 'i':
+    if filesize[-1:].lower() == "i":
         base = 1024  # Binary requested, stop using decimal
         filesize = filesize[:-1]
 
@@ -386,7 +436,7 @@ def factorize(filesize, base=1024):
 def unescape(string):
     """Removes quotes from the beginning and end of strings, and unescapes it."""
 
-    string = string.encode('latin-1', 'backslashreplace').decode('unicode-escape')
+    string = string.encode("latin-1", "backslashreplace").decode("unicode-escape")
 
     try:
         if (string[0] == string[-1]) and string.startswith(("'", '"')):
@@ -397,7 +447,7 @@ def unescape(string):
     return string
 
 
-def execute_command(command, replacement=None, background=True, returnoutput=False, placeholder='$'):
+def execute_command(command, replacement=None, background=True, returnoutput=False, placeholder="$"):
     """Executes a string with commands, with partial support for bash-style quoting and pipes.
 
     The different parts of the command should be separated by spaces, a double
@@ -420,7 +470,7 @@ def execute_command(command, replacement=None, background=True, returnoutput=Fal
     Example commands:
     * "C:\\Program Files\\WinAmp\\WinAmp.exe" --xforce "--title=My Window Title"
     * mplayer $
-    * echo $ | flite -t """
+    * echo $ | flite -t"""
 
     from subprocess import PIPE
     from subprocess import Popen
@@ -434,8 +484,10 @@ def execute_command(command, replacement=None, background=True, returnoutput=Fal
     if command.endswith("&"):
         command = command[:-1]
         if returnoutput:
-            log.add("Yikes, I was asked to return output but I'm also asked to launch "
-                    "the process in the background. returnoutput gets precedent.")
+            log.add(
+                "Yikes, I was asked to return output but I'm also asked to launch "
+                "the process in the background. returnoutput gets precedent."
+            )
         else:
             background = True
 
@@ -446,20 +498,20 @@ def execute_command(command, replacement=None, background=True, returnoutput=Fal
 
         (pre, argument, post) = unparsed.split('"', 2)
         if pre:
-            arguments += pre.rstrip(' ').split(' ')
+            arguments += pre.rstrip(" ").split(" ")
 
         arguments.append(argument)
-        unparsed = post.lstrip(' ')
+        unparsed = post.lstrip(" ")
 
     if unparsed:
-        arguments += unparsed.split(' ')
+        arguments += unparsed.split(" ")
 
     # arguments is now: ['C:\Program Files\WinAmp\WinAmp.exe', '--xforce', '--title=My Title', '$', '|', 'flite', '-t']
     subcommands = []
     current = []
 
     for argument in arguments:
-        if argument in ('|',):
+        if argument in ("|",):
             subcommands.append(current)
             current = []
         else:
@@ -481,23 +533,35 @@ def execute_command(command, replacement=None, background=True, returnoutput=Fal
 
     try:
         if len(subcommands) == 1:  # no need to fool around with pipes
-            procs.append(Popen(subcommands[0], stdout=finalstdout))      # pylint: disable=consider-using-with
+            procs.append(Popen(subcommands[0], stdout=finalstdout))  # pylint: disable=consider-using-with
         else:
-            procs.append(Popen(subcommands[0], stdout=PIPE))             # pylint: disable=consider-using-with
+            procs.append(Popen(subcommands[0], stdout=PIPE))  # pylint: disable=consider-using-with
 
             for subcommand in subcommands[1:-1]:
-                procs.append(Popen(subcommand, stdin=procs[-1].stdout,   # pylint: disable=consider-using-with
-                                   stdout=PIPE))
+                procs.append(
+                    Popen(
+                        subcommand,
+                        stdin=procs[-1].stdout,  # pylint: disable=consider-using-with
+                        stdout=PIPE,
+                    )
+                )
 
-            procs.append(Popen(subcommands[-1], stdin=procs[-1].stdout,  # pylint: disable=consider-using-with
-                               stdout=finalstdout))
+            procs.append(
+                Popen(
+                    subcommands[-1],
+                    stdin=procs[-1].stdout,  # pylint: disable=consider-using-with
+                    stdout=finalstdout,
+                )
+            )
 
         if not background and not returnoutput:
             procs[-1].wait()
 
     except Exception as error:
-        raise RuntimeError("Problem while executing command %s (%s of %s)" %
-                           (subcommands[len(procs)], len(procs) + 1, len(subcommands))) from error
+        raise RuntimeError(
+            "Problem while executing command %s (%s of %s)"
+            % (subcommands[len(procs)], len(procs) + 1, len(subcommands))
+        ) from error
 
     if not returnoutput:
         return True
@@ -522,8 +586,10 @@ def load_file(path, load_func, use_old_file=False):
         return load_func(path)
 
     except Exception as error:
-        log.add(_("Something went wrong while reading file %(filename)s: %(error)s"),
-                {"filename": path, "error": error})
+        log.add(
+            _("Something went wrong while reading file %(filename)s: %(error)s"),
+            {"filename": path, "error": error},
+        )
 
         if not use_old_file:
             # Attempt to load data from .old file
@@ -539,16 +605,17 @@ def write_file_and_backup(path, callback, protect=False):
     try:
         if os.path.exists(path.encode("utf-8")):
             from shutil import copy2
+
             copy2(path, (path + ".old").encode("utf-8"))
 
             if protect:
                 os.chmod((path + ".old").encode("utf-8"), 0o600)
 
     except Exception as error:
-        log.add(_("Unable to back up file %(path)s: %(error)s"), {
-            "path": path,
-            "error": error
-        })
+        log.add(
+            _("Unable to back up file %(path)s: %(error)s"),
+            {"path": path, "error": error},
+        )
         return
 
     # Save new file
@@ -560,10 +627,7 @@ def write_file_and_backup(path, callback, protect=False):
             callback(file_handle)
 
     except Exception as error:
-        log.add(_("Unable to save file %(path)s: %(error)s"), {
-            "path": path,
-            "error": error
-        })
+        log.add(_("Unable to save file %(path)s: %(error)s"), {"path": path, "error": error})
 
         # Attempt to restore file
         try:
@@ -571,16 +635,25 @@ def write_file_and_backup(path, callback, protect=False):
                 os.replace((path + ".old").encode("utf-8"), path)
 
         except Exception as second_error:
-            log.add(_("Unable to restore previous file %(path)s: %(error)s"), {
-                "path": path,
-                "error": second_error
-            })
+            log.add(
+                _("Unable to restore previous file %(path)s: %(error)s"),
+                {"path": path, "error": second_error},
+            )
 
     if protect:
         os.umask(oldumask)
 
 
-def http_request(url_scheme, base_url, path, request_type="GET", body="", headers=None, timeout=10, redirect_depth=0):
+def http_request(
+    url_scheme,
+    base_url,
+    path,
+    request_type="GET",
+    body="",
+    headers=None,
+    timeout=10,
+    redirect_depth=0,
+):
 
     if headers is None:
         headers = {}
@@ -598,16 +671,23 @@ def http_request(url_scheme, base_url, path, request_type="GET", body="", header
     try:
         conn.request(request_type, path, body=body, headers=headers)
         response = conn.getresponse()
-        redirect = response.getheader('Location')
+        redirect = response.getheader("Location")
 
         if redirect:
             from urllib.parse import urlparse
+
             parsed_url = urlparse(redirect)
             redirect_depth += 1
 
             return http_request(
-                parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                request_type, body, headers, timeout, redirect_depth
+                parsed_url.scheme,
+                parsed_url.netloc,
+                parsed_url.path,
+                request_type,
+                body,
+                headers,
+                timeout,
+                redirect_depth,
             )
 
         contents = response.read().decode("utf-8")
@@ -626,8 +706,7 @@ class RestrictedUnpickler(pickle.Unpickler):
 
     def find_class(self, module, name):
         # Forbid all globals
-        raise pickle.UnpicklingError("global '%s.%s' is forbidden" %
-                                     (module, name))
+        raise pickle.UnpicklingError("global '%s.%s' is forbidden" % (module, name))
 
 
 """ Command Aliases """
@@ -667,9 +746,12 @@ def unalias(rest):
         action = aliases[rest]
         del aliases[rest]
 
-        return _("Removed alias %(alias)s: %(action)s\n") % {'alias': rest, 'action': action}
+        return _("Removed alias %(alias)s: %(action)s\n") % {
+            "alias": rest,
+            "action": action,
+        }
 
-    return _("No such alias (%(alias)s)\n") % {'alias': rest}
+    return _("No such alias (%(alias)s)\n") % {"alias": rest}
 
 
 def is_alias(command):
@@ -686,7 +768,6 @@ def is_alias(command):
 
 
 def get_alias(command):
-
     def getpart(line):
 
         if line[0] != "(":
@@ -719,8 +800,8 @@ def get_alias(command):
         i = 0
 
         while i < len(alias):
-            if alias[i:i + 2] == "$(":
-                arg = getpart(alias[i + 1:])
+            if alias[i : i + 2] == "$(":
+                arg = getpart(alias[i + 1 :])
 
                 if not arg:
                     ret = ret + "$"
@@ -750,7 +831,7 @@ def get_alias(command):
                     else:
                         last = len(command)
 
-                value = " ".join(command[first:last + 1])
+                value = " ".join(command[first : last + 1])
 
                 if not value:
                     value = default
@@ -812,14 +893,14 @@ def get_completion_list(commands, rooms):
 
 
 def debug(*args):
-    """ Prints debugging info. """
+    """Prints debugging info."""
 
     truncated_args = [arg[:200] if isinstance(arg, str) else arg for arg in args]
-    log.add('*' * 8, truncated_args)
+    log.add("*" * 8, truncated_args)
 
 
 def strace(function):
-    """ Decorator for debugging """
+    """Decorator for debugging"""
 
     from itertools import chain
 
@@ -827,7 +908,14 @@ def strace(function):
         name = function.__name__
         log.add("%s(%s)" % (name, ", ".join(map(repr, chain(args, list(kwargs.values()))))))
         retvalue = function(*args, **kwargs)
-        log.add("%s(%s): %s" % (name, ", ".join(map(repr, chain(args, list(kwargs.values())))), repr(retvalue)))
+        log.add(
+            "%s(%s): %s"
+            % (
+                name,
+                ", ".join(map(repr, chain(args, list(kwargs.values())))),
+                repr(retvalue),
+            )
+        )
         return retvalue
 
     return newfunc

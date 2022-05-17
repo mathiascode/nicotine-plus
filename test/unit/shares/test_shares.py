@@ -28,7 +28,6 @@ SHARES_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), ".sharedf
 
 
 class SharesTest(unittest.TestCase):
-
     def setUp(self):
 
         config.data_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dbs")
@@ -37,7 +36,7 @@ class SharesTest(unittest.TestCase):
         config.load_config()
 
     def test_shares_scan(self):
-        """ Test a full shares scan """
+        """Test a full shares scan"""
 
         config.sections["transfers"]["shared"] = [("Shares", SHARES_DIR)]
         config.sections["transfers"]["rescanonstartup"] = False
@@ -49,9 +48,12 @@ class SharesTest(unittest.TestCase):
         self.assertIn(SHARES_DIR, list(shares.share_dbs["mtimes"]))
 
         # Verify that shared files were added
-        self.assertIn(['dummy_file', 0, None, None], shares.share_dbs["files"]["Shares"])
-        self.assertIn(['nicotinetestdata.mp3', 80919, (128, 0), 5], shares.share_dbs["files"]["Shares"])
-        self.assertIn(['vbr44.mp3', 36609, (32, 1), 9], shares.share_dbs["files"]["Shares"])  # 1 = VBR
+        self.assertIn(["dummy_file", 0, None, None], shares.share_dbs["files"]["Shares"])
+        self.assertIn(
+            ["nicotinetestdata.mp3", 80919, (128, 0), 5],
+            shares.share_dbs["files"]["Shares"],
+        )
+        self.assertIn(["vbr44.mp3", 36609, (32, 1), 9], shares.share_dbs["files"]["Shares"])  # 1 = VBR
 
         # Verify that expected folder is empty
         self.assertEqual(len(shares.share_dbs["files"]["Shares\\folder2"]), 0)
@@ -61,21 +63,39 @@ class SharesTest(unittest.TestCase):
         nicotinetestdata_indexes = list(word_index["nicotinetestdata"])
         ogg_indexes = list(word_index["ogg"])
 
-        self.assertEqual(set(word_index), set(
-            ['nicotinetestdata', 'ogg', 'mp3', 'shares', 'file', 'dummy', 'folder1',
-             'folder2', 'nothing', 'something', 'test', 'vbr44']
-        ))
+        self.assertEqual(
+            set(word_index),
+            set(
+                [
+                    "nicotinetestdata",
+                    "ogg",
+                    "mp3",
+                    "shares",
+                    "file",
+                    "dummy",
+                    "folder1",
+                    "folder2",
+                    "nothing",
+                    "something",
+                    "test",
+                    "vbr44",
+                ]
+            ),
+        )
         self.assertEqual(len(nicotinetestdata_indexes), 2)
         self.assertEqual(len(ogg_indexes), 1)
 
         # File ID associated with word "ogg" should return our nicotinetestdata.ogg file
         self.assertIn(ogg_indexes[0], nicotinetestdata_indexes)
-        self.assertEqual(shares.share_dbs["fileindex"][str(ogg_indexes[0])][0], 'Shares\\nicotinetestdata.ogg')
+        self.assertEqual(
+            shares.share_dbs["fileindex"][str(ogg_indexes[0])][0],
+            "Shares\\nicotinetestdata.ogg",
+        )
 
         shares.close_shares(shares.share_dbs)
 
     def test_hidden_file_folder_scan(self):
-        """ Test that hidden files and folders are excluded """
+        """Test that hidden files and folders are excluded"""
 
         config.sections["transfers"]["shared"] = [("Shares", SHARES_DIR)]
         config.sections["transfers"]["rescanonstartup"] = False

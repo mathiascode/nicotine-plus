@@ -23,12 +23,14 @@ import subprocess
 
 
 def update_pot():
-    """ Update .pot translation template """
+    """Update .pot translation template"""
 
     # Desktop, Python and GtkBuilder files
-    files = (sorted(glob.glob("data/**/*.in", recursive=True), key=os.path.abspath)
-             + sorted(glob.glob("pynicotine/**/*.py", recursive=True), key=os.path.abspath)
-             + sorted(glob.glob("pynicotine/**/*.ui", recursive=True), key=os.path.abspath))
+    files = (
+        sorted(glob.glob("data/**/*.in", recursive=True), key=os.path.abspath)
+        + sorted(glob.glob("pynicotine/**/*.py", recursive=True), key=os.path.abspath)
+        + sorted(glob.glob("pynicotine/**/*.ui", recursive=True), key=os.path.abspath)
+    )
 
     subprocess.check_call(["xgettext", "-o", "po/nicotine.pot"] + files)
 
@@ -37,5 +39,5 @@ def update_pot():
     subprocess.check_call(["xgettext", "--join-existing", "-L", "Python", "-o", "po/nicotine.pot"] + files)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     update_pot()

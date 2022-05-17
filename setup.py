@@ -41,13 +41,12 @@ from pynicotine.i18n import get_translation_paths
 
 
 class BuildPyCommand(build_py):
-
     def run(self):
         build_translations()
         build_py.run(self)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Specify a description for the PyPi project page
     LONG_DESCRIPTION = """Nicotine+ is a graphical client for the Soulseek peer-to-peer
@@ -58,19 +57,29 @@ alternative to the official Soulseek client, providing additional
 functionality while keeping current with the Soulseek protocol."""
 
     # Specify included files
-    PACKAGES = ["pynicotine"] + \
-        [name for importer, name, ispkg in walk_packages(path=pynicotine.__path__, prefix="pynicotine.") if ispkg]
+    PACKAGES = ["pynicotine"] + [
+        name for importer, name, ispkg in walk_packages(path=pynicotine.__path__, prefix="pynicotine.") if ispkg
+    ]
 
     PACKAGE_DATA = {package: ["*.bin", "*.md", "*.py", "*.svg", "*.ui", "PLUGININFO"] for package in PACKAGES}
 
     DATA_FILES = [
         ("share/applications", ["data/%s.desktop" % config.application_id]),
         ("share/metainfo", ["data/%s.appdata.xml" % config.application_id]),
-        ("share/icons/hicolor/scalable/apps", glob.glob("pynicotine/gtkgui/icons/hicolor/scalable/apps/*.svg")),
-        ("share/icons/hicolor/scalable/intl", glob.glob("pynicotine/gtkgui/icons/hicolor/scalable/intl/*.svg")),
-        ("share/icons/hicolor/symbolic/apps", glob.glob("pynicotine/gtkgui/icons/hicolor/symbolic/apps/*.svg")),
+        (
+            "share/icons/hicolor/scalable/apps",
+            glob.glob("pynicotine/gtkgui/icons/hicolor/scalable/apps/*.svg"),
+        ),
+        (
+            "share/icons/hicolor/scalable/intl",
+            glob.glob("pynicotine/gtkgui/icons/hicolor/scalable/intl/*.svg"),
+        ),
+        (
+            "share/icons/hicolor/symbolic/apps",
+            glob.glob("pynicotine/gtkgui/icons/hicolor/symbolic/apps/*.svg"),
+        ),
         ("share/doc/nicotine", glob.glob("[!404.md]*.md") + glob.glob("doc/*.md")),
-        ("share/man/man1", glob.glob("data/*.1"))
+        ("share/man/man1", glob.glob("data/*.1")),
     ] + get_translation_paths()
 
     # Run setup
@@ -90,5 +99,5 @@ functionality while keeping current with the Soulseek protocol."""
         data_files=DATA_FILES,
         python_requires=">=3.5",
         install_requires=["PyGObject>=3.22"],
-        cmdclass={"build_py": BuildPyCommand}
+        cmdclass={"build_py": BuildPyCommand},
     )

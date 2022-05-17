@@ -25,7 +25,6 @@ from pynicotine.gtkgui.widgets.ui import UserInterface
 
 
 class Shortcuts(UserInterface):
-
     def __init__(self, frame):
 
         super().__init__("ui/dialogs/shortcuts.ui")

@@ -34,7 +34,6 @@ from pynicotine.utils import human_speed
 
 
 class Interests(UserInterface):
-
     def __init__(self, frame, core):
 
         super().__init__("ui/interests.ui")
@@ -47,7 +46,7 @@ class Interests(UserInterface):
             self.recommendations_list_container,
             self.similar_users_button,
             self.similar_users_label,
-            self.similar_users_list_container
+            self.similar_users_list_container,
         ) = self.widgets
 
         if GTK_API_VERSION >= 4:
@@ -62,54 +61,104 @@ class Interests(UserInterface):
 
         # Columns
         self.likes_list_view = TreeView(
-            frame, parent=self.likes_list_container,
+            frame,
+            parent=self.likes_list_container,
             columns=[
-                {"column_id": "likes", "column_type": "text", "title": _("Likes"), "sort_column": 0,
-                 "default_sort_column": "ascending"}
-            ]
+                {
+                    "column_id": "likes",
+                    "column_type": "text",
+                    "title": _("Likes"),
+                    "sort_column": 0,
+                    "default_sort_column": "ascending",
+                }
+            ],
         )
 
         self.dislikes_list_view = TreeView(
-            frame, parent=self.dislikes_list_container,
+            frame,
+            parent=self.dislikes_list_container,
             columns=[
-                {"column_id": "dislikes", "column_type": "text", "title": _("Dislikes"), "sort_column": 0,
-                 "default_sort_column": "ascending"}
-            ]
+                {
+                    "column_id": "dislikes",
+                    "column_type": "text",
+                    "title": _("Dislikes"),
+                    "sort_column": 0,
+                    "default_sort_column": "ascending",
+                }
+            ],
         )
 
         self.recommendations_list_view = TreeView(
-            frame, parent=self.recommendations_list_container,
-            search_column=1, activate_row_callback=self.on_r_row_activated,
+            frame,
+            parent=self.recommendations_list_container,
+            search_column=1,
+            activate_row_callback=self.on_r_row_activated,
             columns=[
                 # Visible columns
-                {"column_id": "rating", "column_type": "number", "title": _("Rating"), "width": 0,
-                 "sort_column": 2, "default_sort_column": "descending"},
-                {"column_id": "item", "column_type": "text", "title": _("Item"), "sort_column": 1},
-
+                {
+                    "column_id": "rating",
+                    "column_type": "number",
+                    "title": _("Rating"),
+                    "width": 0,
+                    "sort_column": 2,
+                    "default_sort_column": "descending",
+                },
+                {
+                    "column_id": "item",
+                    "column_type": "text",
+                    "title": _("Item"),
+                    "sort_column": 1,
+                },
                 # Hidden data columns
-                {"column_id": "rating_hidden", "data_type": int}
-            ]
+                {"column_id": "rating_hidden", "data_type": int},
+            ],
         )
 
         self.similar_users_list_view = TreeView(
-            frame, parent=self.similar_users_list_container,
-            search_column=1, activate_row_callback=self.on_ru_row_activated, tooltip_callback=self.on_tooltip,
+            frame,
+            parent=self.similar_users_list_container,
+            search_column=1,
+            activate_row_callback=self.on_ru_row_activated,
+            tooltip_callback=self.on_tooltip,
             columns=[
                 # Visible columns
-                {"column_id": "status", "column_type": "icon", "title": _("Status"), "width": 25,
-                 "sort_column": 4, "hide_header": True},
-                {"column_id": "user", "column_type": "text", "title": _("User"), "width": 135,
-                 "sort_column": 1, "expand_column": True, "iterator_key": True},
-                {"column_id": "speed", "column_type": "number", "title": _("Speed"), "width": 60,
-                 "sort_column": 5, "expand_column": True},
-                {"column_id": "files", "column_type": "number", "title": _("Files"), "sort_column": 6,
-                 "expand_column": True},
-
+                {
+                    "column_id": "status",
+                    "column_type": "icon",
+                    "title": _("Status"),
+                    "width": 25,
+                    "sort_column": 4,
+                    "hide_header": True,
+                },
+                {
+                    "column_id": "user",
+                    "column_type": "text",
+                    "title": _("User"),
+                    "width": 135,
+                    "sort_column": 1,
+                    "expand_column": True,
+                    "iterator_key": True,
+                },
+                {
+                    "column_id": "speed",
+                    "column_type": "number",
+                    "title": _("Speed"),
+                    "width": 60,
+                    "sort_column": 5,
+                    "expand_column": True,
+                },
+                {
+                    "column_id": "files",
+                    "column_type": "number",
+                    "title": _("Files"),
+                    "sort_column": 6,
+                    "expand_column": True,
+                },
                 # Hidden data columns
                 {"column_id": "status_hidden", "data_type": int},
                 {"column_id": "speed_hidden", "data_type": GObject.TYPE_UINT},
-                {"column_id": "files_hidden", "data_type": GObject.TYPE_UINT}
-            ]
+                {"column_id": "files_hidden", "data_type": GObject.TYPE_UINT},
+            ],
         )
 
         for thing in config.sections["interests"]["likes"]:
@@ -123,27 +172,59 @@ class Interests(UserInterface):
         # Popup menus
         self.til_popup_menu = popup = PopupMenu(self.frame, self.likes_list_view.widget)
         popup.add_items(
-            ("#" + _("Re_commendations for Item"), self.on_recommend_item, self.likes_list_view),
-            ("#" + _("_Search for Item"), self.on_recommend_search, self.likes_list_view),
+            (
+                "#" + _("Re_commendations for Item"),
+                self.on_recommend_item,
+                self.likes_list_view,
+            ),
+            (
+                "#" + _("_Search for Item"),
+                self.on_recommend_search,
+                self.likes_list_view,
+            ),
             ("", None),
-            ("#" + _("_Remove Item"), self.on_remove_thing_i_like)
+            ("#" + _("_Remove Item"), self.on_remove_thing_i_like),
         )
 
         self.tidl_popup_menu = popup = PopupMenu(self.frame, self.dislikes_list_view.widget)
         popup.add_items(
-            ("#" + _("Re_commendations for Item"), self.on_recommend_item, self.dislikes_list_view),
-            ("#" + _("_Search for Item"), self.on_recommend_search, self.dislikes_list_view),
+            (
+                "#" + _("Re_commendations for Item"),
+                self.on_recommend_item,
+                self.dislikes_list_view,
+            ),
+            (
+                "#" + _("_Search for Item"),
+                self.on_recommend_search,
+                self.dislikes_list_view,
+            ),
             ("", None),
-            ("#" + _("_Remove Item"), self.on_remove_thing_i_dislike)
+            ("#" + _("_Remove Item"), self.on_remove_thing_i_dislike),
         )
 
         self.r_popup_menu = popup = PopupMenu(self.frame, self.recommendations_list_view.widget, self.on_popup_r_menu)
         popup.add_items(
-            ("$" + _("I _Like This"), self.on_like_recommendation, self.recommendations_list_view),
-            ("$" + _("I _Dislike This"), self.on_dislike_recommendation, self.recommendations_list_view),
+            (
+                "$" + _("I _Like This"),
+                self.on_like_recommendation,
+                self.recommendations_list_view,
+            ),
+            (
+                "$" + _("I _Dislike This"),
+                self.on_dislike_recommendation,
+                self.recommendations_list_view,
+            ),
             ("", None),
-            ("#" + _("_Recommendations for Item"), self.on_recommend_item, self.recommendations_list_view),
-            ("#" + _("_Search for Item"), self.on_recommend_search, self.recommendations_list_view)
+            (
+                "#" + _("_Recommendations for Item"),
+                self.on_recommend_item,
+                self.recommendations_list_view,
+            ),
+            (
+                "#" + _("_Search for Item"),
+                self.on_recommend_search,
+                self.recommendations_list_view,
+            ),
         )
 
         popup = UserPopupMenu(self.frame, self.similar_users_list_view.widget, self.on_popup_ru_menu)
@@ -167,7 +248,7 @@ class Interests(UserInterface):
         self.similar_users_button.set_sensitive(False)
 
     def populate_recommendations(self):
-        """ Populates the lists of recommendations and similar users if empty """
+        """Populates the lists of recommendations and similar users if empty"""
 
         if self.populated_recommends or not self.core.logged_in:
             return
@@ -385,9 +466,7 @@ class Interests(UserInterface):
         for iterator in list_view.get_selected_rows():
             item = list_view.get_row_value(iterator, column)
 
-            menu.actions[_("I _Like This")].set_state(
-                GLib.Variant("b", item in config.sections["interests"]["likes"])
-            )
+            menu.actions[_("I _Like This")].set_state(GLib.Variant("b", item in config.sections["interests"]["likes"]))
             menu.actions[_("I _Dislike This")].set_state(
                 GLib.Variant("b", item in config.sections["interests"]["dislikes"])
             )

@@ -24,11 +24,11 @@ import sys
 
 
 def install_pypi():
-    """ Install dependencies from PyPi """
+    """Install dependencies from PyPi"""
 
     packages = ["cx_Freeze"]
     subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     install_pypi()

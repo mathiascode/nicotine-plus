@@ -31,10 +31,10 @@ from pynicotine.logfacility import log
 
 
 returncode = {
-    'break': 0,  # don't give other plugins the event, do let n+ process it
-    'zap': 1,    # don't give other plugins the event, don't let n+ process it
-    'pass': 2    # do give other plugins the event, do let n+ process it
-}                # returning nothing is the same as 'pass'
+    "break": 0,  # don't give other plugins the event, do let n+ process it
+    "zap": 1,  # don't give other plugins the event, don't let n+ process it
+    "pass": 2,  # do give other plugins the event, do let n+ process it
+}  # returning nothing is the same as 'pass'
 
 
 class BasePlugin:
@@ -47,11 +47,11 @@ class BasePlugin:
 
     # Attributes that are assigned when the plugin loads, do not modify these
     internal_name = None  # Technical plugin name based on plugin folder name
-    human_name = None     # Friendly plugin name specified in the PLUGININFO file
-    parent = None         # Reference to PluginHandler
-    config = None         # Reference to global Config handler
-    core = None           # Reference to NicotineCore
-    frame = None          # Reference to NicotineFrame (GUI). Not accessible in headless/non-GUI mode. Use sparsely!
+    human_name = None  # Friendly plugin name specified in the PLUGININFO file
+    parent = None  # Reference to PluginHandler
+    config = None  # Reference to global Config handler
+    core = None  # Reference to NicotineCore
+    frame = None  # Reference to NicotineFrame (GUI). Not accessible in headless/non-GUI mode. Use sparsely!
 
     def __init__(self):
         # The plugin class is initializing, plugin settings are not available yet
@@ -174,9 +174,9 @@ class BasePlugin:
         self.core.queue.append(slskmessages.SayChatroom(room, text))
 
     def send_private(self, user, text, show_ui=True, switch_page=True):
-        """ Send user message in private.
+        """Send user message in private.
         show_ui controls if the UI opens a private chat view for the user.
-        switch_page controls whether the user's private chat view should be opened. """
+        switch_page controls whether the user's private chat view should be opened."""
 
         if show_ui:
             self.core.privatechats.show_user(user, switch_page)
@@ -184,23 +184,23 @@ class BasePlugin:
         self.core.privatechats.send_message(user, text)
 
     def echo_public(self, room, text, message_type="local"):
-        """ Display a raw message in chat rooms (not sent to others).
+        """Display a raw message in chat rooms (not sent to others).
         message_type changes the type (and color) of the message in the UI.
-        available message_type values: action, remote, local, hilite """
+        available message_type values: action, remote, local, hilite"""
 
         self.core.chatrooms.echo_message(room, text, message_type)
 
     def echo_private(self, user, text, message_type="local"):
-        """ Display a raw message in private (not sent to others).
+        """Display a raw message in private (not sent to others).
         message_type changes the type (and color) of the message in the UI.
-        available message_type values: action, remote, local, hilite """
+        available message_type values: action, remote, local, hilite"""
 
         self.core.privatechats.show_user(user)
         self.core.privatechats.echo_message(user, text, message_type)
 
     def send_message(self, text):
-        """ Convenience function to send a message to the same user/room
-        a plugin command runs for """
+        """Convenience function to send a message to the same user/room
+        a plugin command runs for"""
 
         if self.parent.command_source is None:  # pylint: disable=no-member
             # Function was not called from a command
@@ -212,8 +212,8 @@ class BasePlugin:
         function(source, text)
 
     def echo_message(self, text, message_type="local"):
-        """ Convenience function to display a raw message the same window
-        a plugin command runs from """
+        """Convenience function to display a raw message the same window
+        a plugin command runs from"""
 
         if self.parent.command_source is None:  # pylint: disable=no-member
             # Function was not called from a command
@@ -274,11 +274,15 @@ class ResponseThrottle:
         current_time = time()
 
         if room not in self.plugin_usage:
-            self.plugin_usage[room] = {'last_time': 0, 'last_request': "", 'last_nick': ""}
+            self.plugin_usage[room] = {
+                "last_time": 0,
+                "last_request": "",
+                "last_nick": "",
+            }
 
-        last_time = self.plugin_usage[room]['last_time']
-        last_nick = self.plugin_usage[room]['last_nick']
-        last_request = self.plugin_usage[room]['last_request']
+        last_time = self.plugin_usage[room]["last_time"]
+        last_nick = self.plugin_usage[room]["last_nick"]
+        last_request = self.plugin_usage[room]["last_request"]
 
         port = False
         try:
@@ -293,25 +297,37 @@ class ResponseThrottle:
             willing_to_respond, reason = False, "The nick's Ip is ignored"
 
         elif not port:
-            willing_to_respond, reason = False, "Request likely from simple PHP based griefer bot"
+            willing_to_respond, reason = (
+                False,
+                "Request likely from simple PHP based griefer bot",
+            )
 
         elif [nick, request] == [last_nick, last_request]:
             if (current_time - last_time) < 12 * seconds_limit_min:
-                willing_to_respond, reason = False, "Too soon for same nick to request same resource in room"
+                willing_to_respond, reason = (
+                    False,
+                    "Too soon for same nick to request same resource in room",
+                )
 
         elif request == last_request:
             if (current_time - last_time) < 3 * seconds_limit_min:
-                willing_to_respond, reason = False, "Too soon for different nick to request same resource in room"
+                willing_to_respond, reason = (
+                    False,
+                    "Too soon for different nick to request same resource in room",
+                )
 
         else:
             recent_responses = 0
 
             for responded_room, room_dict in self.plugin_usage.items():
-                if (current_time - room_dict['last_time']) < seconds_limit_min:
+                if (current_time - room_dict["last_time"]) < seconds_limit_min:
                     recent_responses += 1
 
                     if responded_room == room:
-                        willing_to_respond, reason = False, "Responded in specified room too recently"
+                        willing_to_respond, reason = (
+                            False,
+                            "Responded in specified room too recently",
+                        )
                         break
 
             if recent_responses > 3:
@@ -326,11 +342,14 @@ class ResponseThrottle:
     def responded(self):
         # possible TODO's: we could actually say public the msg here
         # make more stateful - track past msg's as additional responder willingness criteria, etc
-        self.plugin_usage[self.room] = {'last_time': time(), 'last_request': self.request, 'last_nick': self.nick}
+        self.plugin_usage[self.room] = {
+            "last_time": time(),
+            "last_request": self.request,
+            "last_nick": self.nick,
+        }
 
 
 class PluginHandler:
-
     def __init__(self, core, config):
 
         self.core = core
@@ -398,6 +417,7 @@ class PluginHandler:
         try:
             # Import builtin plugin
             from importlib import import_module
+
             plugin = import_module("pynicotine.plugins." + plugin_name)
 
         except Exception:
@@ -412,7 +432,8 @@ class PluginHandler:
             sys.path.append(path)
 
             import importlib.util
-            spec = importlib.util.spec_from_file_location(plugin_name, os.path.join(path, '__init__.py'))
+
+            spec = importlib.util.spec_from_file_location(plugin_name, os.path.join(path, "__init__.py"))
             plugin = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(plugin)
 
@@ -438,10 +459,9 @@ class PluginHandler:
         # Our config file doesn't play nicely with some characters
         if "=" in plugin_name:
             log.add(
-                _("Unable to load plugin %(name)s. Plugin folder name contains invalid characters: %(characters)s"), {
-                    "name": plugin_name,
-                    "characters": "="
-                })
+                _("Unable to load plugin %(name)s. Plugin folder name contains invalid characters: %(characters)s"),
+                {"name": plugin_name, "characters": "="},
+            )
             return False
 
         if plugin_name in self.enabled_plugins:
@@ -459,10 +479,10 @@ class PluginHandler:
             plugin.init()
 
             for trigger, _func in plugin.__publiccommands__:
-                self.core.chatrooms.CMDS.add('/' + trigger + ' ')
+                self.core.chatrooms.CMDS.add("/" + trigger + " ")
 
             for trigger, _func in plugin.__privatecommands__:
-                self.core.privatechats.CMDS.add('/' + trigger + ' ')
+                self.core.privatechats.CMDS.add("/" + trigger + " ")
 
             self.update_completions(plugin)
 
@@ -472,8 +492,11 @@ class PluginHandler:
 
         except Exception:
             from traceback import format_exc
-            log.add(_("Unable to load plugin %(module)s\n%(exc_trace)s"),
-                    {'module': plugin_name, 'exc_trace': format_exc()})
+
+            log.add(
+                _("Unable to load plugin %(module)s\n%(exc_trace)s"),
+                {"module": plugin_name, "exc_trace": format_exc()},
+            )
             return False
 
         return True
@@ -508,10 +531,10 @@ class PluginHandler:
             plugin.disable()
 
             for trigger, _func in plugin.__publiccommands__:
-                self.core.chatrooms.CMDS.remove('/' + trigger + ' ')
+                self.core.chatrooms.CMDS.remove("/" + trigger + " ")
 
             for trigger, _func in plugin.__privatecommands__:
-                self.core.privatechats.CMDS.remove('/' + trigger + ' ')
+                self.core.privatechats.CMDS.remove("/" + trigger + " ")
 
             self.update_completions(plugin)
             plugin.unloaded_notification()
@@ -519,8 +542,11 @@ class PluginHandler:
 
         except Exception:
             from traceback import format_exc
-            log.add(_("Unable to unload plugin %(module)s\n%(exc_trace)s"),
-                    {'module': plugin_name, 'exc_trace': format_exc()})
+
+            log.add(
+                _("Unable to unload plugin %(module)s\n%(exc_trace)s"),
+                {"module": plugin_name, "exc_trace": format_exc()},
+            )
             return False
 
         finally:
@@ -561,7 +587,7 @@ class PluginHandler:
         if plugin_path is None:
             return plugin_info
 
-        info_path = os.path.join(plugin_path, 'PLUGININFO')
+        info_path = os.path.join(plugin_path, "PLUGININFO")
 
         with open(info_path.encode("utf-8"), encoding="utf-8") as file_handle:
             for line in file_handle:
@@ -587,13 +613,15 @@ class PluginHandler:
 
         from traceback import format_tb
 
-        log.add(_("Plugin %(module)s failed with error %(errortype)s: %(error)s.\n"
-                  "Trace: %(trace)s"), {
-            'module': plugin_name,
-            'errortype': exc_type,
-            'error': exc_value,
-            'trace': ''.join(format_tb(exc_traceback))
-        })
+        log.add(
+            _("Plugin %(module)s failed with error %(errortype)s: %(error)s.\n" "Trace: %(trace)s"),
+            {
+                "module": plugin_name,
+                "errortype": exc_type,
+                "error": exc_value,
+                "trace": "".join(format_tb(exc_traceback)),
+            },
+        )
 
     def save_enabled(self):
         self.config.sections["plugins"]["enabled"] = list(self.enabled_plugins.keys())
@@ -607,7 +635,7 @@ class PluginHandler:
         log.add(_("Loading plugin system"))
 
         to_enable = self.config.sections["plugins"]["enabled"]
-        log.add_debug("Enabled plugin(s): %s" % ', '.join(to_enable))
+        log.add_debug("Enabled plugin(s): %s" % ", ".join(to_enable))
 
         for plugin in to_enable:
             self.enable_plugin(plugin)
@@ -634,10 +662,10 @@ class PluginHandler:
                     plugin.settings[key] = customsettings[key]
 
                 else:
-                    log.add_debug("Stored setting '%(key)s' is no longer present in the '%(name)s' plugin", {
-                        'key': key,
-                        'name': plugin_name
-                    })
+                    log.add_debug(
+                        "Stored setting '%(key)s' is no longer present in the '%(name)s' plugin",
+                        {"key": key, "name": plugin_name},
+                    )
 
         except KeyError:
             log.add_debug("No stored settings found for %s", plugin.human_name)
@@ -672,33 +700,38 @@ class PluginHandler:
                 # Nothing changed, continue to the next plugin
                 continue
 
-            if return_value == returncode['zap']:
+            if return_value == returncode["zap"]:
                 self.command_source = None
                 return True
 
-            if return_value == returncode['pass']:
+            if return_value == returncode["pass"]:
                 continue
 
-            log.add_debug("Plugin %(module)s returned something weird, '%(value)s', ignoring",
-                          {'module': module, 'value': str(return_value)})
+            log.add_debug(
+                "Plugin %(module)s returned something weird, '%(value)s', ignoring",
+                {"module": module, "value": str(return_value)},
+            )
 
         self.command_source = None
         return False
 
     def trigger_event(self, function_name, args):
-        """ Triggers an event for the plugins. Since events and notifications
+        """Triggers an event for the plugins. Since events and notifications
         are precisely the same except for how n+ responds to them, both can be
-        triggered by this function. """
+        triggered by this function."""
 
-        function_name_camelcase = function_name.title().replace('_', '')
+        function_name_camelcase = function_name.title().replace("_", "")
 
         for module, plugin in self.enabled_plugins.items():
             try:
                 if hasattr(plugin, function_name_camelcase):
-                    plugin.log("%(old_function)s is deprecated, please use %(new_function)s" % {
-                        "old_function": function_name_camelcase,
-                        "new_function": function_name
-                    })
+                    plugin.log(
+                        "%(old_function)s is deprecated, please use %(new_function)s"
+                        % {
+                            "old_function": function_name_camelcase,
+                            "new_function": function_name,
+                        }
+                    )
                     return_value = getattr(plugin, function_name_camelcase)(*args)
                 else:
                     return_value = getattr(plugin, function_name)(*args)
@@ -716,17 +749,19 @@ class PluginHandler:
                 args = return_value
                 continue
 
-            if return_value == returncode['zap']:
+            if return_value == returncode["zap"]:
                 return None
 
-            if return_value == returncode['break']:
+            if return_value == returncode["break"]:
                 return args
 
-            if return_value == returncode['pass']:
+            if return_value == returncode["pass"]:
                 continue
 
-            log.add_debug("Plugin %(module)s returned something weird, '%(value)s', ignoring",
-                          {'module': module, 'value': return_value})
+            log.add_debug(
+                "Plugin %(module)s returned something weird, '%(value)s', ignoring",
+                {"module": module, "value": return_value},
+            )
 
         return args
 
@@ -790,10 +825,13 @@ class PluginHandler:
         self.trigger_event("user_resolve_notification", (user, ip_address, port, country))
 
     def server_connect_notification(self):
-        self.trigger_event("server_connect_notification", (),)
+        self.trigger_event(
+            "server_connect_notification",
+            (),
+        )
 
     def server_disconnect_notification(self, userchoice):
-        self.trigger_event("server_disconnect_notification", (userchoice, ))
+        self.trigger_event("server_disconnect_notification", (userchoice,))
 
     def join_chatroom_notification(self, room):
         self.trigger_event("join_chatroom_notification", (room,))
@@ -802,10 +840,22 @@ class PluginHandler:
         self.trigger_event("leave_chatroom_notification", (room,))
 
     def user_join_chatroom_notification(self, room, user):
-        self.trigger_event("user_join_chatroom_notification", (room, user,))
+        self.trigger_event(
+            "user_join_chatroom_notification",
+            (
+                room,
+                user,
+            ),
+        )
 
     def user_leave_chatroom_notification(self, room, user):
-        self.trigger_event("user_leave_chatroom_notification", (room, user,))
+        self.trigger_event(
+            "user_leave_chatroom_notification",
+            (
+                room,
+                user,
+            ),
+        )
 
     def user_stats_notification(self, user, stats):
         self.trigger_event("user_stats_notification", (user, stats))
@@ -829,4 +879,7 @@ class PluginHandler:
         self.trigger_event("download_finished_notification", (user, virtual_path, real_path))
 
     def shutdown_notification(self):
-        self.trigger_event("shutdown_notification", (),)
+        self.trigger_event(
+            "shutdown_notification",
+            (),
+        )

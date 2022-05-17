@@ -28,7 +28,6 @@ from pynicotine.utils import human_size
 
 
 class Statistics(UserInterface):
-
     def __init__(self, frame, core):
 
         super().__init__("ui/dialogs/statistics.ui")
@@ -46,7 +45,7 @@ class Statistics(UserInterface):
             self.started_uploads_session_label,
             self.started_uploads_total_label,
             self.uploaded_size_session_label,
-            self.uploaded_size_total_label
+            self.uploaded_size_total_label,
         ) = self.widgets
 
         self.frame = frame
@@ -57,7 +56,7 @@ class Statistics(UserInterface):
             buttons=[(self.reset_button, Gtk.ResponseType.HELP)],
             quit_callback=self.hide,
             title=_("Transfer Statistics"),
-            width=450
+            width=450,
         )
 
         # Initialize stats
@@ -89,9 +88,9 @@ class Statistics(UserInterface):
 
         OptionDialog(
             parent=self.dialog,
-            title=_('Reset Transfer Statistics?'),
-            message=_('Do you really want to reset transfer statistics?'),
-            callback=self.on_reset_statistics_response
+            title=_("Reset Transfer Statistics?"),
+            message=_("Do you really want to reset transfer statistics?"),
+            callback=self.on_reset_statistics_response,
         ).show()
 
     def hide(self, *_args):

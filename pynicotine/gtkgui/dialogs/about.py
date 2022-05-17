@@ -339,7 +339,7 @@ Ukrainian
             version=config.version + "  •  GTK " + config.gtk_version,
             website=config.website_url,
             authors=self.AUTHORS.splitlines(),
-            translator_credits=self.TRANSLATORS + config.translations_url
+            translator_credits=self.TRANSLATORS + config.translations_url,
         )
         set_dialog_properties(self.dialog, frame.window)
         main_icon = get_icon("n")

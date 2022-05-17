@@ -26,11 +26,10 @@ from pynicotine.search import Search
 from pynicotine.slskmessages import increment_token
 
 SEARCH_TEXT = '70 gwen "test" -mp3 -nothanks a:b;c+d +++---}[ *ello [[ @@ auto -no yes'
-SEARCH_MODE = 'global'
+SEARCH_MODE = "global"
 
 
 class SearchTest(unittest.TestCase):
-
     def setUp(self):
 
         config.data_dir = os.path.dirname(os.path.realpath(__file__))
@@ -41,7 +40,7 @@ class SearchTest(unittest.TestCase):
         self.search = Search(None, config, deque(), None, None)
 
     def test_do_search(self):
-        """ Test the do_search function, including the outgoing search term and search history """
+        """Test the do_search function, including the outgoing search term and search history"""
 
         old_token = self.search.token
 
@@ -61,14 +60,19 @@ class SearchTest(unittest.TestCase):
         config.sections["searches"]["remove_special_chars"] = False
         token, searchterm, searchterm_without_special = self.search.do_search(SEARCH_TEXT, SEARCH_MODE)
 
-        self.assertEqual(searchterm, '70 gwen "test" a:b;c+d +++---}[ [[ @@ auto yes -mp3 -nothanks *ello -no')
+        self.assertEqual(
+            searchterm,
+            '70 gwen "test" a:b;c+d +++---}[ [[ @@ auto yes -mp3 -nothanks *ello -no',
+        )
         self.assertEqual(searchterm_without_special, '70 gwen "test" a:b;c+d +++---}[ [[ @@ auto yes')
         self.assertEqual(config.sections["searches"]["history"][0], searchterm)
-        self.assertEqual(config.sections["searches"]["history"][1],
-                         "70 gwen test a b c d auto yes -mp3 -nothanks *ello -no")
+        self.assertEqual(
+            config.sections["searches"]["history"][1],
+            "70 gwen test a b c d auto yes -mp3 -nothanks *ello -no",
+        )
 
     def test_search_token_increment(self):
-        """ Test that search token increments work properly """
+        """Test that search token increments work properly"""
 
         old_token = self.search.token
 
@@ -76,7 +80,7 @@ class SearchTest(unittest.TestCase):
         self.assertEqual(old_token, self.search.token - 1)
 
     def test_wishlist_add(self):
-        """ Test that items are added to the wishlist properly """
+        """Test that items are added to the wishlist properly"""
 
         old_token = self.search.token
 

@@ -26,7 +26,6 @@ from pynicotine.utils import make_version
 
 
 class VersionTest(unittest.TestCase):
-
     @staticmethod
     def test_dev_version():
 

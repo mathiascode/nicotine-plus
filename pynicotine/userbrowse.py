@@ -29,7 +29,6 @@ from pynicotine.utils import RestrictedUnpickler
 
 
 class UserBrowse:
-
     def __init__(self, core, config, ui_callback=None):
 
         self.core = core
@@ -50,7 +49,7 @@ class UserBrowse:
             self.ui_callback.server_disconnect()
 
     def send_upload_attempt_notification(self, username):
-        """ Send notification to user when attempting to initiate upload from our end """
+        """Send notification to user when attempting to initiate upload from our end"""
 
         self.core.send_message_to_peer(username, slskmessages.UploadQueueNotification(None))
 
@@ -67,7 +66,14 @@ class UserBrowse:
         if self.ui_callback:
             self.ui_callback.remove_user(user)
 
-    def show_user(self, user, path=None, local_shares_type=None, indeterminate_progress=False, switch_page=True):
+    def show_user(
+        self,
+        user,
+        path=None,
+        local_shares_type=None,
+        indeterminate_progress=False,
+        switch_page=True,
+    ):
 
         self.add_user(user)
 
@@ -75,7 +81,7 @@ class UserBrowse:
             self.ui_callback.show_user(user, path, local_shares_type, indeterminate_progress, switch_page)
 
     def parse_local_shares(self, username, msg):
-        """ Parse a local shares list and show it in the UI """
+        """Parse a local shares list and show it in the UI"""
 
         built = msg.make_network_message()
         msg.parse_network_message(built)
@@ -83,7 +89,7 @@ class UserBrowse:
         self.shared_file_list(username, msg)
 
     def browse_local_public_shares(self, path=None, new_request=None):
-        """ Browse your own public shares """
+        """Browse your own public shares"""
 
         username = self.config.sections["server"]["login"] or "Default"
 
@@ -97,7 +103,7 @@ class UserBrowse:
         self.show_user(username, path=path, local_shares_type="normal", indeterminate_progress=True)
 
     def browse_local_buddy_shares(self, path=None, new_request=False):
-        """ Browse your own buddy shares """
+        """Browse your own buddy shares"""
 
         username = self.config.sections["server"]["login"] or "Default"
 
@@ -110,8 +116,15 @@ class UserBrowse:
 
         self.show_user(username, path=path, local_shares_type="buddy", indeterminate_progress=True)
 
-    def browse_user(self, username, path=None, local_shares_type=None, new_request=False, switch_page=True):
-        """ Browse a user's shares """
+    def browse_user(
+        self,
+        username,
+        path=None,
+        local_shares_type=None,
+        new_request=False,
+        switch_page=True,
+    ):
+        """Browse a user's shares"""
 
         if not username:
             return
@@ -124,7 +137,7 @@ class UserBrowse:
             self.browse_local_buddy_shares(path, new_request)
             return
 
-        user_exists = (username in self.users)
+        user_exists = username in self.users
         self.show_user(username, path=path, switch_page=switch_page)
 
         if not self.core.logged_in:
@@ -142,8 +155,10 @@ class UserBrowse:
                 os.makedirs(shares_folder.encode("utf-8"))
 
         except Exception as error:
-            log.add(_("Can't create directory '%(folder)s', reported error: %(error)s"),
-                    {'folder': shares_folder, 'error': error})
+            log.add(
+                _("Can't create directory '%(folder)s', reported error: %(error)s"),
+                {"folder": shares_folder, "error": error},
+            )
             return None
 
         return shares_folder
@@ -156,7 +171,7 @@ class UserBrowse:
                 import bz2
 
                 with bz2.BZ2File(filename.encode("utf-8")) as file_handle:
-                    shares_list = RestrictedUnpickler(file_handle, encoding='utf-8').load()
+                    shares_list = RestrictedUnpickler(file_handle, encoding="utf-8").load()
 
             except Exception:
                 # Try new format
@@ -170,10 +185,10 @@ class UserBrowse:
                     pass
 
         except Exception as msg:
-            log.add(_("Loading Shares from disk failed: %(error)s"), {'error': msg})
+            log.add(_("Loading Shares from disk failed: %(error)s"), {"error": msg})
             return
 
-        username = filename.replace('\\', os.sep).split(os.sep)[-1]
+        username = filename.replace("\\", os.sep).split(os.sep)[-1]
         self.show_user(username)
 
         msg = slskmessages.SharedFileList(None)
@@ -194,11 +209,16 @@ class UserBrowse:
             with open(path.encode("utf-8"), "w", encoding="utf-8") as file_handle:
                 json.dump(shares_list, file_handle, ensure_ascii=False)
 
-            log.add(_("Saved list of shared files for user '%(user)s' to %(dir)s"),
-                    {'user': user, 'dir': shares_folder})
+            log.add(
+                _("Saved list of shared files for user '%(user)s' to %(dir)s"),
+                {"user": user, "dir": shares_folder},
+            )
 
         except Exception as error:
-            log.add(_("Can't save shares, '%(user)s', reported error: %(error)s"), {'user': user, 'error': error})
+            log.add(
+                _("Can't save shares, '%(user)s', reported error: %(error)s"),
+                {"user": user, "error": error},
+            )
 
     def download_file(self, user, folder, file_data, prefix=""):
 
@@ -206,15 +226,14 @@ class UserBrowse:
         size = file_data[2]
         h_bitrate, _bitrate, h_length, _length = get_result_bitrate_length(size, file_data[4])
 
-        self.core.transfers.get_file(user, virtualpath, prefix,
-                                     size=size, bitrate=h_bitrate, length=h_length)
+        self.core.transfers.get_file(user, virtualpath, prefix, size=size, bitrate=h_bitrate, length=h_length)
 
     def download_folder(self, user, requested_folder, shares_list, prefix="", recurse=False):
 
         if requested_folder is None:
             return
 
-        remove_prefix = requested_folder.rsplit('\\', 1)[0]
+        remove_prefix = requested_folder.rsplit("\\", 1)[0]
 
         for folder, files in shares_list.items():
             if not recurse and requested_folder != folder:
@@ -240,8 +259,14 @@ class UserBrowse:
                     size = file_data[2]
                     h_bitrate, _bitrate, h_length, _length = get_result_bitrate_length(size, file_data[4])
 
-                    self.core.transfers.get_file(user, virtualpath, destination,
-                                                 size=size, bitrate=h_bitrate, length=h_length)
+                    self.core.transfers.get_file(
+                        user,
+                        virtualpath,
+                        destination,
+                        size=size,
+                        bitrate=h_bitrate,
+                        length=h_length,
+                    )
 
             if not recurse:
                 # Downloading a single folder, no need to continue
@@ -284,6 +309,7 @@ class UserBrowse:
     @staticmethod
     def get_soulseek_url(user, path):
         import urllib.parse
+
         return "slsk://" + urllib.parse.quote("%s/%s" % (user, path.replace("\\", "/")))
 
     def open_soulseek_url(self, url):

@@ -30,7 +30,6 @@ from pynicotine.gtkgui.widgets.ui import UserInterface
 
 
 class ChatHistory(UserInterface):
-
     def __init__(self, frame, core):
 
         super().__init__("ui/popovers/chathistory.ui")
@@ -40,12 +39,24 @@ class ChatHistory(UserInterface):
         self.core = core
 
         self.list_view = TreeView(
-            frame, parent=self.list_container, activate_row_callback=self.on_row_activated,
+            frame,
+            parent=self.list_container,
+            activate_row_callback=self.on_row_activated,
             columns=[
-                {"column_id": "user", "column_type": "text", "title": _("User"), "width": 175,
-                 "sort_column": 0},
-                {"column_id": "latest_message", "column_type": "text", "title": _("Latest Message"), "sort_column": 1}
-            ]
+                {
+                    "column_id": "user",
+                    "column_type": "text",
+                    "title": _("User"),
+                    "width": 175,
+                    "sort_column": 0,
+                },
+                {
+                    "column_id": "latest_message",
+                    "column_type": "text",
+                    "title": _("Latest Message"),
+                    "sort_column": 1,
+                },
+            ],
         )
 
         CompletionEntry(frame.private_entry, self.list_view.model, column=0)

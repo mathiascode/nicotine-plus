@@ -60,8 +60,8 @@ from pynicotine.utils import unescape
 
 
 class NicotineCore:
-    """ NicotineCore contains handlers for various messages from the networking thread.
-    This class links the networking thread and user interface. """
+    """NicotineCore contains handlers for various messages from the networking thread.
+    This class links the networking thread and user interface."""
 
     def __init__(self, bindip, port):
 
@@ -98,7 +98,7 @@ class NicotineCore:
         self.login_username = None  # Only present while logged in
         self.user_ip_address = None
         self.privileges_left = None
-        self.ban_message = "You are banned from downloading my shared files. Ban message: \"%s\""
+        self.ban_message = 'You are banned from downloading my shared files. Ban message: "%s"'
 
         self.queue = deque()
         self.user_statuses = {}
@@ -217,7 +217,7 @@ class NicotineCore:
             slskmessages.PrivateRoomRemoveOperator: self.private_room_remove_operator,
             slskmessages.PublicRoomMessage: self.public_room_message,
             slskmessages.ShowConnectionErrorMessage: self.show_connection_error_message,
-            slskmessages.UnknownPeerMessage: self.ignore
+            slskmessages.UnknownPeerMessage: self.ignore,
         }
 
     def start(self, ui_callback, network_callback):
@@ -226,10 +226,22 @@ class NicotineCore:
         self.network_callback = network_callback
         script_dir = os.path.dirname(__file__)
 
-        log.add(_("Loading %(program)s %(version)s"), {"program": "Python", "version": config.python_version})
-        log.add_debug("Using %(program)s executable: %(exe)s", {"program": "Python", "exe": str(sys.executable)})
-        log.add_debug("Using %(program)s executable: %(exe)s", {"program": config.application_name, "exe": script_dir})
-        log.add(_("Loading %(program)s %(version)s"), {"program": config.application_name, "version": config.version})
+        log.add(
+            _("Loading %(program)s %(version)s"),
+            {"program": "Python", "version": config.python_version},
+        )
+        log.add_debug(
+            "Using %(program)s executable: %(exe)s",
+            {"program": "Python", "exe": str(sys.executable)},
+        )
+        log.add_debug(
+            "Using %(program)s executable: %(exe)s",
+            {"program": config.application_name, "exe": script_dir},
+        )
+        log.add(
+            _("Loading %(program)s %(version)s"),
+            {"program": config.application_name, "version": config.version},
+        )
 
         self.geoip = GeoIP(os.path.join(script_dir, "geoip/ipcountrydb.bin"))
         self.notifications = Notifications(config, ui_callback)
@@ -253,7 +265,14 @@ class NicotineCore:
         port_range = config.sections["server"]["portrange"]
         interface = config.sections["server"]["interface"]
         self.protothread = slskproto.SlskProtoThread(
-            self.network_callback, self.queue, self.bindip, interface, self.port, port_range, self)
+            self.network_callback,
+            self.queue,
+            self.bindip,
+            interface,
+            self.port,
+            port_range,
+            self,
+        )
         self.upnp = UPnP(self, config)
         self.pluginhandler = PluginHandler(self, config)
 
@@ -267,11 +286,14 @@ class NicotineCore:
 
     def quit(self, signal_type=None, _frame=None):
 
-        log.add(_("Quitting %(program)s %(version)s, %(status)s…"), {
-            "program": config.application_name,
-            "version": config.version,
-            "status": _("terminating") if signal_type == signal.SIGTERM else _("application closing")
-        })
+        log.add(
+            _("Quitting %(program)s %(version)s, %(status)s…"),
+            {
+                "program": config.application_name,
+                "version": config.version,
+                "status": _("terminating") if signal_type == signal.SIGTERM else _("application closing"),
+            },
+        )
 
         # Indicate that a shutdown has started, to prevent UI callbacks from networking thread
         self.shutdown = True
@@ -298,11 +320,14 @@ class NicotineCore:
         if self.ui_callback:
             self.ui_callback.quit()
 
-        log.add(_("Quit %(program)s %(version)s, %(status)s!"), {
-            "program": config.application_name,
-            "version": config.version,
-            "status": _("terminated") if signal_type == signal.SIGTERM else _("done")
-        })
+        log.add(
+            _("Quit %(program)s %(version)s, %(status)s!"),
+            {
+                "program": config.application_name,
+                "version": config.version,
+                "status": _("terminated") if signal_type == signal.SIGTERM else _("done"),
+            },
+        )
 
     def connect(self):
 
@@ -324,8 +349,9 @@ class NicotineCore:
         if not valid_listen_port:
             message = _(
                 "The range you specified for client connection ports was "
-                "{}-{}, but none of these were usable. Increase and/or ".format(self.protothread.portrange[0],
-                                                                                self.protothread.portrange[1])
+                "{}-{}, but none of these were usable. Increase and/or ".format(
+                    self.protothread.portrange[0], self.protothread.portrange[1]
+                )
                 + "move the range and restart Nicotine+."
             )
             if self.protothread.portrange[0] < 1024:
@@ -345,7 +371,7 @@ class NicotineCore:
         login = config.sections["server"]["login"]
         password = config.sections["server"]["passw"]
 
-        log.add(_("Connecting to %(host)s:%(port)s"), {'host': addr[0], 'port': addr[1]})
+        log.add(_("Connecting to %(host)s:%(port)s"), {"host": addr[0], "port": addr[1]})
         self.queue.append(slskmessages.ServerConnect(addr, login=(login, password)))
         return True
 
@@ -375,8 +401,8 @@ class NicotineCore:
         self.login_username = None
 
     def send_message_to_peer(self, user, message, address=None):
-        """ Sends message to a peer. Used when we know the username of a peer,
-        but don't have/know an active connection. """
+        """Sends message to a peer. Used when we know the username of a peer,
+        but don't have/know an active connection."""
 
         self.queue.append(slskmessages.SendNetworkMessage(user, message, address))
 
@@ -409,8 +435,8 @@ class NicotineCore:
         self.queue.append(slskmessages.SetStatus(status))
 
     def get_user_country(self, user):
-        """ Retrieve a user's country code if previously cached, otherwise request
-        user's IP address to determine country """
+        """Retrieve a user's country code if previously cached, otherwise request
+        user's IP address to determine country"""
 
         user_address = self.protothread.user_addresses.get(user)
 
@@ -425,8 +451,8 @@ class NicotineCore:
         return None
 
     def watch_user(self, user, force_update=False):
-        """ Tell the server we want to be notified of status/stat updates
-        for a user """
+        """Tell the server we want to be notified of status/stat updates
+        for a user"""
 
         if not isinstance(user, str):
             return
@@ -463,10 +489,13 @@ class NicotineCore:
         msgs.clear()
 
     def show_connection_error_message(self, msg):
-        """ Request UI to show error messages related to connectivity """
+        """Request UI to show error messages related to connectivity"""
 
         for i in msg.msgs:
-            if i.__class__ in (slskmessages.TransferRequest, slskmessages.FileUploadInit):
+            if i.__class__ in (
+                slskmessages.TransferRequest,
+                slskmessages.FileUploadInit,
+            ):
                 self.transfers.get_cant_connect_upload(i.token)
 
             elif i.__class__ is slskmessages.QueueUpload:
@@ -531,7 +560,7 @@ class NicotineCore:
     """
 
     def login(self, msg):
-        """ Server code: 1 """
+        """Server code: 1"""
 
         log.add_msg_contents(msg)
 
@@ -571,7 +600,7 @@ class NicotineCore:
             log.add_important_error(_("Unable to connect to the server. Reason: %s"), msg.reason)
 
     def get_peer_address(self, msg):
-        """ Server code: 3 """
+        """Server code: 3"""
 
         log.add_msg_contents(msg)
 
@@ -608,7 +637,9 @@ class NicotineCore:
 
         if country_code:
             country = " (%(cc)s / %(country)s)" % {
-                'cc': country_code, 'country': self.geoip.country_code_to_name(country_code)}
+                "cc": country_code,
+                "country": self.geoip.country_code_to_name(country_code),
+            }
         else:
             country = ""
 
@@ -616,15 +647,13 @@ class NicotineCore:
             log.add(_("Cannot retrieve the IP of user %s, since this user is offline"), user)
             return
 
-        log.add(_("IP address of user %(user)s is %(ip)s, port %(port)i%(country)s"), {
-            'user': user,
-            'ip': msg.ip_address,
-            'port': msg.port,
-            'country': country
-        })
+        log.add(
+            _("IP address of user %(user)s is %(ip)s, port %(port)i%(country)s"),
+            {"user": user, "ip": msg.ip_address, "port": msg.port, "country": country},
+        )
 
     def add_user(self, msg):
-        """ Server code: 5 """
+        """Server code: 5"""
 
         log.add_msg_contents(msg)
 
@@ -638,7 +667,7 @@ class NicotineCore:
             self.get_user_stats(msg, log_contents=False)
 
     def get_user_status(self, msg, log_contents=True):
-        """ Server code: 7 """
+        """Server code: 7"""
 
         if log_contents:
             log.add_msg_contents(msg)
@@ -665,43 +694,42 @@ class NicotineCore:
         self.pluginhandler.user_status_notification(msg.user, msg.status, bool(msg.privileged))
 
     def say_chat_room(self, msg):
-        """ Server code: 13 """
+        """Server code: 13"""
 
         log.add_msg_contents(msg)
-        log.add_chat(_("Chat message from user '%(user)s' in room '%(room)s': %(message)s"), {
-            "user": msg.user,
-            "room": msg.room,
-            "message": msg.msg
-        })
+        log.add_chat(
+            _("Chat message from user '%(user)s' in room '%(room)s': %(message)s"),
+            {"user": msg.user, "room": msg.room, "message": msg.msg},
+        )
 
         self.chatrooms.say_chat_room(msg)
 
     def join_room(self, msg):
-        """ Server code: 14 """
+        """Server code: 14"""
 
         log.add_msg_contents(msg)
         self.chatrooms.join_room(msg)
 
     def leave_room(self, msg):
-        """ Server code: 15 """
+        """Server code: 15"""
 
         log.add_msg_contents(msg)
         self.chatrooms.leave_room(msg)
 
     def user_joined_room(self, msg):
-        """ Server code: 16 """
+        """Server code: 16"""
 
         log.add_msg_contents(msg)
         self.chatrooms.user_joined_room(msg)
 
     def user_left_room(self, msg):
-        """ Server code: 17 """
+        """Server code: 17"""
 
         log.add_msg_contents(msg)
         self.chatrooms.user_left_room(msg)
 
     def connect_to_peer(self, msg):
-        """ Server code: 18 """
+        """Server code: 18"""
 
         log.add_msg_contents(msg)
 
@@ -712,18 +740,18 @@ class NicotineCore:
             self.transfers.remove_from_privileged(msg.user)
 
     def message_user(self, msg):
-        """ Server code: 22 """
+        """Server code: 22"""
 
         log.add_msg_contents(msg)
-        log.add_chat(_("Private message from user '%(user)s': %(message)s"), {
-            "user": msg.user,
-            "message": msg.msg
-        })
+        log.add_chat(
+            _("Private message from user '%(user)s': %(message)s"),
+            {"user": msg.user, "message": msg.msg},
+        )
 
         self.privatechats.message_user(msg)
 
     def search_request(self, msg):
-        """ Server code: 26, 42 and 120 """
+        """Server code: 26, 42 and 120"""
 
         log.add_msg_contents(msg)
 
@@ -731,7 +759,7 @@ class NicotineCore:
         self.pluginhandler.search_request_notification(msg.searchterm, msg.user, msg.token)
 
     def get_user_stats(self, msg, log_contents=True):
-        """ Server code: 36 """
+        """Server code: 36"""
 
         if log_contents:
             log.add_msg_contents(msg)
@@ -745,66 +773,66 @@ class NicotineCore:
         self.chatrooms.get_user_stats(msg)
 
         stats = {
-            'avgspeed': msg.avgspeed,
-            'uploadnum': msg.uploadnum,
-            'files': msg.files,
-            'dirs': msg.dirs,
+            "avgspeed": msg.avgspeed,
+            "uploadnum": msg.uploadnum,
+            "files": msg.files,
+            "dirs": msg.dirs,
         }
 
         self.pluginhandler.user_stats_notification(msg.user, stats)
 
     @staticmethod
     def relogged(_msg):
-        """ Server code: 41 """
+        """Server code: 41"""
 
         log.add_important_info(_("Someone logged in to your Soulseek account elsewhere"))
 
     def recommendations(self, msg):
-        """ Server code: 54 """
+        """Server code: 54"""
 
         log.add_msg_contents(msg)
         self.interests.recommendations(msg)
 
     def global_recommendations(self, msg):
-        """ Server code: 56 """
+        """Server code: 56"""
 
         log.add_msg_contents(msg)
         self.interests.global_recommendations(msg)
 
     def user_interests(self, msg):
-        """ Server code: 57 """
+        """Server code: 57"""
 
         log.add_msg_contents(msg)
         self.userinfo.user_interests(msg)
 
     def room_list(self, msg):
-        """ Server code: 64 """
+        """Server code: 64"""
 
         log.add_msg_contents(msg)
         self.chatrooms.room_list(msg)
 
     @staticmethod
     def admin_message(msg):
-        """ Server code: 66 """
+        """Server code: 66"""
 
         log.add_important_info(msg.msg)
 
     def privileged_users(self, msg):
-        """ Server code: 69 """
+        """Server code: 69"""
 
         log.add_msg_contents(msg)
         self.transfers.set_privileged_users(msg.users)
         log.add(_("%i privileged users"), (len(msg.users)))
 
     def add_to_privileged(self, msg):
-        """ Server code: 91 """
+        """Server code: 91"""
         """ DEPRECATED """
 
         log.add_msg_contents(msg)
         self.transfers.add_to_privileged(msg.user)
 
     def check_privileges(self, msg):
-        """ Server code: 92 """
+        """Server code: 92"""
 
         log.add_msg_contents(msg)
 
@@ -813,106 +841,115 @@ class NicotineCore:
         days = hours // 24
 
         if msg.seconds == 0:
-            log.add(_("You have no privileges. Privileges are not required, but allow your downloads "
-                      "to be queued ahead of non-privileged users."))
+            log.add(
+                _(
+                    "You have no privileges. Privileges are not required, but allow your downloads "
+                    "to be queued ahead of non-privileged users."
+                )
+            )
         else:
-            log.add(_("%(days)i days, %(hours)i hours, %(minutes)i minutes, %(seconds)i seconds of "
-                      "download privileges left."), {
-                'days': days,
-                'hours': hours % 24,
-                'minutes': mins % 60,
-                'seconds': msg.seconds % 60
-            })
+            log.add(
+                _(
+                    "%(days)i days, %(hours)i hours, %(minutes)i minutes, %(seconds)i seconds of "
+                    "download privileges left."
+                ),
+                {
+                    "days": days,
+                    "hours": hours % 24,
+                    "minutes": mins % 60,
+                    "seconds": msg.seconds % 60,
+                },
+            )
 
         self.privileges_left = msg.seconds
 
     def wishlist_interval(self, msg):
-        """ Server code: 104 """
+        """Server code: 104"""
 
         log.add_msg_contents(msg)
         self.search.set_wishlist_interval(msg)
 
     def similar_users(self, msg):
-        """ Server code: 110 """
+        """Server code: 110"""
 
         log.add_msg_contents(msg)
         self.interests.similar_users(msg)
 
     def item_recommendations(self, msg):
-        """ Server code: 111 """
+        """Server code: 111"""
 
         log.add_msg_contents(msg)
         self.interests.item_recommendations(msg)
 
     def item_similar_users(self, msg):
-        """ Server code: 112 """
+        """Server code: 112"""
 
         log.add_msg_contents(msg)
         self.interests.item_similar_users(msg)
 
     def room_ticker_state(self, msg):
-        """ Server code: 113 """
+        """Server code: 113"""
 
         log.add_msg_contents(msg)
         self.chatrooms.ticker_set(msg)
 
     def room_ticker_add(self, msg):
-        """ Server code: 114 """
+        """Server code: 114"""
 
         log.add_msg_contents(msg)
         self.chatrooms.ticker_add(msg)
 
     def room_ticker_remove(self, msg):
-        """ Server code: 115 """
+        """Server code: 115"""
 
         log.add_msg_contents(msg)
         self.chatrooms.ticker_remove(msg)
 
     def private_room_users(self, msg):
-        """ Server code: 133 """
+        """Server code: 133"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_users(msg)
 
     def private_room_add_user(self, msg):
-        """ Server code: 134 """
+        """Server code: 134"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_add_user(msg)
 
     def private_room_remove_user(self, msg):
-        """ Server code: 135 """
+        """Server code: 135"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_remove_user(msg)
 
     def private_room_disown(self, msg):
-        """ Server code: 137 """
+        """Server code: 137"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_disown(msg)
 
     def private_room_added(self, msg):
-        """ Server code: 139 """
+        """Server code: 139"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_added(msg)
 
     def private_room_removed(self, msg):
-        """ Server code: 140 """
+        """Server code: 140"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_removed(msg)
 
     def private_room_toggle(self, msg):
-        """ Server code: 141 """
+        """Server code: 141"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_toggle(msg)
 
     @staticmethod
     def change_password(msg):
-        """ Server code: 142 """
+        """Server code: 142"""
 
         log.add_msg_contents(msg)
 
@@ -920,41 +957,40 @@ class NicotineCore:
         config.sections["server"]["passw"] = password
         config.write_configuration()
 
-        log.add_important_info(
-            _("Your password has been changed. Password is %s"), password)
+        log.add_important_info(_("Your password has been changed. Password is %s"), password)
 
     def private_room_add_operator(self, msg):
-        """ Server code: 143 """
+        """Server code: 143"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_add_operator(msg)
 
     def private_room_remove_operator(self, msg):
-        """ Server code: 144 """
+        """Server code: 144"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_remove_operator(msg)
 
     def private_room_operator_added(self, msg):
-        """ Server code: 145 """
+        """Server code: 145"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_operator_added(msg)
 
     def private_room_operator_removed(self, msg):
-        """ Server code: 146 """
+        """Server code: 146"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_operator_removed(msg)
 
     def private_room_owned(self, msg):
-        """ Server code: 148 """
+        """Server code: 148"""
 
         log.add_msg_contents(msg)
         self.chatrooms.private_room_owned(msg)
 
     def public_room_message(self, msg):
-        """ Server code: 152 """
+        """Server code: 152"""
 
         log.add_msg_contents(msg)
         self.chatrooms.public_room_message(msg)
@@ -964,7 +1000,7 @@ class NicotineCore:
     """
 
     def get_shared_file_list(self, msg):
-        """ Peer code: 4 """
+        """Peer code: 4"""
 
         log.add_msg_contents(msg)
 
@@ -978,7 +1014,7 @@ class NicotineCore:
 
         self.requested_share_times[user] = request_time
 
-        log.add(_("User %(user)s is browsing your list of shared files"), {'user': user})
+        log.add(_("User %(user)s is browsing your list of shared files"), {"user": user})
 
         ip_address, _port = msg.init.addr
         checkuser, reason = self.network_filter.check_user(user, ip_address)
@@ -1005,19 +1041,19 @@ class NicotineCore:
         self.queue.append(shares_list)
 
     def shared_file_list(self, msg):
-        """ Peer code: 5 """
+        """Peer code: 5"""
 
         username = msg.init.target_user
         self.userbrowse.shared_file_list(username, msg)
 
     def file_search_result(self, msg):
-        """ Peer message: 9 """
+        """Peer message: 9"""
 
         log.add_msg_contents(msg)
         self.search.file_search_result(msg)
 
     def user_info_request(self, msg):
-        """ Peer code: 15 """
+        """Peer code: 15"""
 
         log.add_msg_contents(msg)
 
@@ -1033,7 +1069,7 @@ class NicotineCore:
         self.requested_info_times[user] = request_time
 
         if self.login_username != user:
-            log.add(_("User %(user)s is reading your user info"), {'user': user})
+            log.add(_("User %(user)s is reading your user info"), {"user": user})
 
         status, reason = self.network_filter.check_user(user, ip_address)
 
@@ -1047,7 +1083,7 @@ class NicotineCore:
             try:
                 userpic = config.sections["userinfo"]["pic"]
 
-                with open(userpic, 'rb') as file_handle:
+                with open(userpic, "rb") as file_handle:
                     pic = file_handle.read()
 
             except Exception:
@@ -1065,10 +1101,11 @@ class NicotineCore:
             uploadallowed = 0
 
         self.queue.append(
-            slskmessages.UserInfoReply(msg.init, descr, pic, totalupl, queuesize, slotsavail, uploadallowed))
+            slskmessages.UserInfoReply(msg.init, descr, pic, totalupl, queuesize, slotsavail, uploadallowed)
+        )
 
     def user_info_reply(self, msg):
-        """ Peer code: 16 """
+        """Peer code: 16"""
 
         log.add_msg_contents(msg)
 
@@ -1076,21 +1113,24 @@ class NicotineCore:
         self.userinfo.user_info_reply(username, msg)
 
     def p_message_user(self, msg):
-        """ Peer code: 22 """
+        """Peer code: 22"""
 
         log.add_msg_contents(msg)
 
         username = msg.init.target_user
 
         if username != msg.user:
-            msg.msg = _("(Warning: %(realuser)s is attempting to spoof %(fakeuser)s) ") % {
-                "realuser": username, "fakeuser": msg.user} + msg.msg
+            msg.msg = (
+                _("(Warning: %(realuser)s is attempting to spoof %(fakeuser)s) ")
+                % {"realuser": username, "fakeuser": msg.user}
+                + msg.msg
+            )
             msg.user = username
 
         self.privatechats.message_user(msg)
 
     def folder_contents_request(self, msg):
-        """ Peer code: 36 """
+        """Peer code: 36"""
 
         log.add_msg_contents(msg)
 
@@ -1121,18 +1161,20 @@ class NicotineCore:
                     self.queue.append(slskmessages.FolderContentsResponse(init, msg.dir, shares[msg.dir]))
                     return
 
-                if msg.dir.rstrip('\\') in shares:
-                    self.queue.append(slskmessages.FolderContentsResponse(init, msg.dir, shares[msg.dir.rstrip('\\')]))
+                if msg.dir.rstrip("\\") in shares:
+                    self.queue.append(slskmessages.FolderContentsResponse(init, msg.dir, shares[msg.dir.rstrip("\\")]))
                     return
 
             except Exception as error:
-                log.add(_("Failed to fetch the shared folder %(folder)s: %(error)s"),
-                        {"folder": msg.dir, "error": error})
+                log.add(
+                    _("Failed to fetch the shared folder %(folder)s: %(error)s"),
+                    {"folder": msg.dir, "error": error},
+                )
 
             self.queue.append(slskmessages.FolderContentsResponse(init, msg.dir, None))
 
     def folder_contents_response(self, msg):
-        """ Peer code: 37 """
+        """Peer code: 37"""
 
         file_list = msg.list
 
@@ -1155,43 +1197,43 @@ class NicotineCore:
             self.transfers.folder_contents_response(msg)
 
     def transfer_request(self, msg):
-        """ Peer code: 40 """
+        """Peer code: 40"""
 
         log.add_msg_contents(msg)
         self.transfers.transfer_request(msg)
 
     def transfer_response(self, msg):
-        """ Peer code: 41 """
+        """Peer code: 41"""
 
         log.add_msg_contents(msg)
         self.transfers.transfer_response(msg)
 
     def queue_upload(self, msg):
-        """ Peer code: 43 """
+        """Peer code: 43"""
 
         log.add_msg_contents(msg)
         self.transfers.queue_upload(msg)
 
     def place_in_queue(self, msg):
-        """ Peer code: 44 """
+        """Peer code: 44"""
 
         log.add_msg_contents(msg)
         self.transfers.place_in_queue(msg)
 
     def upload_failed(self, msg):
-        """ Peer code: 46 """
+        """Peer code: 46"""
 
         log.add_msg_contents(msg)
         self.transfers.upload_failed(msg)
 
     def upload_denied(self, msg):
-        """ Peer code: 50 """
+        """Peer code: 50"""
 
         log.add_msg_contents(msg)
         self.transfers.upload_denied(msg)
 
     def place_in_queue_request(self, msg):
-        """ Peer code: 51 """
+        """Peer code: 51"""
 
         log.add_msg_contents(msg)
         self.transfers.place_in_queue_request(msg)
@@ -1213,7 +1255,7 @@ class NicotineCore:
     """
 
     def distrib_search(self, msg):
-        """ Distrib code: 3 """
+        """Distrib code: 3"""
 
         # Verbose: log.add_msg_contents(msg)
 

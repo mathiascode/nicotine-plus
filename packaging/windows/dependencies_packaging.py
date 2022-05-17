@@ -27,7 +27,7 @@ ARCH = os.environ.get("ARCH") or "x86_64"
 
 
 def install_pacman():
-    """ Install dependencies from the main MinGW repos """
+    """Install dependencies from the main MinGW repos"""
 
     prefix = "mingw-w64-" + ARCH + "-"
     packages = [prefix + "python-cx-freeze"]
@@ -35,5 +35,5 @@ def install_pacman():
     subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     install_pacman()

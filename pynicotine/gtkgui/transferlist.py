@@ -60,11 +60,7 @@ class TransferList(UserInterface):
     def __init__(self, frame, core, transfer_type):
 
         super().__init__("ui/" + transfer_type + "s.ui")
-        (
-            self.clear_all_button,
-            self.container,
-            self.tree_view
-        ) = self.widgets
+        (self.clear_all_button, self.container, self.tree_view) = self.widgets
 
         self.frame = frame
         self.core = core
@@ -110,33 +106,35 @@ class TransferList(UserInterface):
             "File not shared.": _("File not shared"),  # Newer variant containing a dot
             "Download folder error": _("Download folder error"),
             "Local file error": _("Local file error"),
-            "Remote file error": _("Remote file error")
+            "Remote file error": _("Remote file error"),
         }
         self.deprioritized_statuses = ("", "Paused", "Aborted", "Finished", "Filtered")
 
         self.transfersmodel = Gtk.TreeStore(
-            str,                   # (0)  user
-            str,                   # (1)  path
-            str,                   # (2)  file name
-            str,                   # (3)  translated status
-            str,                   # (4)  hqueue position
-            int,                   # (5)  percent
-            str,                   # (6)  hsize
-            str,                   # (7)  hspeed
-            str,                   # (8)  htime elapsed
-            str,                   # (9)  htime left
-            GObject.TYPE_UINT64,   # (10) size
-            GObject.TYPE_UINT64,   # (11) current bytes
-            GObject.TYPE_UINT64,   # (12) speed
-            GObject.TYPE_UINT,     # (13) queue position
-            int,                   # (14) time elapsed
-            int,                   # (15) time left
-            GObject.TYPE_PYOBJECT  # (16) transfer object
+            str,  # (0)  user
+            str,  # (1)  path
+            str,  # (2)  file name
+            str,  # (3)  translated status
+            str,  # (4)  hqueue position
+            int,  # (5)  percent
+            str,  # (6)  hsize
+            str,  # (7)  hspeed
+            str,  # (8)  htime elapsed
+            str,  # (9)  htime left
+            GObject.TYPE_UINT64,  # (10) size
+            GObject.TYPE_UINT64,  # (11) current bytes
+            GObject.TYPE_UINT64,  # (12) speed
+            GObject.TYPE_UINT,  # (13) queue position
+            int,  # (14) time elapsed
+            int,  # (15) time left
+            GObject.TYPE_PYOBJECT,  # (16) transfer object
         )
 
         self.column_numbers = list(range(self.transfersmodel.get_n_columns()))
         self.cols = cols = initialise_columns(
-            frame, transfer_type, self.tree_view,
+            frame,
+            transfer_type,
+            self.tree_view,
             ["user", _("User"), 200, "text", None],
             ["path", self.path_label, 400, "text", None],
             ["filename", _("Filename"), 400, "text", None],
@@ -162,14 +160,24 @@ class TransferList(UserInterface):
 
         self.tree_view.set_model(self.transfersmodel)
 
-        state = GLib.Variant("s", verify_grouping_mode(config.sections["transfers"]["group%ss" % transfer_type]))
-        action = Gio.SimpleAction(name="%sgrouping" % transfer_type, parameter_type=GLib.VariantType("s"), state=state)
+        state = GLib.Variant(
+            "s",
+            verify_grouping_mode(config.sections["transfers"]["group%ss" % transfer_type]),
+        )
+        action = Gio.SimpleAction(
+            name="%sgrouping" % transfer_type,
+            parameter_type=GLib.VariantType("s"),
+            state=state,
+        )
         action.connect("change-state", self.on_toggle_tree)
         frame.window.add_action(action)
         action.change_state(state)
 
         menu = create_grouping_menu(
-            frame.window, config.sections["transfers"]["group%ss" % transfer_type], self.on_toggle_tree)
+            frame.window,
+            config.sections["transfers"]["group%ss" % transfer_type],
+            self.on_toggle_tree,
+        )
         self.grouping_button.set_menu_model(menu)
 
         self.expand_button.connect("toggled", self.on_expand_tree)
@@ -183,7 +191,7 @@ class TransferList(UserInterface):
         self.popup_menu_copy.add_items(
             ("#" + _("Copy _File Path"), self.on_copy_file_path),
             ("#" + _("Copy _URL"), self.on_copy_url),
-            ("#" + _("Copy Folder U_RL"), self.on_copy_dir_url)
+            ("#" + _("Copy Folder U_RL"), self.on_copy_dir_url),
         )
 
         self.popup_menu = FilePopupMenu(frame, self.tree_view, self.on_popup_menu)
@@ -203,7 +211,7 @@ class TransferList(UserInterface):
             ("", None),
             (">" + _("Clear All"), self.popup_menu_clear),
             (">" + _("Copy"), self.popup_menu_copy),
-            (">" + _("User(s)"), self.popup_menu_users)
+            (">" + _("User(s)"), self.popup_menu_users),
         )
 
         self.update_visuals()
@@ -317,7 +325,7 @@ class TransferList(UserInterface):
         if self.tree_users != "ungrouped":
             if transfer is not None:
                 username = transfer.user
-                path = transfer.path if self.type == "download" else transfer.filename.rsplit('\\', 1)[0]
+                path = transfer.path if self.type == "download" else transfer.filename.rsplit("\\", 1)[0]
                 user_path = username + path
 
                 user_path_iter = self.paths.get(user_path)
@@ -434,12 +442,20 @@ class TransferList(UserInterface):
 
         if transfer.current_byte_offset != current_bytes:
             self.transfersmodel.set_value(initer, 5, self.get_percent(current_bytes, total_size))
-            self.transfersmodel.set_value(initer, 6, "%s / %s" % (human_size(current_bytes), human_size(total_size)))
+            self.transfersmodel.set_value(
+                initer,
+                6,
+                "%s / %s" % (human_size(current_bytes), human_size(total_size)),
+            )
             self.transfersmodel.set_value(initer, 11, GObject.Value(GObject.TYPE_UINT64, current_bytes))
             transfer.current_byte_offset = current_bytes
 
         if transfer.size != total_size:
-            self.transfersmodel.set_value(initer, 6, "%s / %s" % (human_size(current_bytes), human_size(total_size)))
+            self.transfersmodel.set_value(
+                initer,
+                6,
+                "%s / %s" % (human_size(current_bytes), human_size(total_size)),
+            )
             self.transfersmodel.set_value(initer, 10, GObject.Value(GObject.TYPE_UINT64, total_size))
             transfer.size = total_size
 
@@ -513,7 +529,9 @@ class TransferList(UserInterface):
                 # Create Parent if it doesn't exist
                 # ProgressRender not visible (last column sets 4th column)
                 self.users[user] = self.transfersmodel.insert_with_values(
-                    None, -1, self.column_numbers,
+                    None,
+                    -1,
+                    self.column_numbers,
                     [
                         user,
                         empty_str,
@@ -531,8 +549,8 @@ class TransferList(UserInterface):
                         empty_int,
                         empty_int,
                         empty_int,
-                        Transfer(user=user)
-                    ]
+                        Transfer(user=user),
+                    ],
                 )
 
                 if self.tree_users == "folder_grouping":
@@ -545,9 +563,9 @@ class TransferList(UserInterface):
             if self.tree_users == "folder_grouping":
                 # Group by folder
 
-                """ Paths can be empty if files are downloaded individually, make sure we
-                don't add files to the wrong user in the TreeView """
-                full_path = path = transfer.path if self.type == "download" else transfer.filename.rsplit('\\', 1)[0]
+                """Paths can be empty if files are downloaded individually, make sure we
+                don't add files to the wrong user in the TreeView"""
+                full_path = path = transfer.path if self.type == "download" else transfer.filename.rsplit("\\", 1)[0]
                 user_path = user + path
 
                 if config.sections["ui"]["reverse_file_paths"]:
@@ -555,7 +573,9 @@ class TransferList(UserInterface):
 
                 if user_path not in self.paths:
                     self.paths[user_path] = self.transfersmodel.insert_with_values(
-                        self.users[user], -1, self.column_numbers,
+                        self.users[user],
+                        -1,
+                        self.column_numbers,
                         [
                             user,
                             path,
@@ -573,8 +593,8 @@ class TransferList(UserInterface):
                             empty_int,
                             empty_int,
                             empty_int,
-                            Transfer(user=user, path=full_path)
-                        ]
+                            Transfer(user=user, path=full_path),
+                        ],
                     )
                     expand_folder = self.expand_button.get_active()
 
@@ -590,13 +610,15 @@ class TransferList(UserInterface):
             # Group by folder, path not visible
             path = ""
         else:
-            path = transfer.path if self.type == "download" else transfer.filename.rsplit('\\', 1)[0]
+            path = transfer.path if self.type == "download" else transfer.filename.rsplit("\\", 1)[0]
 
             if config.sections["ui"]["reverse_file_paths"]:
                 path = self.path_separator.join(reversed(path.split(self.path_separator)))
 
         iterator = self.transfersmodel.insert_with_values(
-            parent, -1, self.column_numbers,
+            parent,
+            -1,
+            self.column_numbers,
             (
                 user,
                 path,
@@ -614,8 +636,8 @@ class TransferList(UserInterface):
                 GObject.Value(GObject.TYPE_UINT, queue_position),
                 elapsed,
                 left,
-                transfer
-            )
+                transfer,
+            ),
         )
         transfer.iterator = iterator
         self.update_num_users_files()
@@ -692,7 +714,7 @@ class TransferList(UserInterface):
         popup.setup_user_menu(user)
         popup.add_items(
             ("", None),
-            ("#" + _("Select User's Transfers"), self.on_select_user_transfers, user)
+            ("#" + _("Select User's Transfers"), self.on_select_user_transfers, user),
         )
         popup.update_model()
         popup.toggle_user_items()
@@ -767,7 +789,7 @@ class TransferList(UserInterface):
         self.select_transfers()
         action = config.sections["transfers"]["%s_doubleclick" % self.type]
 
-        if action == 1:    # Send to Player
+        if action == 1:  # Send to Player
             self.on_play_files()
 
         elif action == 2:  # Open in File Manager
@@ -806,28 +828,28 @@ class TransferList(UserInterface):
         self.select_transfers()
 
     def on_abort_transfers_accelerator(self, *_args):
-        """ T: abort transfer """
+        """T: abort transfer"""
 
         self.select_transfers()
         self.abort_transfers()
         return True
 
     def on_retry_transfers_accelerator(self, *_args):
-        """ R: retry transfers """
+        """R: retry transfers"""
 
         self.select_transfers()
         self.retry_transfers()
         return True
 
     def on_clear_transfers_accelerator(self, *_args):
-        """ Delete: clear transfers """
+        """Delete: clear transfers"""
 
         self.select_transfers()
         self.abort_transfers(clear=True)
         return True
 
     def on_file_properties_accelerator(self, *_args):
-        """ Alt+Return: show file properties dialog """
+        """Alt+Return: show file properties dialog"""
 
         self.select_transfers()
         self.on_file_properties()
@@ -845,21 +867,29 @@ class TransferList(UserInterface):
             file_size = transfer.size
             selected_size += file_size
 
-            data.append({
-                "user": transfer.user,
-                "fn": fullname,
-                "filename": filename,
-                "directory": directory,
-                "path": transfer.path,
-                "queue_position": transfer.queue_position,
-                "speed": transfer.speed,
-                "size": file_size,
-                "bitrate": transfer.bitrate,
-                "length": transfer.length
-            })
+            data.append(
+                {
+                    "user": transfer.user,
+                    "fn": fullname,
+                    "filename": filename,
+                    "directory": directory,
+                    "path": transfer.path,
+                    "queue_position": transfer.queue_position,
+                    "speed": transfer.speed,
+                    "size": file_size,
+                    "bitrate": transfer.bitrate,
+                    "length": transfer.length,
+                }
+            )
 
         if data:
-            FileProperties(self.frame, self.core, data, total_size=selected_size, download_button=False).show()
+            FileProperties(
+                self.frame,
+                self.core,
+                data,
+                total_size=selected_size,
+                download_button=False,
+            ).show()
 
     def on_copy_url(self, *_args):
         pass

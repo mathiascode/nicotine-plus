@@ -26,7 +26,6 @@ from pynicotine.gtkgui.application import GTK_API_VERSION
 
 
 class Accelerator:
-
     def __init__(self, accelerator, widget, callback, user_data=None):
 
         if GTK_API_VERSION >= 4:
@@ -89,6 +88,8 @@ class Accelerator:
 
 
 if GTK_API_VERSION != 4:
-    ALL_MODIFIERS = (Accelerator.parse_accelerator("<Primary>")[1]
-                     | Accelerator.parse_accelerator("<Shift>")[1]
-                     | Accelerator.parse_accelerator("<Alt>")[1])
+    ALL_MODIFIERS = (
+        Accelerator.parse_accelerator("<Primary>")[1]
+        | Accelerator.parse_accelerator("<Shift>")[1]
+        | Accelerator.parse_accelerator("<Alt>")[1]
+    )

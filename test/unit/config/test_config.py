@@ -23,7 +23,6 @@ from pynicotine.config import config
 
 
 class ConfigTest(unittest.TestCase):
-
     def setUp(self):
 
         config.data_dir = os.path.dirname(os.path.realpath(__file__))
@@ -32,7 +31,7 @@ class ConfigTest(unittest.TestCase):
         config.load_config()
 
     def test_load_config(self):
-        """ Test loading a config file """
+        """Test loading a config file"""
 
         self.assertEqual(config.defaults["server"]["login"], "")
         self.assertEqual(config.defaults["server"]["passw"], "")
@@ -42,7 +41,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(config.sections["server"]["autoreply"], "ääääääää")
 
     def test_write_config(self):
-        """ Test writing to a config file """
+        """Test writing to a config file"""
 
         # Verify that changes are saved
         config.sections["server"]["login"] = "newname"

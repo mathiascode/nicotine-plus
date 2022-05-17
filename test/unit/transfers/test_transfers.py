@@ -30,7 +30,6 @@ from pynicotine.transfers import Transfers
 
 
 class TransfersTest(unittest.TestCase):
-
     def setUp(self):
 
         config.data_dir = os.path.dirname(os.path.realpath(__file__))
@@ -48,7 +47,7 @@ class TransfersTest(unittest.TestCase):
         self.userbrowse.core.transfers = self.transfers
 
     def test_load_downloads(self):
-        """ Test loading a downloads.json file """
+        """Test loading a downloads.json file"""
 
         self.assertEqual(len(self.transfers.queue), 2)
         self.assertEqual(len(self.transfers.downloads), 13)
@@ -74,9 +73,9 @@ class TransfersTest(unittest.TestCase):
         self.assertEqual(transfer.length, "4:12")
 
     def test_save_downloads(self):
-        """ Verify that the order of the download list at the end of the session
+        """Verify that the order of the download list at the end of the session
         is identical to the one we loaded. Ignore transfer 13, since its missing
-        properties will be added at the end of the session. """
+        properties will be added at the end of the session."""
 
         self.transfers.abort_transfers()
 
@@ -86,7 +85,7 @@ class TransfersTest(unittest.TestCase):
         self.assertEqual(old_transfers, saved_transfers)
 
     def test_load_uploads(self):
-        """ Test loading a uploads.json file """
+        """Test loading a uploads.json file"""
 
         # Only finished uploads are loaded, other types should never be stored
         self.assertEqual(len(self.transfers.uploads), 3)
@@ -113,7 +112,7 @@ class TransfersTest(unittest.TestCase):
         self.assertEqual(transfer.length, "4:28")
 
     def test_queue_download(self):
-        """ Verify that new downloads are prepended to the list """
+        """Verify that new downloads are prepended to the list"""
 
         self.transfers.get_file("newuser", "Hello\\Path\\File.mp3", "")
         transfer = self.transfers.downloads[0]
@@ -123,7 +122,7 @@ class TransfersTest(unittest.TestCase):
         self.assertEqual(transfer.path, "")
 
     def test_push_upload(self):
-        """ Verify that new uploads are prepended to the list """
+        """Verify that new uploads are prepended to the list"""
 
         self.transfers.push_file("newuser2", "Hello\\Upload\\File.mp3", 2000, "/home/test")
         self.transfers.push_file("newuser99", "Home\\None.mp3", 100, "/home/more")
@@ -134,7 +133,7 @@ class TransfersTest(unittest.TestCase):
         self.assertEqual(transfer.path, "/home/test")
 
     def test_download_folder_destination(self):
-        """ Verify that the correct download destination is used """
+        """Verify that the correct download destination is used"""
 
         user = "newuser"
         folder = "Hello\\Path"
@@ -151,42 +150,60 @@ class TransfersTest(unittest.TestCase):
         self.assertEqual(destination_user, os.path.join(config.data_dir, "newuser", "Path"))
 
     def test_download_subfolders(self):
-        """ Verify that subfolders are downloaded to the correct location """
+        """Verify that subfolders are downloaded to the correct location"""
 
         user = "random"
         target_folder = "share\\Soulseek"
 
-        shares_list = OrderedDict([
-            ('share\\Music', [
-                (1, 'music1.mp3', 1000000, '', {}),
-                (1, 'music2.mp3', 2000000, '', {})
-            ]),
-            ('share\\Soulseek', [
-                (1, 'file1.mp3', 3000000, '', {}),
-                (1, 'file2.mp3', 4000000, '', {})
-            ]),
-            ('share\\Soulseek\\folder1', [
-                (1, 'file3.mp3', 5000000, '', {})
-            ]),
-            ('share\\Soulseek\\folder1\\folder', [
-                (1, 'file4.mp3', 6000000, '', {})
-            ]),
-            ('share\\Soulseek\\folder2', [
-                (1, 'file5.mp3', 7000000, '', {})
-            ]),
-            ('share\\Soulseek\\folder2\\folder3', [
-                (1, 'file6.mp3', 8000000, '', {})
-            ])
-        ])
+        shares_list = OrderedDict(
+            [
+                (
+                    "share\\Music",
+                    [
+                        (1, "music1.mp3", 1000000, "", {}),
+                        (1, "music2.mp3", 2000000, "", {}),
+                    ],
+                ),
+                (
+                    "share\\Soulseek",
+                    [
+                        (1, "file1.mp3", 3000000, "", {}),
+                        (1, "file2.mp3", 4000000, "", {}),
+                    ],
+                ),
+                ("share\\Soulseek\\folder1", [(1, "file3.mp3", 5000000, "", {})]),
+                (
+                    "share\\Soulseek\\folder1\\folder",
+                    [(1, "file4.mp3", 6000000, "", {})],
+                ),
+                ("share\\Soulseek\\folder2", [(1, "file5.mp3", 7000000, "", {})]),
+                (
+                    "share\\Soulseek\\folder2\\folder3",
+                    [(1, "file6.mp3", 8000000, "", {})],
+                ),
+            ]
+        )
 
         self.transfers.downloads.clear()
         self.userbrowse.download_folder(user, target_folder, shares_list, prefix="test", recurse=True)
 
         self.assertEqual(len(self.transfers.downloads), 6)
 
-        self.assertEqual(self.transfers.downloads[0].path, os.path.join("test", "Soulseek", "folder2", "folder3"))
-        self.assertEqual(self.transfers.downloads[1].path, os.path.join("test", "Soulseek", "folder2"))
-        self.assertEqual(self.transfers.downloads[2].path, os.path.join("test", "Soulseek", "folder1", "folder"))
-        self.assertEqual(self.transfers.downloads[3].path, os.path.join("test", "Soulseek", "folder1"))
+        self.assertEqual(
+            self.transfers.downloads[0].path,
+            os.path.join("test", "Soulseek", "folder2", "folder3"),
+        )
+        self.assertEqual(
+            self.transfers.downloads[1].path,
+            os.path.join("test", "Soulseek", "folder2"),
+        )
+        self.assertEqual(
+            self.transfers.downloads[2].path,
+            os.path.join("test", "Soulseek", "folder1", "folder"),
+        )
+        self.assertEqual(
+            self.transfers.downloads[3].path,
+            os.path.join("test", "Soulseek", "folder1"),
+        )
         self.assertEqual(self.transfers.downloads[4].path, os.path.join("test", "Soulseek"))
         self.assertEqual(self.transfers.downloads[5].path, os.path.join("test", "Soulseek"))

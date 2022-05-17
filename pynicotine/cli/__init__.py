@@ -18,7 +18,8 @@
 
 
 def run_cli(core, ci_mode):
-    """ Run application in headless (CLI) mode """
+    """Run application in headless (CLI) mode"""
 
     from pynicotine.cli.application import Application
+
     return Application(core, ci_mode).run()

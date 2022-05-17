@@ -34,17 +34,20 @@ ACTIVE_CHOOSER = None
 
 
 class FileChooser:
-
-    def __init__(self, parent, callback, callback_data=None, title=_("Select a File"),
-                 initial_folder='~', action=Gtk.FileChooserAction.OPEN, multiple=False):
+    def __init__(
+        self,
+        parent,
+        callback,
+        callback_data=None,
+        title=_("Select a File"),
+        initial_folder="~",
+        action=Gtk.FileChooserAction.OPEN,
+        multiple=False,
+    ):
 
         global ACTIVE_CHOOSER  # pylint:disable=global-statement
 
-        self.file_chooser = ACTIVE_CHOOSER = Gtk.FileChooserNative(
-            transient_for=parent,
-            title=title,
-            action=action
-        )
+        self.file_chooser = ACTIVE_CHOOSER = Gtk.FileChooserNative(transient_for=parent, title=title, action=action)
 
         self.file_chooser.connect("response", self.on_selected, callback, callback_data)
         self.file_chooser.set_modal(True)
@@ -88,18 +91,37 @@ class FileChooser:
 
 
 class FolderChooser(FileChooser):
+    def __init__(
+        self,
+        parent,
+        callback,
+        callback_data=None,
+        title=_("Select a Folder"),
+        initial_folder="~",
+        multiple=False,
+    ):
 
-    def __init__(self, parent, callback, callback_data=None, title=_("Select a Folder"),
-                 initial_folder='~', multiple=False):
-
-        super().__init__(parent, callback, callback_data, title, initial_folder,
-                         action=Gtk.FileChooserAction.SELECT_FOLDER, multiple=multiple)
+        super().__init__(
+            parent,
+            callback,
+            callback_data,
+            title,
+            initial_folder,
+            action=Gtk.FileChooserAction.SELECT_FOLDER,
+            multiple=multiple,
+        )
 
 
 class ImageChooser(FileChooser):
-
-    def __init__(self, parent, callback, callback_data=None, title=_("Select an Image"),
-                 initial_folder='~', multiple=False):
+    def __init__(
+        self,
+        parent,
+        callback,
+        callback_data=None,
+        title=_("Select an Image"),
+        initial_folder="~",
+        multiple=False,
+    ):
 
         super().__init__(parent, callback, callback_data, title, initial_folder)
 
@@ -138,24 +160,38 @@ class ImageChooser(FileChooser):
 
 
 class FileChooserSave(FileChooser):
+    def __init__(
+        self,
+        parent,
+        callback,
+        callback_data=None,
+        title=_("Save as…"),
+        initial_folder="~",
+        initial_file="",
+        multiple=False,
+    ):
 
-    def __init__(self, parent, callback, callback_data=None, title=_("Save as…"),
-                 initial_folder='~', initial_file='', multiple=False):
-
-        super().__init__(parent, callback, callback_data, title, initial_folder,
-                         action=Gtk.FileChooserAction.SAVE, multiple=multiple)
+        super().__init__(
+            parent,
+            callback,
+            callback_data,
+            title,
+            initial_folder,
+            action=Gtk.FileChooserAction.SAVE,
+            multiple=multiple,
+        )
 
         if GTK_API_VERSION == 3:
             # Display hidden files
-            self.file_chooser.set_show_hidden(True)                # pylint: disable=no-member
+            self.file_chooser.set_show_hidden(True)  # pylint: disable=no-member
             self.file_chooser.set_do_overwrite_confirmation(True)  # pylint: disable=no-member
 
         self.file_chooser.set_current_name(initial_file)
 
 
 class FileChooserButton:
-    """ This class expands the functionality of a GtkButton to open a file
-    chooser and display the name of a selected folder or file """
+    """This class expands the functionality of a GtkButton to open a file
+    chooser and display the name of a selected folder or file"""
 
     def __init__(self, button, parent, chooser_type="file", selected_function=None):
 
@@ -175,16 +211,21 @@ class FileChooserButton:
             icon_name = "text-x-generic-symbolic"
 
         self.icon = Gtk.Image(icon_name=icon_name, visible=True)
-        self.label = Gtk.Label(label=_("(None)"), ellipsize=Pango.EllipsizeMode.END, width_chars=6,
-                               xalign=0, visible=True)
+        self.label = Gtk.Label(
+            label=_("(None)"),
+            ellipsize=Pango.EllipsizeMode.END,
+            width_chars=6,
+            xalign=0,
+            visible=True,
+        )
 
         box = Gtk.Box(spacing=6, visible=True)
 
         if GTK_API_VERSION >= 4:
-            box.append(self.icon)   # pylint: disable=no-member
+            box.append(self.icon)  # pylint: disable=no-member
             box.append(self.label)  # pylint: disable=no-member
         else:
-            box.add(self.icon)   # pylint: disable=no-member
+            box.add(self.icon)  # pylint: disable=no-member
             box.add(self.label)  # pylint: disable=no-member
 
         self.button.set_property("child", box)
@@ -207,7 +248,7 @@ class FileChooserButton:
             FolderChooser(
                 parent=self.parent,
                 callback=self.open_file_chooser_response,
-                initial_folder=self.path
+                initial_folder=self.path,
             ).show()
             return
 
@@ -220,14 +261,14 @@ class FileChooserButton:
             ImageChooser(
                 parent=self.parent,
                 callback=self.open_file_chooser_response,
-                initial_folder=folder_path
+                initial_folder=folder_path,
             ).show()
             return
 
         FileChooser(
             parent=self.parent,
             callback=self.open_file_chooser_response,
-            initial_folder=folder_path
+            initial_folder=folder_path,
         ).show()
 
     def get_path(self):

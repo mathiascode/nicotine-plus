@@ -34,15 +34,20 @@ UI_DATA = {}
 
 
 class UserInterface:
-
     def __init__(self, filename):
 
         try:
             if filename not in UI_DATA:
-                with open(os.path.join(GTK_GUI_DIR, filename).encode("utf-8"), encoding="utf-8") as file_handle:
+                with open(
+                    os.path.join(GTK_GUI_DIR, filename).encode("utf-8"),
+                    encoding="utf-8",
+                ) as file_handle:
                     if GTK_API_VERSION >= 4:
-                        UI_DATA[filename] = file_handle.read().replace(
-                            "GtkRadioButton", "GtkCheckButton").replace("\"can-focus\"", "\"focusable\"")
+                        UI_DATA[filename] = (
+                            file_handle.read()
+                            .replace("GtkRadioButton", "GtkCheckButton")
+                            .replace('"can-focus"', '"focusable"')
+                        )
                     else:
                         UI_DATA[filename] = file_handle.read()
 
@@ -55,7 +60,7 @@ class UserInterface:
                 self.builder = Gtk.Builder()
                 self.builder.set_translation_domain(TRANSLATION_DOMAIN)
                 self.builder.add_from_string(UI_DATA[filename])
-                self.builder.connect_signals(self)                       # pylint: disable=no-member
+                self.builder.connect_signals(self)  # pylint: disable=no-member
 
             self.widgets = self.builder.get_objects()
 
@@ -73,8 +78,8 @@ class UserInterface:
             self.widgets.sort(key=Gtk.Buildable.get_name)
 
         except Exception as error:
-            log.add(_("Failed to load ui file %(file)s: %(error)s"), {
-                "file": filename,
-                "error": error
-            })
+            log.add(
+                _("Failed to load ui file %(file)s: %(error)s"),
+                {"file": filename, "error": error},
+            )
             sys.exit()

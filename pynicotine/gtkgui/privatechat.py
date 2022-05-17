@@ -50,7 +50,6 @@ from pynicotine.utils import open_log
 
 
 class PrivateChats(IconNotebook):
-
     def __init__(self, frame, core):
 
         IconNotebook.__init__(self, frame, core, frame.private_notebook, frame.private_page)
@@ -60,7 +59,7 @@ class PrivateChats(IconNotebook):
         self.history = ChatHistory(frame, core)
 
         self.command_help = UserInterface("ui/popovers/privatechatcommands.ui")
-        self.command_help.popover, = self.command_help.widgets
+        (self.command_help.popover,) = self.command_help.widgets
 
         self.update_visuals()
 
@@ -185,7 +184,6 @@ class PrivateChats(IconNotebook):
 
 
 class PrivateChat(UserInterface):
-
     def __init__(self, chats, user):
 
         super().__init__("ui/privatechat.ui")
@@ -197,7 +195,7 @@ class PrivateChat(UserInterface):
             self.log_toggle,
             self.search_bar,
             self.search_entry,
-            self.speech_toggle
+            self.speech_toggle,
         ) = self.widgets
 
         self.user = user
@@ -215,12 +213,24 @@ class PrivateChat(UserInterface):
         self.chat_view = TextView(self.chat_view, font="chatfont")
 
         # Text Search
-        self.search_bar = TextSearchBar(self.chat_view.textview, self.search_bar, self.search_entry,
-                                        controller_widget=self.container, focus_widget=self.chat_entry)
+        self.search_bar = TextSearchBar(
+            self.chat_view.textview,
+            self.search_bar,
+            self.search_entry,
+            controller_widget=self.container,
+            focus_widget=self.chat_entry,
+        )
 
         # Chat Entry
-        ChatEntry(self.frame, self.chat_entry, chats.completion, user, slskmessages.MessageUser,
-                  self.core.privatechats.send_message, self.core.privatechats.CMDS)
+        ChatEntry(
+            self.frame,
+            self.chat_entry,
+            chats.completion,
+            user,
+            slskmessages.MessageUser,
+            self.core.privatechats.send_message,
+            self.core.privatechats.CMDS,
+        )
 
         self.log_toggle.set_active(config.sections["logging"]["privatechat"])
 
@@ -234,7 +244,7 @@ class PrivateChat(UserInterface):
             menu.add_items(
                 ("", None),
                 ("#" + _("Close All Tabs…"), self.on_close_all_tabs),
-                ("#" + _("_Close Tab"), self.on_close)
+                ("#" + _("_Close Tab"), self.on_close),
             )
 
         popup = PopupMenu(self.frame, self.chat_view.textview, self.on_popup_menu_chat)
@@ -295,7 +305,11 @@ class PrivateChat(UserInterface):
     def server_disconnect(self):
 
         timestamp_format = config.sections["logging"]["private_timestamp"]
-        self.chat_view.append_line(_("--- disconnected ---"), self.tag_hilite, timestamp_format=timestamp_format)
+        self.chat_view.append_line(
+            _("--- disconnected ---"),
+            self.tag_hilite,
+            timestamp_format=timestamp_format,
+        )
         self.status = -1
         self.offline_message = False
 
@@ -342,17 +356,20 @@ class PrivateChat(UserInterface):
 
         OptionDialog(
             parent=self.frame.window,
-            title=_('Delete Logged Messages?'),
-            message=_('Do you really want to permanently delete all logged messages for this user?'),
-            callback=self.on_delete_chat_log_response
+            title=_("Delete Logged Messages?"),
+            message=_("Do you really want to permanently delete all logged messages for this user?"),
+            callback=self.on_delete_chat_log_response,
         ).show()
 
     def show_notification(self, text):
 
         self.chats.request_tab_hilite(self.container)
 
-        if (self.chats.get_current_page() == self.chats.page_num(self.container)
-                and self.frame.current_page_id == self.frame.private_page.id and self.frame.window.is_active()):
+        if (
+            self.chats.get_current_page() == self.chats.page_num(self.container)
+            and self.frame.current_page_id == self.frame.private_page.id
+            and self.frame.window.is_active()
+        ):
             # Don't show notifications if the chat is open and the window is in use
             return
 
@@ -363,7 +380,7 @@ class PrivateChat(UserInterface):
             self.frame.notifications.new_text_notification(
                 text,
                 title=_("Private message from %s") % self.user,
-                priority=Gio.NotificationPriority.HIGH
+                priority=Gio.NotificationPriority.HIGH,
             )
 
     def message_user(self, msg):
@@ -390,26 +407,42 @@ class PrivateChat(UserInterface):
             tag = usertag = self.tag_hilite
 
             if not self.offline_message:
-                self.chat_view.append_line(_("* Message(s) sent while you were offline."), tag,
-                                           timestamp_format=timestamp_format)
+                self.chat_view.append_line(
+                    _("* Message(s) sent while you were offline."),
+                    tag,
+                    timestamp_format=timestamp_format,
+                )
                 self.offline_message = True
 
         else:
             self.offline_message = False
 
-        self.chat_view.append_line(line, tag, timestamp=timestamp, timestamp_format=timestamp_format,
-                                   username=self.user, usertag=usertag)
+        self.chat_view.append_line(
+            line,
+            tag,
+            timestamp=timestamp,
+            timestamp_format=timestamp_format,
+            username=self.user,
+            usertag=usertag,
+        )
 
         if self.speech_toggle.get_active():
             self.core.notifications.new_tts(
-                config.sections["ui"]["speechprivate"], {"user": self.user, "message": speech}
+                config.sections["ui"]["speechprivate"],
+                {"user": self.user, "message": speech},
             )
 
         if self.log_toggle.get_active():
             timestamp_format = config.sections["logging"]["log_timestamp"]
 
             self.chats.history.update_user(self.user, "%s %s" % (time.strftime(timestamp_format), line))
-            log.write_log(config.sections["logging"]["privatelogsdir"], self.user, line, timestamp, timestamp_format)
+            log.write_log(
+                config.sections["logging"]["privatelogsdir"],
+                self.user,
+                line,
+                timestamp,
+                timestamp_format,
+            )
 
     def echo_message(self, text, message_type):
 
@@ -432,15 +465,24 @@ class PrivateChat(UserInterface):
             line = "[%s] %s" % (my_username, text)
             tag = self.tag_local
 
-        self.chat_view.append_line(line, tag, timestamp_format=config.sections["logging"]["private_timestamp"],
-                                   username=my_username, usertag=self.tag_my_username)
+        self.chat_view.append_line(
+            line,
+            tag,
+            timestamp_format=config.sections["logging"]["private_timestamp"],
+            username=my_username,
+            usertag=self.tag_my_username,
+        )
 
         if self.log_toggle.get_active():
             timestamp_format = config.sections["logging"]["log_timestamp"]
 
             self.chats.history.update_user(self.user, "%s %s" % (time.strftime(timestamp_format), line))
-            log.write_log(config.sections["logging"]["privatelogsdir"], self.user, line,
-                          timestamp_format=timestamp_format)
+            log.write_log(
+                config.sections["logging"]["privatelogsdir"],
+                self.user,
+                line,
+                timestamp_format=timestamp_format,
+            )
 
     def update_visuals(self):
 
@@ -488,8 +530,14 @@ class PrivateChat(UserInterface):
 
     def update_tags(self):
 
-        for tag in (self.tag_remote, self.tag_local, self.tag_action, self.tag_hilite,
-                    self.tag_username, self.tag_my_username):
+        for tag in (
+            self.tag_remote,
+            self.tag_local,
+            self.tag_action,
+            self.tag_hilite,
+            self.tag_username,
+            self.tag_my_username,
+        ):
             self.chat_view.update_tag(tag)
 
     def on_close(self, *_args):

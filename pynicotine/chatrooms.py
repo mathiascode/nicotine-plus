@@ -25,11 +25,54 @@ class ChatRooms:
 
     # List of allowed commands
     CMDS = {
-        "/al ", "/alias ", "/un ", "/unalias ", "/w ", "/whois ", "/browse ", "/b ", "/ip ", "/pm ", "/m ", "/msg ",
-        "/s ", "/search ", "/us ", "/usearch ", "/rs ", "/rsearch ", "/bs ", "/bsearch ", "/j ", "/join ", "/l ",
-        "/leave ", "/p ", "/part ", "/ad ", "/add ", "/buddy ", "/rem ", "/unbuddy ", "/ban ", "/ignore ", "/ignoreip ",
-        "/unban ", "/unignore ", "/clear ", "/cl ", "/me ", "/a ", "/away ", "/q ", "/quit ", "/exit ", "/now ",
-        "/rescan ", "/info ", "/toggle "
+        "/al ",
+        "/alias ",
+        "/un ",
+        "/unalias ",
+        "/w ",
+        "/whois ",
+        "/browse ",
+        "/b ",
+        "/ip ",
+        "/pm ",
+        "/m ",
+        "/msg ",
+        "/s ",
+        "/search ",
+        "/us ",
+        "/usearch ",
+        "/rs ",
+        "/rsearch ",
+        "/bs ",
+        "/bsearch ",
+        "/j ",
+        "/join ",
+        "/l ",
+        "/leave ",
+        "/p ",
+        "/part ",
+        "/ad ",
+        "/add ",
+        "/buddy ",
+        "/rem ",
+        "/unbuddy ",
+        "/ban ",
+        "/ignore ",
+        "/ignoreip ",
+        "/unban ",
+        "/unignore ",
+        "/clear ",
+        "/cl ",
+        "/me ",
+        "/a ",
+        "/away ",
+        "/q ",
+        "/quit ",
+        "/exit ",
+        "/now ",
+        "/rescan ",
+        "/info ",
+        "/toggle ",
     }
 
     def __init__(self, core, config, queue, ui_callback=None):
@@ -96,7 +139,7 @@ class ChatRooms:
                 "joined": 0,
                 "operators": operators or [],
                 "owned": False,
-                "owner": owner
+                "owner": owner,
             }
             return private_room
 
@@ -320,23 +363,33 @@ class ChatRooms:
             room_data = self.private_rooms.get(room[0])
 
             if room_data is None:
-                self.private_rooms[room[0]] = {"users": [], "joined": room[1], "operators": [], "owner": login_username}
+                self.private_rooms[room[0]] = {
+                    "users": [],
+                    "joined": room[1],
+                    "operators": [],
+                    "owner": login_username,
+                }
                 continue
 
-            room_data['joined'] = room[1]
-            room_data['owner'] = login_username
+            room_data["joined"] = room[1]
+            room_data["owner"] = login_username
 
         for room in msg.otherprivaterooms:
             room_data = self.private_rooms.get(room[0])
 
             if room_data is None:
-                self.private_rooms[room[0]] = {"users": [], "joined": room[1], "operators": [], "owner": None}
+                self.private_rooms[room[0]] = {
+                    "users": [],
+                    "joined": room[1],
+                    "operators": [],
+                    "owner": None,
+                }
                 continue
 
-            room_data['joined'] = room[1]
+            room_data["joined"] = room[1]
 
-            if room_data['owner'] == login_username:
-                room_data['owner'] = None
+            if room_data["owner"] == login_username:
+                room_data["owner"] = None
 
         if self.ui_callback:
             self.ui_callback.room_list(msg)
@@ -393,7 +446,6 @@ class ChatRooms:
 
 
 class Tickers:
-
     def __init__(self):
 
         self.messages = []

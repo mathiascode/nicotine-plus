@@ -34,9 +34,19 @@ from pynicotine.utils import unalias
 
 
 class ChatEntry:
-    """ Custom text entry with support for chat commands and completions """
+    """Custom text entry with support for chat commands and completions"""
 
-    def __init__(self, frame, entry, completion, entity, message_class, send_message, command_list, is_chatroom=False):
+    def __init__(
+        self,
+        frame,
+        entry,
+        completion,
+        entity,
+        message_class,
+        send_message,
+        command_list,
+        is_chatroom=False,
+    ):
 
         self.frame = frame
         self.core = frame.core
@@ -67,6 +77,7 @@ class ChatEntry:
 
             if self.frame.spell_checker:
                 from gi.repository import Gspell  # pylint:disable=no-name-in-module
+
                 spell_buffer = Gspell.EntryBuffer.get_from_gtk_entry_buffer(entry.get_buffer())
                 spell_buffer.set_spell_checker(self.frame.spell_checker)
                 spell_view = Gspell.Entry.get_from_gtk_entry(entry)
@@ -92,7 +103,7 @@ class ChatEntry:
             text = alias_text
 
         is_double_slash_cmd = text.startswith("//")
-        is_single_slash_cmd = (text.startswith("/") and not is_double_slash_cmd)
+        is_single_slash_cmd = text.startswith("/") and not is_double_slash_cmd
 
         if not is_single_slash_cmd or text.startswith("/me"):
             # Regular chat message (/me is sent as plain text)
@@ -253,7 +264,8 @@ class ChatEntry:
 
         elif cmd == "/now":
             self.core.now_playing.display_now_playing(
-                callback=lambda np_message: self.send_message(self.entity, np_message))
+                callback=lambda np_message: self.send_message(self.entity, np_message)
+            )
 
         elif cmd == "/rescan":
             self.core.shares.rescan_shares()
@@ -269,12 +281,11 @@ class ChatEntry:
             self.core.pluginhandler.trigger_private_command_event(self.entity, cmd[1:], args)
 
     def on_tab_complete_accelerator(self, widget, state, backwards=False):
-        """ Tab and Shift+Tab: tab complete chat """
+        """Tab and Shift+Tab: tab complete chat"""
         return self.completion.on_tab_complete_accelerator(widget, state, backwards)
 
 
 class ChatCompletion:
-
     def __init__(self):
 
         self.completion_list = []
@@ -446,7 +457,7 @@ class ChatCompletion:
         self.midwaycompletion = False
 
     def on_tab_complete_accelerator(self, _widget, _state, backwards=False):
-        """ Tab and Shift+Tab: tab complete chat """
+        """Tab and Shift+Tab: tab complete chat"""
 
         if not config.sections["words"]["tab"]:
             return False
@@ -480,14 +491,14 @@ class ChatCompletion:
             return True
 
         if not self.midwaycompletion:
-            self.completions['completions'] = self.get_completions(text, self.completion_list)
+            self.completions["completions"] = self.get_completions(text, self.completion_list)
 
-            if self.completions['completions']:
+            if self.completions["completions"]:
                 self.midwaycompletion = True
-                self.completions['currentindex'] = -1
+                self.completions["currentindex"] = -1
                 currentnick = text
         else:
-            currentnick = self.completions['completions'][self.completions['currentindex']]
+            currentnick = self.completions["completions"][self.completions["currentindex"]]
 
         if self.midwaycompletion:
             # We're still completing, block handler to avoid modifying midwaycompletion value
@@ -498,10 +509,11 @@ class ChatCompletion:
                 if backwards:
                     direction = -1  # Backward cycle
 
-                self.completions['currentindex'] = ((self.completions['currentindex'] + direction) %
-                                                    len(self.completions['completions']))
+                self.completions["currentindex"] = (self.completions["currentindex"] + direction) % len(
+                    self.completions["completions"]
+                )
 
-                newnick = self.completions['completions'][self.completions['currentindex']]
+                newnick = self.completions["completions"][self.completions["currentindex"]]
                 self.entry.insert_text(newnick, preix)
                 self.entry.set_position(preix + len(newnick))
 
@@ -509,15 +521,18 @@ class ChatCompletion:
 
 
 class CompletionEntry:
-
     def __init__(self, entry, model, column=0):
 
         self.entry = entry
         self.model = model
         self.column = column
 
-        completion = Gtk.EntryCompletion(inline_completion=True, inline_selection=True,
-                                         popup_single_match=False, model=model)
+        completion = Gtk.EntryCompletion(
+            inline_completion=True,
+            inline_selection=True,
+            popup_single_match=False,
+            model=model,
+        )
         completion.set_text_column(column)
         completion.set_match_func(self.entry_completion_find_match)
         entry.set_completion(completion)
@@ -539,7 +554,6 @@ class CompletionEntry:
 
 
 class TextSearchBar:
-
     def __init__(self, textview, search_bar, entry, controller_widget=None, focus_widget=None):
 
         self.textview = textview
@@ -579,10 +593,16 @@ class TextSearchBar:
 
         if search_type == "previous":
             match = iterator.backward_search(
-                query, Gtk.TextSearchFlags.TEXT_ONLY | Gtk.TextSearchFlags.CASE_INSENSITIVE, limit=None)
+                query,
+                Gtk.TextSearchFlags.TEXT_ONLY | Gtk.TextSearchFlags.CASE_INSENSITIVE,
+                limit=None,
+            )
         else:
             match = iterator.forward_search(
-                query, Gtk.TextSearchFlags.TEXT_ONLY | Gtk.TextSearchFlags.CASE_INSENSITIVE, limit=None)
+                query,
+                Gtk.TextSearchFlags.TEXT_ONLY | Gtk.TextSearchFlags.CASE_INSENSITIVE,
+                limit=None,
+            )
 
         if match is not None and len(match) == 2:
             match_start, match_end = match
@@ -616,13 +636,13 @@ class TextSearchBar:
         self.on_search_match(search_type="next")
 
     def on_hide_search_accelerator(self, *_args):
-        """ Escape: hide search bar """
+        """Escape: hide search bar"""
 
         self.hide()
         return True
 
     def on_show_search_accelerator(self, *_args):
-        """ Ctrl+F: show search bar """
+        """Ctrl+F: show search bar"""
 
         self.show()
         return True

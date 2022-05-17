@@ -34,7 +34,6 @@ from pynicotine.utils import open_uri
 
 
 class TextView:
-
     def __init__(self, textview, font=None):
 
         self.textview = textview
@@ -78,9 +77,18 @@ class TextView:
         adjustment.set_value(adjustment.get_upper() - adjustment.get_page_size())
         return False
 
-    def append_line(self, line, tag=None, timestamp=None, showstamp=True, timestamp_format="%H:%M:%S",
-                    username=None, usertag=None, scroll=True, find_urls=True):
-
+    def append_line(
+        self,
+        line,
+        tag=None,
+        timestamp=None,
+        showstamp=True,
+        timestamp_format="%H:%M:%S",
+        username=None,
+        usertag=None,
+        scroll=True,
+        find_urls=True,
+    ):
         def _append(buffer, text, tag):
 
             iterator = buffer.get_end_iter()
@@ -97,8 +105,12 @@ class TextView:
         def _usertag(buffer, section):
 
             # Tag usernames with popup menu creating tag, and away/online/offline colors
-            if (username is not None and usertag is not None and config.sections["ui"]["usernamehotspots"]
-                    and username in section):
+            if (
+                username is not None
+                and usertag is not None
+                and config.sections["ui"]["usernamehotspots"]
+                and username in section
+            ):
                 start = section.find(username)
                 end = start + len(username)
 
@@ -130,7 +142,7 @@ class TextView:
 
             # Highlight urls, if found and tag them
             while match:
-                _usertag(buffer, line[:match.start()])
+                _usertag(buffer, line[: match.start()])
 
                 url = match.group()
                 urltag = self.create_tag("urlcolor", url=url)
@@ -138,7 +150,7 @@ class TextView:
                 _append(buffer, url, urltag)
 
                 # Match remaining url
-                line = line[match.end():]
+                line = line[match.end() :]
                 match = self.url_regex.search(line)
 
         if line:
@@ -158,8 +170,7 @@ class TextView:
 
     def get_tags_for_selected_pos(self):
 
-        buf_x, buf_y = self.textview.window_to_buffer_coords(Gtk.TextWindowType.WIDGET,
-                                                             self.pressed_x, self.pressed_y)
+        buf_x, buf_y = self.textview.window_to_buffer_coords(Gtk.TextWindowType.WIDGET, self.pressed_x, self.pressed_y)
         _over_text, iterator, _trailing = self.textview.get_iter_at_position(buf_x, buf_y)
 
         return iterator.get_tags()

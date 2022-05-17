@@ -33,32 +33,31 @@ from pynicotine.slskmessages import ServerConnect, Login, SetWaitPort
 
 # Time (in s) needed for SlskProtoThread main loop to run at least once
 SLSKPROTO_RUN_TIME = 1.5
-LOGIN_DATAFILE = 'socket_localhost_22420.log'
+LOGIN_DATAFILE = "socket_localhost_22420.log"
 
 
 class MockSocket(Mock):
-
     def __init__(self):
         super().__init__()
         self.events = None
 
     def set_data(self, datafile):
 
-        windows_line_ending = b'\r\n'
-        unix_line_ending = b'\n'
+        windows_line_ending = b"\r\n"
+        unix_line_ending = b"\n"
 
         file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), datafile)
 
-        with open(file_path.encode("utf-8"), 'rb') as file_handle:
+        with open(file_path.encode("utf-8"), "rb") as file_handle:
             content = file_handle.read()
 
         content = content.replace(windows_line_ending, unix_line_ending)
-        logs = pickle.loads(content, encoding='bytes')
+        logs = pickle.loads(content, encoding="bytes")
         self.events = {}
 
-        for mode in b'send', b'recv':
-            for time, event in logs[b'transactions'][mode].items():
-                self.events[time] = (mode.decode('latin1'), event)
+        for mode in b"send", b"recv":
+            for time, event in logs[b"transactions"][mode].items():
+                self.events[time] = (mode.decode("latin1"), event)
 
     @staticmethod
     def send(data):
@@ -67,41 +66,45 @@ class MockSocket(Mock):
     @staticmethod
     def recv(bufsize):
         print("recving {} data".format(bufsize))
-        return b''
+        return b""
 
 
 class SlskProtoTest(unittest.TestCase):
-
     def test_server_conn(self):
 
         queue = deque()
         proto = SlskProtoThread(
-            core_callback=Mock(), queue=queue, interface='', bindip='',
-            port=None, port_range=(1024, 65535), eventprocessor=Mock()
+            core_callback=Mock(),
+            queue=queue,
+            interface="",
+            bindip="",
+            port=None,
+            port_range=(1024, 65535),
+            eventprocessor=Mock(),
         )
 
         # Windows doesn't accept mock_socket in select() calls
         proto.selector = MagicMock()
 
-        with patch('socket.socket') as mock_socket:
+        with patch("socket.socket") as mock_socket:
             mock_socket.set_data(LOGIN_DATAFILE)
             proto.server_connect()
 
-            queue.append(ServerConnect(addr=('0.0.0.0', 0), login=('dummy', 'dummy')))
+            queue.append(ServerConnect(addr=("0.0.0.0", 0), login=("dummy", "dummy")))
             sleep(SLSKPROTO_RUN_TIME)
 
-            if hasattr(socket, 'TCP_KEEPIDLE'):
+            if hasattr(socket, "TCP_KEEPIDLE"):
                 self.assertEqual(proto.server_socket.setsockopt.call_count, 4)  # pylint: disable=no-member
 
-            elif hasattr(socket, 'TCP_KEEPALIVE'):
+            elif hasattr(socket, "TCP_KEEPALIVE"):
                 self.assertEqual(proto.server_socket.setsockopt.call_count, 3)  # pylint: disable=no-member
 
-            elif hasattr(socket, 'SIO_KEEPALIVE_VALS'):
-                self.assertEqual(proto.server_socket.ioctl.call_count, 1)       # pylint: disable=no-member
+            elif hasattr(socket, "SIO_KEEPALIVE_VALS"):
+                self.assertEqual(proto.server_socket.ioctl.call_count, 1)  # pylint: disable=no-member
                 self.assertEqual(proto.server_socket.setsockopt.call_count, 1)  # pylint: disable=no-member
 
-            self.assertEqual(proto.server_socket.setblocking.call_count, 1)     # pylint: disable=no-member
-            self.assertEqual(proto.server_socket.connect_ex.call_count, 1)      # pylint: disable=no-member
+            self.assertEqual(proto.server_socket.setblocking.call_count, 1)  # pylint: disable=no-member
+            self.assertEqual(proto.server_socket.connect_ex.call_count, 1)  # pylint: disable=no-member
 
             proto.abort()
             self.assertIsNone(proto.server_socket)
@@ -111,15 +114,20 @@ class SlskProtoTest(unittest.TestCase):
 
         queue = deque()
         proto = SlskProtoThread(
-            core_callback=Mock(), queue=queue, interface='', bindip='',
-            port=None, port_range=(1024, 65535), eventprocessor=Mock()
+            core_callback=Mock(),
+            queue=queue,
+            interface="",
+            bindip="",
+            port=None,
+            port_range=(1024, 65535),
+            eventprocessor=Mock(),
         )
         proto.server_connect()
-        queue.append(ServerConnect(addr=('0.0.0.0', 0), login=('username', 'password')))
+        queue.append(ServerConnect(addr=("0.0.0.0", 0), login=("username", "password")))
 
         sleep(SLSKPROTO_RUN_TIME / 2)
 
-        queue.append(Login('username', 'password', 160, 1))
+        queue.append(Login("username", "password", 160, 1))
         queue.append(SetWaitPort(1))
 
         sleep(SLSKPROTO_RUN_TIME)

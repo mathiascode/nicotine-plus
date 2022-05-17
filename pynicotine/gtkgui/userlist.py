@@ -45,15 +45,10 @@ from pynicotine.utils import human_speed
 
 
 class UserList(UserInterface):
-
     def __init__(self, frame, core):
 
         super().__init__("ui/buddylist.ui")
-        (
-            self.container,
-            self.list_view,
-            self.toolbar
-        ) = self.widgets
+        (self.container, self.list_view, self.toolbar) = self.widgets
 
         self.frame = frame
         self.core = core
@@ -61,26 +56,28 @@ class UserList(UserInterface):
         # Columns
         self.user_iterators = {}
         self.usersmodel = Gtk.ListStore(
-            Gio.Icon,             # (0)  status icon
-            str,                  # (1)  flag
-            str,                  # (2)  username
-            str,                  # (3)  hspeed
-            str,                  # (4)  hfile count
-            bool,                 # (5)  trusted
-            bool,                 # (6)  notify
-            bool,                 # (7)  prioritized
-            str,                  # (8)  hlast seen
-            str,                  # (9)  note
-            int,                  # (10) status
-            GObject.TYPE_UINT,    # (11) speed
-            GObject.TYPE_UINT,    # (12) file count
-            int,                  # (13) last seen
-            str                   # (14) country
+            Gio.Icon,  # (0)  status icon
+            str,  # (1)  flag
+            str,  # (2)  username
+            str,  # (3)  hspeed
+            str,  # (4)  hfile count
+            bool,  # (5)  trusted
+            bool,  # (6)  notify
+            bool,  # (7)  prioritized
+            str,  # (8)  hlast seen
+            str,  # (9)  note
+            int,  # (10) status
+            GObject.TYPE_UINT,  # (11) speed
+            GObject.TYPE_UINT,  # (12) file count
+            int,  # (13) last seen
+            str,  # (14) country
         )
 
         self.column_numbers = list(range(self.usersmodel.get_n_columns()))
         self.cols = cols = initialise_columns(
-            frame, "buddy_list", self.list_view,
+            frame,
+            "buddy_list",
+            self.list_view,
             ["status", _("Status"), 25, "icon", None],
             ["country", _("Country"), 25, "icon", None],
             ["user", _("User"), 250, "text", None],
@@ -90,7 +87,7 @@ class UserList(UserInterface):
             ["notify", _("Notify"), 0, "toggle", None],
             ["privileged", _("Prioritized"), 0, "toggle", None],
             ["last_seen", _("Last Seen"), 160, "text", None],
-            ["comments", _("Note"), 400, "text", None]
+            ["comments", _("Note"), 400, "text", None],
         )
 
         cols["status"].set_sort_column_id(10)
@@ -108,16 +105,16 @@ class UserList(UserInterface):
         cols["country"].get_widget().hide()
 
         for render in cols["trusted"].get_cells():
-            render.connect('toggled', self.cell_toggle_callback, self.list_view, 5)
+            render.connect("toggled", self.cell_toggle_callback, self.list_view, 5)
 
         for render in cols["notify"].get_cells():
-            render.connect('toggled', self.cell_toggle_callback, self.list_view, 6)
+            render.connect("toggled", self.cell_toggle_callback, self.list_view, 6)
 
         for render in cols["privileged"].get_cells():
-            render.connect('toggled', self.cell_toggle_callback, self.list_view, 7)
+            render.connect("toggled", self.cell_toggle_callback, self.list_view, 7)
 
         for render in cols["comments"].get_cells():
-            render.connect('edited', self.cell_edited_callback, self.list_view, 9)
+            render.connect("edited", self.cell_edited_callback, self.list_view, 9)
 
         self.list_view.set_model(self.usersmodel)
 
@@ -127,8 +124,11 @@ class UserList(UserInterface):
 
         self.usersmodel.set_sort_column_id(2, Gtk.SortType.ASCENDING)
 
-        for combo_box in (self.frame.user_search_combobox, self.frame.userinfo_combobox,
-                          self.frame.userbrowse_combobox):
+        for combo_box in (
+            self.frame.user_search_combobox,
+            self.frame.userinfo_combobox,
+            self.frame.userbrowse_combobox,
+        ):
             combo_box.set_model(self.usersmodel)
             combo_box.set_entry_text_column(2)
 
@@ -143,7 +143,7 @@ class UserList(UserInterface):
             ("", None),
             ("#" + _("Add User _Note…"), self.on_add_note),
             (">" + _("Private Rooms"), self.popup_menu_private_rooms),
-            ("#" + _("_Remove"), self.on_remove_user)
+            ("#" + _("_Remove"), self.on_remove_user),
         )
 
         self.update_visuals()
@@ -209,7 +209,7 @@ class UserList(UserInterface):
             0,
             0,
             time_from_epoch,
-            country
+            country,
         ]
 
         self.user_iterators[username] = self.usersmodel.insert_with_valuesv(0, self.column_numbers, row)
@@ -323,7 +323,7 @@ class UserList(UserInterface):
         menu.toggle_user_items()
         menu.populate_private_rooms(self.popup_menu_private_rooms)
 
-        private_rooms_enabled = (self.popup_menu_private_rooms.items and menu.user != self.core.login_username)
+        private_rooms_enabled = self.popup_menu_private_rooms.items and menu.user != self.core.login_username
         menu.actions[_("Private Rooms")].set_enabled(private_rooms_enabled)
 
     def get_user_status(self, msg):
@@ -412,7 +412,8 @@ class UserList(UserInterface):
         empty_str = ""
 
         self.user_iterators[user] = self.usersmodel.insert_with_valuesv(
-            -1, self.column_numbers,
+            -1,
+            self.column_numbers,
             [
                 get_status_icon(0),
                 empty_str,
@@ -428,8 +429,8 @@ class UserList(UserInterface):
                 empty_int,
                 empty_int,
                 empty_int,
-                empty_str
-            ]
+                empty_str,
+            ],
         )
 
         self.save_user_list()
@@ -455,8 +456,23 @@ class UserList(UserInterface):
         user_list = []
 
         for i in self.usersmodel:
-            (_status_icon, _flag, user, _hspeed, _hfile_count, trusted, notify, prioritized,
-                hlast_seen, note, _status, _speed, _file_count, _last_seen, country) = i
+            (
+                _status_icon,
+                _flag,
+                user,
+                _hspeed,
+                _hfile_count,
+                trusted,
+                notify,
+                prioritized,
+                hlast_seen,
+                note,
+                _status,
+                _speed,
+                _file_count,
+                _last_seen,
+                country,
+            ) = i
             user_list.append([user, note, notify, prioritized, trusted, hlast_seen, country])
 
         self.core.userlist.save_user_list(user_list)
@@ -535,7 +551,7 @@ class UserList(UserInterface):
             message=_("Add a note about user %s:") % user,
             callback=self.on_add_note_response,
             callback_data=user,
-            default=note
+            default=note,
         ).show()
 
     def on_remove_user(self, *_args):

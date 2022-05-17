@@ -30,7 +30,6 @@ from pynicotine.gtkgui.widgets.ui import UserInterface
 
 
 class RoomList(UserInterface):
-
     def __init__(self, frame, core):
 
         super().__init__("ui/popovers/roomlist.ui")
@@ -40,7 +39,7 @@ class RoomList(UserInterface):
             self.private_room_toggle,
             self.public_feed_toggle,
             self.refresh_button,
-            self.search_entry
+            self.search_entry,
         ) = self.widgets
 
         self.frame = frame
@@ -48,12 +47,7 @@ class RoomList(UserInterface):
         self.room_iters = {}
         self.initializing_feed = False
 
-        self.room_model = Gtk.ListStore(
-            str,
-            int,
-            Pango.Weight,
-            Pango.Underline
-        )
+        self.room_model = Gtk.ListStore(str, int, Pango.Weight, Pango.Underline)
 
         self.room_filter = self.room_model.filter_new()
         self.room_filter.set_visible_func(self.room_match_function)
@@ -63,9 +57,11 @@ class RoomList(UserInterface):
         self.column_numbers = list(range(self.room_model.get_n_columns()))
         attribute_columns = (2, 3)
         self.cols = initialise_columns(
-            frame, None, self.list_view,
+            frame,
+            None,
+            self.list_view,
             ["room", _("Room"), 260, "text", attribute_columns],
-            ["users", _("Users"), 100, "number", attribute_columns]
+            ["users", _("Users"), 100, "number", attribute_columns],
         )
         self.cols["room"].set_sort_column_id(0)
         self.cols["users"].set_sort_column_id(1)
@@ -77,7 +73,7 @@ class RoomList(UserInterface):
             ("#" + _("Leave Room"), self.on_popup_leave),
             ("", None),
             ("#" + _("Disown Private Room"), self.on_popup_private_room_disown),
-            ("#" + _("Cancel Room Membership"), self.on_popup_private_room_dismember)
+            ("#" + _("Cancel Room Membership"), self.on_popup_private_room_dismember),
         )
 
         self.private_room_toggle.set_active(config.sections["server"]["private_chatrooms"])
@@ -173,8 +169,7 @@ class RoomList(UserInterface):
         text_underline = Pango.Underline.SINGLE if owned else Pango.Underline.NONE
 
         self.room_iters[room] = self.room_model.insert_with_valuesv(
-            -1, self.column_numbers,
-            [room, user_count, text_weight, text_underline]
+            -1, self.column_numbers, [room, user_count, text_weight, text_underline]
         )
 
     def on_row_activated(self, treeview, _path, _column):
@@ -235,7 +230,7 @@ class RoomList(UserInterface):
         self.core.chatrooms.request_private_room_toggle(self.private_room_toggle.get_active())
 
     def on_search_accelerator(self, *_args):
-        """ Ctrl+F: Search rooms """
+        """Ctrl+F: Search rooms"""
 
         self.search_entry.grab_focus()
         return True

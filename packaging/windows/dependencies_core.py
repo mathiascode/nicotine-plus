@@ -25,20 +25,23 @@ import sys
 
 
 def install_pacman():
-    """ Install dependencies from the main MinGW repos """
+    """Install dependencies from the main MinGW repos"""
 
     arch = os.environ.get("ARCH") or "x86_64"
     prefix = "mingw-w64-" + arch + "-"
-    gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or '3'
-    use_libadwaita = gtk_version == '4' and os.environ.get("NICOTINE_LIBADWAITA") == '1'
+    gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or "3"
+    use_libadwaita = gtk_version == "4" and os.environ.get("NICOTINE_LIBADWAITA") == "1"
 
-    packages = [prefix + "gettext",
-                prefix + "gtk" + gtk_version,
-                prefix + "python-chardet",
-                prefix + "python-flake8",
-                prefix + "python-pip",
-                prefix + "python-pylint",
-                prefix + "python-gobject"]
+    packages = [
+        prefix + "gettext",
+        prefix + "gtk" + gtk_version,
+        prefix + "python-black",
+        prefix + "python-chardet",
+        prefix + "python-flake8",
+        prefix + "python-pip",
+        prefix + "python-pylint",
+        prefix + "python-gobject",
+    ]
 
     if use_libadwaita:
         packages.append(prefix + "libadwaita")
@@ -47,12 +50,12 @@ def install_pacman():
 
 
 def install_pypi():
-    """ Install dependencies from PyPi """
+    """Install dependencies from PyPi"""
 
     packages = ["semidbm"]
     subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     install_pacman()
     install_pypi()

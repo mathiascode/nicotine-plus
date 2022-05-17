@@ -18,7 +18,6 @@
 
 
 class UserList:
-
     def __init__(self, core, config, queue, ui_callback):
 
         self.core = core

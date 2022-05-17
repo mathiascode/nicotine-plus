@@ -23,7 +23,6 @@ from pynicotine.config import config
 
 
 class Logger:
-
     def __init__(self):
 
         self.listeners = set()
@@ -37,7 +36,7 @@ class Logger:
             "connection": "Conn",
             "message": "Msg",
             "transfer": "Transfer",
-            "miscellaneous": "Misc"
+            "miscellaneous": "Misc",
         }
 
         self.add_listener(self.log_console)
@@ -128,7 +127,7 @@ class Logger:
 
     @staticmethod
     def contents(obj):
-        """ Returns variables for object, for debug output """
+        """Returns variables for object, for debug output"""
         try:
             return {s: getattr(obj, s) for s in obj.__slots__ if hasattr(obj, s)}
         except AttributeError:
@@ -155,10 +154,18 @@ class Logger:
 
         self.write_log(folder, "transfers", msg, timestamp_format=timestamp_format)
 
-    def write_log(self, logsdir, filename, msg, timestamp=None, timestamp_format="%Y-%m-%d %H:%M:%S"):
+    def write_log(
+        self,
+        logsdir,
+        filename,
+        msg,
+        timestamp=None,
+        timestamp_format="%Y-%m-%d %H:%M:%S",
+    ):
 
         try:
             from pynicotine.utils import clean_file
+
             filename = clean_file(filename) + ".log"
             path = os.path.join(logsdir, filename)
             oldumask = os.umask(0o077)
@@ -166,15 +173,19 @@ class Logger:
             if not os.path.exists(logsdir.encode("utf-8")):
                 os.makedirs(logsdir.encode("utf-8"))
 
-            with open(path, 'ab', 0) as logfile:
+            with open(path, "ab", 0) as logfile:
                 os.umask(oldumask)
 
-                text = "%s %s\n" % (time.strftime(timestamp_format, time.localtime(timestamp)), msg)
-                logfile.write(text.encode('utf-8', 'replace'))
+                text = "%s %s\n" % (
+                    time.strftime(timestamp_format, time.localtime(timestamp)),
+                    msg,
+                )
+                logfile.write(text.encode("utf-8", "replace"))
 
         except Exception as error:
-            self.add(_("Couldn't write to log file \"%(filename)s\": %(error)s") %
-                     {"filename": filename, "error": error})
+            self.add(
+                _('Couldn\'t write to log file "%(filename)s": %(error)s') % {"filename": filename, "error": error}
+            )
 
 
 log = Logger()

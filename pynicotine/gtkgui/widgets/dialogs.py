@@ -25,14 +25,22 @@ from pynicotine.gtkgui.application import GTK_API_VERSION
 """ Dialogs """
 
 
-def generic_dialog(parent=None, content_box=None, buttons=None, quit_callback=None,
-                   title="Dialog", width=400, height=400, modal=True):
+def generic_dialog(
+    parent=None,
+    content_box=None,
+    buttons=None,
+    quit_callback=None,
+    title="Dialog",
+    width=400,
+    height=400,
+    modal=True,
+):
 
     dialog = Gtk.Dialog(
         use_header_bar=config.sections["ui"]["header_bar"],
         title=title,
         default_width=width,
-        default_height=height
+        default_height=height,
     )
     dialog.get_style_context().add_class("generic-dialog")
 
@@ -99,9 +107,7 @@ def dialog_show(dialog):
     dialog.present()
 
     if GTK_API_VERSION == 3:
-        dialog.get_window().set_functions(
-            Gdk.WMFunction.RESIZE | Gdk.WMFunction.MOVE | Gdk.WMFunction.CLOSE
-        )
+        dialog.get_window().set_functions(Gdk.WMFunction.RESIZE | Gdk.WMFunction.MOVE | Gdk.WMFunction.CLOSE)
 
 
 def dialog_hide(dialog):
@@ -118,18 +124,31 @@ def dialog_hide(dialog):
 
 
 class MessageDialog:
-
-    def __init__(self, parent, title, message, callback=None, callback_data=None,
-                 message_type=Gtk.MessageType.OTHER, buttons=None, width=-1):
+    def __init__(
+        self,
+        parent,
+        title,
+        message,
+        callback=None,
+        callback_data=None,
+        message_type=Gtk.MessageType.OTHER,
+        buttons=None,
+        width=-1,
+    ):
 
         self.dialog = Gtk.MessageDialog(
-            transient_for=parent, destroy_with_parent=True, modal=True,
-            message_type=message_type, default_width=width,
-            text=title, secondary_text=message
+            transient_for=parent,
+            destroy_with_parent=True,
+            modal=True,
+            message_type=message_type,
+            default_width=width,
+            text=title,
+            secondary_text=message,
         )
         self.container = self.dialog.get_message_area()
 
         if not callback:
+
             def callback(dialog, *_args):
                 dialog.destroy()
 
@@ -162,16 +181,36 @@ class MessageDialog:
 
 
 class EntryDialog(MessageDialog):
+    def __init__(
+        self,
+        parent,
+        title,
+        callback,
+        message=None,
+        callback_data=None,
+        default="",
+        use_second_entry=False,
+        second_default="",
+        option_label="",
+        option_value=False,
+        visibility=True,
+        droplist=None,
+        second_droplist=None,
+    ):
 
-    def __init__(self, parent, title, callback, message=None, callback_data=None, default="", use_second_entry=False,
-                 second_default="", option_label="", option_value=False, visibility=True,
-                 droplist=None, second_droplist=None):
-
-        super().__init__(parent=parent, title=title, message=message, message_type=Gtk.MessageType.OTHER,
-                         callback=callback, callback_data=callback_data, width=500,
-                         buttons=[
-                             (_("Cancel"), Gtk.ResponseType.CANCEL),
-                             (_("OK"), Gtk.ResponseType.OK)])
+        super().__init__(
+            parent=parent,
+            title=title,
+            message=message,
+            message_type=Gtk.MessageType.OTHER,
+            callback=callback,
+            callback_data=callback_data,
+            width=500,
+            buttons=[
+                (_("Cancel"), Gtk.ResponseType.CANCEL),
+                (_("OK"), Gtk.ResponseType.OK),
+            ],
+        )
 
         if droplist:
             self.entry = self._add_combobox(droplist, visibility)
@@ -239,9 +278,19 @@ class EntryDialog(MessageDialog):
 
 
 class OptionDialog(MessageDialog):
-
-    def __init__(self, parent, title, message, callback, callback_data=None, option_label="", option_value=False,
-                 first_button=_("_No"), second_button=_("_Yes"), third_button=""):
+    def __init__(
+        self,
+        parent,
+        title,
+        message,
+        callback,
+        callback_data=None,
+        option_label="",
+        option_value=False,
+        first_button=_("_No"),
+        second_button=_("_Yes"),
+        third_button="",
+    ):
 
         buttons = []
 
@@ -254,8 +303,15 @@ class OptionDialog(MessageDialog):
         if third_button:
             buttons.append((third_button, 3))
 
-        super().__init__(parent=parent, title=title, message=message, message_type=Gtk.MessageType.OTHER,
-                         callback=callback, callback_data=callback_data, buttons=buttons)
+        super().__init__(
+            parent=parent,
+            title=title,
+            message=message,
+            message_type=Gtk.MessageType.OTHER,
+            callback=callback,
+            callback_data=callback_data,
+            buttons=buttons,
+        )
 
         self.option = Gtk.CheckButton(label=option_label, active=option_value, visible=bool(option_label))
 

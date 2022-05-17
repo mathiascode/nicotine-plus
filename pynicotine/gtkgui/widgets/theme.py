@@ -40,7 +40,7 @@ if "gi.repository.Adw" not in sys.modules:
     # GNOME 42+ system-wide dark mode for vanilla GTK (no libadwaita)
 
     def read_color_scheme():
-        """ Available color schemes:
+        """Available color schemes:
         - 0: No preference
         - 1: Prefer dark appearance
         - 2: Prefer light appearance
@@ -48,8 +48,11 @@ if "gi.repository.Adw" not in sys.modules:
 
         try:
             result = SETTINGS_PORTAL.call_sync(
-                "Read", GLib.Variant("(ss)", ("org.freedesktop.appearance", "color-scheme")),
-                Gio.DBusCallFlags.NONE, -1, None
+                "Read",
+                GLib.Variant("(ss)", ("org.freedesktop.appearance", "color-scheme")),
+                Gio.DBusCallFlags.NONE,
+                -1,
+                None,
             )
 
             return result.unpack()[0]
@@ -64,17 +67,20 @@ if "gi.repository.Adw" not in sys.modules:
 
         namespace, name, color_scheme, *_unused = parameters.unpack()
 
-        if (config.sections["ui"]["dark_mode"]
-                or namespace != "org.freedesktop.appearance" or name != "color-scheme"):
+        if config.sections["ui"]["dark_mode"] or namespace != "org.freedesktop.appearance" or name != "color-scheme":
             return
 
         set_dark_mode(color_scheme == 1)
 
     try:
         SETTINGS_PORTAL = Gio.DBusProxy.new_for_bus_sync(
-            Gio.BusType.SESSION, Gio.DBusProxyFlags.NONE, None,
-            "org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop",
-            "org.freedesktop.portal.Settings", None
+            Gio.BusType.SESSION,
+            Gio.DBusProxyFlags.NONE,
+            None,
+            "org.freedesktop.portal.Desktop",
+            "/org/freedesktop/portal/desktop",
+            "org.freedesktop.portal.Settings",
+            None,
         )
         SETTINGS_PORTAL.connect("g-signal", on_color_scheme_changed)
 
@@ -97,7 +103,7 @@ def set_dark_mode(enabled):
         color_scheme = read_color_scheme()
 
         if color_scheme is not None:
-            enabled = (color_scheme == 1)
+            enabled = color_scheme == 1
 
     GTK_SETTINGS.set_property("gtk-application-prefer-dark-theme", enabled)
 
@@ -227,14 +233,18 @@ def set_global_css():
         global_css_provider.load_from_data(css)
 
         Gtk.StyleContext.add_provider_for_display(  # pylint: disable=no-member
-            Gdk.Display.get_default(), global_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            Gdk.Display.get_default(),
+            global_css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
 
     else:
         global_css_provider.load_from_data(css)
 
         Gtk.StyleContext.add_provider_for_screen(  # pylint: disable=no-member
-            Gdk.Screen.get_default(), global_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            Gdk.Screen.get_default(),
+            global_css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
 
 
@@ -283,7 +293,7 @@ def get_status_icon(status):
 
 
 def load_ui_icon(name):
-    """ Load icon required by the UI """
+    """Load icon required by the UI"""
 
     path = os.path.join(GTK_GUI_DIR, "icons", name + ".svg")
 
@@ -294,7 +304,7 @@ def load_ui_icon(name):
 
 
 def load_custom_icons(names):
-    """ Load custom icon theme if one is selected """
+    """Load custom icon theme if one is selected"""
 
     if not config.sections["ui"].get("icontheme"):
         return False
@@ -317,10 +327,10 @@ def load_custom_icons(names):
                     loaded = True
 
             except Exception as error:
-                log.add(_("Error loading custom icon %(path)s: %(error)s"), {
-                    "path": path,
-                    "error": error
-                })
+                log.add(
+                    _("Error loading custom icon %(path)s: %(error)s"),
+                    {"path": path, "error": error},
+                )
 
         if name not in ICONS:
             ICONS[name] = load_ui_icon(name)
@@ -329,7 +339,7 @@ def load_custom_icons(names):
 
 
 def load_icons():
-    """ Load custom icons necessary for the application to function """
+    """Load custom icons necessary for the application to function"""
 
     names = (
         "away",
@@ -342,7 +352,7 @@ def load_icons():
         "trayicon_disconnect",
         "trayicon_msg",
         "n",
-        "notify"
+        "notify",
     )
 
     """ Load icons required by the application, such as status icons """
@@ -355,7 +365,7 @@ def load_icons():
 
     paths = (
         os.path.join(GTK_GUI_DIR, "icons"),  # Support running from folder, as well as macOS and Windows
-        os.path.join(sys.prefix, "share", "icons")  # Support Python venv
+        os.path.join(sys.prefix, "share", "icons"),  # Support Python venv
     )
 
     for path in paths:
@@ -384,12 +394,15 @@ def get_user_status_color(status):
 
 
 def parse_color_string(color_string):
-    """ Take a color string, e.g. BLUE, and return a HEX color code """
+    """Take a color string, e.g. BLUE, and return a HEX color code"""
 
     if color_string:
         if COLOR_RGBA.parse(color_string):
             color_hex = "#%02X%02X%02X" % (
-                round(COLOR_RGBA.red * 255), round(COLOR_RGBA.green * 255), round(COLOR_RGBA.blue * 255))
+                round(COLOR_RGBA.red * 255),
+                round(COLOR_RGBA.green * 255),
+                round(COLOR_RGBA.blue * 255),
+            )
             return color_hex
 
     return None
@@ -445,7 +458,7 @@ def set_widget_fg_bg_css(widget, bg_color=None, fg_color=None):
         context.add_provider(css_providers[widget], Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         context.add_class(class_name)
 
-    css_providers[widget].load_from_data(css.encode('utf-8'))
+    css_providers[widget].load_from_data(css.encode("utf-8"))
 
 
 def set_widget_font(widget, font):
@@ -492,17 +505,14 @@ def update_tag_visuals(tag, color=None, font=None):
 def update_widget_visuals(widget, list_font_target="listfont"):
 
     from pynicotine.gtkgui.widgets.textview import TextView
+
     config_ui = config.sections["ui"]
 
     if isinstance(widget, Gtk.ComboBox) and widget.get_has_entry() or isinstance(widget, Gtk.Entry):
         if isinstance(widget, Gtk.ComboBox):
             widget = widget.get_child()
 
-        set_widget_fg_bg_css(
-            widget,
-            bg_color=config_ui["textbg"],
-            fg_color=config_ui["inputcolor"]
-        )
+        set_widget_fg_bg_css(widget, bg_color=config_ui["textbg"], fg_color=config_ui["inputcolor"])
 
     elif isinstance(widget, TextView):
         # Update URL tag colors

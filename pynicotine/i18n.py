@@ -28,20 +28,22 @@ TRANSLATION_DOMAIN = "nicotine"
 
 
 def _set_default_system_language():
-    """ Extracts the default system language and applies it on systems that don't
-    set the 'LANGUAGE' environment variable by default (Windows, macOS) """
+    """Extracts the default system language and applies it on systems that don't
+    set the 'LANGUAGE' environment variable by default (Windows, macOS)"""
 
     language = None
 
     if os.getenv("LANGUAGE") is None:
         if sys.platform == "win32":
             import ctypes
+
             windll = ctypes.windll.kernel32
             language = locale.windows_locale.get(windll.GetUserDefaultUILanguage())
 
         elif sys.platform == "darwin":
             try:
                 import subprocess
+
                 language_output = subprocess.check_output(("defaults", "read", "-g", "AppleLanguages"))
                 languages = language_output.decode("utf-8").strip('()\n" ').split(",")
 
@@ -83,23 +85,24 @@ def apply_translations():
     if sys.platform == "win32":
         libintl_path = "libintl-8.dll"
 
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             libintl_path = os.path.join(executable_folder, "lib", libintl_path)
 
     elif sys.platform == "darwin":
         libintl_path = "libintl.8.dylib"
 
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             libintl_path = os.path.join(executable_folder, libintl_path)
 
     if libintl_path is not None:
         import ctypes
+
         libintl = ctypes.cdll.LoadLibrary(libintl_path)
 
         if use_local_path:
             mo_path = local_mo_path
 
-        elif getattr(sys, 'frozen', False):
+        elif getattr(sys, "frozen", False):
             mo_path = os.path.join(executable_folder, "share", "locale")
 
         else:
@@ -126,9 +129,10 @@ def apply_translations():
 
 
 def build_translations():
-    """ Builds .mo translation files in the 'mo' folder of the project repository """
+    """Builds .mo translation files in the 'mo' folder of the project repository"""
 
     import subprocess
+
     languages = []
 
     for po_file in glob.glob(os.path.join(BASE_FOLDER, "po", "*.po")):
@@ -145,17 +149,36 @@ def build_translations():
 
     # Merge translations into .desktop and appdata files
     for desktop_file in glob.glob(os.path.join(BASE_FOLDER, "data", "*.desktop.in")):
-        subprocess.check_call(["msgfmt", "--desktop", "--template=" + desktop_file, "-d", "po",
-                               "-o", desktop_file[:-3]])
+        subprocess.check_call(
+            [
+                "msgfmt",
+                "--desktop",
+                "--template=" + desktop_file,
+                "-d",
+                "po",
+                "-o",
+                desktop_file[:-3],
+            ]
+        )
 
     for appdata_file in glob.glob(os.path.join(BASE_FOLDER, "data", "*.appdata.xml.in")):
-        subprocess.check_call(["msgfmt", "--xml", "--template=" + appdata_file, "-d", "po", "-o", appdata_file[:-3]])
+        subprocess.check_call(
+            [
+                "msgfmt",
+                "--xml",
+                "--template=" + appdata_file,
+                "-d",
+                "po",
+                "-o",
+                appdata_file[:-3],
+            ]
+        )
 
     return languages
 
 
 def get_translation_paths():
-    """ Returns the target path and current path of built .mo translation files """
+    """Returns the target path and current path of built .mo translation files"""
 
     mo_entries = []
 

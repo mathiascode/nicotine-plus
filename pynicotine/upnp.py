@@ -34,23 +34,23 @@ class Router:
 
 
 class SSDPResponse:
-    """ Simple Service Discovery Protocol (SSDP) response """
+    """Simple Service Discovery Protocol (SSDP) response"""
 
     def __init__(self, message):
 
         import email.parser
 
         self.message = message
-        self.headers = list(email.parser.Parser().parsestr('\r\n'.join(message.splitlines()[1:])).items())
+        self.headers = list(email.parser.Parser().parsestr("\r\n".join(message.splitlines()[1:])).items())
 
     def __bytes__(self):
-        """ Return complete SSDP response """
+        """Return complete SSDP response"""
 
-        return self.message.encode('utf-8')
+        return self.message.encode("utf-8")
 
 
 class SSDPRequest:
-    """ Simple Service Discovery Protocol (SSDP) request """
+    """Simple Service Discovery Protocol (SSDP) request"""
 
     def __init__(self, search_target):
 
@@ -58,7 +58,7 @@ class SSDPRequest:
             "HOST": "%s:%s" % (SSDP.multicast_host, SSDP.multicast_port),
             "ST": search_target,
             "MAN": '"ssdp:discover"',
-            "MX": str(SSDP.response_time_secs)
+            "MX": str(SSDP.response_time_secs),
         }
 
     def sendto(self, sock, addr):
@@ -75,7 +75,7 @@ class SSDPRequest:
         for header in self.headers.items():
             headers.append("%s: %s" % header)
 
-        return '\r\n'.join(headers).encode('utf-8') + b'\r\n\r\n'
+        return "\r\n".join(headers).encode("utf-8") + b"\r\n\r\n"
 
 
 class SSDP:
@@ -93,17 +93,21 @@ class SSDP:
             from xml.etree import ElementTree
 
             response = http_request(url_scheme, base_url, root_url, timeout=2)
-            log.add_debug("UPnP: Device description response from %s://%s%s: %s",
-                          (url_scheme, base_url, root_url, response.encode('utf-8')))
+            log.add_debug(
+                "UPnP: Device description response from %s://%s%s: %s",
+                (url_scheme, base_url, root_url, response.encode("utf-8")),
+            )
 
             xml = ElementTree.fromstring(response)
 
             for service in xml.findall(".//{urn:schemas-upnp-org:device-1-0}service"):
                 found_service_type = service.find(".//{urn:schemas-upnp-org:device-1-0}serviceType").text
 
-                if found_service_type in ("urn:schemas-upnp-org:service:WANIPConnection:1",
-                                          "urn:schemas-upnp-org:service:WANPPPConnection:1",
-                                          "urn:schemas-upnp-org:service:WANIPConnection:2"):
+                if found_service_type in (
+                    "urn:schemas-upnp-org:service:WANIPConnection:1",
+                    "urn:schemas-upnp-org:service:WANPPPConnection:1",
+                    "urn:schemas-upnp-org:service:WANIPConnection:2",
+                ):
                     # We found a router with UPnP enabled
                     service_type = found_service_type
                     control_url = service.find(".//{urn:schemas-upnp-org:device-1-0}controlURL").text
@@ -111,8 +115,10 @@ class SSDP:
 
         except Exception as error:
             # Invalid response
-            log.add_debug("UPnP: Invalid device description response from %s://%s%s: %s",
-                          (url_scheme, base_url, root_url, error))
+            log.add_debug(
+                "UPnP: Invalid device description response from %s://%s%s: %s",
+                (url_scheme, base_url, root_url, error),
+            )
 
         return service_type, control_url
 
@@ -120,12 +126,16 @@ class SSDP:
     def add_router(routers, ssdp_response):
 
         from urllib.parse import urlsplit
+
         response_headers = {k.upper(): v for k, v in ssdp_response.headers}
 
         log.add_debug("UPnP: Device search response: %s", bytes(ssdp_response))
 
         if "LOCATION" not in response_headers:
-            log.add_debug("UPnP: M-SEARCH response did not contain a LOCATION header: %s", ssdp_response.headers)
+            log.add_debug(
+                "UPnP: M-SEARCH response did not contain a LOCATION header: %s",
+                ssdp_response.headers,
+            )
             return
 
         url_parts = urlsplit(response_headers["LOCATION"])
@@ -135,12 +145,21 @@ class SSDP:
             log.add_debug("UPnP: No router with UPnP enabled in device search response, ignoring")
             return
 
-        log.add_debug("UPnP: Device details: service_type '%s'; control_url '%s'", (service_type, control_url))
+        log.add_debug(
+            "UPnP: Device details: service_type '%s'; control_url '%s'",
+            (service_type, control_url),
+        )
 
         routers.append(
-            Router(wan_ip_type=response_headers['ST'], url_scheme=url_parts.scheme,
-                   base_url=url_parts.netloc, root_url=url_parts.path,
-                   service_type=service_type, control_url=control_url))
+            Router(
+                wan_ip_type=response_headers["ST"],
+                url_scheme=url_parts.scheme,
+                base_url=url_parts.netloc,
+                root_url=url_parts.path,
+                service_type=service_type,
+                control_url=control_url,
+            )
+        )
 
         log.add_debug("UPnP: Added device to list")
 
@@ -185,7 +204,7 @@ class SSDP:
             while True:
                 try:
                     message = sock.recv(4096)
-                    SSDP.add_router(routers, SSDPResponse(message.decode('utf-8')))
+                    SSDP.add_router(routers, SSDPResponse(message.decode("utf-8")))
 
                 except socket.error:
                     break
@@ -196,24 +215,26 @@ class SSDP:
 
 
 class UPnP:
-    """ Class that handles UPnP Port Mapping """
+    """Class that handles UPnP Port Mapping"""
 
-    request_body = ('<?xml version="1.0"?>\r\n'
-                    + '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" '
-                    + 's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
-                    + '<s:Body>'
-                    + '<u:AddPortMapping xmlns:u="%s">'
-                    + '<NewRemoteHost></NewRemoteHost>'
-                    + '<NewExternalPort>%s</NewExternalPort>'
-                    + '<NewProtocol>%s</NewProtocol>'
-                    + '<NewInternalPort>%s</NewInternalPort>'
-                    + '<NewInternalClient>%s</NewInternalClient>'
-                    + '<NewEnabled>1</NewEnabled>'
-                    + '<NewPortMappingDescription>%s</NewPortMappingDescription>'
-                    + '<NewLeaseDuration>%s</NewLeaseDuration>'
-                    + '</u:AddPortMapping>'
-                    + '</s:Body>'
-                    + '</s:Envelope>\r\n')
+    request_body = (
+        '<?xml version="1.0"?>\r\n'
+        + '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" '
+        + 's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
+        + "<s:Body>"
+        + '<u:AddPortMapping xmlns:u="%s">'
+        + "<NewRemoteHost></NewRemoteHost>"
+        + "<NewExternalPort>%s</NewExternalPort>"
+        + "<NewProtocol>%s</NewProtocol>"
+        + "<NewInternalPort>%s</NewInternalPort>"
+        + "<NewInternalClient>%s</NewInternalClient>"
+        + "<NewEnabled>1</NewEnabled>"
+        + "<NewPortMappingDescription>%s</NewPortMappingDescription>"
+        + "<NewLeaseDuration>%s</NewLeaseDuration>"
+        + "</u:AddPortMapping>"
+        + "</s:Body>"
+        + "</s:Envelope>\r\n"
+    )
 
     def __init__(self, core, config):
 
@@ -223,8 +244,16 @@ class UPnP:
 
         self.add_port_mapping()
 
-    def _request_port_mapping(self, router, protocol, public_port, private_ip, private_port,
-                              mapping_description, lease_duration):
+    def _request_port_mapping(
+        self,
+        router,
+        protocol,
+        public_port,
+        private_ip,
+        private_port,
+        mapping_description,
+        lease_duration,
+    ):
         """
         Function that adds a port mapping to the router.
         If a port mapping already exists, it is updated with a lease period of 24 hours.
@@ -232,39 +261,57 @@ class UPnP:
 
         from xml.etree import ElementTree
 
-        url = '%s%s' % (router.base_url, router.control_url)
-        log.add_debug("UPnP: Adding port mapping (%s %s/%s, %s) at url '%s'",
-                      (private_ip, private_port, protocol, router.search_target, url))
+        url = "%s%s" % (router.base_url, router.control_url)
+        log.add_debug(
+            "UPnP: Adding port mapping (%s %s/%s, %s) at url '%s'",
+            (private_ip, private_port, protocol, router.search_target, url),
+        )
 
         headers = {
             "Host": router.base_url,
             "Content-Type": "text/xml; charset=utf-8",
-            "SOAPACTION": '"%s#AddPortMapping"' % router.service_type
+            "SOAPACTION": '"%s#AddPortMapping"' % router.service_type,
         }
 
-        body = (self.request_body % (router.service_type, public_port, protocol, private_port, private_ip,
-                                     mapping_description, lease_duration)).encode('utf-8')
+        body = (
+            self.request_body
+            % (
+                router.service_type,
+                public_port,
+                protocol,
+                private_port,
+                private_ip,
+                mapping_description,
+                lease_duration,
+            )
+        ).encode("utf-8")
 
         log.add_debug("UPnP: Add port mapping request headers: %s", headers)
         log.add_debug("UPnP: Add port mapping request contents: %s", body)
 
         response = http_request(
-            router.url_scheme, router.base_url, router.control_url,
-            request_type="POST", body=body, headers=headers)
+            router.url_scheme,
+            router.base_url,
+            router.control_url,
+            request_type="POST",
+            body=body,
+            headers=headers,
+        )
 
         xml = ElementTree.fromstring(response)
 
         if xml.find(".//{http://schemas.xmlsoap.org/soap/envelope/}Body") is None:
-            raise Exception(_("Invalid response: %s") % response.encode('utf-8'))
+            raise Exception(_("Invalid response: %s") % response.encode("utf-8"))
 
-        log.add_debug("UPnP: Add port mapping response: %s", response.encode('utf-8'))
+        log.add_debug("UPnP: Add port mapping response: %s", response.encode("utf-8"))
 
         error_code = xml.findtext(".//{urn:schemas-upnp-org:control-1-0}errorCode")
         error_description = xml.findtext(".//{urn:schemas-upnp-org:control-1-0}errorDescription")
 
         if error_code or error_description:
-            raise Exception(_("Error code %(code)s: %(description)s") %
-                            {"code": error_code, "description": error_description})
+            raise Exception(
+                _("Error code %(code)s: %(description)s") % {"code": error_code, "description": error_description}
+            )
 
     @staticmethod
     def find_local_ip_address():
@@ -285,23 +332,34 @@ class UPnP:
     def find_router(private_ip):
 
         routers = SSDP.get_routers(private_ip)
-        router = next((r for r in routers if r.search_target == "urn:schemas-upnp-org:service:WANIPConnection:2"), None)
+        router = next(
+            (r for r in routers if r.search_target == "urn:schemas-upnp-org:service:WANIPConnection:2"),
+            None,
+        )
 
         if not router:
             router = next(
-                (r for r in routers if r.search_target == "urn:schemas-upnp-org:service:WANIPConnection:1"), None)
+                (r for r in routers if r.search_target == "urn:schemas-upnp-org:service:WANIPConnection:1"),
+                None,
+            )
 
         if not router:
             router = next(
-                (r for r in routers if r.search_target == "urn:schemas-upnp-org:service:WANPPPConnection:1"), None)
+                (r for r in routers if r.search_target == "urn:schemas-upnp-org:service:WANPPPConnection:1"),
+                None,
+            )
 
         if not router:
             router = next(
-                (r for r in routers if r.search_target == "urn:schemas-upnp-org:device:InternetGatewayDevice:2"), None)
+                (r for r in routers if r.search_target == "urn:schemas-upnp-org:device:InternetGatewayDevice:2"),
+                None,
+            )
 
         if not router:
             router = next(
-                (r for r in routers if r.search_target == "urn:schemas-upnp-org:device:InternetGatewayDevice:1"), None)
+                (r for r in routers if r.search_target == "urn:schemas-upnp-org:device:InternetGatewayDevice:1"),
+                None,
+            )
 
         if not router:
             router = next((r for r in routers), None)
@@ -332,11 +390,10 @@ class UPnP:
                 raise RuntimeError(_("UPnP is not available on this network"))
 
             # Perform the port mapping
-            log.add_debug("UPnP: Trying to redirect external WAN port %s TCP => %s port %s TCP", (
-                listening_port,
-                local_ip_address,
-                listening_port
-            ))
+            log.add_debug(
+                "UPnP: Trying to redirect external WAN port %s TCP => %s port %s TCP",
+                (listening_port, local_ip_address, listening_port),
+            )
 
             try:
                 self._request_port_mapping(
@@ -346,28 +403,33 @@ class UPnP:
                     private_ip=local_ip_address,
                     private_port=listening_port,
                     mapping_description="NicotinePlus",
-                    lease_duration=86400  # Expires in 24 hours
+                    lease_duration=86400,  # Expires in 24 hours
                 )
 
             except Exception as error:
-                raise RuntimeError(
-                    _("Failed to map the external WAN port: %(error)s") % {"error": error}) from error
+                raise RuntimeError(_("Failed to map the external WAN port: %(error)s") % {"error": error}) from error
 
         except Exception as error:
             from traceback import format_exc
-            log.add(_("UPnP: Failed to forward external port %(external_port)s: %(error)s"), {
-                "external_port": listening_port,
-                "error": error
-            })
+
+            log.add(
+                _("UPnP: Failed to forward external port %(external_port)s: %(error)s"),
+                {"external_port": listening_port, "error": error},
+            )
             log.add_debug(format_exc())
             return
 
-        log.add(_("UPnP: External port %(external_port)s successfully forwarded to local "
-                  "IP address %(ip_address)s port %(local_port)s"), {
-            "external_port": listening_port,
-            "ip_address": local_ip_address,
-            "local_port": listening_port
-        })
+        log.add(
+            _(
+                "UPnP: External port %(external_port)s successfully forwarded to local "
+                "IP address %(ip_address)s port %(local_port)s"
+            ),
+            {
+                "external_port": listening_port,
+                "ip_address": local_ip_address,
+                "local_port": listening_port,
+            },
+        )
 
     def add_port_mapping(self):
 
@@ -388,8 +450,8 @@ class UPnP:
         self._update_port_mapping(self.core.protothread.listenport)
 
     def _start_timer(self):
-        """ Port mapping entries last 24 hours, we need to regularly renew them.
-        The default interval is 4 hours. """
+        """Port mapping entries last 24 hours, we need to regularly renew them.
+        The default interval is 4 hours."""
 
         self.cancel_timer()
         upnp_interval = self.config.sections["server"]["upnp_interval"]

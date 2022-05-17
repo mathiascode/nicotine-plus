@@ -65,7 +65,6 @@ from pynicotine.utils import PUNCTUATION
 
 
 class ChatRooms(IconNotebook):
-
     def __init__(self, frame, core):
 
         IconNotebook.__init__(self, frame, core, frame.chatrooms_notebook, frame.chatrooms_page)
@@ -77,7 +76,7 @@ class ChatRooms(IconNotebook):
         self.roomlist = RoomList(frame, core)
 
         self.command_help = UserInterface("ui/popovers/chatroomcommands.ui")
-        self.command_help.popover, = self.command_help.widgets
+        (self.command_help.popover,) = self.command_help.widgets
 
         if GTK_API_VERSION >= 4:
             self.frame.chatrooms_paned.set_resize_start_child(True)
@@ -345,7 +344,6 @@ class ChatRooms(IconNotebook):
 
 
 class ChatRoom(UserInterface):
-
     def __init__(self, chatrooms, room, users):
 
         super().__init__("ui/chatrooms.ui")
@@ -372,7 +370,7 @@ class ChatRoom(UserInterface):
             self.users_container,
             self.users_label,
             self.users_list_view,
-            self.users_paned
+            self.users_paned,
         ) = self.widgets
 
         self.chatrooms = chatrooms
@@ -398,8 +396,9 @@ class ChatRoom(UserInterface):
             window_width, _window_height = self.frame.window.get_size()
 
         # Get the X position of the rightmost edge of the user list, and set the width to 400
-        position = (self.frame.chatrooms_paned.get_position() or self.frame.horizontal_paned.get_position()
-                    or window_width)
+        position = (
+            self.frame.chatrooms_paned.get_position() or self.frame.horizontal_paned.get_position() or window_width
+        )
         self.users_paned.set_position(position - 400)
 
         self.tickers = Tickers()
@@ -413,15 +412,32 @@ class ChatRoom(UserInterface):
         self.chat_view = TextView(self.chat_view, font="chatfont")
 
         # Event Text Search
-        TextSearchBar(self.activity_view.textview, self.activity_search_bar, self.activity_search_entry)
+        TextSearchBar(
+            self.activity_view.textview,
+            self.activity_search_bar,
+            self.activity_search_entry,
+        )
 
         # Chat Text Search
-        TextSearchBar(self.chat_view.textview, self.chat_search_bar, self.chat_search_entry,
-                      controller_widget=self.chat_container, focus_widget=self.chat_entry)
+        TextSearchBar(
+            self.chat_view.textview,
+            self.chat_search_bar,
+            self.chat_search_entry,
+            controller_widget=self.chat_container,
+            focus_widget=self.chat_entry,
+        )
 
         # Chat Entry
-        ChatEntry(self.frame, self.chat_entry, chatrooms.completion, room, slskmessages.SayChatroom,
-                  self.core.chatrooms.send_message, self.core.chatrooms.CMDS, is_chatroom=True)
+        ChatEntry(
+            self.frame,
+            self.chat_entry,
+            chatrooms.completion,
+            room,
+            slskmessages.SayChatroom,
+            self.core.chatrooms.send_message,
+            self.core.chatrooms.CMDS,
+            is_chatroom=True,
+        )
 
         self.log_toggle.set_active(config.sections["logging"]["chatrooms"])
         if not self.log_toggle.get_active():
@@ -435,29 +451,31 @@ class ChatRoom(UserInterface):
             config.sections["columns"]["chat_room"][room] = {}
 
         self.usersmodel = Gtk.ListStore(
-            Gio.Icon,             # (0)  status_icon
-            str,                  # (1)  flag
-            str,                  # (2)  username
-            str,                  # (3)  h_speed
-            str,                  # (4)  h_files
-            int,                  # (5)  status
-            GObject.TYPE_UINT,    # (6)  avgspeed
-            GObject.TYPE_UINT,    # (7)  files
-            str,                  # (8)  country
-            Pango.Weight,         # (9)  username_weight
-            Pango.Underline       # (10) username_underline
+            Gio.Icon,  # (0)  status_icon
+            str,  # (1)  flag
+            str,  # (2)  username
+            str,  # (3)  h_speed
+            str,  # (4)  h_files
+            int,  # (5)  status
+            GObject.TYPE_UINT,  # (6)  avgspeed
+            GObject.TYPE_UINT,  # (7)  files
+            str,  # (8)  country
+            Pango.Weight,  # (9)  username_weight
+            Pango.Underline,  # (10) username_underline
         )
         self.users_list_view.set_model(self.usersmodel)
 
         self.column_numbers = list(range(self.usersmodel.get_n_columns()))
         attribute_columns = (9, 10)
         self.cols = cols = initialise_columns(
-            self.frame, ("chat_room", room), self.users_list_view,
+            self.frame,
+            ("chat_room", room),
+            self.users_list_view,
             ["status", _("Status"), 25, "icon", None],
             ["country", _("Country"), 25, "icon", None],
             ["user", _("User"), 155, "text", attribute_columns],
             ["speed", _("Speed"), 100, "number", None],
-            ["files", _("Files"), -1, "number", None]
+            ["files", _("Files"), -1, "number", None],
         )
 
         cols["status"].set_sort_column_id(5)
@@ -482,13 +500,13 @@ class ChatRoom(UserInterface):
 
         for menu, menu_private_rooms in (
             (self.popup_menu_user_chat, self.popup_menu_private_rooms_chat),
-            (self.popup_menu_user_list, self.popup_menu_private_rooms_list)
+            (self.popup_menu_user_list, self.popup_menu_private_rooms_list),
         ):
             menu.setup_user_menu()
             menu.add_items(
                 ("", None),
                 ("#" + _("Sear_ch User's Files"), menu.on_search_user),
-                (">" + _("Private Rooms"), menu_private_rooms)
+                (">" + _("Private Rooms"), menu_private_rooms),
             )
 
         PopupMenu(self.frame, self.activity_view.textview, self.on_popup_menu_log).add_items(
@@ -499,7 +517,7 @@ class ChatRoom(UserInterface):
             ("", None),
             ("#" + _("Clear Activity View"), self.activity_view.on_clear_all_text),
             ("", None),
-            ("#" + _("_Leave Room"), self.on_leave_room)
+            ("#" + _("_Leave Room"), self.on_leave_room),
         )
 
         PopupMenu(self.frame, self.chat_view.textview, self.on_popup_menu_chat).add_items(
@@ -513,13 +531,11 @@ class ChatRoom(UserInterface):
             ("#" + _("Delete Room Log…"), self.on_delete_room_log),
             ("", None),
             ("#" + _("Clear Message View"), self.chat_view.on_clear_all_text),
-            ("#" + _("_Leave Room"), self.on_leave_room)
+            ("#" + _("_Leave Room"), self.on_leave_room),
         )
 
         self.tab_menu = PopupMenu(self.frame)
-        self.tab_menu.add_items(
-            ("#" + _("_Leave Room"), self.on_leave_room)
-        )
+        self.tab_menu.add_items(("#" + _("_Leave Room"), self.on_leave_room))
 
         self.setup_public_feed()
         self.chat_entry.grab_focus()
@@ -541,8 +557,13 @@ class ChatRoom(UserInterface):
         if self.room != "Public ":
             return
 
-        for widget in (self.activity_container, self.users_container, self.chat_entry,
-                       self.room_wall_button, self.help_button):
+        for widget in (
+            self.activity_container,
+            self.users_container,
+            self.chat_entry,
+            self.room_wall_button,
+            self.help_button,
+        ):
             widget.hide()
 
         self.users_action_row.remove(self.auto_join_toggle)
@@ -550,7 +571,7 @@ class ChatRoom(UserInterface):
         if GTK_API_VERSION >= 4:
             self.chat_entry_row.append(self.auto_join_toggle)  # pylint: disable=no-member
         else:
-            self.chat_entry_row.add(self.auto_join_toggle)     # pylint: disable=no-member
+            self.chat_entry_row.add(self.auto_join_toggle)  # pylint: disable=no-member
 
         self.speech_toggle.set_active(False)  # Public feed is jibberish and too fast for TTS
         self.chat_entry.set_sensitive(False)
@@ -589,7 +610,8 @@ class ChatRoom(UserInterface):
                 underline = Pango.Underline.NONE
 
         iterator = self.usersmodel.insert_with_valuesv(
-            -1, self.column_numbers,
+            -1,
+            self.column_numbers,
             [
                 status_icon,
                 flag_icon,
@@ -601,8 +623,8 @@ class ChatRoom(UserInterface):
                 GObject.Value(GObject.TYPE_UINT, files),
                 country,
                 weight,
-                underline
-            ]
+                underline,
+            ],
         )
 
         self.users[username] = iterator
@@ -645,7 +667,7 @@ class ChatRoom(UserInterface):
                     end = line.find("] ")
 
                     if end > start:
-                        user = line[start + 1:end].strip()
+                        user = line[start + 1 : end].strip()
                         usertag = self.get_user_tag(user)
 
                         if user == login:
@@ -661,11 +683,23 @@ class ChatRoom(UserInterface):
                     tag = self.tag_action
 
                 if user != login:
-                    self.chat_view.append_line(self.core.privatechats.censor_chat(line), tag, username=user,
-                                               usertag=usertag, timestamp_format="", scroll=False)
+                    self.chat_view.append_line(
+                        self.core.privatechats.censor_chat(line),
+                        tag,
+                        username=user,
+                        usertag=usertag,
+                        timestamp_format="",
+                        scroll=False,
+                    )
                 else:
-                    self.chat_view.append_line(line, tag, username=user, usertag=usertag,
-                                               timestamp_format="", scroll=False)
+                    self.chat_view.append_line(
+                        line,
+                        tag,
+                        username=user,
+                        usertag=usertag,
+                        timestamp_format="",
+                        scroll=False,
+                    )
 
             if lines:
                 self.chat_view.append_line(_("--- old messages above ---"), self.tag_hilite, scroll=False)
@@ -676,7 +710,7 @@ class ChatRoom(UserInterface):
         menu.toggle_user_items()
         menu.populate_private_rooms(menu_private_rooms)
 
-        private_rooms_enabled = (menu_private_rooms.items and menu.user != self.core.login_username)
+        private_rooms_enabled = menu_private_rooms.items and menu.user != self.core.login_username
         menu.actions[_("Private Rooms")].set_enabled(private_rooms_enabled)
 
     def on_find_activity_log(self, *_args):
@@ -722,8 +756,7 @@ class ChatRoom(UserInterface):
         self.tickers.clear_tickers()
 
         for user, message in msg.msgs:
-            if self.core.network_filter.is_user_ignored(user) or \
-                    self.core.network_filter.is_user_ip_ignored(user):
+            if self.core.network_filter.is_user_ignored(user) or self.core.network_filter.is_user_ip_ignored(user):
                 # User ignored, ignore Ticker messages
                 continue
 
@@ -747,19 +780,22 @@ class ChatRoom(UserInterface):
         if user == login:
             return
 
-        mentioned = (tag == self.tag_hilite)
+        mentioned = tag == self.tag_hilite
 
         if mentioned and config.sections["notifications"]["notification_popup_chatroom_mention"]:
             self.frame.notifications.new_text_notification(
                 text,
                 title=_("%(user)s mentioned you in the %(room)s room") % {"user": user, "room": self.room},
-                priority=Gio.NotificationPriority.HIGH
+                priority=Gio.NotificationPriority.HIGH,
             )
 
         self.chatrooms.request_tab_hilite(self.container, mentioned)
 
-        if (self.chatrooms.get_current_page() == self.chatrooms.page_num(self.container)
-                and self.frame.current_page_id == self.frame.chatrooms_page.id and self.frame.window.is_active()):
+        if (
+            self.chatrooms.get_current_page() == self.chatrooms.page_num(self.container)
+            and self.frame.current_page_id == self.frame.chatrooms_page.id
+            and self.frame.window.is_active()
+        ):
             # Don't show notifications if the chat is open and the window is in use
             return
 
@@ -773,17 +809,17 @@ class ChatRoom(UserInterface):
             self.frame.notifications.new_text_notification(
                 text,
                 title=_("Message by %(user)s in the %(room)s room") % {"user": user, "room": self.room},
-                priority=Gio.NotificationPriority.HIGH
+                priority=Gio.NotificationPriority.HIGH,
             )
 
     @staticmethod
     def find_whole_word(word, text, after=0):
-        """ Return the position of the first mention of word that is not a subword """
+        """Return the position of the first mention of word that is not a subword"""
 
         if word not in text:
             return -1
 
-        word_boundaries = [' '] + PUNCTUATION
+        word_boundaries = [" "] + PUNCTUATION
         whole = False
         start = 0
 
@@ -791,8 +827,9 @@ class ChatRoom(UserInterface):
             start = text.find(word, after)
             after = start + len(word)
 
-            whole = ((text[after] if after < len(text) else " ") in word_boundaries
-                     and (text[start - 1] if start > 0 else " ") in word_boundaries)
+            whole = (text[after] if after < len(text) else " ") in word_boundaries and (
+                text[start - 1] if start > 0 else " "
+            ) in word_boundaries
 
         return start if whole else -1
 
@@ -833,19 +870,26 @@ class ChatRoom(UserInterface):
 
         if user != login_username:
             self.chat_view.append_line(
-                self.core.privatechats.censor_chat(line), tag,
-                username=user, usertag=usertag, timestamp_format=timestamp_format
+                self.core.privatechats.censor_chat(line),
+                tag,
+                username=user,
+                usertag=usertag,
+                timestamp_format=timestamp_format,
             )
 
             if self.speech_toggle.get_active():
                 self.core.notifications.new_tts(
-                    config.sections["ui"]["speechrooms"], {"room": msg.room, "user": user, "message": speech}
+                    config.sections["ui"]["speechrooms"],
+                    {"room": msg.room, "user": user, "message": speech},
                 )
 
         else:
             self.chat_view.append_line(
-                line, tag,
-                username=user, usertag=usertag, timestamp_format=timestamp_format
+                line,
+                tag,
+                username=user,
+                usertag=usertag,
+                timestamp_format=timestamp_format,
             )
 
         self.show_notification(login_username, user, speech, tag, public)
@@ -853,8 +897,12 @@ class ChatRoom(UserInterface):
         if self.log_toggle.get_active():
             timestamp_format = config.sections["logging"]["log_timestamp"]
 
-            log.write_log(config.sections["logging"]["roomlogsdir"], self.room, line,
-                          timestamp_format=timestamp_format)
+            log.write_log(
+                config.sections["logging"]["roomlogsdir"],
+                self.room,
+                line,
+                timestamp_format=timestamp_format,
+            )
 
     def echo_message(self, text, message_type):
 
@@ -876,8 +924,9 @@ class ChatRoom(UserInterface):
         # Add to completion list, and completion drop-down
         self.chatrooms.completion.add_completion(username)
 
-        if not self.core.network_filter.is_user_ignored(username) and \
-                not self.core.network_filter.is_user_ip_ignored(username):
+        if not self.core.network_filter.is_user_ignored(username) and not self.core.network_filter.is_user_ip_ignored(
+            username
+        ):
             self.activity_view.append_line(_("%s joined the room") % username, self.tag_log)
 
         self.add_user_row(userdata)
@@ -894,8 +943,9 @@ class ChatRoom(UserInterface):
         if username not in (i[0] for i in config.sections["server"]["userlist"]):
             self.chatrooms.completion.remove_completion(username)
 
-        if not self.core.network_filter.is_user_ignored(username) and \
-                not self.core.network_filter.is_user_ip_ignored(username):
+        if not self.core.network_filter.is_user_ignored(username) and not self.core.network_filter.is_user_ip_ignored(
+            username
+        ):
             self.activity_view.append_line(_("%s left the room") % username, self.tag_log)
 
         self.usersmodel.remove(self.users[username])
@@ -954,8 +1004,7 @@ class ChatRoom(UserInterface):
             # left the room before an offline status is sent.
             return
 
-        if not self.core.network_filter.is_user_ignored(user) and \
-                not self.core.network_filter.is_user_ip_ignored(user):
+        if not self.core.network_filter.is_user_ignored(user) and not self.core.network_filter.is_user_ip_ignored(user):
             self.activity_view.append_line(action % user, self.tag_log)
 
         self.usersmodel.set_value(iterator, 0, status_icon)
@@ -1030,7 +1079,13 @@ class ChatRoom(UserInterface):
 
     def update_tags(self):
 
-        for tag in (self.tag_remote, self.tag_local, self.tag_action, self.tag_hilite, self.tag_log):
+        for tag in (
+            self.tag_remote,
+            self.tag_local,
+            self.tag_action,
+            self.tag_hilite,
+            self.tag_log,
+        ):
             self.chat_view.update_tag(tag)
 
         for tag in self.tag_users.values():
@@ -1045,8 +1100,10 @@ class ChatRoom(UserInterface):
         self.users.clear()
         self.count_users()
 
-        if (self.room not in config.sections["server"]["autojoin"]
-                and self.room in config.sections["columns"]["chat_room"]):
+        if (
+            self.room not in config.sections["server"]["autojoin"]
+            and self.room in config.sections["columns"]["chat_room"]
+        ):
             del config.sections["columns"]["chat_room"][self.room]
 
         self.chat_view.append_line(_("--- disconnected ---"), self.tag_hilite)
@@ -1154,13 +1211,13 @@ class ChatRoom(UserInterface):
 
         OptionDialog(
             parent=self.frame.window,
-            title=_('Delete Logged Messages?'),
-            message=_('Do you really want to permanently delete all logged messages for this room?'),
-            callback=self.on_delete_room_log_response
+            title=_("Delete Logged Messages?"),
+            message=_("Do you really want to permanently delete all logged messages for this room?"),
+            callback=self.on_delete_room_log_response,
         ).show()
 
     def on_ignore_users_settings(self, *_args):
-        self.frame.on_settings(page='IgnoredUsers')
+        self.frame.on_settings(page="IgnoredUsers")
 
     def set_completion_list(self, completion_list):
 
