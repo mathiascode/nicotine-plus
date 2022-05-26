@@ -20,7 +20,6 @@
 import glob
 import os
 import pkgutil
-import re
 import ssl
 import subprocess
 import sys
@@ -252,7 +251,7 @@ setup(
     name=config.application_name,
     description=config.application_name,
     author=config.author,
-    version=re.sub(r".(dev|rc)(.*)", "", config.version),
+    version=config.version,
     options={
         "build_exe": dict(
             packages=["gi"] + PLUGIN_PACKAGES,
