@@ -275,6 +275,7 @@ setup(
             applications_shortcut=True
         )
     },
+    packages=[],
     executables=[
         Executable(
             script=os.path.join(PYNICOTINE_PATH, "nicotine"),
