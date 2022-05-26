@@ -250,6 +250,7 @@ from pynicotine.config import config  # noqa: E402  # pylint: disable=import-err
 
 setup(
     name=config.application_name,
+    description=config.application_name,
     author=config.author,
     version=re.sub(r".(dev|rc)(.*)", "", config.version),
     options={
@@ -280,6 +281,7 @@ setup(
             target_name=config.application_name,
             base=GUI_BASE,
             icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
+            copyright=config.copyright,
             shortcut_name=config.application_name,
             shortcut_dir="StartMenuFolder"
         )
