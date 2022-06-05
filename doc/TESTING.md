@@ -25,6 +25,12 @@ If you prefer to install a .deb package directly, you can [download one here](ht
 
 Unlike the repository installation method, you need to download and install Nicotine+ from the link above every time you want to update to the latest unstable build.
 
+### Fedora/SUSE/Mageia
+
+Unstable RPM packages are built after every commit to the master branch.
+
+- [Download Unstable RPM Package](https://nightly.link/nicotine-plus/nicotine-plus/workflows/packaging/master/rpm-package.zip)
+
 ### Flatpak
 
 Unstable [Flatpak](https://www.flatpak.org/setup/) packages are built after every commit to the master branch.

@@ -48,6 +48,32 @@ jobs:
         run-tests: true
         cache-key: flatpak-builder-${{ github.sha }}
 
+  rpm:
+    runs-on: ubuntu-20.04
+    container: fedora:37
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          dnf -y install 'dnf-command(builddep)' rpm-build
+          dnf -y builddep packaging/rpm/nicotine+.spec
+
+      - name: Build RPM package
+        run: |
+          python3 setup.py sdist
+          mkdir -p ~/rpmbuild/SOURCES/ && cp dist/nicotine-plus-*.tar.gz "$_"
+          rpmbuild -ba packaging/rpm/nicotine+.spec
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: rpm-package
+          path: ~/rpmbuild/RPMS/noarch/
+
   windows:
     runs-on: windows-2019
     strategy:
