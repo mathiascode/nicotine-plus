@@ -15,12 +15,15 @@ BuildArch: noarch
 BuildRequires:  gettext
 BuildRequires:  gtk3
 BuildRequires:  python3-devel
-BuildRequires:  %{py3_dist pytest-xvfb}
+BuildRequires:  python3-gobject
+BuildRequires:  python3-pytest-xvfb
+BuildRequires:  python3-wheel
 
 Requires:       gdbm
 Requires:       gspell
 Requires:       gtk3
 Requires:       libappindicator-gtk3
+Requires:       python3-gobject
 
 %description
 Nicotine+ is a graphical client for the Soulseek peer-to-peer
