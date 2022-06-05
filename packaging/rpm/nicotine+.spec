@@ -30,18 +30,7 @@ functionality while keeping current with the Soulseek protocol.
 %autosetup -n %{python_name}-%{version}
 
 %install
-pip3 install . --root=$RPM_BUILD_ROOT --no-dependencies
-%find_lang %{short_name}
+pip3 install . --root=$RPM_BUILD_ROOT
 
-%files -f %{short_name}.lang
-%license COPYING
-%{_bindir}/%{short_name}
-%{python3_sitelib}/pynicotine/
-%{python3_sitelib}/nicotine_plus-*.dist-info/
-%{_datadir}/applications/%{application_id}.desktop
-%{_datadir}/icons/hicolor/*/apps/%{application_id}*.*
-%{_datadir}/icons/hicolor/*/intl/*.*
-%{_datadir}/icons/hicolor/*/status/*.*
-%{_defaultdocdir}/%{short_name}/*
-%{_metainfodir}/%{application_id}.appdata.xml
-%{_mandir}/man1/%{short_name}.1.*
+%files
+/*
