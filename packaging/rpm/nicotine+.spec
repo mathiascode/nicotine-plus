@@ -31,6 +31,16 @@ functionality while keeping current with the Soulseek protocol.
 
 %install
 pip3 install . --root=$RPM_BUILD_ROOT
+%find_lang %{short_name}
 
-%files
-/*
+%files -f %{short_name}.lang
+%{_bindir}/%{short_name}
+/usr/lib/python*/site-packages/pynicotine/
+/usr/lib/python*/site-packages/nicotine_plus-*.dist-info/
+%{_datadir}/applications/%{application_id}.desktop
+%{_datadir}/icons/hicolor/*/apps/%{application_id}*.*
+%{_datadir}/icons/hicolor/*/intl/*.*
+%{_datadir}/icons/hicolor/*/status/*.*
+%{_defaultdocdir}/%{short_name}/*
+%{_metainfodir}/%{application_id}.appdata.xml
+%{_mandir}/man1/%{short_name}.1.*
