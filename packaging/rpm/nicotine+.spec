@@ -12,6 +12,10 @@ URL: https://nicotine-plus.org/
 Source0: %{python_name}-%{version}.tar.gz
 
 BuildArch: noarch
+BuildRequires:  gettext
+BuildRequires:  gtk3
+BuildRequires:  python3-devel
+BuildRequires:  %{py3_dist pytest-xvfb}
 
 Requires:       gdbm
 Requires:       gspell
@@ -29,14 +33,23 @@ functionality while keeping current with the Soulseek protocol.
 %prep
 %autosetup -n %{python_name}-%{version}
 
+%generate_buildrequires
+%pyproject_buildrequires -r
+
+%build
+%pyproject_wheel
+
 %install
-pip3 install . --root=$RPM_BUILD_ROOT
+%pyproject_install
+%pyproject_save_files pynicotine
 %find_lang %{short_name}
 
-%files -f %{short_name}.lang
+%check
+%pytest
+
+%files -f %{pyproject_files} -f %{short_name}.lang
+%license COPYING
 %{_bindir}/%{short_name}
-/usr/lib/python*/site-packages/pynicotine/
-/usr/lib/python*/site-packages/nicotine_plus-*.dist-info/
 %{_datadir}/applications/%{application_id}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{application_id}*.*
 %{_datadir}/icons/hicolor/*/intl/*.*
