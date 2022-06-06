@@ -29,7 +29,7 @@ ARCH = os.environ.get("ARCH") or "x86_64"
 def install_pacman():
     """ Install dependencies from the main MinGW repos """
 
-    packages = ["cx_Freeze"]
+    packages = ["wheel", "cx_Freeze"]
 
     subprocess.check_call(["pip", "install"] + packages)
 
