@@ -38,7 +38,8 @@ def install_pacman():
                 prefix + "python-flake8",
                 prefix + "python-pip",
                 prefix + "python-pylint",
-                prefix + "python-gobject"]
+                prefix + "python-gobject",
+                prefix + "python-wheel"]
 
     if use_libadwaita:
         packages.append(prefix + "libadwaita")
