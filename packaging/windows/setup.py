@@ -249,7 +249,7 @@ add_plugin_packages()
 from pynicotine.config import config  # noqa: E402  # pylint: disable=import-error,wrong-import-position
 
 setup(
-    name=config.application_name,
+    name="Nicotine",
     description=config.application_name,
     author=config.author,
     version=re.sub(r"([.]dev|rc)(.*)", "", config.version),
