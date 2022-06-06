@@ -279,7 +279,7 @@ setup(
     executables=[
         Executable(
             script=os.path.join(PYNICOTINE_PATH, "nicotine"),
-            target_name=config.application_name,
+            target_name="Nicotine",
             base=GUI_BASE,
             icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
             copyright=config.copyright,
