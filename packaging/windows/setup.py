@@ -19,6 +19,7 @@
 
 import glob
 import os
+import pkg_resources
 import pkgutil
 import re
 import ssl
@@ -53,6 +54,12 @@ USE_LIBADWAITA = GTK_VERSION == '4' and os.environ.get("NICOTINE_LIBADWAITA") ==
 
 PYNICOTINE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
 sys.path.append(PYNICOTINE_PATH)
+
+
+def safe_name(name):
+    return name
+
+pkg_resources.safe_name = safe_name
 
 
 def process_files(rel_path, starts_with, ends_with, callback, callback_data=None,
@@ -249,7 +256,7 @@ add_plugin_packages()
 from pynicotine.config import config  # noqa: E402  # pylint: disable=import-error,wrong-import-position
 
 setup(
-    name="Nicotine",
+    name=config.application_name,
     description=config.application_name,
     author=config.author,
     version=re.sub(r"([.]dev|rc)(.*)", "", config.version),
