@@ -26,14 +26,12 @@ import subprocess
 ARCH = os.environ.get("ARCH") or "x86_64"
 
 
-def install_pacman():
-    """ Install dependencies from the main MinGW repos """
+def install_pypi():
+    """ Install dependencies from PyPi """
 
-    prefix = "mingw-w64-" + ARCH + "-"
-    packages = [prefix + "python-cx-freeze"]
-
-    subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
+    packages = ["cx_Freeze==6.10"]
+    subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
 
 
 if __name__ == '__main__':
-    install_pacman()
+    install_pypi()
