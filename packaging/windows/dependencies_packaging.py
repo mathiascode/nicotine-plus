@@ -31,7 +31,8 @@ def install_pacman():
     """ Install dependencies from the main MinGW repos """
 
     prefix = "mingw-w64-" + ARCH + "-"
-    packages = [prefix + "python-setuptools",
+    packages = [prefix + "python-cx-logging",
+                prefix + "python-setuptools",
                 prefix + "python-wheel"]
 
     subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
