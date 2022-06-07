@@ -24,6 +24,19 @@ import sys
 """ Script used to install packaging dependencies in MinGW """
 
 
+ARCH = os.environ.get("ARCH") or "x86_64"
+
+
+def install_pacman():
+    """ Install dependencies from the main MinGW repos """
+
+    prefix = "mingw-w64-" + ARCH + "-"
+    packages = [prefix + "python-setuptools",
+                prefix + "python-wheel"]
+
+    subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
+
+
 def install_pypi():
     """ Install dependencies from PyPi """
 
@@ -32,4 +45,5 @@ def install_pypi():
 
 
 if __name__ == '__main__':
+    install_pacman()
     install_pypi()
