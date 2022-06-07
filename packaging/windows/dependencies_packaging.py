@@ -19,11 +19,9 @@
 
 import os
 import subprocess
+import sys
 
 """ Script used to install packaging dependencies in MinGW """
-
-
-ARCH = os.environ.get("ARCH") or "x86_64"
 
 
 def install_pypi():
