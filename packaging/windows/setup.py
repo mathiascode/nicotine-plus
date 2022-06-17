@@ -29,6 +29,15 @@ import tempfile
 from cx_Freeze import Executable, setup  # pylint: disable=import-error
 
 
+def except_hook(exctype, value, traceback):
+    from distutils.errors import DistutilsOptionError
+
+    if exctype != DistutilsOptionError:
+        sys.__excepthook__(exctype, value, traceback)
+
+sys.excepthook = except_hook
+
+
 if sys.platform == "win32":
     GUI_BASE = "Win32GUI"
     SYS_BASE = sys.prefix
@@ -249,7 +258,7 @@ add_plugin_packages()
 from pynicotine.config import config  # noqa: E402  # pylint: disable=import-error,wrong-import-position
 
 setup(
-    name="nicotine-plus",
+    name=config.application_name,
     description=config.application_name,
     author=config.author,
     version=config.version,
@@ -264,7 +273,6 @@ setup(
         "bdist_msi": dict(
             all_users=True,
             install_icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
-            initial_target_dir=r'[ProgramFilesFolder]\%s' % config.application_name,
             target_name="%s-%s.msi" % (config.application_name, config.version),
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
