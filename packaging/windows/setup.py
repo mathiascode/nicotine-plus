@@ -20,11 +20,9 @@
 import glob
 import os
 import pkgutil
-import re
 import ssl
 import subprocess
 import sys
-import sysconfig
 import tempfile
 
 from cx_Freeze import Executable, setup  # pylint: disable=import-error
@@ -51,10 +49,11 @@ INCLUDE_FILES = []
 PLUGIN_PACKAGES = []
 TEMP_FOLDER = tempfile.mkdtemp()
 
+ARCH = os.environ.get("ARCH") or "x86_64"
 GTK_VERSION = os.environ.get("NICOTINE_GTK_VERSION") or '3'
 USE_LIBADWAITA = GTK_VERSION == '4' and os.environ.get("NICOTINE_LIBADWAITA") == '1'
 
-CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 PYNICOTINE_PATH = os.path.abspath(os.path.join(CURRENT_PATH, "..", ".."))
 sys.path.append(PYNICOTINE_PATH)
 
@@ -268,13 +267,13 @@ setup(
         "bdist_msi": dict(
             all_users=True,
             install_icon=os.path.join(CURRENT_PATH, ICON_NAME),
-            plat_name=sysconfig.get_platform().replace("mingw_", ""),
+            plat_name=ARCH,
             target_name=config.application_name,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
-            iconfile=os.path.join(CURRENT_PATH, ICON_NAME),
-            bundle_name=config.application_name
+            bundle_name=config.application_name,
+            iconfile=os.path.join(CURRENT_PATH, ICON_NAME)
         ),
         "bdist_dmg": dict(
             applications_shortcut=True,
