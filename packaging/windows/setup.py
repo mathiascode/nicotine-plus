@@ -30,17 +30,21 @@ import tempfile
 from cx_Freeze import Executable, setup  # pylint: disable=import-error
 
 
+CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+
 if sys.platform == "win32":
     GUI_BASE = "Win32GUI"
     SYS_BASE = sys.prefix
     LIB_FOLDER = "bin"
     LIB_EXTENSION = ".dll"
+    ICON_NAME = "nicotine.ico"
 
 elif sys.platform == "darwin":
     GUI_BASE = None
     SYS_BASE = "/usr/local"
     LIB_FOLDER = "lib"
     LIB_EXTENSION = (".dylib", ".so")
+    ICON_NAME = "nicotine.icns"
 
 else:
     raise RuntimeError("Only Windows and macOS are supported")
@@ -264,13 +268,13 @@ setup(
         ),
         "bdist_msi": dict(
             all_users=True,
-            install_icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
+            install_icon=ICON_NAME,
             plat_name=sysconfig.get_platform().replace("mingw_", ""),
             target_name=config.application_name,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
-            iconfile=os.path.join(PYNICOTINE_PATH, "packaging/macos/nicotine.icns"),
+            iconfile=ICON_NAME,
             bundle_name=config.application_name
         ),
         "bdist_dmg": dict(
@@ -283,7 +287,8 @@ setup(
         Executable(
             script=os.path.join(PYNICOTINE_PATH, "nicotine"),
             base=GUI_BASE,
-            icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
+            target_name=config.application_name,
+            icon=ICON_NAME,
             copyright=config.copyright,
             shortcut_name=config.application_name,
             shortcut_dir="ProgramMenuFolder"
