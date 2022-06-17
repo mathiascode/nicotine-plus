@@ -267,7 +267,6 @@ setup(
             install_icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
             plat_name=sysconfig.get_platform().replace("mingw_", ""),
             target_name=config.application_name,
-            target_version=config.version,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
@@ -275,14 +274,14 @@ setup(
             bundle_name=config.application_name
         ),
         "bdist_dmg": dict(
-            applications_shortcut=True
+            applications_shortcut=True,
+            volume_label="%s-%s" % (config.application_name, config.version)
         )
     },
     packages=[],
     executables=[
         Executable(
             script=os.path.join(PYNICOTINE_PATH, "nicotine"),
-            target_name=config.application_name,
             base=GUI_BASE,
             icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
             copyright=config.copyright,
