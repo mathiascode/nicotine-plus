@@ -252,7 +252,7 @@ setup(
     name="nicotine-plus",
     description=config.application_name,
     author=config.author,
-    version=re.sub(r"([.]dev|rc)(.*)", "", config.version),
+    version=config.version,
     options={
         "build_exe": dict(
             packages=["gi"] + PLUGIN_PACKAGES,
@@ -261,12 +261,10 @@ setup(
             zip_include_packages=["*"],
             zip_exclude_packages=["pynicotine"]
         ),
-        "install_exe": dict(
-            install_dir=config.application_name,
-        ),
         "bdist_msi": dict(
             all_users=True,
             install_icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
+            initial_target_dir=r'[ProgramFilesFolder]\%s' % config.application_name,
             target_name="%s-%s.msi" % (config.application_name, config.version),
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
