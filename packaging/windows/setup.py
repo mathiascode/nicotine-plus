@@ -267,7 +267,7 @@ setup(
         "bdist_msi": dict(
             all_users=True,
             install_icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
-            target_name="%s-%s" % (config.application_name, config.version),
+            target_name="%s-%s.msi" % (config.application_name, config.version),
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
