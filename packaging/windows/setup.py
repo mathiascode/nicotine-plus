@@ -273,7 +273,8 @@ setup(
         ),
         "bdist_mac": dict(
             bundle_name=config.application_name,
-            iconfile=os.path.join(CURRENT_PATH, ICON_NAME)
+            iconfile=os.path.join(CURRENT_PATH, ICON_NAME),
+            include_resources=INCLUDE_FILES
         ),
         "bdist_dmg": dict(
             applications_shortcut=True,
