@@ -29,7 +29,7 @@ ARCH = os.environ.get("ARCH") or "x86_64"
 def install_pacman():
     """ Install dependencies from the main MinGW repos """
 
-    prefix = "mingw64/mingw-w64-x86_64" if ARCH == "x86_64" else "mingw32/mingw-w64-i386"
+    prefix = "mingw64/mingw-w64-x86_64" if ARCH == "x86_64" else "mingw32/mingw-w64-i686"
     packages = ["https://repo.msys2.org/mingw/%s-python-cx-freeze-6.10-1-any.pkg.tar.zst" % prefix]
 
     subprocess.check_call(["pacman", "--noconfirm", "-U"] + packages)
