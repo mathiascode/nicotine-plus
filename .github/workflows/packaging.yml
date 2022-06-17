@@ -77,6 +77,7 @@ jobs:
 
       - name: Install build dependencies
         run: |
+          sed -i s'/SigLevel.*/SigLevel = Never/'g /etc/pacman.conf
           pacman --noconfirm -S --needed mingw-w64-$ARCH-python
           python3 packaging/windows/dependencies_core.py
           python3 packaging/windows/dependencies_packaging.py
