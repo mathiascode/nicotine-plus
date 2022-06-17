@@ -30,8 +30,6 @@ import tempfile
 from cx_Freeze import Executable, setup  # pylint: disable=import-error
 
 
-CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
-
 if sys.platform == "win32":
     GUI_BASE = "Win32GUI"
     SYS_BASE = sys.prefix
@@ -56,7 +54,8 @@ TEMP_FOLDER = tempfile.mkdtemp()
 GTK_VERSION = os.environ.get("NICOTINE_GTK_VERSION") or '3'
 USE_LIBADWAITA = GTK_VERSION == '4' and os.environ.get("NICOTINE_LIBADWAITA") == '1'
 
-PYNICOTINE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+PYNICOTINE_PATH = os.path.abspath(os.path.join(CURRENT_PATH, "..", ".."))
 sys.path.append(PYNICOTINE_PATH)
 
 
@@ -268,13 +267,13 @@ setup(
         ),
         "bdist_msi": dict(
             all_users=True,
-            install_icon=ICON_NAME,
+            install_icon=os.path.join(CURRENT_PATH, ICON_NAME),
             plat_name=sysconfig.get_platform().replace("mingw_", ""),
             target_name=config.application_name,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
-            iconfile=ICON_NAME,
+            iconfile=os.path.join(CURRENT_PATH, ICON_NAME),
             bundle_name=config.application_name
         ),
         "bdist_dmg": dict(
@@ -288,7 +287,7 @@ setup(
             script=os.path.join(PYNICOTINE_PATH, "nicotine"),
             base=GUI_BASE,
             target_name=config.application_name,
-            icon=ICON_NAME,
+            icon=os.path.join(CURRENT_PATH, ICON_NAME),
             copyright=config.copyright,
             shortcut_name=config.application_name,
             shortcut_dir="ProgramMenuFolder"
