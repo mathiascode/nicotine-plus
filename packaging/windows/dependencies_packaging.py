@@ -34,6 +34,13 @@ def install_pacman():
 
     subprocess.check_call(["pacman", "--noconfirm", "-U", "--needed"] + packages)
 
+    packages = [prefix + "-python-packaging",
+                prefix + "-python-lief",
+                prefix + "-python-importlib-metadata",
+                prefix + "-python-cx-logging"]
+
+    subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
+
 
 if __name__ == '__main__':
     install_pacman()
