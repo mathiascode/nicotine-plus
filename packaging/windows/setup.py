@@ -249,10 +249,10 @@ add_plugin_packages()
 from pynicotine.config import config  # noqa: E402  # pylint: disable=import-error,wrong-import-position
 
 setup(
-    name=config.application_name,
+    name="nicotine-plus",
     description=config.application_name,
     author=config.author,
-    version=re.sub(r"([.]dev|rc)(.*)", "", config.version),
+    version=config.version,
     options={
         "build_exe": dict(
             packages=["gi"] + PLUGIN_PACKAGES,
@@ -264,7 +264,7 @@ setup(
         "bdist_msi": dict(
             all_users=True,
             install_icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
-            target_name="%s-%s.msi" % (config.application_name, config.version),
+            target_name=config.application_name,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
