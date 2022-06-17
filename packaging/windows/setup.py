@@ -20,11 +20,11 @@
 import glob
 import os
 import pkgutil
-import platform
 import re
 import ssl
 import subprocess
 import sys
+import sysconfig
 import tempfile
 
 from cx_Freeze import Executable, setup  # pylint: disable=import-error
@@ -265,8 +265,9 @@ setup(
         "bdist_msi": dict(
             all_users=True,
             install_icon=os.path.join(PYNICOTINE_PATH, "packaging/windows/nicotine.ico"),
-            plat_name=platform.machine(),
+            plat_name=sysconfig.get_platform().replace("mingw_", ""),
             target_name=config.application_name,
+            target_version=config.version,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
