@@ -96,7 +96,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: windows-${{ matrix.arch }}-package
-          path: packaging/windows/build/portable
+          path: build/exe
 
   macos:
     runs-on: macos-10.15
