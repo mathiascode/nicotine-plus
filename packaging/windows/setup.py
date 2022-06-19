@@ -267,7 +267,6 @@ setup(
         "bdist_msi": dict(
             all_users=True,
             bdist_dir=os.path.join(CURRENT_PATH, "build", "portable", config.application_name),
-            dist_dir=os.path.join(CURRENT_PATH, "build", "installer"),
             install_icon=os.path.join(CURRENT_PATH, ICON_NAME),
             keep_temp=True,
             plat_name=ARCH,
