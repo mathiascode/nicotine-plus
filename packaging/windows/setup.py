@@ -266,7 +266,7 @@ setup(
         ),
         "bdist_msi": dict(
             all_users=True,
-            bdist_dir=os.path.join(CURRENT_PATH, "build", "portable"),
+            bdist_dir=os.path.join(CURRENT_PATH, "build", "portable", config.application_name),
             dist_dir=os.path.join(CURRENT_PATH, "build", "installer"),
             install_icon=os.path.join(CURRENT_PATH, ICON_NAME),
             keep_temp=True,
@@ -281,6 +281,7 @@ setup(
         ),
         "bdist_dmg": dict(
             applications_shortcut=True,
+            dmg_name=os.path.join(CURRENT_PATH, "build", "installer", "test.dmg"),
             volume_label="%s-%s" % (config.application_name, config.version)
         )
     },
