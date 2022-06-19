@@ -26,7 +26,7 @@ import sys
 def install_pypi():
     """ Install dependencies from PyPi """
 
-    packages = ["git+https://github.com/marcelotduarte/cx_Freeze.git@develop"]
+    packages = ["git+https://github.com/marcelotduarte/cx_Freeze.git@6.11.0"]
     subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
 
 
