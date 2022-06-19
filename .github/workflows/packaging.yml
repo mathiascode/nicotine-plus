@@ -90,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: windows-${{ matrix.arch }}-installer
-          path: packaging/windows/build/installer
+          path: dist/*.msi
 
       - name: Archive package artifacts
         uses: actions/upload-artifact@v2
