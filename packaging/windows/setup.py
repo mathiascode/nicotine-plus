@@ -270,6 +270,7 @@ setup(
             dist_dir=os.path.join(CURRENT_PATH, "build", "installer"),
             install_icon=os.path.join(CURRENT_PATH, ICON_NAME),
             keep_temp=True,
+            plat_name=ARCH,
             target_name=config.application_name,
             target_version=config.version,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
@@ -281,7 +282,6 @@ setup(
         ),
         "bdist_dmg": dict(
             applications_shortcut=True,
-            dmg_name=os.path.join(CURRENT_PATH, "build", "installer", "test.dmg"),
             volume_label="%s-%s" % (config.application_name, config.version)
         )
     },
