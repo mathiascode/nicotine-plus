@@ -258,7 +258,6 @@ setup(
     version=config.version,
     options={
         "build_exe": dict(
-            build_exe=os.path.join("build", "exe", config.application_name),
             packages=["gi"] + PLUGIN_PACKAGES,
             excludes=["pygtkcompat", "tkinter"],
             include_files=INCLUDE_FILES,
@@ -267,10 +266,9 @@ setup(
         ),
         "bdist_msi": dict(
             all_users=True,
-            bdist_dir=os.path.join(CURRENT_PATH, "build", "exe", config.application_name),
+            bdist_dir=os.path.join("build", "exe", config.application_name),
             install_icon=os.path.join(CURRENT_PATH, ICON_NAME),
             keep_temp=True,
-            plat_name=ARCH,
             target_name=config.application_name,
             target_version=config.version,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
