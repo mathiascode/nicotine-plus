@@ -267,7 +267,7 @@ setup(
         "bdist_msi": dict(
             all_users=True,
             install_icon=os.path.join(CURRENT_PATH, ICON_NAME),
-            plat_name=ARCH,
+            keep_temp=True,
             target_name=config.application_name,
             target_version=config.version,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
