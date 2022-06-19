@@ -258,6 +258,7 @@ setup(
     version=config.version,
     options={
         "build_exe": dict(
+            build_exe=os.path.join("build", "portable", config.application_name),
             packages=["gi"] + PLUGIN_PACKAGES,
             excludes=["pygtkcompat", "tkinter"],
             include_files=INCLUDE_FILES,
