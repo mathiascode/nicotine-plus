@@ -269,6 +269,7 @@ setup(
             install_icon=os.path.join(CURRENT_PATH, ICON_NAME),
             plat_name=ARCH,
             target_name=config.application_name,
+            target_version=config.version,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
