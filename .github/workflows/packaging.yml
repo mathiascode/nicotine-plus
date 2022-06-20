@@ -101,7 +101,7 @@ jobs:
   macos:
     runs-on: macos-10.15
     env:
-      NICOTINE_GTK_VERSION: 4
+      NICOTINE_GTK_VERSION: 3
       NICOTINE_LIBADWAITA: 1
     steps:
       - name: Checkout code
