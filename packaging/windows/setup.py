@@ -269,8 +269,14 @@ setup(
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
-            bundle_name=APPLICATION_ID,
-            iconfile=os.path.join(CURRENT_PATH, ICON_NAME)
+            bundle_name=APPLICATION_NAME,
+            iconfile=os.path.join(CURRENT_PATH, ICON_NAME),
+            plist_items=[
+                ("CFBundleName", APPLICATION_NAME),
+                ("CFBundleIdentifier", APPLICATION_ID),
+                ("CFBundleShortVersionString", VERSION),
+                ("CFBundleInfoDictionaryVersion", "6.0")
+            ]
         ),
         "bdist_dmg": dict(
             applications_shortcut=True
