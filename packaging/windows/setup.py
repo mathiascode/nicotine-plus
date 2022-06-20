@@ -275,7 +275,9 @@ setup(
                 ("CFBundleName", APPLICATION_NAME),
                 ("CFBundleIdentifier", APPLICATION_ID),
                 ("CFBundleShortVersionString", VERSION),
-                ("CFBundleInfoDictionaryVersion", "6.0")
+                ("CFBundleVersion", VERSION),
+                ("CFBundleInfoDictionaryVersion", "6.0"),
+                ("NSHumanReadableCopyright", COPYRIGHT)
             ]
         ),
         "bdist_dmg": dict(
