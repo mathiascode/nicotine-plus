@@ -97,5 +97,13 @@ def run_gui(core, hidden, ci_mode, multi_instance):
         log.add(_("No graphical environment available, using headless (no GUI) mode"))
         return None
 
+    if getattr(sys, 'frozen', False):
+        # Set up paths for frozen binaries (Windows and macOS)
+        executable_folder = os.path.dirname(sys.executable)
+        os.environ["XDG_DATA_DIRS"] = os.path.join(executable_folder, "share")
+        os.environ["GDK_PIXBUF_MODULE_FILE"] = os.path.join(executable_folder, "lib/pixbuf-loaders.cache")
+        os.environ["GI_TYPELIB_PATH"] = os.path.join(executable_folder, "lib/typelibs")
+        os.environ["GSETTINGS_SCHEMAS_DIR"] = os.path.join(executable_folder, "lib/glib/schemas")
+
     from pynicotine.gtkgui.application import Application
     return Application(core, hidden, ci_mode, multi_instance).run()

@@ -115,7 +115,7 @@ def add_pixbuf_loaders():
 
         temp_file_handle.write(data)
 
-    include_files.append((temp_loaders_file, loaders_file))
+    include_files.append((temp_loaders_file, "lib/pixbuf-loaders.cache"))
     add_files("lib/gdk-pixbuf-2.0/2.10.0/loaders", "libpixbufloader-", LIB_EXTENSION, output_path="lib")
 
 
@@ -170,7 +170,8 @@ def add_typelibs():
         process_files("share/gir-1.0", required_typelibs, ".gir", _add_typelibs_callback)
         temporary_folder = True
 
-    add_files("lib/girepository-1.0", required_typelibs, ".typelib", temporary=temporary_folder)
+    add_files("lib/girepository-1.0", required_typelibs, ".typelib", output_path="lib/typelibs",
+              temporary=temporary_folder)
 
 
 def add_gtk():
@@ -191,7 +192,7 @@ def add_gtk():
         add_files(LIB_FOLDER, "libadwaita-", LIB_EXTENSION, output_path=lib_output_path)
 
     include_files.append((os.path.join(SYS_BASE, "share/glib-2.0/schemas/gschemas.compiled"),
-                         "share/glib-2.0/schemas/gschemas.compiled"))
+                         "lib/gschemas.compiled"))
 
     # Pixbuf loaders
     add_pixbuf_loaders()
@@ -221,7 +222,7 @@ def add_themes():
 
 def add_ssl_certs():
     ssl_paths = ssl.get_default_verify_paths()
-    include_files.append((ssl_paths.openssl_cafile, "share/ssl/cert.pem"))
+    include_files.append((ssl_paths.openssl_cafile, "lib/cert.pem"))
 
 
 def add_translations():
@@ -278,7 +279,9 @@ setup(
                 ("CFBundleVersion", VERSION),
                 ("CFBundleInfoDictionaryVersion", "6.0"),
                 ("NSHumanReadableCopyright", COPYRIGHT)
-            ]
+            ],
+            codesign_identity='-',
+            codesign_deep=True
         ),
         "bdist_dmg": dict(
             applications_shortcut=True
