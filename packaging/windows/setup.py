@@ -46,17 +46,18 @@ else:
 
 TEMP_PATH = tempfile.mkdtemp()
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+BUILD_PATH = os.path.join(CURRENT_PATH, "build")
 PROJECT_PATH = os.path.abspath(os.path.join(CURRENT_PATH, "..", ".."))
 sys.path.append(PROJECT_PATH)
 
 from pynicotine.config import config  # noqa: E402  # pylint: disable=import-error,wrong-import-position
 
 APPLICATION_NAME = config.application_name
+APPLICATION_ID = config.application_id
 VERSION = config.version
 AUTHOR = config.author
 COPYRIGHT = config.copyright
 
-PACKAGE_NAME = "nicotine-plus"
 SCRIPT_NAME = "nicotine"
 MODULE_NAME = "pynicotine"
 GTK_VERSION = os.environ.get("NICOTINE_GTK_VERSION") or '3'
@@ -245,11 +246,15 @@ add_translations()
 
 # Setup
 setup(
-    name=PACKAGE_NAME,
+    name=APPLICATION_NAME,
     description=APPLICATION_NAME,
     author=AUTHOR,
     version=VERSION,
     options={
+        "build": dict(
+            build_base=BUILD_PATH,
+            build_exe=os.path.join(BUILD_PATH, "package", APPLICATION_NAME)
+        ),
         "build_exe": dict(
             packages=[MODULE_NAME, "gi"],
             excludes=["tkinter"],
@@ -259,20 +264,16 @@ setup(
         ),
         "bdist_msi": dict(
             all_users=True,
-            bdist_dir=os.path.join("build", "package", APPLICATION_NAME),
+            dist_dir=BUILD_PATH,
             install_icon=os.path.join(CURRENT_PATH, ICON_NAME),
-            keep_temp=True,
-            target_name=APPLICATION_NAME,
-            target_version=VERSION,
             upgrade_code="{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         ),
         "bdist_mac": dict(
-            bundle_name=APPLICATION_NAME,
+            bundle_name=APPLICATION_ID,
             iconfile=os.path.join(CURRENT_PATH, ICON_NAME)
         ),
         "bdist_dmg": dict(
-            applications_shortcut=True,
-            volume_label="%s-%s" % (APPLICATION_NAME, VERSION)
+            applications_shortcut=True
         )
     },
     packages=[],
