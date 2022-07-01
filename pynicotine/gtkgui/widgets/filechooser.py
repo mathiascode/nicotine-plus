@@ -50,13 +50,17 @@ class FileChooser:
         self.file_chooser.set_modal(True)
         self.file_chooser.set_select_multiple(multiple)
 
+        print(initial_folder)
         initial_folder = os.path.expanduser(initial_folder)
+        print(initial_folder)
 
         if not os.path.isdir(initial_folder):
             initial_folder = os.path.expanduser("~")
+            print(initial_folder)
 
         if GTK_API_VERSION >= 4:
             initial_folder = Gio.File.new_for_path(initial_folder)
+            print(initial_folder)
 
         else:
             # Display network shares
