@@ -55,11 +55,11 @@ def check_gui_dependencies():
     except ValueError:
         return _("Cannot find %s, please install it.") % ("GTK " + str(gtk_version[0]))
 
-    try:
-        from gi.repository import Gtk
+    # try:
+    from gi.repository import Gtk
 
-    except ImportError:
-        return _("Cannot import the Gtk module. Bad install of the python-gobject module?")
+    # except ImportError:
+    #     return _("Cannot import the Gtk module. Bad install of the python-gobject module?")
 
     if Gtk.check_version(*gtk_version):
         return _("You are using an unsupported version of GTK %(major_version)s. You should install "
