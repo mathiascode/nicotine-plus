@@ -590,28 +590,38 @@ class UserBrowse(UserInterface):
         if not files:
             return
 
-        # Temporarily disable sorting for increased performance
-        sort_column, sort_type = self.file_store.get_sort_column_id()
-        self.file_store.set_default_sort_func(lambda *_args: 0)
-        self.file_store.set_sort_column_id(-1, Gtk.SortType.ASCENDING)
+        def add_files(files):
+            # Temporarily disable sorting for increased performance
+            sort_column, sort_type = self.file_store.get_sort_column_id()
+            self.file_store.set_default_sort_func(lambda *_args: 0)
+            self.file_store.set_sort_column_id(-1, Gtk.SortType.ASCENDING)
 
-        selected_folder_size = 0
+            selected_folder_size = 0
+            directory = self.selected_folder
 
-        for _code, filename, size, _ext, attrs, *_unused in files:
-            selected_folder_size += size
-            h_bitrate, bitrate, h_length, length = get_result_bitrate_length(size, attrs)
+            for _code, filename, size, _ext, attrs, *_unused in files:
+                if directory != self.selected_folder:
+                    yield False
 
-            file_row = [filename, human_size(size), h_bitrate, h_length,
-                        GObject.Value(GObject.TYPE_UINT64, size),
-                        GObject.Value(GObject.TYPE_UINT, bitrate),
-                        GObject.Value(GObject.TYPE_UINT, length)]
+                selected_folder_size += size
+                h_bitrate, bitrate, h_length, length = get_result_bitrate_length(size, attrs)
 
-            self.file_iters[filename] = self.file_store.insert_with_valuesv(-1, self.file_column_numbers, file_row)
+                file_row = [filename, human_size(size), h_bitrate, h_length,
+                            GObject.Value(GObject.TYPE_UINT64, size),
+                            GObject.Value(GObject.TYPE_UINT, bitrate),
+                            GObject.Value(GObject.TYPE_UINT, length)]
 
-        self.selected_folder_size = selected_folder_size
+                self.file_iters[filename] = self.file_store.insert_with_valuesv(-1, self.file_column_numbers, file_row)
+                yield True
 
-        if sort_column is not None and sort_type is not None:
-            self.file_store.set_sort_column_id(sort_column, sort_type)
+            self.selected_folder_size = selected_folder_size
+
+            if sort_column is not None and sort_type is not None:
+                self.file_store.set_sort_column_id(sort_column, sort_type)
+
+            yield False
+
+        GLib.idle_add(next, add_files(files))
 
     def select_files(self):
 

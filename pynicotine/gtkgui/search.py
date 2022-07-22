@@ -571,91 +571,108 @@ class Search(UserInterface):
 
         self.on_refilter()
 
-    def add_result_list(self, result_list, user, country, inqueue, ulspeed, h_speed,
+    def add_result(self, result, user, country, inqueue, ulspeed, h_speed,
                         h_queue, color, private=False):
+
+        if self.num_results_found >= self.max_limit:
+            self.max_limited = True
+            return False
+
+        fullpath = result[1]
+        fullpath_lower = fullpath.lower()
+
+        if any(word in fullpath_lower for word in self.searchterm_words_ignore):
+            # Filter out results with filtered words (e.g. nicotine -music)
+            log.add_debug(("Filtered out excluded search result %(filepath)s from user %(user)s for "
+                           "search term \"%(query)s\""), {
+                "filepath": fullpath,
+                "user": user,
+                "query": self.text
+            })
+            return True
+
+        if not any(word in fullpath_lower for word in self.searchterm_words_include):
+            # Certain users may send us wrong results, filter out such ones
+            log.add_search(_("Filtered out incorrect search result %(filepath)s from user %(user)s for "
+                             "search query \"%(query)s\""), {
+                "filepath": fullpath,
+                "user": user,
+                "query": self.text
+            })
+            return True
+
+        self.num_results_found += 1
+        fullpath_split = fullpath.split('\\')
+
+        if config.sections["ui"]["reverse_file_paths"]:
+            # Reverse file path, file name is the first item. next() retrieves the name and removes
+            # it from the iterator.
+            fullpath_split = reversed(fullpath_split)
+            name = next(fullpath_split)
+
+        else:
+            # Regular file path, file name is the last item. Retrieve it and remove it from the list.
+            name = fullpath_split.pop()
+
+        # Join the resulting items into a folder path
+        directory = '\\'.join(fullpath_split)
+
+        size = result[2]
+        h_size = human_size(size)
+        h_bitrate, bitrate, h_length, length = get_result_bitrate_length(size, result[4])
+
+        if private:
+            name = _("[PRIVATE]  %s") % name
+
+        is_result_visible = self.append(
+            [
+                self.num_results_found,
+                user,
+                get_flag_icon_name(country),
+                h_speed,
+                h_queue,
+                directory,
+                name,
+                h_size,
+                h_bitrate,
+                h_length,
+                GObject.Value(GObject.TYPE_UINT, bitrate),
+                fullpath,
+                country,
+                GObject.Value(GObject.TYPE_UINT64, size),
+                GObject.Value(GObject.TYPE_UINT, ulspeed),
+                GObject.Value(GObject.TYPE_UINT, inqueue),
+                GObject.Value(GObject.TYPE_UINT, length),
+                GObject.Value(GObject.TYPE_STRING, color)
+            ]
+        )
+        return True
+
+    def add_result_list(self, result_list, private_result_list, user, country, inqueue, ulspeed, h_speed,
+                        h_queue, color):
         """ Adds a list of search results to the treeview. Lists can either contain publicly or
         privately shared files. """
 
-        update_ui = False
+        update_ui = True
 
         for result in result_list:
-            if self.num_results_found >= self.max_limit:
-                self.max_limited = True
-                break
+            yield self.add_result(result, user, country, inqueue, ulspeed, h_speed, h_queue, color)
 
-            fullpath = result[1]
-            fullpath_lower = fullpath.lower()
+        for result in private_result_list:
+            yield self.add_result(result, user, country, inqueue, ulspeed, h_speed, h_queue, color, private=True)
 
-            if any(word in fullpath_lower for word in self.searchterm_words_ignore):
-                # Filter out results with filtered words (e.g. nicotine -music)
-                log.add_debug(("Filtered out excluded search result %(filepath)s from user %(user)s for "
-                               "search term \"%(query)s\""), {
-                    "filepath": fullpath,
-                    "user": user,
-                    "query": self.text
-                })
-                continue
+        if update_ui:
+            # If this search wasn't initiated by us (e.g. wishlist), and the results aren't spoofed, show tab
+            if not self.showtab:
+                self.searches.show_tab(self, self.text)
+                self.showtab = True
 
-            if not any(word in fullpath_lower for word in self.searchterm_words_include):
-                # Certain users may send us wrong results, filter out such ones
-                log.add_search(_("Filtered out incorrect search result %(filepath)s from user %(user)s for "
-                                 "search query \"%(query)s\""), {
-                    "filepath": fullpath,
-                    "user": user,
-                    "query": self.text
-                })
-                continue
+            self.searches.request_tab_hilite(self.container)
 
-            self.num_results_found += 1
-            fullpath_split = fullpath.split('\\')
+        # Update number of results, even if they are all filtered
+        self.update_result_counter()
 
-            if config.sections["ui"]["reverse_file_paths"]:
-                # Reverse file path, file name is the first item. next() retrieves the name and removes
-                # it from the iterator.
-                fullpath_split = reversed(fullpath_split)
-                name = next(fullpath_split)
-
-            else:
-                # Regular file path, file name is the last item. Retrieve it and remove it from the list.
-                name = fullpath_split.pop()
-
-            # Join the resulting items into a folder path
-            directory = '\\'.join(fullpath_split)
-
-            size = result[2]
-            h_size = human_size(size)
-            h_bitrate, bitrate, h_length, length = get_result_bitrate_length(size, result[4])
-
-            if private:
-                name = _("[PRIVATE]  %s") % name
-
-            is_result_visible = self.append(
-                [
-                    self.num_results_found,
-                    user,
-                    get_flag_icon_name(country),
-                    h_speed,
-                    h_queue,
-                    directory,
-                    name,
-                    h_size,
-                    h_bitrate,
-                    h_length,
-                    GObject.Value(GObject.TYPE_UINT, bitrate),
-                    fullpath,
-                    country,
-                    GObject.Value(GObject.TYPE_UINT64, size),
-                    GObject.Value(GObject.TYPE_UINT, ulspeed),
-                    GObject.Value(GObject.TYPE_UINT, inqueue),
-                    GObject.Value(GObject.TYPE_UINT, length),
-                    GObject.Value(GObject.TYPE_STRING, color)
-                ]
-            )
-
-            if is_result_visible:
-                update_ui = True
-
-        return update_ui
+        yield False
 
     def add_user_results(self, msg, user, country):
 
@@ -680,25 +697,7 @@ class Search(UserInterface):
         color_id = "search" if msg.freeulslots else "searchq"
         color = config.sections["ui"][color_id] or None
 
-        update_ui = self.add_result_list(msg.list, user, country, inqueue, ulspeed, h_speed, h_queue, color)
-
-        if msg.privatelist:
-            update_ui_private = self.add_result_list(
-                msg.privatelist, user, country, inqueue, ulspeed, h_speed, h_queue, color, private=True)
-
-            if not update_ui and update_ui_private:
-                update_ui = True
-
-        if update_ui:
-            # If this search wasn't initiated by us (e.g. wishlist), and the results aren't spoofed, show tab
-            if not self.showtab:
-                self.searches.show_tab(self, self.text)
-                self.showtab = True
-
-            self.searches.request_tab_hilite(self.container)
-
-        # Update number of results, even if they are all filtered
-        self.update_result_counter()
+        GLib.idle_add(next, self.add_result_list(msg.list, msg.privatelist, user, country, inqueue, ulspeed, h_speed, h_queue, color), priority=GLib.PRIORITY_LOW)
 
     def append(self, row):
 

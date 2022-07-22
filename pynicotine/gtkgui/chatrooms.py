@@ -500,6 +500,10 @@ class ChatRoom(UserInterface):
         cols["status"].get_widget().hide()
         cols["country"].get_widget().hide()
 
+        cols["user"].set_expand(True)
+        cols["speed"].set_expand(True)
+        cols["files"].set_expand(True)
+
         for userdata in users:
             self.add_user_row(userdata)
 
