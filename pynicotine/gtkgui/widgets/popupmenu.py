@@ -102,7 +102,7 @@ class PopupMenu:
         state = GLib.Variant("b", False) if stateful else None
         action = Gio.SimpleAction(name=action_id, state=state)
 
-        self.frame.window.add_action(action)
+        self.frame.application.add_action(action)
         return action
 
     def _create_menu_item(self, item):
@@ -135,7 +135,7 @@ class PopupMenu:
             action = None
 
         else:
-            action_id = "win." + (label + self.popup_id).replace(" ", "").lower().translate(
+            action_id = "app." + (label + self.popup_id).replace(" ", "").lower().translate(
                 str.maketrans(dict.fromkeys(string.punctuation)))
 
             action = self._create_action(action_id[4:], (boolean or choice))

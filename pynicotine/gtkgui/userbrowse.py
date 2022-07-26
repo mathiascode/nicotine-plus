@@ -57,15 +57,14 @@ class UserBrowses(IconNotebook):
 
     def __init__(self, frame, core):
 
-        IconNotebook.__init__(self, frame, core, frame.userbrowse_notebook, frame.userbrowse_page)
-        self.notebook.connect("switch-page", self.on_switch_browse_page)
+        IconNotebook.__init__(
+            self, frame, core, notebook=frame.userbrowse_notebook, parent_page=frame.userbrowse_page,
+            switch_page_callback=self.on_switch_browse_page
+        )
 
         self.file_properties = FileProperties(frame, core)
 
     def on_switch_browse_page(self, _notebook, page, _page_num):
-
-        if self.frame.current_page_id != self.frame.userbrowse_page.id:
-            return
 
         for tab in self.pages.values():
             if tab.container == page:
@@ -120,7 +119,7 @@ class UserBrowses(IconNotebook):
         page.grab_view_focus()
 
         if switch_page:
-            self.set_current_page(self.page_num(page.container))
+            self.set_current_page(page.container)
             self.frame.change_main_page(self.frame.userbrowse_page)
 
     def remove_user(self, user):

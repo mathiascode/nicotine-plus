@@ -54,8 +54,10 @@ class PrivateChats(IconNotebook):
 
     def __init__(self, frame, core):
 
-        IconNotebook.__init__(self, frame, core, frame.private_notebook, frame.private_page)
-        self.notebook.connect("switch-page", self.on_switch_chat)
+        IconNotebook.__init__(
+            self, frame, core, notebook=frame.private_notebook, parent_page=frame.private_page,
+            switch_page_callback=self.on_switch_chat
+        )
 
         self.completion = ChatCompletion()
         self.history = ChatHistory(frame, core)
@@ -66,9 +68,6 @@ class PrivateChats(IconNotebook):
         self.update_visuals()
 
     def on_switch_chat(self, _notebook, page, _page_num):
-
-        if self.frame.current_page_id != self.frame.private_page.id:
-            return
 
         for user, tab in self.pages.items():
             if tab.container == page:
@@ -102,7 +101,7 @@ class PrivateChats(IconNotebook):
         if self.frame.current_page_id != self.frame.private_page.id:
             return
 
-        page = self.get_nth_page(self.get_current_page())
+        page = self.get_current_page()
 
         for user, tab in self.pages.items():
             if tab.container == page:
@@ -129,8 +128,8 @@ class PrivateChats(IconNotebook):
             self.append_page(page.container, user, page.on_close, user=user)
             page.set_label(self.get_tab_label_inner(page.container))
 
-        if switch_page and self.get_current_page() != self.page_num(self.pages[user].container):
-            self.set_current_page(self.page_num(self.pages[user].container))
+        if switch_page and self.get_current_page() != self.pages[user].container:
+            self.set_current_page(self.pages[user].container)
 
     def remove_user(self, user):
 
@@ -167,7 +166,7 @@ class PrivateChats(IconNotebook):
 
     def set_completion_list(self, completion_list):
 
-        page = self.get_nth_page(self.get_current_page())
+        page = self.get_current_page()
 
         for tab in self.pages.values():
             if tab.container == page:
@@ -240,6 +239,7 @@ class PrivateChat(UserInterface):
             menu.add_items(
                 ("", None),
                 ("#" + _("Close All Tabs…"), self.on_close_all_tabs),
+                ("#" + _("_Detach Tab"), self.on_detach),
                 ("#" + _("_Close Tab"), self.on_close)
             )
 
@@ -359,7 +359,7 @@ class PrivateChat(UserInterface):
 
         self.chats.request_tab_hilite(self.container)
 
-        if (self.chats.get_current_page() == self.chats.page_num(self.container)
+        if (self.chats.get_current_page() == self.container
                 and self.frame.current_page_id == self.frame.private_page.id and self.frame.window.is_active()):
             # Don't show notifications if the chat is open and the window is in use
             return
@@ -499,6 +499,9 @@ class PrivateChat(UserInterface):
         for tag in (self.tag_remote, self.tag_local, self.tag_action, self.tag_hilite,
                     self.tag_username, self.tag_my_username):
             self.chat_view.update_tag(tag)
+
+    def on_detach(self, *_args):
+        self.chats.detach_page(self.container)
 
     def on_close(self, *_args):
         self.core.privatechats.remove_user(self.user)

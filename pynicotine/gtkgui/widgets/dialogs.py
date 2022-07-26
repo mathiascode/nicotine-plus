@@ -31,16 +31,21 @@ class Dialog:
     active_dialog = None  # Class variable keeping the dialog object alive
 
     def __init__(self, dialog=None, parent=None, content_box=None, buttons=None, default_response=None,
-                 show_callback=None, close_callback=None, title="Dialog", width=0, height=0,
+                 show_callback=None, focus_callback=None, close_callback=None, title="Dialog", width=0, height=0,
                  modal=True, resizable=True, close_destroy=True):
 
         self.default_width = width
         self.default_height = height
+        self.content_box = content_box
         self.close_destroy = close_destroy
+
+        self.show_callback = show_callback
+        self.focus_callback = focus_callback
+        self.close_callback = close_callback
 
         if dialog:
             self.dialog = dialog
-            self._set_dialog_properties(parent, modal, show_callback, close_callback)
+            self._set_dialog_properties(parent, modal)
             return
 
         self.dialog = Gtk.Dialog(
@@ -72,11 +77,26 @@ class Dialog:
         if default_response:
             self.dialog.set_default_response(default_response)
 
-        self._set_dialog_properties(parent, modal, show_callback, close_callback)
+        self._set_dialog_properties(parent, modal)
+
+    def on_show(self, *_args):
+        if self.show_callback is not None:
+            self.show_callback(self)
+
+    def on_active(self, _dialog, param):
+
+        if self.focus_callback is None:
+            return
+
+        is_focused = self.dialog.get_property(param.name)
+        self.focus_callback(self, is_focused)
 
     def on_close_request(self, *_args):
 
         Dialog.active_dialog = None
+
+        if self.close_callback is not None:
+            self.close_callback(self)
 
         if self.close_destroy:
             return False
@@ -90,7 +110,7 @@ class Dialog:
 
         return True
 
-    def _set_dialog_properties(self, parent, modal=True, show_callback=None, close_callback=None):
+    def _set_dialog_properties(self, parent, modal=True):
 
         if GTK_API_VERSION >= 4:
             self.dialog.connect("close-request", self.on_close_request)
@@ -100,14 +120,14 @@ class Dialog:
             self.dialog.set_property("window-position", Gtk.WindowPosition.CENTER_ON_PARENT)
             self.dialog.set_type_hint(Gdk.WindowTypeHint.DIALOG)
 
-        if show_callback:
-            self.dialog.connect("show", show_callback)
-
-        if close_callback:
-            self.dialog.connect("hide", close_callback)
+        self.dialog.connect("show", self.on_show)
+        self.dialog.connect("notify::is-active", self.on_active)
 
         self.dialog.set_modal(modal)
         self.dialog.set_transient_for(parent)
+
+    def focus(self):
+        self.dialog.present()
 
     def show(self):
 
