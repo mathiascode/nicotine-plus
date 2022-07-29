@@ -160,7 +160,7 @@ class ServerConnection(Connection):
 
 class PeerConnection(Connection):
 
-    __slots__ = ("init", "indirect", "fileinit", "filedown", "fileupl", "lastcallback")
+    __slots__ = ("init", "indirect", "fileinit", "filedown", "fileupl", "close_request", "lastcallback")
 
     def __init__(self, sock=None, addr=None, events=None, init=None, indirect=False):
 
@@ -171,6 +171,7 @@ class PeerConnection(Connection):
         self.fileinit = None
         self.filedown = None
         self.fileupl = None
+        self.close_request = None
         self.lastcallback = time.time()
 
 
@@ -182,6 +183,7 @@ class SlskProtoThread(threading.Thread):
     """ The server and peers send each other small binary messages that start
     with length and message code followed by the actual message data. """
 
+    CLOSE_REQUEST_DELAY = 1
     IN_PROGRESS_STALE_AFTER = 2
     CONNECTION_MAX_IDLE = 60
 
@@ -975,6 +977,37 @@ class SlskProtoThread(threading.Thread):
 
         del self._init_msgs[init_key]
 
+    def close_connection_if_inactive(self, conn_obj, sock):
+
+        if sock is self.server_socket:
+            return False
+
+        current_time = time.time()
+
+        if (current_time - conn_obj.lastactive) > self.CONNECTION_MAX_IDLE:
+            # No recent activity, peer connection is stale
+            self.close_connection(self._conns, sock)
+            return True
+
+        if not conn_obj.close_request:
+            return False
+
+        # A connection needs to be closed immediately instead of waiting for
+        # timeout. Currently only used for search results. Add a slight delay
+        # before closing direct connections to prevent indirect connections
+        # from establishing afterwards.
+
+        if not conn_obj.init.indirect and (current_time - conn_obj.close_request) < self.CLOSE_REQUEST_DELAY:
+            return False
+
+        if not self.socket_still_active(sock):
+            self.close_connection(self._conns, sock)
+            return True
+
+        # Connection was reused after the close request, bail out
+        conn_obj.close_request = None
+        return False
+
     def close_connection_by_ip(self, ip_address):
 
         for sock, conn_obj in self._conns.copy().items():
@@ -1451,7 +1484,8 @@ class SlskProtoThread(threading.Thread):
                     msg_class, msg_buffer_mem[idx + 8:idx + msgsize_total], msgsize - 4, "peer", conn_obj.init)
 
                 if msg_class is FileSearchResult:
-                    search_result_received = True
+                    # Close connection as soon as possible
+                    conn_obj.close_request = time.time()
 
                 if msg is not None:
                     self._callback_msgs.append(msg)
@@ -1473,12 +1507,6 @@ class SlskProtoThread(threading.Thread):
 
         if idx:
             conn_obj.ibuf = msg_buffer[idx:]
-
-        if search_result_received and not self.socket_still_active(sock):
-            # Forcibly close peer connection. Only used after receiving a search result,
-            # as we need to get rid of peer connections before they pile up.
-
-            self.close_connection(self._conns, sock)
 
     def process_peer_output(self, msg_obj):
 
@@ -2058,10 +2086,7 @@ class SlskProtoThread(threading.Thread):
 
             # Process read/write for active connections
             for sock, conn_obj in self._conns.copy().items():
-                if (sock is not self.server_socket
-                        and (current_time - conn_obj.lastactive) > self.CONNECTION_MAX_IDLE):
-                    # No recent activity, peer connection is stale
-                    self.close_connection(self._conns, sock)
+                if self.close_connection_if_inactive(conn_obj, sock):
                     continue
 
                 if sock in input_list:
