@@ -171,7 +171,6 @@ class PeerConnection(Connection):
         self.fileinit = None
         self.filedown = None
         self.fileupl = None
-        self.close_request = None
         self.lastcallback = time.time()
 
 
@@ -871,7 +870,7 @@ class SlskProtoThread(threading.Thread):
         conn_type = init.conn_type
 
         if user == self.server_username or not self.has_existing_user_socket(user, conn_type):
-            return
+            return True
 
         log.add_conn("Discarding existing connection of type %(type)s to user %(user)s", {
             "type": init.conn_type,
@@ -882,7 +881,12 @@ class SlskProtoThread(threading.Thread):
         init.outgoing_msgs = prev_init.outgoing_msgs
         prev_init.outgoing_msgs = []
 
+        if prev_init.close_request:
+            # Existing connection scheduled for removal, don't accept new connection
+            return False
+
         self.close_connection(self._conns, prev_init.sock)
+        return True
 
     @staticmethod
     def close_socket(sock):
@@ -983,13 +987,21 @@ class SlskProtoThread(threading.Thread):
             return False
 
         current_time = time.time()
+        init = conn_obj.init
 
         if (current_time - conn_obj.lastactive) > self.CONNECTION_MAX_IDLE:
-            # No recent activity, peer connection is stale
+            if init is not None:
+                log.add_conn("Removing stale connection of type %(type)s for user %(user)s", {
+                    'type': init.conn_type,
+                    'user': init.target_user
+                })
             self.close_connection(self._conns, sock)
             return True
 
-        if not conn_obj.close_request:
+        if init is None:
+            return False
+
+        if not init.close_request:
             return False
 
         # A connection needs to be closed immediately instead of waiting for
@@ -997,15 +1009,20 @@ class SlskProtoThread(threading.Thread):
         # before closing direct connections to prevent indirect connections
         # from establishing afterwards.
 
-        if not conn_obj.init.indirect and (current_time - conn_obj.close_request) < self.CLOSE_REQUEST_DELAY:
+        if (current_time - init.close_request) < self.CLOSE_REQUEST_DELAY:
             return False
 
         if not self.socket_still_active(sock):
+            log.add_conn(("Removing connection of type %(type)s for user %(user)s requested "
+                          "for immediate removal"), {
+                'type': init.conn_type,
+                'user': init.target_user
+            })
             self.close_connection(self._conns, sock)
             return True
 
         # Connection was reused after the close request, bail out
-        conn_obj.close_request = None
+        init.close_request = None
         return False
 
     def close_connection_by_ip(self, ip_address):
@@ -1347,7 +1364,11 @@ class SlskProtoThread(threading.Thread):
                             'addr': addr
                         })
 
-                        self.replace_existing_connection(msg)
+                        if not self.replace_existing_connection(msg):
+                            log.add_conn(("Existing connection for user %s is scheduled for removal, "
+                                          "rejecting new connection"), user)
+                            self.close_connection(self._conns, conn_obj.sock)
+                            return
 
                         conn_obj.init = msg
                         conn_obj.init.addr = addr
@@ -1454,8 +1475,6 @@ class SlskProtoThread(threading.Thread):
         msg_buffer_mem = memoryview(msg_buffer)
         buffer_len = len(msg_buffer_mem)
         idx = 0
-        search_result_received = False
-        sock = conn_obj.sock
 
         # Peer messages are 8 bytes or greater in length
         while buffer_len >= 8:
@@ -1485,7 +1504,7 @@ class SlskProtoThread(threading.Thread):
 
                 if msg_class is FileSearchResult:
                     # Close connection as soon as possible
-                    conn_obj.close_request = time.time()
+                    conn_obj.init.close_request = time.time()
 
                 if msg is not None:
                     self._callback_msgs.append(msg)

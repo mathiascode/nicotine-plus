@@ -2206,7 +2206,7 @@ class PeerInit(PeerInitMessage):
     Nicotine+ extends the PeerInit class to reuse and keep track of peer
     connections internally. """
 
-    __slots__ = ("sock", "addr", "init_user", "target_user", "conn_type", "indirect", "token")
+    __slots__ = ("sock", "addr", "init_user", "target_user", "conn_type", "indirect", "token", "close_request")
 
     def __init__(self, sock=None, addr=None, init_user=None, target_user=None, conn_type=None, indirect=False, token=0):
         self.sock = sock
@@ -2216,6 +2216,7 @@ class PeerInit(PeerInitMessage):
         self.conn_type = conn_type
         self.indirect = indirect
         self.token = token
+        self.close_request = None
         self.outgoing_msgs = []
 
     def make_network_message(self):
