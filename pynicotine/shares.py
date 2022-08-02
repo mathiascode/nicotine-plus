@@ -236,6 +236,28 @@ class Scanner:
 
         return new_mtimes, new_files, new_streams
 
+    def real2virtual(self, real_path):
+
+        real_path = real_path.replace('/', '\\')
+        shares = (self.config.sections["transfers"]["shared"] + self.config.sections["transfers"]["buddyshared"])
+
+        for virtual_name, real_folder_path, *_unused in shares:
+            # Remove slashes from share name to avoid path conflicts
+            virtual_name = virtual_name.replace('/', '_').replace('\\', '_')
+
+            real_folder_path = real_folder_path.replace('/', '\\')
+            if real_path == real_folder_path:
+                return virtual_name
+
+            # Use rstrip to remove trailing separator from root directories
+            real_folder_path = real_folder_path.rstrip('\\') + '\\'
+
+            if real_path.startswith(real_folder_path):
+                virtual_path = virtual_name + '\\' + real_path[len(real_folder_path):]
+                return virtual_path
+
+        return "__INTERNAL_ERROR__" + real_path
+
     @staticmethod
     def is_hidden(folder, filename=None, entry_stat=None):
         """ Stop sharing any dot/hidden directories/files """
@@ -274,7 +296,7 @@ class Scanner:
             folder_stat = os.stat(encode_path(folder))
 
         folder_unchanged = False
-        virtual_folder = Shares.real2virtual_cls(folder, self.config)
+        virtual_folder = self.real2virtual(folder)
         mtime = folder_stat.st_mtime
 
         file_list = []
@@ -485,55 +507,60 @@ class Shares:
 
         self.rescan_shares(init=True, rescan=rescan_startup)
 
-    def real2virtual(self, path):
-        return self.real2virtual_cls(path, self.config)
+    def _virtual2real(self, shares, virtual_path):
 
-    @classmethod
-    def real2virtual_cls(cls, path, config):
+        virtual_path = virtual_path.replace('/', os.sep).replace('\\', os.sep)
+        virtual_name = virtual_path.split(os.sep, 1)[0]
 
-        path = path.replace('/', '\\')
-
-        for virtual, real, *_unused in cls._virtualmapping(config):
+        for virtual_name_shared, real_folder_path, *_unused in shares:
             # Remove slashes from share name to avoid path conflicts
-            virtual = virtual.replace('/', '_').replace('\\', '_')
+            virtual_name_shared = virtual_name_shared.replace('/', '_').replace('\\', '_')
 
-            real = real.replace('/', '\\')
-            if path == real:
-                return virtual
+            if virtual_name_shared != virtual_name:
+                continue
 
-            # Use rstrip to remove trailing separator from root directories
-            real = real.rstrip('\\') + '\\'
+            if virtual_name == virtual_path:
+                return real_folder_path
 
-            if path.startswith(real):
-                virtualpath = virtual + '\\' + path[len(real):]
-                return virtualpath
+            if not virtual_path.startswith(virtual_name + os.sep):
+                continue
 
-        return "__INTERNAL_ERROR__" + path
+            real_path = real_folder_path + virtual_path[len(virtual_name):]
 
-    def virtual2real(self, path):
+            if real_path != os.path.abspath(real_path):
+                # Protect against directory traversal
+                return None
 
-        path = path.replace('/', os.sep).replace('\\', os.sep)
+            folder_path, _sep, basename = virtual_path.rpartition(os.sep)
 
-        for virtual, real, *_unused in self._virtualmapping(self.config):
-            # Remove slashes from share name to avoid path conflicts
-            virtual = virtual.replace('/', '_').replace('\\', '_')
+            if Scanner.is_hidden(folder_path, basename):
+                return None
 
-            if path == virtual:
-                return real
+            return real_path
 
-            if path.startswith(virtual + os.sep):
-                realpath = real + path[len(virtual):]
-                return realpath
+        return None
 
-        return "__INTERNAL_ERROR__" + path
+    def virtual2real(self, virtual_path, user=None):
 
-    @staticmethod
-    def _virtualmapping(config):
+        if user is None:
+            shares = (self.config.sections["transfers"]["shared"] + self.config.sections["transfers"]["buddyshared"])
+            return self._virtual2real(shares, virtual_path)
 
-        mapping = config.sections["transfers"]["shared"][:]
-        mapping += config.sections["transfers"]["buddyshared"]
+        if self.config.sections["transfers"]["buddyshared"]:
+            for row in self.config.sections["server"]["userlist"]:
+                if row[0] != user:
+                    continue
 
-        return mapping
+                # Check if buddy is trusted
+                if self.config.sections["transfers"]["buddysharestrustedonly"] and not row[4]:
+                    break
+
+                path = self._virtual2real(self.config.sections["transfers"]["buddyshared"], virtual_path)
+
+                if path is not None:
+                    return path
+
+        return self._virtual2real(self.config.sections["transfers"]["shared"], virtual_path)
 
     @staticmethod
     def get_normalized_virtual_name(virtual_name, shared_folders):
@@ -611,56 +638,6 @@ class Shares:
 
         log.add(_("File index of shared files could not be accessed. This could occur due to several instances of "
                   "Nicotine+ being active simultaneously, file permission issues, or another issue in Nicotine+."))
-
-    def file_is_shared(self, user, virtual_file_path, real_file_path):
-
-        log.add_transfer("Checking if file is shared: %(virtual_name)s with real path %(path)s", {
-            "virtual_name": virtual_file_path,
-            "path": real_file_path
-        })
-
-        if real_file_path.startswith("__INTERNAL_ERROR__"):
-            # Virtual name not present
-            return False
-
-        real_file_path = os.path.abspath(real_file_path)
-        folder_path, _sep, basename = virtual_file_path.rpartition('\\')
-        virtual_name = folder_path.split('\\', 1)[0]
-
-        if self.config.sections["transfers"]["buddyshared"]:
-            for row in self.config.sections["server"]["userlist"]:
-                if row[0] != user:
-                    continue
-
-                # Check if buddy is trusted
-                if self.config.sections["transfers"]["buddysharestrustedonly"] and not row[4]:
-                    break
-
-                for virtual_name_shared, real_folder_path in self.config.sections["transfers"]["buddyshared"]:
-                    if virtual_name_shared != virtual_name:
-                        continue
-
-                    if not os.path.commonprefix([real_file_path, real_folder_path]):
-                        return False
-
-                    if Scanner.is_hidden(folder_path, basename):
-                        return False
-
-                    return True
-
-        for virtual_name_shared, real_folder_path in self.config.sections["transfers"]["shared"]:
-            if virtual_name_shared != virtual_name:
-                continue
-
-            if not os.path.commonprefix([real_file_path, real_folder_path]):
-                return False
-
-            if Scanner.is_hidden(folder_path, basename):
-                return False
-
-            return True
-
-        return False
 
     def get_compressed_shares_message(self, share_type):
         """ Returns the compressed shares message. Creates a new one if necessary, e.g.
