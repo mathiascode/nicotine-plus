@@ -612,48 +612,55 @@ class Shares:
         log.add(_("File index of shared files could not be accessed. This could occur due to several instances of "
                   "Nicotine+ being active simultaneously, file permission issues, or another issue in Nicotine+."))
 
-    def file_is_shared(self, user, virtualfilename, realfilename):
+    def file_is_shared(self, user, virtual_file_path, real_file_path):
 
         log.add_transfer("Checking if file is shared: %(virtual_name)s with real path %(path)s", {
-            "virtual_name": virtualfilename,
-            "path": realfilename
+            "virtual_name": virtual_file_path,
+            "path": real_file_path
         })
 
-        folder, _sep, file = virtualfilename.rpartition('\\')
-        shared_files = self.share_dbs.get("files")
-        bshared_files = self.share_dbs.get("buddyfiles")
-        file_is_shared = False
-
-        if not realfilename.startswith("__INTERNAL_ERROR__"):
-            if bshared_files is not None:
-                for row in self.config.sections["server"]["userlist"]:
-                    if row[0] != user:
-                        continue
-
-                    # Check if buddy is trusted
-                    if self.config.sections["transfers"]["buddysharestrustedonly"] and not row[4]:
-                        break
-
-                    for fileinfo in bshared_files.get(str(folder), []):
-                        if file == fileinfo[0]:
-                            file_is_shared = True
-                            break
-
-            if not file_is_shared and shared_files is not None:
-                for fileinfo in shared_files.get(str(folder), []):
-                    if file == fileinfo[0]:
-                        file_is_shared = True
-                        break
-
-        if not file_is_shared:
-            log.add_transfer(("File is not present in the database of shared files, not sharing: "
-                              "%(virtual_name)s with real path %(path)s"), {
-                "virtual_name": virtualfilename,
-                "path": realfilename
-            })
+        if real_file_path.startswith("__INTERNAL_ERROR__"):
+            # Virtual name not present
             return False
 
-        return True
+        real_file_path = os.path.abspath(real_file_path)
+        folder_path, _sep, basename = virtual_file_path.rpartition('\\')
+        virtual_name = folder_path.split('\\', 1)[0]
+
+        if self.config.sections["transfers"]["buddyshared"]:
+            for row in self.config.sections["server"]["userlist"]:
+                if row[0] != user:
+                    continue
+
+                # Check if buddy is trusted
+                if self.config.sections["transfers"]["buddysharestrustedonly"] and not row[4]:
+                    break
+
+                for virtual_name_shared, real_folder_path in self.config.sections["transfers"]["buddyshared"]:
+                    if virtual_name_shared != virtual_name:
+                        continue
+
+                    if not os.path.commonprefix([real_file_path, real_folder_path]):
+                        return False
+
+                    if Scanner.is_hidden(folder_path, basename):
+                        return False
+
+                    return True
+
+        for virtual_name_shared, real_folder_path in self.config.sections["transfers"]["shared"]:
+            if virtual_name_shared != virtual_name:
+                continue
+
+            if not os.path.commonprefix([real_file_path, real_folder_path]):
+                return False
+
+            if Scanner.is_hidden(folder_path, basename):
+                return False
+
+            return True
+
+        return False
 
     def get_compressed_shares_message(self, share_type):
         """ Returns the compressed shares message. Creates a new one if necessary, e.g.
