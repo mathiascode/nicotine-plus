@@ -609,8 +609,7 @@ def write_file_and_backup(path, callback, protect=False):
     # Back up old file to path.old
     try:
         if os.path.exists(path_encoded) and os.stat(path_encoded).st_size > 0:
-            from shutil import copy2
-            copy2(path, path_old_encoded)
+            os.replace(path_encoded, path_old_encoded)
 
             if protect:
                 os.chmod(path_old_encoded, 0o600)
@@ -643,7 +642,7 @@ def write_file_and_backup(path, callback, protect=False):
         # Attempt to restore file
         try:
             if os.path.exists(path_old_encoded):
-                os.replace(path_old_encoded, path)
+                os.replace(path_old_encoded, path_encoded)
 
         except Exception as second_error:
             log.add(_("Unable to restore previous file %(path)s: %(error)s"), {
