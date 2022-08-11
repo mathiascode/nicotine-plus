@@ -627,7 +627,7 @@ def write_file_and_backup(path, callback, protect=False):
         oldumask = os.umask(0o077)
 
     try:
-        with open(path_encoded, "w", encoding="utf-8") as file_handle:
+        with open(path_encoded, "w", encoding="utf-8", buffering=0) as file_handle:
             callback(file_handle)
 
     except Exception as error:
