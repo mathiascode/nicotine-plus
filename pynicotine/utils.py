@@ -627,8 +627,12 @@ def write_file_and_backup(path, callback, protect=False):
         oldumask = os.umask(0o077)
 
     try:
-        with open(path_encoded, "w", encoding="utf-8", buffering=0) as file_handle:
+        with open(path_encoded, "w", encoding="utf-8") as file_handle:
             callback(file_handle)
+
+            # Force write to file
+            file_handle.flush()
+            os.fsync(file_handle.fileno())
 
     except Exception as error:
         log.add(_("Unable to save file %(path)s: %(error)s"), {
