@@ -31,14 +31,14 @@ if sys.platform == "win32":
     SYS_BASE = sys.prefix
     LIB_FOLDER = os.path.join(SYS_BASE, "bin")
     LIB_EXTENSION = ".dll"
-    ICON_NAME = "icon.ico"
+    ICON_NAME = "nicotine.ico"
 
 elif sys.platform == "darwin":
     GUI_BASE = None
     SYS_BASE = "/usr/local"
     LIB_FOLDER = os.path.join(SYS_BASE, "lib")
     LIB_EXTENSION = (".dylib", ".so")
-    ICON_NAME = "icon.icns"
+    ICON_NAME = "nicotine.icns"
 
 else:
     raise RuntimeError("Only Windows and macOS are supported")
