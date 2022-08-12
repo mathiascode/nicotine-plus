@@ -5,27 +5,21 @@ on: [push, pull_request]
 jobs:
 
   debian:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.10'
-
       - name: Install dependencies
         run: |
-          sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
           sudo apt update
           sudo apt build-dep .
 
       - name: Build Debian package
         run: |
-          python setup.py sdist
+          python3 setup.py sdist
           mk-origtargz dist/nicotine-plus-*.tar.gz
           debuild -sa -us -uc
 
@@ -43,7 +37,7 @@ jobs:
   flatpak:
     runs-on: ubuntu-20.04
     container:
-      image: bilelmoussaoui/flatpak-github-actions:freedesktop-20.08
+      image: bilelmoussaoui/flatpak-github-actions:gnome-42
       options: --privileged
     steps:
     - uses: actions/checkout@v2
@@ -68,6 +62,7 @@ jobs:
     env:
       ARCH: ${{ matrix.arch }}
       NICOTINE_GTK_VERSION: 3
+      NICOTINE_LIBADWAITA: 0
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -82,31 +77,32 @@ jobs:
 
       - name: Install build dependencies
         run: |
+          sed -i s'/SigLevel.*/SigLevel = Never/'g /etc/pacman.conf
           pacman --noconfirm -S --needed mingw-w64-$ARCH-python
           python3 packaging/windows/dependencies_core.py
           python3 packaging/windows/dependencies_packaging.py
 
-      - name: Build installer
+      - name: Freeze application
         run: |
           python3 packaging/windows/setup.py bdist_msi
-          mv build/exe.* build/Nicotine+
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v2
         with:
           name: windows-${{ matrix.arch }}-installer
-          path: dist
+          path: packaging/windows/build/*.msi
 
       - name: Archive package artifacts
         uses: actions/upload-artifact@v2
         with:
           name: windows-${{ matrix.arch }}-package
-          path: build
+          path: packaging/windows/build/package
 
   macos:
     runs-on: macos-10.15
     env:
-      NICOTINE_GTK_VERSION: 3
+      NICOTINE_GTK_VERSION: 4
+      NICOTINE_LIBADWAITA: 1
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -118,20 +114,15 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          brew update
           python3 packaging/macos/dependencies_core.py
           python3 packaging/macos/dependencies_packaging.py
 
       - name: Freeze application
         run: |
-          pyinstaller packaging/macos/nicotine.spec
-          rm -rf dist/Nicotine+/
-
-      - name: Generate .dmg
-        run: python3 packaging/macos/create_dmg.py
+          python3 packaging/macos/setup.py bdist_dmg
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v2
         with:
           name: macos-installer
-          path: dmg
+          path: packaging/macos/build/*.dmg
