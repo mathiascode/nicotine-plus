@@ -403,7 +403,8 @@ class StatusIconImplementation(BaseImplementation):
             self.menu.popup(None, None, None, None, button, time)
 
     def set_icon_name(self, icon_name):
-        self.tray_icon.set_from_icon_name(icon_name)
+        # self.tray_icon.set_from_icon_name(icon_name)
+        pass
 
     def is_visible(self):
         return self.tray_icon.get_visible() and self.tray_icon.is_embedded()
@@ -450,13 +451,16 @@ class TrayIcon:
         if self.implementation is None:
             try:
                 self.implementation = AppIndicatorImplementation(self.frame, self.core)
+                log.add_debug("Using AppIndicator tray icon implementation")
 
             except AttributeError:
                 try:
                     self.implementation = StatusIconImplementation(self.frame, self.core)
+                    log.add_debug("Using GtkStatusIcon tray icon implementation")
 
                 except AttributeError:
                     self.available = False
+                    log.add_debug("No tray icon implementation available")
                     return
 
             self.set_server_actions_sensitive(False)
