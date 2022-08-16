@@ -19,6 +19,7 @@
 import threading
 import socket
 
+from pynicotine import slskproto
 from pynicotine.logfacility import log
 from pynicotine.utils import http_request
 
@@ -271,21 +272,6 @@ class UPnP:
                             {"code": error_code, "description": error_description})
 
     @staticmethod
-    def find_local_ip_address():
-
-        # Create a UDP socket
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as local_socket:
-
-            # Send a broadcast packet on a local address (doesn't need to be reachable,
-            # but MacOS requires port to be non-zero)
-            local_socket.connect(("10.255.255.255", 1))
-
-            # This returns the "primary" IP on the local box, even if that IP is a NAT/private/internal IP
-            ip_address = local_socket.getsockname()[0]
-
-        return ip_address
-
-    @staticmethod
     def find_router(private_ip):
 
         routers = SSDP.get_routers(private_ip)
@@ -327,7 +313,7 @@ class UPnP:
             log.add_debug("UPnP: Creating Port Mapping rule...")
 
             # Find local IP address
-            local_ip_address = self.find_local_ip_address()
+            local_ip_address = slskproto.SlskProtoThread.get_primary_ip_address()
 
             # Find router
             router = self.find_router(local_ip_address)

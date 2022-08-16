@@ -285,6 +285,21 @@ class SlskProtoThread(threading.Thread):
         return True
 
     @staticmethod
+    def get_primary_ip_address():
+
+        # Create a UDP socket
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as local_socket:
+
+            # Send a broadcast packet on a local address (doesn't need to be reachable,
+            # but macOS requires port to be non-zero)
+            local_socket.connect(("10.254.254.254", 1))
+
+            # This returns the "primary" IP on the local box, even if that IP is a NAT/private/internal IP
+            ip_address = local_socket.getsockname()[0]
+
+        return ip_address
+
+    @staticmethod
     def get_interface_ip_address(if_name):
 
         try:
@@ -330,7 +345,12 @@ class SlskProtoThread(threading.Thread):
         if self.interface and not self.bindip:
             self.bind_to_network_interface(self.listen_socket, self.interface)
 
-        ip_address = self.bindip or ''
+        try:
+            ip_address = self.bindip or self.get_primary_ip_address()
+
+        except Exception as error:
+            log.add_debug("Cannot retrieve primary IP address, binding to all network interfaces. Error: %s", error)
+            ip_address = "0.0.0.0"
 
         for listenport in range(int(self.portrange[0]), int(self.portrange[1]) + 1):
             try:
