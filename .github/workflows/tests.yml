@@ -33,7 +33,7 @@ jobs:
         run: python -m pylint pynicotine test
 
       - name: Integration and unit tests
-        run: xvfb-run python -m unittest
+        run: python -m unittest
 
   ubuntu-dep8:
     runs-on: ${{ matrix.os }}
