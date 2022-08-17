@@ -12,7 +12,6 @@ Build-Depends: debhelper-compat (= 10),
                python3-gdbm,
                python3-gi,
                python3-pytest,
-               python3-pytest-xvfb,
                python3-setuptools
 Vcs-Git: https://github.com/nicotine-plus/nicotine-plus.git
 Vcs-Browser: https://github.com/nicotine-plus/nicotine-plus
