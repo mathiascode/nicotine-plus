@@ -10,8 +10,9 @@ jobs:
       matrix:
         python: ['3.5', '3.6', '3.7', '3.8', '3.9', '3.10', 'pypy-3.6', 'pypy-3.7', 'pypy-3.8', 'pypy-3.9']
     env:
-      GDK_BACKEND: broadway
-      BROADWAY_DISPLAY: 5
+      GDK_BACKEND: 'broadway'
+      BROADWAY_DISPLAY: ':10'
+      DISPLAY: ':10'
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
