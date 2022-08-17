@@ -18,6 +18,7 @@
 
 import os
 import subprocess
+import time
 import unittest
 
 USER_DATA = os.path.dirname(os.path.realpath(__file__))
@@ -46,6 +47,7 @@ class StartupTest(unittest.TestCase):
                 # Program was still running, success!
                 is_success = True
 
+            time.sleep(2)
             self.assertTrue(is_success)
 
     def test_cli(self):
