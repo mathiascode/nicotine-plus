@@ -35,6 +35,9 @@ class StartupTest(unittest.TestCase):
     def test_startup(self):
         """ Verify that regular startup works """
 
+        os.environ["GDK_BACKEND"] = "broadway"
+        os.environ["BROADWAY_DISPLAY"] = 10
+        
         for command in COMMANDS:
             # Assume failure by default
             is_success = False
