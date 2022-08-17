@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python: ['3.5', '3.6', '3.7', '3.8', '3.9', '3.10', 'pypy-3.6', 'pypy-3.7', 'pypy-3.8', 'pypy-3.9']
+        python: ['3.6', '3.7', '3.8', '3.9', '3.10', 'pypy-3.6', 'pypy-3.7', 'pypy-3.8', 'pypy-3.9']
         gtk: [3, 4]
     env:
       NICOTINE_GTK_VERSION: ${{ matrix.gtk }}
