@@ -903,6 +903,7 @@ class SlskProtoThread(threading.Thread):
 
         try:
             log.add_conn("Closing socket %s", sock)
+            file_descriptor = sock.detach()
             sock.close()
 
         except OSError as error:
@@ -919,6 +920,8 @@ class SlskProtoThread(threading.Thread):
             # Already removed
             return
 
+        self.modify_connection_events(conn_obj, 0)
+        sock.setblocking(True)
         self.selector.unregister(sock)
         self.close_socket(sock, shutdown=(connection_list != self._connsinprogress))
         self._numsockets -= 1
