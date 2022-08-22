@@ -920,7 +920,6 @@ class SlskProtoThread(threading.Thread):
             # Already removed
             return
 
-        self.modify_connection_events(conn_obj, 0)
         sock.setblocking(True)
         self.selector.unregister(sock)
         self.close_socket(sock, shutdown=(connection_list != self._connsinprogress))
