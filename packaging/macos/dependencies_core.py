@@ -19,7 +19,6 @@
 
 import os
 import subprocess
-import sys
 
 """ Script used to install core dependencies in Homebrew """
 
