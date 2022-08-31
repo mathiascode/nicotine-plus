@@ -35,7 +35,7 @@ def install_brew():
                 "gettext",
                 "gobject-introspection",
                 "gtk+" + gtk_version,
-                "pygobject",
+                "pygobject3",
                 "pylint"]
 
     if use_libadwaita:
