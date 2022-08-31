@@ -87,7 +87,7 @@ class SlskProtoTest(unittest.TestCase):
         self.protothread.start()
 
         # Slight delay to allow the network thread to fully start
-        sleep(SLSKPROTO_RUN_TIME / 2)
+        sleep(8)
 
     def tearDown(self):
 
