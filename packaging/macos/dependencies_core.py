@@ -32,7 +32,6 @@ def install_brew():
     packages = ["adwaita-icon-theme",
                 "flake8",
                 "gettext",
-                "gobject-introspection",
                 "gtk+" + gtk_version,
                 "pygobject3",
                 "pylint"]
