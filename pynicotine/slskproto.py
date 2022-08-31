@@ -1997,7 +1997,7 @@ class SlskProtoThread(threading.Thread):
         self.selector = selectors.DefaultSelector()
 
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.listen_socket.setblocking(False)
         self.selector.register(self.listen_socket, selectors.EVENT_READ)
 
