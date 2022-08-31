@@ -33,7 +33,8 @@ def install_brew():
     packages = ["adwaita-icon-theme",
                 "gettext",
                 "gobject-introspection",
-                "gtk+" + gtk_version]
+                "gtk+" + gtk_version,
+                "py3cairo"]
 
     if use_libadwaita:
         packages.append("libadwaita")
@@ -45,7 +46,6 @@ def install_pypi():
     """ Install dependencies from PyPi """
 
     packages = ["flake8",
-                "pycairo",
                 "pygobject",
                 "pylint"]
     subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
