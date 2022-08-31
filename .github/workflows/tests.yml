@@ -124,7 +124,7 @@ jobs:
           python3 packaging/macos/dependencies_core.py
 
       - name: Flake8 linter
-        run: python3 -m flake8
+        run: flake8
 
       - name: Pylint linter
         run: python3 -m pylint pynicotine test
