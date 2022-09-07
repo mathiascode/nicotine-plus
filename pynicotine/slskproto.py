@@ -210,7 +210,7 @@ class SlskProtoThread(threading.Thread):
         self.portrange = (port, port) if port else port_range
         self.interface = interface
 
-        self.selector = None
+        self.selector = selectors.DefaultSelector()
         self.listen_socket = None
         self.upnp = None
 
@@ -1992,9 +1992,6 @@ class SlskProtoThread(threading.Thread):
     """ Networking Loop """
 
     def run(self):
-
-        # Select Networking Input and Output sockets
-        self.selector = selectors.DefaultSelector()
 
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
