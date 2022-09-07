@@ -210,8 +210,10 @@ class SlskProtoThread(threading.Thread):
         self.portrange = (port, port) if port else port_range
         self.interface = interface
 
-        self.selector = selectors.DefaultSelector()
-        self.listen_socket = None
+        self.selector = None
+        self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.listen_socket.setblocking(False)
         self.upnp = None
 
         self.server_socket = None
@@ -1993,9 +1995,7 @@ class SlskProtoThread(threading.Thread):
 
     def run(self):
 
-        self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listen_socket.setblocking(False)
+        self.selector = selectors.DefaultSelector()
         self.selector.register(self.listen_socket, selectors.EVENT_READ)
 
         self._core_callback([SetConnectionStats()])
