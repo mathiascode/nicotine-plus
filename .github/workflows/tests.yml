@@ -35,13 +35,16 @@ jobs:
         run: |
           sudo apt update
           sudo apt install gettext gir1.2-gtk-${{ matrix.gtk }}.0 libgirepository1.0-dev
-          python -m pip install flake8 pygobject pylint
+          python -m pip install flake8 pygobject pylint pytype
 
       - name: Flake8 linter
         run: python -m flake8
 
       - name: Pylint linter
         run: python -m pylint pynicotine test
+
+      - name: Pytype
+        run: python -m pytype pynicotine test
 
       - name: Integration and unit tests
         run: xvfb-run python -m unittest
