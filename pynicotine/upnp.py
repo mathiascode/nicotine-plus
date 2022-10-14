@@ -206,6 +206,41 @@ class UPnP:
         self.timer = None
 
     @staticmethod
+    def _remove_port_mapping(router, protocol, public_port):
+
+        log.add_debug("UPnP: Removing port mapping for public port %s", public_port)
+
+        headers = {
+            "Host": router.base_url,
+            "Content-Type": "text/xml; charset=utf-8",
+            "SOAPACTION": '"%s#DeletePortMapping"' % router.service_type
+        }
+
+        body = (
+            ('<?xml version="1.0"?>\r\n'
+             + '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" '
+             + 's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
+             + '<s:Body>'
+             + '<u:DeletePortMapping xmlns:u="%s">'
+             + '<NewRemoteHost></NewRemoteHost>'
+             + '<NewExternalPort>%s</NewExternalPort>'
+             + '<NewProtocol>%s</NewProtocol>'
+             + '</u:DeletePortMapping>'
+             + '</s:Body>'
+             + '</s:Envelope>\r\n') %
+            (router.service_type, public_port, protocol)
+        ).encode('utf-8')
+
+        log.add_debug("UPnP: Remove port mapping request headers: %s", headers)
+        log.add_debug("UPnP: Remove port mapping request contents: %s", body)
+
+        response = http_request(
+            router.url_scheme, router.base_url, router.control_url,
+            request_type="POST", body=body, headers=headers)
+
+        log.add_debug("UPnP: Remove port mapping response: %s", response.encode('utf-8'))
+
+    @staticmethod
     def _request_port_mapping(router, protocol, public_port, private_ip, private_port,
                               mapping_description, lease_duration):
         """
@@ -330,13 +365,16 @@ class UPnP:
             if not router:
                 raise RuntimeError(_("UPnP is not available on this network"))
 
-            # Perform the port mapping
             log.add_debug("UPnP: Trying to redirect external WAN port %s TCP => %s port %s TCP", (
                 self.port,
                 local_ip_address,
                 self.port
             ))
 
+            # Remove old port mapping if present
+            self._remove_port_mapping(router=router, protocol="TCP", public_port=self.port)
+
+            # Add new port mapping
             error_code, error_description = self._request_port_mapping(
                 router=router,
                 protocol="TCP",
