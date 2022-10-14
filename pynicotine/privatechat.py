@@ -149,6 +149,10 @@ class PrivateChats:
     def send_automatic_message(self, user, message):
         self.send_message(user, "[Automatic Message] " + message)
 
+    def clear_view(self, user):
+        if self.ui_callback:
+            self.ui_callback.clear_view(user)
+
     def echo_message(self, user, message, message_type="local"):
         if self.ui_callback:
             self.ui_callback.echo_message(user, message, message_type)
