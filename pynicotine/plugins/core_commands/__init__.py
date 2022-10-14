@@ -146,7 +146,6 @@ class Plugin(BasePlugin):
             command_list = self.parent.cli_commands
 
         command_groups = {}
-        self.echo_message("List of commands:")
 
         for command, data in command_list.items():
             command_message = command
@@ -154,22 +153,22 @@ class Plugin(BasePlugin):
             aliases = data.get("aliases", [])
 
             if aliases:
-                command_message = command_message + ", " + ", ".join(aliases)
+                command_message = command_message + " /" + " /".join(aliases)
 
             if usage:
                 command_message += " " + usage
 
             description = data.get("description", "No description")
-            group = data.get("group", _("General"))
+            group = data.get("group", _("Commands"))
 
             if group not in command_groups:
                 command_groups[group] = []
 
-            command_groups[group].append("%s - %s" % (command_message, description))
+            command_groups[group].append("    %s  -  %s" % (command_message, description))
 
         for group, commands in command_groups.items():
             self.echo_message("")
-            self.echo_message(group + ":")
+            self.echo_message("  " + group + ":")
 
             for command in commands:
                 self.echo_message(command)
