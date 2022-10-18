@@ -299,6 +299,7 @@ setup(
         "build_exe": dict(
             packages=[MODULE_NAME, "gi"],
             excludes=["tkinter"],
+            bin_includes=["libgcc_s_seh", "libwinpthread"],
             include_files=include_files,
             zip_include_packages=["*"],
             zip_exclude_packages=[MODULE_NAME]
