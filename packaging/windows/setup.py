@@ -199,7 +199,7 @@ def add_gtk():
         lib_output_path = ""
 
     # This also includes all dlls required by GTK
-    add_files(
+    """add_files(
         folder_path=LIB_FOLDER, output_path=lib_output_path,
         starts_with="libgtk-%s" % GTK_VERSION, ends_with=LIB_EXTENSION
     )
@@ -208,7 +208,7 @@ def add_gtk():
         add_files(
             folder_path=LIB_FOLDER, output_path=lib_output_path,
             starts_with="libadwaita-", ends_with=LIB_EXTENSION
-        )
+        )"""
 
     # Schemas
     add_file(
