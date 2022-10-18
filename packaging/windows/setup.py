@@ -297,9 +297,8 @@ setup(
             build_exe=os.path.join(BUILD_PATH, "package", APPLICATION_NAME)
         ),
         "build_exe": dict(
-            packages=[MODULE_NAME, "gi"],
+            packages=[MODULE_NAME],
             excludes=["tkinter"],
-            bin_includes=["libgcc_s_seh-1.dll", "libwinpthread-1.dll"],
             include_files=include_files,
             zip_include_packages=["*"],
             zip_exclude_packages=[MODULE_NAME]
