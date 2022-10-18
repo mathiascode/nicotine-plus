@@ -297,9 +297,9 @@ setup(
             build_exe=os.path.join(BUILD_PATH, "package", APPLICATION_NAME)
         ),
         "build_exe": dict(
-            packages=[MODULE_NAME],
+            packages=[],
             excludes=["tkinter"],
-            include_files=include_files,
+            include_files=[],
             zip_include_packages=["*"],
             zip_exclude_packages=[MODULE_NAME]
         ),
