@@ -120,10 +120,10 @@ def add_pixbuf_loaders():
         temp_file_handle.write(data)
 
     add_file(file_path=temp_loaders_file, output_path="lib/pixbuf-loaders.cache")
-    add_files(
+    """add_files(
         folder_path=os.path.join(SYS_BASE, "lib/gdk-pixbuf-2.0/2.10.0/loaders"), output_path="lib",
         starts_with="libpixbufloader-", ends_with=LIB_EXTENSION
-    )
+    )"""
 
 
 def _add_typelibs_callback(full_path, short_path, _callback_data=None):
@@ -181,10 +181,10 @@ def add_typelibs():
         )
         folder_path = TEMP_PATH
 
-    add_files(
+    """add_files(
         folder_path=folder_path, output_path="lib/typelibs",
         starts_with=required_typelibs, ends_with=".typelib"
-    )
+    )"""
 
 
 def add_gtk():
