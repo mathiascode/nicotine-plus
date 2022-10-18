@@ -191,7 +191,7 @@ def add_gtk():
 
     if sys.platform == "win32":
         # gdbus required for single-instance application (Windows)
-        add_file(file_path=os.path.join(LIB_FOLDER, "gdbus.exe"), output_path="lib/gdbus.exe")
+        # add_file(file_path=os.path.join(LIB_FOLDER, "gdbus.exe"), output_path="lib/gdbus.exe")
         lib_output_path = "lib"
 
     elif sys.platform == "darwin":
