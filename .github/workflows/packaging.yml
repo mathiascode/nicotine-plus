@@ -87,7 +87,7 @@ jobs:
           python3 packaging/windows/setup.py build_exe
           cp packaging/windows/build/package/Nicotine+/lib/libgcc*.dll packaging/windows/build/package/Nicotine+/
           cp packaging/windows/build/package/Nicotine+/lib/libwinpthread*.dll packaging/windows/build/package/Nicotine+/
-          python3 packaging/windows/setup.py bdist_msi
+          python3 packaging/windows/setup.py bdist_msi --skip-build
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v3
