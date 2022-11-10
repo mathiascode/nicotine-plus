@@ -55,6 +55,50 @@ class Plugin(BasePlugin):
                 "usage": ["[force]"],
                 "choices": ["force"],
                 "aliases": ["q", "exit"]
+            },
+            "add": {
+                "callback": self.add_buddy_command,
+                "description": _("Add user to buddy list"),
+                "usage": ["<user>"],
+                "aliases": ["buddy"],
+                "group": _("Users")
+            },
+            "rem": {
+                "callback": self.remove_buddy_command,
+                "description": _("Remove user from buddy list"),
+                "usage": ["<buddy>"],
+                "aliases": ["unbuddy"],
+                "group": _("Users")
+            },
+            "ban": {
+                "callback": self.ban_user_command,
+                "description": _("Stop connections from user"),
+                "usage": ["<user>"],
+                "group": _("Users")
+            },
+            "unban": {
+                "callback": self.unban_user_command,
+                "description": _("Remove user from ban list"),
+                "usage": ["<user>"],
+                "group": _("Users")
+            },
+            "block": {  # new
+                "callback": self.block_user_ip_command,
+                "description": _("Stop all connections from same IP as user"),
+                "usage": ["<user>"],
+                "group": _("Network Filters")
+            },
+            "unblock": {  # new
+                "callback": self.unblock_user_ip_command,
+                "description": _("Remove user's IP address from block list"),
+                "usage": ["<user>"],
+                "group": _("Network Filters")
+            },
+            "ip": {
+                "callback": self.ip_user_command,
+                "description": _("Show IP address of user"),
+                "usage": ["<user>"],
+                "group": _("Network Filters")
             }
         }
 
@@ -103,6 +147,56 @@ class Plugin(BasePlugin):
                 "description": _("Ask for a user's client version"),
                 "usage": ["[user]"],
                 "group": _("Client-To-Client Protocol")
+            },
+            "ignore": {
+                "callback": self.ignore_user_command,
+                "description": _("Silence chat messages from user"),
+                "usage": ["<user>"],
+                "group": _("Users")
+            },
+            "unignore": {
+                "callback": self.unignore_user_command,
+                "description": _("Remove user from chat ignore list"),
+                "usage": ["<user>"],
+                "group": _("Users")
+            },
+            "ignoreip": {
+                "callback": self.ignore_user_ip_command,
+                "description": _("Silence chat messages from IP address of user"),
+                "usage": ["<user>"],
+                "group": _("Network Filters")
+            },
+            "unignoreip": {  # new
+                "callback": self.unignore_user_ip_command,
+                "description": _("Remove user's IP address from chat ignore list"),
+                "usage": ["<user>"],
+                "group": _("Network Filters")
+            },
+            "ipignore": {  # new
+                "callback": self.ignore_ip_command,
+                "description": _("Silence chat from anyone at IP address"),
+                "usage": ["<ip_address>"],
+                "group": _("Network Filters")
+            },
+            "ipunignore": {  # new
+                "callback": self.unignore_ip_command,
+                "description": _("Remove IP address from chat ignore list"),
+                "usage": ["<ip_address>"],
+                "group": _("Network Filters")
+            },
+            "whois": {
+                "callback": self.whois_user_command,
+                "description": _("Show info about user"),
+                "usage": ["<user>"],
+                "aliases": ["info"],
+                "group": _("Users")
+            },
+            "browse": {
+                "callback": self.browse_user_command,
+                "description": _("Browse files of user"),
+                "usage": ["<user>"],
+                "aliases": ["b"],
+                "group": _("Users")
             }
         }
 
@@ -137,6 +231,88 @@ class Plugin(BasePlugin):
                 "usage": ["<room>"],
                 "aliases": ["l"],
                 "group": _("Chat Rooms")
+            },
+            "add": {
+                "callback": self.add_buddy_command,
+                "description": _("Add user to buddy list"),
+                "usage": ["[user]"],
+                "aliases": ["buddy"],
+                "group": _("Users")
+            },
+            "rem": {
+                "callback": self.remove_buddy_command,
+                "description": _("Remove user from buddy list"),
+                "usage": ["[buddy]"],
+                "aliases": ["unbuddy"],
+                "group": _("Users")
+            },
+            "ban": {
+                "callback": self.ban_user_command,
+                "description": _("Stop connections from user"),
+                "usage": ["[user]"],
+                "group": _("Users")
+            },
+            "unban": {
+                "callback": self.unban_user_command,
+                "description": _("Remove user from ban list"),
+                "usage": ["[user]"],
+                "group": _("Users")
+            },
+            "block": {  # new
+                "callback": self.block_user_ip_command,
+                "description": _("Stop all connections from same IP as user"),
+                "usage": ["[user]"],
+                "group": _("Network Filters")
+            },
+            "unblock": {  # new
+                "callback": self.unblock_user_ip_command,
+                "description": _("Remove user's IP address from block list"),
+                "usage": ["[user]"],
+                "group": _("Network Filters")
+            },
+            "ignore": {
+                "callback": self.ignore_user_command,
+                "description": _("Silence chat messages from user"),
+                "usage": ["[user]"],
+                "group": _("Users")
+            },
+            "unignore": {
+                "callback": self.unignore_user_command,
+                "description": _("Remove user from chat ignore list"),
+                "usage": ["[user]"],
+                "group": _("Users")
+            },
+            "ignoreip": {
+                "callback": self.ignore_user_ip_command,
+                "description": _("Silence chat messages from IP address of user"),
+                "usage": ["[user]"],
+                "group": _("Network Filters")
+            },
+            "unignoreip": {  # new
+                "callback": self.unignore_user_ip_command,
+                "description": _("Remove user's IP address from chat ignore list"),
+                "usage": ["[user]"],
+                "group": _("Network Filters")
+            },
+            "ip": {
+                "callback": self.ip_user_command,
+                "description": _("Show IP address of user"),
+                "usage": ["[user]"],
+                "group": _("Network Filters")
+            },
+            "whois": {
+                "callback": self.whois_user_command,
+                "description": _("Show info about user"),
+                "usage": ["[user]"],
+                "aliases": ["info"],
+                "group": _("Users")
+            },
+            "browse": {
+                "callback": self.browse_user_command,
+                "description": _("Browse files of user"),
+                "usage": ["[user]"],
+                "aliases": ["b"],
+                "group": _("Users")
             }
         }
 
@@ -306,6 +482,106 @@ class Plugin(BasePlugin):
 
     def rescan_command(self, _args, **_unused):
         self.core.shares.rescan_shares()
+
+    """ "Users" """
+
+    def add_buddy_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.userlist.add_user(user)
+
+    def remove_buddy_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.userlist.remove_user(user)
+
+    def ban_user_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.network_filter.ban_user(user)
+
+    def unban_user_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.network_filter.unban_user(user)
+
+    def block_user_ip_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.network_filter.block_user_ip(user)
+
+    def unblock_user_ip_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.network_filter.unblock_user_ip(user)
+
+    def ignore_user_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.network_filter.ignore_user(user)
+
+    def unignore_user_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.network_filter.unignore_user(user)
+
+    def ignore_user_ip_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.network_filter.ignore_user_ip(user)
+
+    def unignore_user_ip_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.network_filter.unignore_user_ip(user)
+
+    def ip_user_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.request_ip_address(user)
+
+    def ignore_ip_command(self, args, **_unused):
+        return self.core.network_filter.ignore_ip(args)
+
+    def unignore_ip_command(self, args, **_unused):
+        # TODO: self.core.network_filter.unignore_ip(ip_address)
+        self.echo_message(f"nothing here yet, you entered: {args}")
+
+    def whois_user_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.userinfo.request_user_info(user)
+
+    def browse_user_command(self, args, user=None, **_unused):
+
+        if args:
+            user = args
+
+        return self.core.userbrowse.browse_user(user)
 
     def away_command(self, _args, **_unused):
         self.core.set_away_mode(self.core.user_status != 1, save_state=True)  # 1 = UserStatus.AWAY
