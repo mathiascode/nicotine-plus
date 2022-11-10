@@ -28,7 +28,7 @@ class Plugin(BasePlugin):
         commands = {
             "help": {
                 "callback": self.help_command,
-                "description": "Show commands",
+                "description": "List commands",
                 "usage": ["[query]"],
                 "aliases": ["?"]
             },
@@ -317,6 +317,11 @@ class Plugin(BasePlugin):
         }
 
         cli_commands = {
+            "listshares": {
+                "callback": self.list_shares_command,
+                "description": _("List shares"),
+                "group": _("Shares")
+            },
             "addshare": {
                 "callback": self.add_share_command,
                 "description": _("Add share"),
@@ -330,11 +335,6 @@ class Plugin(BasePlugin):
                 "usage": ["<public|private>", "<virtual_name>"],
                 "choices": ["public", "private"],
                 "group": _("Shares")
-            },
-            "listshares": {
-                "callback": self.list_shares_command,
-                "description": _("List shares"),
-                "group": _("Shares")
             }
         }
 
@@ -346,12 +346,18 @@ class Plugin(BasePlugin):
 
         if user is not None:
             command_list = self.parent.private_chat_commands
+            interface = "private_chat"  # _("_")
+            prefix = "/"
 
         elif room is not None:
             command_list = self.parent.chatroom_commands
+            interface = "chatroom"
+            prefix = "/"
 
         else:
             command_list = self.parent.cli_commands
+            interface = "cli"
+            prefix = ""
 
         query = args.split(" ", maxsplit=1)[0].lower().lstrip("/")
         command_groups = {}
@@ -360,37 +366,52 @@ class Plugin(BasePlugin):
         for command, data in command_list.items():
             command_message = command
             usage = " ".join(data.get("usage", []))
-            aliases = data.get("aliases", [])
+            aliases = f", {prefix}".join(data.get("aliases", []))
 
             if aliases:
-                command_message = command_message + " /" + " /".join(aliases)
+                command_message += f", {prefix}" + aliases
 
             if usage:
                 command_message += " " + usage
 
             description = data.get("description", "No description")
-            group = data.get("group", _("Commands"))
-            group_words = group.lower().split(" ")
+            group = data.get("group", f"{self.config.application_name} {_('Commands')}")
 
-            if not args or query in command or query in (a for a in aliases) or query in group_words:
-                if group not in command_groups:
-                    command_groups[group] = []
+            if args and query not in command_message and query not in group.lower():
+                continue
 
-                command_groups[group].append("    %s  -  %s" % (command_message, description))
-                num_commands += 1
+            num_commands += 1
+
+            if interface == "cli":
+                command_message = command_message.lstrip("/").ljust(24)
+
+            if group not in command_groups:
+                command_groups[group] = []
+
+            command_groups[group].append("    %s  -  %s" % (command_message, description))
 
         if not num_commands:
             self.echo_unknown_command(query)
+            return False
 
-        elif num_commands >= 2 and query:
-            self.echo_message("List of %i commands matching \"%s\":" % (num_commands, query))
+        output = f"Listing {num_commands} {interface} commands" + (" " + f"matching \"{query}\":" if query else ":")
 
         for group, commands in command_groups.items():
-            self.echo_message("")
-            self.echo_message("  " + group + ":")
+            output += "\n\n" + "  " + group + ":"
 
             for command in commands:
-                self.echo_message(command)
+                output += "\n" + command
+
+        output += "\n"
+
+        if not query:
+            output += "\n" + f"Type {prefix}help [query] (without brackets) to list similar commands or aliases"
+
+        if prefix:
+            output += "\n" + "Start a command using / (forward slash)"
+
+        self.echo_message(output)
+        return None
 
     def clear_command(self, _args, user=None, room=None):
 
