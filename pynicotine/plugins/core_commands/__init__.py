@@ -426,12 +426,13 @@ class Plugin(BasePlugin):
         if args:
             user = args
 
-        if user in self.core.privatechats.users:
-            self.echo_message("Closing private chat of user %s" % user)
-        elif user:
+        if user not in self.core.privatechats.users:
             self.echo_message("Not messaging with user %s" % user)
+            return False
 
+        self.echo_message("Closing private chat of user %s" % user)
         self.core.privatechats.remove_user(user)
+        return True
 
     def ctcpversion_command(self, args, user=None, **_unused):
 
@@ -457,9 +458,10 @@ class Plugin(BasePlugin):
 
         if room not in self.core.chatrooms.joined_rooms:
             self.echo_message("Not joined in room %s" % room)
-            # return  # in future the gui might need to close a tab even if we are not joined, such as while offline etc
+            return False
 
         self.core.chatrooms.remove_room(room)
+        return True
 
     def me_chat_command(self, args, **_unused):
         self.send_message("/me " + args)
@@ -470,7 +472,9 @@ class Plugin(BasePlugin):
         user, text = args_split[0], args_split[1]
 
         if self.send_private(user, text, show_ui=True, switch_page=False):
-            self.echo_message("Private message sent to user %s" % user)
+            return "Private message sent to user %s" % user
+
+        return False
 
     def pm_chat_command(self, args, **_unused):
         self.core.privatechats.show_user(args)
@@ -482,7 +486,9 @@ class Plugin(BasePlugin):
         room, text = args_split[0], args_split[1]
 
         if self.send_public(room, text):
-            self.log("Chat message sent to room %s" % room)
+            return "Chat message sent to room %s" % room
+
+        return False
 
     def add_share_command(self, args):
 

@@ -940,8 +940,12 @@ class ChatRoom:
 
     def echo_message(self, text, message_type):
 
+        if message_type == "echo":
+            timestamp_format = None
+        else:
+            timestamp_format = config.sections["logging"]["rooms_timestamp"]
+
         tag = self.tag_action
-        timestamp_format = config.sections["logging"]["rooms_timestamp"]
 
         if hasattr(self, "tag_" + str(message_type)):
             tag = getattr(self, "tag_" + str(message_type))
