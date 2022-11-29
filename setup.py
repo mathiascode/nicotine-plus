@@ -34,7 +34,6 @@ from setuptools import setup
 from setuptools.command.build_py import build_py
 
 from pynicotine.config import config
-from pynicotine.i18n import LOCALE_PATH
 from pynicotine.i18n import build_translations
 
 
@@ -75,7 +74,7 @@ functionality while keeping current with the Soulseek protocol.""",
             "Topic :: System :: Networking"
         ],
         packages=find_packages(include=["pynicotine", "pynicotine.*"]),
-        package_data={"": ["*.bin", "*.ui", "PLUGININFO"] + glob.glob(LOCALE_PATH + "/**/*.mo", recursive=True)},
+        package_data={"": ["*.bin", "*.ui", "PLUGININFO"] + glob.glob("pynicotine/**/*.mo", recursive=True)},
         scripts=["nicotine"],
         data_files=[
             ("share/applications", ["data/%s.desktop" % config.application_id]),
