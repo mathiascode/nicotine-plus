@@ -87,7 +87,6 @@ disable=missing-class-docstring,
         import-outside-toplevel,
         pointless-string-statement,
         duplicate-code,
-        no-value-for-parameter,
         no-self-use
 
 # Enable the message, report, category or checker with the given id(s). You can
