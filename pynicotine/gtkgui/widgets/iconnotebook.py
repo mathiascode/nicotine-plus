@@ -42,11 +42,12 @@ from pynicotine.slskmessages import UserStatus
 
 class TabLabel(Gtk.Box):
 
-    def __init__(self, label="", full_text="", close_button_visible=False, close_callback=None):
+    def __init__(self, label="", full_text="", close_button_visible=False, close_callback=None, page_id=None):
 
         Gtk.Box.__init__(self, hexpand=False, visible=True)
         add_css_class(self, "notebook-tab")
 
+        self.page_id = page_id
         self.highlighted = False
         self.mentioned = False
         self.centered = False
@@ -330,12 +331,12 @@ class IconNotebook:
         self.set_tab_reorderable(page, True)
         self.set_show_tabs(True)
 
-    def append_page(self, page, text, focus_callback=None, close_callback=None, full_text=None, user=None):
+    def append_page(self, page, text, focus_callback=None, close_callback=None, full_text=None, user=None, page_id=None):
 
         if full_text is None:
             full_text = text
 
-        label_tab = TabLabel(text, full_text, config.sections["ui"]["tabclosers"], close_callback)
+        label_tab = TabLabel(text, full_text, config.sections["ui"]["tabclosers"], close_callback, page_id=page_id)
         label_tab.set_tooltip_text(full_text)
 
         if GTK_API_VERSION >= 4:

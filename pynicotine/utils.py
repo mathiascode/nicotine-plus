@@ -310,7 +310,7 @@ def execute_command(command, replacement=None, background=True, returnoutput=Fal
 
 def _try_open_uri(uri):
 
-    if sys.platform not in ("darwin", "win32"):
+    if sys.platform != "darwin":
         try:
             from gi.repository import Gio  # pylint: disable=import-error
             Gio.AppInfo.launch_default_for_uri(uri)
@@ -319,6 +319,10 @@ def _try_open_uri(uri):
         except Exception:
             # Fall back to webbrowser module
             pass
+
+    if sys.platform == "win32":
+        os.startfile(file_path_encoded)  # pylint: disable=no-member
+        return
 
     if not webbrowser.open(uri):
         raise webbrowser.Error("No known URI provider available")
@@ -349,9 +353,6 @@ def open_file_path(file_path, command=None, create_folder=False, create_file=Fal
 
         if command and "$" in command:
             execute_command(command, file_path)
-
-        elif sys.platform == "win32":
-            os.startfile(file_path_encoded)  # pylint: disable=no-member
 
         elif sys.platform == "darwin":
             execute_command("open $", file_path)
@@ -389,7 +390,6 @@ def open_uri(uri):
 
         # Situation 2, user did not define a way of handling the protocol
         _try_open_uri(uri)
-
         return True
 
     except Exception as error:

@@ -83,9 +83,15 @@ class ChatRooms(IconNotebook):
         self.command_help = None
 
         if GTK_API_VERSION >= 4:
-            self.window.chatrooms_paned.set_resize_start_child(True)
+            window.chatrooms_paned.set_resize_start_child(True)
         else:
-            self.window.chatrooms_paned.child_set_property(self.window.chatrooms_container, "resize", True)
+            window.chatrooms_paned.child_set_property(window.chatrooms_container, "resize", True)
+
+        self.menu_page_id = None
+        self.tab_menu = PopupMenu(window.application, self.widget, self.on_tab_menu)
+        self.tab_menu.add_items(
+            ("#" + _("_Leave Room"), self.on_leave_room)
+        )
 
         for event_name, callback in (
             ("clear-room-messages", self.clear_room_messages),
@@ -195,6 +201,16 @@ class ChatRooms(IconNotebook):
 
         self.window.chatrooms_entry.set_text("")
 
+    def on_leave_room(self, *_args):
+
+        page = self.pages.get(self.menu_page_id)
+
+        if page is not None:
+            page.on_leave_room()
+
+    def on_tab_menu(self, model, tab_widget):
+        self.menu_page_id = tab_widget.page_id
+
     def clear_room_messages(self, room):
 
         page = self.pages.get(room)
@@ -261,9 +277,7 @@ class ChatRooms(IconNotebook):
             return
 
         self.pages[msg.room] = tab = ChatRoom(self, msg.room, msg.users)
-
-        self.append_page(tab.container, msg.room, focus_callback=tab.on_focus, close_callback=tab.on_leave_room)
-        tab.set_label(self.get_tab_label_inner(tab.container))
+        self.append_page(tab.container, msg.room, focus_callback=tab.on_focus, close_callback=tab.on_leave_room, page_id=msg.room)
 
         if msg.room in self.autojoin_rooms:
             self.autojoin_rooms.remove(msg.room)
@@ -559,11 +573,6 @@ class ChatRoom:
             ("#" + _("_Leave Room"), self.on_leave_room)
         )
 
-        self.tab_menu = PopupMenu(self.window.application)
-        self.tab_menu.add_items(
-            ("#" + _("_Leave Room"), self.on_leave_room)
-        )
-
         self.setup_public_feed()
         self.chat_entry.grab_focus()
 
@@ -591,11 +600,8 @@ class ChatRoom:
 
         for menu in (self.popup_menu_private_rooms_chat, self.popup_menu_private_rooms_list,
                      self.popup_menu_user_chat, self.popup_menu_user_list, self.users_list_view.column_menu,
-                     self.popup_menu_activity_view, self.popup_menu_chat_view, self.tab_menu):
+                     self.popup_menu_activity_view, self.popup_menu_chat_view):
             menu.clear()
-
-    def set_label(self, label):
-        self.tab_menu.set_parent(label)
 
     def setup_public_feed(self):
 
@@ -1170,6 +1176,8 @@ class ChatRoom:
 
     def on_leave_room(self, *_args):
 
+        print("hi")
+        print(self.room)
         if self.room == "Public ":
             self.chatrooms.roomlist.public_feed_toggle.set_active(False)
             return

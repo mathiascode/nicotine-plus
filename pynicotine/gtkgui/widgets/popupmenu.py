@@ -262,6 +262,7 @@ class PopupMenu:
         menu = None
         menu_model = self
         callback = self.callback
+        parent = self.parent
         self.update_model()
 
         if isinstance(self.parent, Gtk.TreeView):
@@ -282,8 +283,19 @@ class PopupMenu:
                 # No rows selected, don't show menu
                 return False
 
+        elif isinstance(self.parent, Gtk.Notebook):
+            if pos_x and pos_y:
+                from pynicotine.gtkgui.widgets.iconnotebook import TabLabel
+                widget = self.parent.pick(pos_x, pos_y, Gtk.PickFlags.DEFAULT)
+                tab_label = widget.get_ancestor(TabLabel)
+
+                if tab_label:
+                    parent = tab_label
+                else:
+                    return False
+
         if callback:
-            callback(menu_model, self.parent)
+            callback(menu_model, parent)
 
         self.popup(pos_x, pos_y, controller, menu=menu)
         return True
