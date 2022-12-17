@@ -32,6 +32,6 @@ functionality while keeping current with the Soulseek protocol.
 python3 setup.py build
 
 %install
-python3 setup.py install --single-version-externally-managed -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
+python3 setup.py install --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 
 %files -f INSTALLED_FILES
