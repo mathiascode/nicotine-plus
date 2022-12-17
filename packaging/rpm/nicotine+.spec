@@ -31,9 +31,6 @@ functionality while keeping current with the Soulseek protocol.
 %install
 pip3 install . --root=$RPM_BUILD_ROOT
 
-%check
-%pytest
-
 %files
 %license COPYING
 %{_bindir}/%{short_name}
