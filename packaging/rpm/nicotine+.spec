@@ -17,7 +17,6 @@ BuildRequires:  (gtk4 or gtk3)
 BuildRequires:  python3-devel
 BuildRequires:  python3-gobject
 BuildRequires:  python3-pytest-xvfb
-BuildRequires:  python3-wheel
 
 Requires:       gspell
 Requires:       (gtk4 or gtk3)
@@ -34,20 +33,13 @@ functionality while keeping current with the Soulseek protocol.
 %prep
 %autosetup -n %{python_name}-%{version}
 
-%generate_buildrequires
-%pyproject_buildrequires -r
-
-%build
-%pyproject_wheel
-
 %install
-%pyproject_install
-%pyproject_save_files pynicotine
+pip3 install . --root=$RPM_BUILD_ROOT
 
 %check
 %pytest
 
-%files -f %{pyproject_files}
+%files
 %license COPYING
 %{_bindir}/%{short_name}
 %{_datadir}/applications/%{application_id}.desktop
@@ -56,3 +48,5 @@ functionality while keeping current with the Soulseek protocol.
 %{_datadir}/icons/hicolor/*/status/*.*
 %{_metainfodir}/%{application_id}.appdata.xml
 %{_mandir}/man1/%{short_name}.1.*
+%{python3_sitelib}/pynicotine/
+%{python3_sitelib}/%{python_name}-*.dist-info/
