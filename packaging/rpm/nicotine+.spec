@@ -32,7 +32,6 @@ functionality while keeping current with the Soulseek protocol.
 pip3 install . --root=$RPM_BUILD_ROOT
 
 %files
-%license COPYING
 %{_bindir}/%{short_name}
 %{_datadir}/applications/%{application_id}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{application_id}*.*
