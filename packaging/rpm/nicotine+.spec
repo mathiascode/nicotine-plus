@@ -12,10 +12,10 @@ URL: https://nicotine-plus.org/
 Source0: %{python_name}-%{version}.tar.gz
 
 BuildArch: noarch
-
-Requires:       gspell
-Requires:       (gtk4 or gtk3)
-Requires:       python3-gobject
+Prefix: %{_prefix}
+Requires: gspell
+Requires: (gtk4 or gtk3)
+Requires: python3-gobject
 
 %description
 Nicotine+ is a graphical client for the Soulseek peer-to-peer
@@ -26,7 +26,7 @@ alternative to the official Soulseek client, providing additional
 functionality while keeping current with the Soulseek protocol.
 
 %prep
-%autosetup -n %{python_name}-%{version}
+%setup -n %{python_name}-%{version}
 
 %build
 python3 setup.py build
