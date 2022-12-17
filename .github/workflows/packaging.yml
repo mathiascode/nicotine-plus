@@ -50,7 +50,6 @@ jobs:
 
   rpm:
     runs-on: ubuntu-20.04
-    container: fedora:37
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -59,8 +58,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          dnf -y install 'dnf-command(builddep)' rpm-build
-          dnf -y builddep packaging/rpm/nicotine+.spec
+          sudo apt update
+          sudo apt build-dep .
 
       - name: Build RPM package
         run: |
