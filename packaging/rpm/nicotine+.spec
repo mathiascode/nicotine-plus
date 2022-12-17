@@ -12,6 +12,7 @@ URL: https://nicotine-plus.org/
 Source0: %{python_name}-%{version}.tar.gz
 
 BuildArch: noarch
+Prefix: %{_prefix}
 Requires: gspell
 Requires: (gtk4 or gtk3)
 Requires: python3-gobject
