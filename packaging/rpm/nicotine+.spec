@@ -21,13 +21,8 @@ Nicotine+ aims to be a pleasant, free and open source (FOSS)
 alternative to the official Soulseek client, providing additional
 functionality while keeping current with the Soulseek protocol.
 
-%prep
-%setup -n nicotine-plus-%{version}
-
-%build
-python3 setup.py build
-
 %install
-python3 setup.py install --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
+pip3 install --verbose --no-build-isolation --no-deps --no-index --root=%{buildroot} --prefix=/usr %{SOURCE0}
 
-%files -f INSTALLED_FILES
+%files
+/usr/*
