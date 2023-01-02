@@ -315,8 +315,8 @@ class MainWindow(Window):
                 self.window.move(x_pos, y_pos)
 
         # Maximize main window if necessary
-        if config.sections["ui"]["maximized"]:
-            self.window.maximize()
+        # if config.sections["ui"]["maximized"]:
+        #     self.window.maximize()
 
         # Auto-away mode
         if GTK_API_VERSION >= 4:
