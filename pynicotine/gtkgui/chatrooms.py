@@ -756,7 +756,7 @@ class ChatRoom:
         user = self.get_selected_username(treeview)
 
         if user is not None:
-            core.privatechat.show_user(user)
+            core.userinfo.show_user(user)
 
     def on_popup_menu_user(self, menu, treeview):
         user = self.get_selected_username(treeview)

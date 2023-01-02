@@ -1220,6 +1220,9 @@ class UserBrowse:
     def on_tab_popup(self, *_args):
         self.user_popup_menu.toggle_user_items()
 
+    def on_user_profile(self, *_args):
+        core.userinfo.show_user(self.user)
+
     def on_search(self, *_args):
         self.find_search_matches()
 

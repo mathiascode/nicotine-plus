@@ -730,7 +730,7 @@ class UploadsPage:
         }
 
 
-class UserInfoPage:
+class UserProfilePage:
 
     def __init__(self, application):
 
@@ -2367,7 +2367,7 @@ class Preferences(Dialog):
             ("downloads", _("Downloads"), "document-save-symbolic"),
             ("uploads", _("Uploads"), "emblem-shared-symbolic"),
             ("searches", _("Searches"), "system-search-symbolic"),
-            ("user-info", _("User Info"), "avatar-default-symbolic"),
+            ("user-profile", _("User Profile"), "avatar-default-symbolic"),
             ("chats", _("Chats"), "insert-text-symbolic"),
             ("now-playing", _("Now Playing"), "folder-music-symbolic"),
             ("logging", _("Logging"), "folder-documents-symbolic"),

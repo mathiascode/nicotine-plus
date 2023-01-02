@@ -118,7 +118,7 @@ class UserInfo:
         self.requested_info_times[user] = request_time
 
         if core.login_username != user:
-            log.add(_("User %(user)s is reading your user info"), {'user': user})
+            log.add(_("User %(user)s is viewing your user profile"), {'user': user})
 
         status, reason = core.network_filter.check_user(user, ip_address)
 

@@ -79,7 +79,7 @@ class UserInfos(IconNotebook):
         ):
             events.connect(event_name, callback)
 
-    def on_get_user_info(self, *_args):
+    def on_show_user_profile(self, *_args):
 
         username = self.window.userinfo_entry.get_text().strip()
 
@@ -224,6 +224,7 @@ class UserInfo:
 
         self.info_bar = InfoBar(self.info_bar, button=self.retry_button)
         self.description_view = TextView(self.description_view)
+        self.description_view.append_line(_("No description provided…"))
         self.user_label.set_text(user)
 
         if GTK_API_VERSION >= 4:

@@ -102,8 +102,8 @@ class BaseImplementation:
         self.create_item()
 
         self.send_message_item = self.create_item(_("Send Message"), self.on_open_private_chat)
-        self.lookup_info_item = self.create_item(_("Request User's Info"), self.on_get_a_users_info)
-        self.lookup_shares_item = self.create_item(_("Request User's Shares"), self.on_get_a_users_shares)
+        self.lookup_info_item = self.create_item(_("User Profile"), self.on_get_a_users_info)
+        self.lookup_shares_item = self.create_item(_("Browse Shares"), self.on_get_a_users_shares)
 
         self.create_item()
 
@@ -232,7 +232,7 @@ class BaseImplementation:
 
         EntryDialog(
             parent=self.application.window,
-            title=_("Request User Info"),
+            title=_("Show User Profile"),
             message=_('Enter the name of the user whose info you want to see:'),
             callback=self.on_get_a_users_info_response,
             droplist=sorted(core.userlist.buddies)
@@ -252,7 +252,7 @@ class BaseImplementation:
 
         EntryDialog(
             parent=self.application.window,
-            title=_("Request Shares List"),
+            title=_("Browse Shares"),
             message=_('Enter the name of the user whose shares you want to see:'),
             callback=self.on_get_a_users_shares_response,
             droplist=sorted(core.userlist.buddies)
