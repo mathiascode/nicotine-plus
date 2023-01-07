@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install gettext gir1.2-gtk-${{ matrix.gtk }}.0 libgirepository1.0-dev
+          sudo apt build-dep .
           python -m pip install -e ".[test]"
 
       - name: Flake8 linter
