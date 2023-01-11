@@ -34,6 +34,27 @@ jobs:
           name: debian-package
           path: build/package/
 
+  docker:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: packaging/container/Containerfile
+          push: false
+
   flatpak:
     runs-on: ubuntu-20.04
     container:

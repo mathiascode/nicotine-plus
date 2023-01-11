@@ -1,0 +1,17 @@
+version: '3'
+services:
+  nicotine:
+    build:
+      context: .
+      dockerfile: Containerfile
+    container_name: nicotine
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - nicotine-config:/home/nicotine/.config/nicotine
+      - nicotine-data:/home/nicotine/.local/share/nicotine
+    ports:
+      - 8090:8090
+      - 2234:2234
+    restart: unless-stopped

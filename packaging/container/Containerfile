@@ -1,0 +1,21 @@
+FROM docker.io/library/alpine:latest
+EXPOSE 8090
+ENV BROADWAY_DISPLAY=:10
+
+ARG USER=nicotine
+ARG UID=1000
+
+ARG GROUP=nicotine
+ARG GID=1000
+
+ADD . /nicotine-plus
+RUN addgroup -g ${GID} -S ${GROUP} && \
+    adduser --disabled-password -u ${UID} -S ${USER} -G ${GROUP} && \
+    apk update && \
+    apk add adwaita-icon-theme font-cantarell gettext gtk+3.0 py3-gobject3 py3-pip py3-wheel python3-gdbm supervisor && \
+    pip install /nicotine-plus && \
+    cp /nicotine-plus/packaging/container/supervisord.conf /etc/ && \
+    rm -rf /nicotine-plus
+
+USER ${USER}
+ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
