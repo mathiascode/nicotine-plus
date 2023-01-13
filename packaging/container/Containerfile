@@ -3,9 +3,8 @@ EXPOSE 8090
 ENV BROADWAY_DISPLAY=:10
 
 ARG USER=nicotine
-ARG UID=1000
-
 ARG GROUP=nicotine
+ARG UID=1000
 ARG GID=1000
 
 ADD . /nicotine-plus
@@ -17,5 +16,7 @@ RUN addgroup -g ${GID} -S ${GROUP} && \
     cp /nicotine-plus/packaging/container/supervisord.conf /etc/ && \
     rm -rf /nicotine-plus
 
+ENV USER=${USER}
 USER ${USER}
+WORKDIR /home/${USER}
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
