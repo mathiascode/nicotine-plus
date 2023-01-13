@@ -2,8 +2,8 @@ version: '3'
 services:
   nicotine:
     build:
-      context: .
-      dockerfile: Containerfile
+      context: ../../
+      dockerfile: packaging/container/Containerfile
     container_name: nicotine
     environment:
       - PUID=1000
@@ -15,3 +15,7 @@ services:
       - 8090:8090
       - 2234:2234
     restart: unless-stopped
+
+volumes:
+  nicotine-config:
+  nicotine-data:
