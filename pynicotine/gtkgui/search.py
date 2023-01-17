@@ -68,7 +68,7 @@ class Searches(IconNotebook):
 
         super().__init__(
             window,
-            widget=window.search_notebook,
+            parent=window.search_content,
             parent_page=window.search_page,
             switch_page_callback=self.on_switch_search_page
         )
@@ -170,7 +170,6 @@ class Searches(IconNotebook):
         if page is None:
             self.pages[token] = page = Search(self, text, token, mode, mode_label, show_page)
         else:
-            mode = page.mode
             mode_label = page.mode_label
 
         if not show_page:
@@ -328,11 +327,11 @@ class Search:
         self.searchterm_words_ignore = []
 
         for word in text.lower().split():
-            if word.startswith('*'):
+            if word.startswith("*"):
                 if len(word) > 1:
                     self.searchterm_words_include.append(word[1:])
 
-            elif word.startswith('-'):
+            elif word.startswith("-"):
                 if len(word) > 1:
                     self.searchterm_words_ignore.append(word[1:])
 
@@ -514,7 +513,7 @@ class Search:
     @staticmethod
     def on_tooltip(widget, pos_x, pos_y, _keyboard_mode, tooltip):
 
-        country_tooltip = show_country_tooltip(widget, pos_x, pos_y, tooltip, 12, strip_prefix="")
+        country_tooltip = show_country_tooltip(widget, pos_x, pos_y, tooltip, 12)
         file_path_tooltip = show_file_path_tooltip(widget, pos_x, pos_y, tooltip, 11)
 
         if country_tooltip:
@@ -585,7 +584,7 @@ class Search:
 
         self.on_refilter()
 
-    def add_result_list(self, result_list, user, country, inqueue, ulspeed, h_speed,
+    def add_result_list(self, result_list, user, country_code, inqueue, ulspeed, h_speed,
                         h_queue, color, private=False):
         """ Adds a list of search results to the treeview. Lists can either contain publicly or
         privately shared files. """
@@ -603,7 +602,7 @@ class Search:
             if any(word in fullpath_lower for word in self.searchterm_words_ignore):
                 # Filter out results with filtered words (e.g. nicotine -music)
                 log.add_debug(("Filtered out excluded search result %(filepath)s from user %(user)s for "
-                               "search term \"%(query)s\""), {
+                               'search term "%(query)s"'), {
                     "filepath": fullpath,
                     "user": user,
                     "query": self.text
@@ -613,7 +612,7 @@ class Search:
             if not any(word in fullpath_lower for word in self.searchterm_words_include):
                 # Certain users may send us wrong results, filter out such ones
                 log.add_search(_("Filtered out incorrect search result %(filepath)s from user %(user)s for "
-                                 "search query \"%(query)s\""), {
+                                 'search query "%(query)s"'), {
                     "filepath": fullpath,
                     "user": user,
                     "query": self.text
@@ -621,7 +620,7 @@ class Search:
                 continue
 
             self.num_results_found += 1
-            fullpath_split = fullpath.split('\\')
+            fullpath_split = fullpath.split("\\")
 
             if config.sections["ui"]["reverse_file_paths"]:
                 # Reverse file path, file name is the first item. next() retrieves the name and removes
@@ -634,7 +633,7 @@ class Search:
                 name = fullpath_split.pop()
 
             # Join the resulting items into a folder path
-            directory = '\\'.join(fullpath_split)
+            directory = "\\".join(fullpath_split)
 
             size = result[2]
             h_size = humanize(size) if config.sections["ui"]["exact_file_sizes"] else human_size(size)
@@ -647,7 +646,7 @@ class Search:
                 [
                     self.num_results_found,
                     user,
-                    get_flag_icon_name(country),
+                    get_flag_icon_name(country_code),
                     h_speed,
                     h_queue,
                     directory,
@@ -657,7 +656,7 @@ class Search:
                     h_length,
                     GObject.Value(GObject.TYPE_UINT, bitrate),
                     fullpath,
-                    country,
+                    country_code,
                     GObject.Value(GObject.TYPE_UINT64, size),
                     GObject.Value(GObject.TYPE_UINT, ulspeed),
                     GObject.Value(GObject.TYPE_UINT, inqueue),
@@ -680,14 +679,7 @@ class Search:
 
         self.users.add(user)
         ip_address = msg.init.addr[0]
-
-        if ip_address:
-            country = core.geoip.get_country_code(ip_address)
-        else:
-            country = ""
-
-        if country == "-":
-            country = ""
+        country_code = core.geoip.get_country_code(ip_address)
 
         if msg.freeulslots:
             inqueue = 0
@@ -705,11 +697,11 @@ class Search:
         color_id = "search" if msg.freeulslots else "searchq"
         color = config.sections["ui"][color_id] or None
 
-        update_ui = self.add_result_list(msg.list, user, country, inqueue, ulspeed, h_speed, h_queue, color)
+        update_ui = self.add_result_list(msg.list, user, country_code, inqueue, ulspeed, h_speed, h_queue, color)
 
         if msg.privatelist:
             update_ui_private = self.add_result_list(
-                msg.privatelist, user, country, inqueue, ulspeed, h_speed, h_queue, color, private=True)
+                msg.privatelist, user, country_code, inqueue, ulspeed, h_speed, h_queue, color, private=True)
 
             if not update_ui and update_ui_private:
                 update_ui = True
@@ -743,7 +735,7 @@ class Search:
 
     def add_row_to_model(self, row):
         (_counter, user, flag, h_speed, h_queue, directory, _filename, _h_size, _h_bitrate,
-            _h_length, _bitrate, fullpath, country, _size, speed, queue, _length, color) = row
+            _h_length, _bitrate, fullpath, country_code, _size, speed, queue, _length, color) = row
 
         expand_user = False
         expand_folder = False
@@ -770,7 +762,7 @@ class Search:
                         empty_str,
                         empty_int,
                         empty_str,
-                        country,
+                        country_code,
                         empty_int,
                         speed,
                         queue,
@@ -806,8 +798,8 @@ class Search:
                             empty_str,
                             empty_str,
                             empty_int,
-                            fullpath.rsplit('\\', 1)[0] + '\\',
-                            country,
+                            fullpath.rsplit("\\", 1)[0] + "\\",
+                            country_code,
                             empty_int,
                             speed,
                             queue,
@@ -848,12 +840,12 @@ class Search:
         """ Returns: (operation, digit) """
 
         operators = {
-            '<': operator.lt,
-            '<=': operator.le,
-            '==': operator.eq,
-            '!=': operator.ne,
-            '>=': operator.ge,
-            '>': operator.gt
+            "<": operator.lt,
+            "<=": operator.le,
+            "==": operator.eq,
+            "!=": operator.ne,
+            ">=": operator.ge,
+            ">": operator.gt
         }
 
         if condition.startswith((">=", "<=", "==", "!=")):
@@ -1235,7 +1227,7 @@ class Search:
 
         for iterator in self.selected_results.values():
             user = self.resultsmodel.get_value(iterator, 1)
-            folder = self.resultsmodel.get_value(iterator, 11).rsplit('\\', 1)[0] + '\\'
+            folder = self.resultsmodel.get_value(iterator, 11).rsplit("\\", 1)[0] + "\\"
 
             if user not in requested_users and folder not in requested_folders:
                 core.userbrowse.browse_user(user, path=folder)
@@ -1251,7 +1243,7 @@ class Search:
 
         for iterator in self.selected_results.values():
             virtual_path = self.resultsmodel.get_value(iterator, 11)
-            directory, filename = virtual_path.rsplit('\\', 1)
+            directory, filename = virtual_path.rsplit("\\", 1)
             file_size = self.resultsmodel.get_value(iterator, 13)
             selected_size += file_size
             selected_length += self.resultsmodel.get_value(iterator, 16)
@@ -1315,7 +1307,7 @@ class Search:
 
         for iterator in self.selected_results.values():
             user = self.resultsmodel.get_value(iterator, 1)
-            folder = self.resultsmodel.get_value(iterator, 11).rsplit('\\', 1)[0]
+            folder = self.resultsmodel.get_value(iterator, 11).rsplit("\\", 1)[0]
 
             if folder in requested_folders[user]:
                 """ Ensure we don't send folder content requests for a folder more than once,
@@ -1328,7 +1320,7 @@ class Search:
             for row in self.all_data:
 
                 # Find the wanted directory
-                if folder != row[11].rsplit('\\', 1)[0]:
+                if folder != row[11].rsplit("\\", 1)[0]:
                     continue
 
                 # remove_destination is False because we need the destination for the full folder
@@ -1336,7 +1328,7 @@ class Search:
                 destination = core.transfers.get_folder_destination(user, folder, remove_destination=False)
 
                 (_counter, user, _flag, _h_speed, _h_queue, _directory, _filename,
-                    _h_size, h_bitrate, h_length, _bitrate, fullpath, _country, size, _speed,
+                    _h_size, h_bitrate, h_length, _bitrate, fullpath, _country_code, size, _speed,
                     _queue, _length, _color) = row
                 visible_files.append(
                     (user, fullpath, destination, size.get_value(), h_bitrate, h_length))
@@ -1376,7 +1368,7 @@ class Search:
         for iterator in self.selected_results.values():
             user = self.resultsmodel.get_value(iterator, 1)
             filepath = self.resultsmodel.get_value(iterator, 11)
-            url = core.userbrowse.get_soulseek_url(user, filepath.rsplit('\\', 1)[0] + '\\')
+            url = core.userbrowse.get_soulseek_url(user, filepath.rsplit("\\", 1)[0] + "\\")
             copy_text(url)
             return
 

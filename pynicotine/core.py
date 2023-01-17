@@ -32,6 +32,7 @@ This is the actual client code. Actual GUI classes are in the separate modules
 import os
 import signal
 import sys
+import threading
 import time
 
 from collections import deque
@@ -79,7 +80,7 @@ class Core:
         self.login_username = None  # Only present while logged in
         self.user_ip_address = None
         self.privileges_left = None
-        self.ban_message = "You are banned from downloading my shared files. Ban message: \"%s\""
+        self.ban_message = 'You are banned from downloading my shared files. Ban message: "%s"'
 
         self.queue = deque()
         self.message_events = {}
@@ -101,7 +102,7 @@ class Core:
             ("thread-callback", self._thread_callback),
             ("user-stats", self._user_stats),
             ("user-status", self._user_status),
-            ("watch-user", self._add_user)
+            ("watch-user", self._watch_user)
         ):
             events.connect(event_name, callback)
 
@@ -125,6 +126,7 @@ class Core:
         from pynicotine.userinfo import UserInfo
         from pynicotine.userlist import UserList
 
+        self._init_thread_exception_hook()
         config.load_config()
 
         if enable_cli:
@@ -158,6 +160,33 @@ class Core:
         self.privatechat = PrivateChat()
         self.chatrooms = ChatRooms()
         self.pluginhandler = PluginHandler()
+
+    def _init_thread_exception_hook(self):
+
+        def thread_excepthook(args):
+            sys.excepthook(*args)
+
+        if hasattr(threading, "excepthook"):
+            threading.excepthook = thread_excepthook
+            return
+
+        # Workaround for Python <= 3.7
+        init_thread = threading.Thread.__init__
+
+        def init_thread_excepthook(self, *args, **kwargs):
+
+            init_thread(self, *args, **kwargs)
+            run_thread = self.run
+
+            def run_with_excepthook(*args2, **kwargs2):
+                try:
+                    run_thread(*args2, **kwargs2)
+                except Exception:
+                    thread_excepthook(sys.exc_info())
+
+            self.run = run_with_excepthook
+
+        threading.Thread.__init__ = init_thread_excepthook
 
     """ CLI """
 
@@ -316,7 +345,7 @@ class Core:
             # Already being watched, and we don't need to re-fetch the status/stats
             return
 
-        self.queue.append(slskmessages.AddUser(user))
+        self.queue.append(slskmessages.WatchUser(user))
 
         # Get privilege status
         self.queue.append(slskmessages.GetUserStatus(user))
@@ -399,13 +428,13 @@ class Core:
             return
 
         log.add(_("IP address of user %(user)s: %(ip)s, port %(port)i%(country)s"), {
-            'user': user,
-            'ip': msg.ip_address,
-            'port': msg.port,
-            'country': country
+            "user": user,
+            "ip": msg.ip_address,
+            "port": msg.port,
+            "country": country
         }, title=_("IP Address"))
 
-    def _add_user(self, msg):
+    def _watch_user(self, msg):
         """ Server code: 5 """
 
         if msg.userexists:
@@ -437,10 +466,10 @@ class Core:
         """ Server code: 36 """
 
         stats = {
-            'avgspeed': msg.avgspeed,
-            'uploadnum': msg.uploadnum,
-            'files': msg.files,
-            'dirs': msg.dirs,
+            "avgspeed": msg.avgspeed,
+            "uploadnum": msg.uploadnum,
+            "files": msg.files,
+            "dirs": msg.dirs,
         }
 
         self.pluginhandler.user_stats_notification(msg.user, stats)
@@ -472,10 +501,10 @@ class Core:
         else:
             log.add(_("%(days)i days, %(hours)i hours, %(minutes)i minutes, %(seconds)i seconds of "
                       "Soulseek privileges left"), {
-                'days': days,
-                'hours': hours % 24,
-                'minutes': mins % 60,
-                'seconds': msg.seconds % 60
+                "days": days,
+                "hours": hours % 24,
+                "minutes": mins % 60,
+                "seconds": msg.seconds % 60
             })
 
         self.privileges_left = msg.seconds
