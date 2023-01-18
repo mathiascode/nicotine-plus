@@ -381,6 +381,7 @@ class PluginHandler:
         BasePlugin.core = core
 
         for event_name, callback in (
+            ("cli-command", self._cli_command),
             ("start", self._start),
             ("quit", self._quit)
         ):
@@ -410,6 +411,9 @@ class PluginHandler:
         # Disable plugins
         for plugin in self.list_installed_plugins():
             self.disable_plugin(plugin)
+
+    def _cli_command(self, command, args):
+        self.trigger_cli_command_event(command, args or "")
 
     def update_completions(self, plugin):
 
@@ -715,6 +719,45 @@ class PluginHandler:
 
         except KeyError:
             log.add_debug("No stored settings found for %s", plugin.human_name)
+
+    def get_command_descriptions(self, command_interface, search_query=None):
+
+        command_groups = {}
+
+        if command_interface == "chatroom":
+            command_list = self.chatroom_commands
+
+        elif command_interface == "private_chat":
+            command_list = self.private_chat_commands
+
+        else:
+            command_list = self.cli_commands
+
+        for command, data in command_list.items():
+            command_message = command
+            description = _("No description")
+            group = _("Miscellaneous")
+
+            if data:
+                commands = ", /".join([command] + data.get("aliases", []))
+                parameters = " ".join(data.get(f"usage_{command_interface}", data.get("usage", [])))
+
+                command_message = f"{commands} {parameters}".strip()
+                description = data.get("description", description)
+                group = data.get("group", group)
+
+            if (search_query
+                    and search_query not in group.lower()
+                    and search_query not in command_message.lower()
+                    and search_query not in description.lower()):
+                continue
+
+            if group not in command_groups:
+                command_groups[group] = []
+
+            command_groups[group].append((command_message, description))
+
+        return command_groups
 
     def trigger_chatroom_command_event(self, room, command, args):
         return self._trigger_command(command, args, room=room)

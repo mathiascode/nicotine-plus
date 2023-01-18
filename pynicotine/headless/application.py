@@ -19,6 +19,7 @@
 import sys
 import time
 
+from pynicotine.cli import cli
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
@@ -34,6 +35,12 @@ class Application:
         for log_level in ("download", "upload"):
             log.add_log_level(log_level, is_permanent=False)
 
+        for event_name, callback in (
+            ("confirm-quit", self.on_confirm_quit),
+            ("shares-unavailable", self.on_shares_unavailable)
+        ):
+            events.connect(event_name, callback)
+
     def run(self):
 
         core.start()
@@ -48,6 +55,24 @@ class Application:
         config.write_configuration()
         return 0
 
-    def exception_hook(self, _exc_type, exc_value, _exc_traceback, *_unused):
+    def exception_hook(self, _exc_type, exc_value, _exc_traceback):
         core.quit()
         raise exc_value
+
+    def on_confirm_quit_response(self, user_input):
+        if user_input.lower().startswith("y"):
+            core.quit()
+
+    def on_confirm_quit(self, _remember):
+        cli.prompt("Do you really want to quit Nicotine+ (Y/N)?: ", callback=self.on_confirm_quit_response)
+
+    def on_shares_unavailable_response(self, user_input):
+
+        if user_input == "test":
+            core.shares.rescan_shares()
+            return
+
+        log.add("no")
+
+    def on_shares_unavailable(self, _shares):
+        cli.prompt("Enter some text: ", callback=self.on_shares_unavailable_response)
