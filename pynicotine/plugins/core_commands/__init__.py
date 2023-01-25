@@ -25,21 +25,32 @@ class Plugin(BasePlugin):
 
         super().__init__(*args, **kwargs)
 
-        self.main_group_name = _("%s Commands") % self.config.application_name
         self.commands = {
             "help": {
                 "aliases": ["?"],
                 "callback": self.help_command,
                 "description": _("List available commands"),
-                "group": self.main_group_name,
                 "usage": ["[query]"]
             },
             "quit": {
                 "aliases": ["q", "exit"],
                 "callback": self.quit_command,
                 "description": _("Quit Nicotine+"),
-                "group": self.main_group_name,
                 "usage": ["[-force]"]
+            },
+            "clear": {
+                "aliases": ["cl"],
+                "callback": self.clear_command,
+                "description": _("Clear chat window"),
+                "disable": ["cli"],
+                "group": _("Chat"),
+            },
+            "me": {
+                "callback": self.me_command,
+                "description": _("Say something in the third-person"),
+                "disable": ["cli"],
+                "group": _("Chat"),
+                "usage": ["<something..>"]
             },
             "close": {
                 "description": "Close private chat",
@@ -50,15 +61,38 @@ class Plugin(BasePlugin):
                 "usage_chatroom": ["<user>"],
                 "usage_private_chat": ["[user]"]
             },
+            "pm": {
+                "callback": self.pm_command,
+                "description": _("Open private chat"),
+                "disable": ["cli"],
+                "group": _("Private Chat"),
+                "usage": ["<user>"]
+            },
             "sample": {
                 "description": "Sample command description",
-                "group": self.main_group_name,
                 "aliases": ["demo"],
                 "disable": ["private_chat"],
                 "callback": self.sample_command,
                 "callback_private_chat": self.sample_command,
                 "usage": ["<choice1|choice2>", "<something..>"],
                 "usage_chatroom": ["<choice55|choice2>"]
+            },
+            "join": {
+                "aliases": ["j"],
+                "callback": self.join_command,
+                "description": _("Join chat room"),
+                "disable": ["cli"],
+                "group": _("Chat Rooms"),
+                "usage": ["<room>"]
+            },
+            "leave": {
+                "aliases": ["l"],
+                "callback": self.leave_command,
+                "description": _("Leave chat room"),
+                "disable": ["cli"],
+                "group": _("Chat Rooms"),
+                "usage": ["<room>"],
+                "usage_chatroom": ["[room]"]
             },
             "rescan": {
                 "callback": self.rescan_command,
@@ -72,6 +106,30 @@ class Plugin(BasePlugin):
                 "description": _("List shares"),
                 "group": _("Configure Shares"),
                 "usage": ["[public]", "[buddy]"]
+            },
+            "search": {
+                "aliases": ["s"],
+                "callback": self.search_command,
+                "description": _("Start global file search"),
+                "disable": ["cli"],
+                "group": _("Search Files"),
+                "usage": ["<query>"]
+            },
+            "rsearch": {
+                "aliases": ["rs"],
+                "callback": self.search_rooms_command,
+                "description": _("Search files in joined rooms"),
+                "disable": ["cli"],
+                "group": _("Search Files"),
+                "usage": ["<query>"]
+            },
+            "bsearch": {
+                "aliases": ["bs"],
+                "callback": self.search_buddies_command,
+                "description": _("Search files of all buddies"),
+                "disable": ["cli"],
+                "group": _("Search Files"),
+                "usage": ["<query>"]
             }
         }
 
@@ -80,17 +138,17 @@ class Plugin(BasePlugin):
     def help_command(self, args, user=None, room=None):
 
         if user is not None:
-            interface = "private_chat"
+            command_interface = "private_chat"
 
         elif room is not None:
-            interface = "chatroom"
+            command_interface = "chatroom"
 
         else:
-            interface = "cli"
+            command_interface = "cli"
 
         search_query = " ".join(args.lower().split(" ", maxsplit=1))
         command_groups = self.parent.get_command_descriptions(  # pylint: disable=no-member
-            interface, search_query=search_query
+            command_interface, search_query=search_query
         )
         num_commands = sum(len(command_groups[x]) for x in command_groups)
         output_text = ""
@@ -107,7 +165,7 @@ class Plugin(BasePlugin):
             output_text += f"\n\n{group_name}:"
 
             for command_usage, description in commands:
-                output_text += f"\n	{command_usage}  -  {description}"
+                output_text += f"\n\t{command_usage}  -  {description}"
 
         if not search_query:
             output_text += "\n\n" + _("Type %(command)s to list similar commands") % {"command": "/help [query]"}
@@ -130,7 +188,25 @@ class Plugin(BasePlugin):
 
         return True
 
-    """ Private Chats """
+    """ Chat """
+
+    def clear_command(self, args, user=None, room=None):
+
+        if args:
+            return False
+
+        if room is not None:
+            self.core.chatrooms.clear_room_messages(room)
+
+        elif user is not None:
+            self.core.privatechat.clear_private_messages(user)
+
+        return True
+
+    def me_command(self, args, **_unused):
+        self.send_message("/me " + args)  # /me is sent as plain text
+
+    """ Private Chat """
 
     def close_command(self, args, user=None, **_unused):
 
@@ -145,8 +221,28 @@ class Plugin(BasePlugin):
         self.core.privatechat.remove_user(user)
         return True
 
+    def pm_command(self, args, **_unused):
+        self.core.privatechat.show_user(args)
+
     def sample_command(self, _args, **_unused):
         self.output("Hello")
+        return True
+
+    """ Chat Rooms """
+
+    def join_command(self, args, **_unused):
+        self.core.chatrooms.show_room(args)
+
+    def leave_command(self, args, room=None, **_unused):
+
+        if args:
+            room = args
+
+        if room not in self.core.chatrooms.joined_rooms:
+            self.output(_("Not joined in room %s") % room)
+            return False
+
+        self.core.chatrooms.remove_room(room)
         return True
 
     """ Configure Shares """
@@ -183,3 +279,14 @@ class Plugin(BasePlugin):
             num_listed += num_shares
 
         self.output("\n" + f"{num_listed} shares listed ({num_total} configured)")
+
+    """ Search Files """
+
+    def search_command(self, args, **_unused):
+        self.core.search.do_search(args, "global")
+
+    def search_rooms_command(self, args, **_unused):
+        self.core.search.do_search(args, "rooms")
+
+    def search_buddies_command(self, args, **_unused):
+        self.core.search.do_search(args, "buddies")
