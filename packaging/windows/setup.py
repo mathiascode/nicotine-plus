@@ -28,7 +28,7 @@ from cx_Freeze import Executable, setup  # pylint: disable=import-error
 
 
 if sys.platform == "win32":
-    GUI_BASE = "Win32GUI"
+    GUI_BASE = None
     SYS_BASE = sys.prefix
     LIB_FOLDER = os.path.join(SYS_BASE, "bin")
     LIB_EXTENSION = ".dll"
