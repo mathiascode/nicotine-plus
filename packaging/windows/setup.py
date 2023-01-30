@@ -201,9 +201,16 @@ def add_gtk():
     # This also includes all dlls required by GTK
     add_files(
         folder_path=LIB_FOLDER, output_path=lib_output_path,
-        starts_with=("libgtk-%s" % GTK_VERSION, "libEGL"), ends_with=LIB_EXTENSION
+        starts_with="libgtk-%s" % GTK_VERSION, ends_with=LIB_EXTENSION
     )
 
+    if GTK_VERSION == "4":
+        # ANGLE (OpenGL ES)
+        add_files(
+            folder_path=LIB_FOLDER, output_path=lib_output_path,
+            starts_with=("libEGL", "libGLES", "libangle", "libfeature"), ends_with=LIB_EXTENSION
+        )
+    
     if USE_LIBADWAITA:
         add_files(
             folder_path=LIB_FOLDER, output_path=lib_output_path,
