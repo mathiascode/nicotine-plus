@@ -208,7 +208,7 @@ def add_gtk():
         # ANGLE (OpenGL ES)
         add_files(
             folder_path=LIB_FOLDER, output_path=lib_output_path,
-            starts_with=("libEGL", "libGLES", "libangle", "libfeature"), ends_with=LIB_EXTENSION
+            starts_with=("libEGL", "libGLESv1", "libGLESv2.", "libfeature"), ends_with=LIB_EXTENSION
         )
     
     if USE_LIBADWAITA:
