@@ -201,7 +201,7 @@ def run():
     except Exception as error:
         log.add(f"Faulthandler module could not be enabled. Error: {error}")
 
-    core.init_components(enable_cli=True)
+    core.init_components(enable_cli=False)
 
     if not os.path.isdir(LOCALE_PATH):
         log.add("Translation files (.mo) are unavailable, using default English strings")
