@@ -18,9 +18,7 @@
 
 import os
 import subprocess
-import sys
 
-from unittest import skipIf
 from unittest import TestCase
 
 USER_DATA = os.path.dirname(os.path.realpath(__file__))
