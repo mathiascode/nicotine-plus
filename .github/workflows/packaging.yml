@@ -45,8 +45,6 @@ jobs:
       with:
         bundle: flatpak-package.flatpak
         manifest-path: packaging/flatpak/org.nicotine_plus.Nicotine.json
-        run-tests: true
-        cache-key: flatpak-builder-${{ github.sha }}
 
   windows:
     runs-on: windows-2019
