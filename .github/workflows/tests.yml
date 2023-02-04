@@ -24,8 +24,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          apt update
-          apt install gettext gir1.2-gtk-4.0 libgirepository1.0-dev
+          sudo apt update
+          sudo apt install gettext gir1.2-gtk-4.0 libgirepository1.0-dev
           python -m pip install -e ".[test]"
 
       - name: Flake8 linter
@@ -47,9 +47,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install dependencies
-        run: |
-          dnf update
-          dnf -y install gettext gtk4 pylint python3-flake8 python3-gobject
+        run: dnf -y install gettext gtk4 pylint python3-flake8 python3-gobject
 
       - name: Flake8 linter
         run: python -m flake8
@@ -102,7 +100,7 @@ jobs:
         run: python -m pylint pynicotine test
 
       - name: Integration and unit tests
-        run: xvfb-run python -m unittest -v
+        run: python -m unittest -v
 
   windows:
     runs-on: windows-latest
