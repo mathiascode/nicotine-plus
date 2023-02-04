@@ -37,6 +37,29 @@ jobs:
       - name: Integration and unit tests
         run: xvfb-run python -m unittest -v
 
+  fedora:
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          dnf update
+          dnf install gettext gtk4 pylint python3-flake8 python3-gobject
+
+      - name: Flake8 linter
+        run: python -m flake8
+
+      - name: Pylint linter
+        run: python -m pylint pynicotine test
+
+      - name: Integration and unit tests
+        run: xvfb-run python -m unittest -v
+
   ubuntu:
     runs-on: ${{ matrix.os }}
     strategy:
