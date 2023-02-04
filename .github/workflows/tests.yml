@@ -56,7 +56,7 @@ jobs:
         run: python3 -m pylint pynicotine test
 
       - name: Integration and unit tests
-        run: python3 -m unittest -v
+        run: xvfb-run python3 -m unittest -v
 
   ubuntu:
     runs-on: ${{ matrix.os }}
