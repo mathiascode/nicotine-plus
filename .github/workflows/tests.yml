@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         run: |
           dnf update
-          dnf install gettext gtk4 pylint python3-flake8 python3-gobject
+          dnf install -y gettext gtk4 pylint python3-flake8 python3-gobject
 
       - name: Flake8 linter
         run: python -m flake8
@@ -91,7 +91,7 @@ jobs:
       - name: Install dependencies
         run: |
           apk update
-          apk add gettext gtk4.0 mesa-dri-swrast py3-flake8 py3-gobject3 py3-pylint python3-gdbm xvfb-run
+          apk add gettext gtk4.0 mesa-dri-gallium py3-flake8 py3-gobject3 py3-pylint python3-gdbm xvfb-run
 
       - name: Flake8 linter
         run: python -m flake8
