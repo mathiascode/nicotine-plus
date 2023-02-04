@@ -80,6 +80,8 @@ jobs:
   alpine:
     runs-on: ubuntu-latest
     container: alpine:edge
+    env:
+      GSK_BACKEND: cairo
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
