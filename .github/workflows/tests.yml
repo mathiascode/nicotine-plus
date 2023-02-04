@@ -47,7 +47,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install dependencies
-        run: dnf -y install gettext gtk4 pylint python3-flake8 python3-gobject
+        run: dnf -y install gettext gtk4 pylint python3-flake8 python3-gobject python3-pytest-xvfb
 
       - name: Flake8 linter
         run: python3 -m flake8
@@ -56,7 +56,7 @@ jobs:
         run: python3 -m pylint pynicotine test
 
       - name: Integration and unit tests
-        run: xvfb-run python3 -m unittest -v
+        run: python3 -m pytest -v
 
   ubuntu:
     runs-on: ${{ matrix.os }}
@@ -99,6 +99,27 @@ jobs:
 
       - name: Integration and unit tests
         run: xvfb-run python3 -m unittest -v
+
+  opensuse:
+    runs-on: ubuntu-latest
+    container: opensuse/tumbleweed:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: zypper install gettext-runtime typelib-1_0-Gtk-4_0 python3-gobject python3-dbm python3-pylint python3-flake8 python3-pytest-xvfb
+
+      - name: Flake8 linter
+        run: python3 -m flake8
+
+      - name: Pylint linter
+        run: python3 -m pylint pynicotine test
+
+      - name: Integration and unit tests
+        run: python3 -m pytest -v
 
   windows:
     runs-on: windows-latest
