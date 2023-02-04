@@ -5,9 +5,6 @@ on: [push, pull_request]
 jobs:
 
   python:
-    strategy:
-      matrix:
-        python: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy-3.6', 'pypy-3.7', 'pypy-3.8', 'pypy-3.9']
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -18,7 +15,16 @@ jobs:
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python }}
+          python-version: |
+            3.7
+            3.8
+            3.9
+            3.10
+            3.11
+            pypy-3.6
+            pypy-3.7
+            pypy-3.8
+            pypy-3.9
           cache: 'pip'
           cache-dependency-path: setup.py
 
