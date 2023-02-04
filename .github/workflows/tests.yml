@@ -58,7 +58,7 @@ jobs:
 
   fedora:
     runs-on: ubuntu-latest
-    container: fedora:latest
+    container: fedora:rawhide
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -79,7 +79,7 @@ jobs:
 
   alpine:
     runs-on: ubuntu-latest
-    container: alpine:latest
+    container: alpine:edge
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
