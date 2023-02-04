@@ -68,7 +68,7 @@ jobs:
       - name: Install dependencies
         run: |
           apk update
-          apk add gettext gtk4.0 py3-flake8 py3-gobject3 py3-pylint python3-gdbm xvfb-run
+          apk add gettext gtk4.0 mesa-dri-swrast py3-flake8 py3-gobject3 py3-pylint python3-gdbm xvfb-run
 
       - name: Flake8 linter
         run: python -m flake8
