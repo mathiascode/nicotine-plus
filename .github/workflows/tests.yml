@@ -50,13 +50,13 @@ jobs:
         run: dnf -y install gettext gtk4 pylint python3-flake8 python3-gobject
 
       - name: Flake8 linter
-        run: python -m flake8
+        run: python3 -m flake8
 
       - name: Pylint linter
-        run: python -m pylint pynicotine test
+        run: python3 -m pylint pynicotine test
 
       - name: Integration and unit tests
-        run: python -m unittest -v
+        run: python3 -m unittest -v
 
   ubuntu:
     runs-on: ${{ matrix.os }}
@@ -80,8 +80,6 @@ jobs:
   alpine:
     runs-on: ubuntu-latest
     container: alpine:latest
-    env:
-      GSK_RENDERER: cairo
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -91,16 +89,16 @@ jobs:
       - name: Install dependencies
         run: |
           apk update
-          apk add gettext gtk4.0 py3-flake8 py3-gobject3 py3-pylint python3-gdbm xvfb-run
+          apk add gettext gtk4.0 mesa-dri-gallium py3-flake8 py3-gobject3 py3-pylint python3-gdbm xvfb-run
 
       - name: Flake8 linter
-        run: python -m flake8
+        run: python3 -m flake8
 
       - name: Pylint linter
-        run: python -m pylint pynicotine test
+        run: python3 -m pylint pynicotine test
 
       - name: Integration and unit tests
-        run: python -m unittest -v
+        run: xvfb-run python3 -m unittest -v
 
   windows:
     runs-on: windows-latest
