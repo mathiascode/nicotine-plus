@@ -4,12 +4,11 @@ on: [push, pull_request]
 
 jobs:
 
-  ubuntu:
+  python:
     strategy:
       matrix:
-        python: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy-3.6', 'pypy-3.7', 'pypy-3.8', 'pypy-3.9']
-    runs-on: ubuntu-20.04
-    container: fedora:latest
+        python: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy-3.6', 'pypy-3.7', 'pypy-3.8', 'pypy-3.9']
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -25,8 +24,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo dnf update
-          sudo dnf install gettext gtk4
+          sudo apt update
+          sudo apt install gettext gir1.2-gtk-4.0 libgirepository1.0-dev
           python -m pip install -e ".[test]"
 
       - name: Flake8 linter
@@ -38,7 +37,7 @@ jobs:
       - name: Integration and unit tests
         run: xvfb-run python -m unittest -v
 
-  ubuntu-dep8:
+  ubuntu:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
