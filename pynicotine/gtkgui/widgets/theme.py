@@ -314,7 +314,6 @@ else:
 
 CUSTOM_ICON_THEME_NAME = ".nicotine-icon-theme"
 FILE_TYPE_ICON_LABELS = {
-    "application-x-executable-symbolic": _("Executable"),
     "audio-x-generic-symbolic": _("Audio"),
     "image-x-generic-symbolic": _("Image"),
     "package-x-generic-symbolic": _("Archive"),
@@ -486,9 +485,6 @@ def get_file_type_icon_name(filename):
 
     if extension in FileTypes.DOCUMENT_TEXT:
         return "x-office-document-symbolic"
-
-    if extension in FileTypes.EXECUTABLE:
-        return "application-x-executable-symbolic"
 
     return "text-x-generic-symbolic"
 

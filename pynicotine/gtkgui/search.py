@@ -56,6 +56,7 @@ from pynicotine.gtkgui.widgets.treeview import show_file_path_tooltip
 from pynicotine.gtkgui.widgets.treeview import show_file_type_tooltip
 from pynicotine.gtkgui.widgets.ui import UserInterface
 from pynicotine.logfacility import log
+from pynicotine.shares import FileTypes
 from pynicotine.slskmessages import SEARCH_TOKENS_ALLOWED
 from pynicotine.slskmessages import FileListMessage
 from pynicotine.utils import factorize
@@ -551,7 +552,7 @@ class Search:
                 presets = (">10MiB", "<10MiB", "<5MiB", "<1MiB", ">0")
 
             elif filter_id == "filtertype":
-                presets = ("flac|wav|ape|aiff|wv|cue", "mp3|m4a|aac|ogg|opus|wma", "!mp3")
+                presets = ("audio", "image", "video", "text", "archive", "audio|image|text", "video|text")
 
             widget.set_row_separator_func(lambda *_args: 0)
             widget.remove_all()
@@ -950,6 +951,7 @@ class Search:
     def check_file_type(result_filter, value):
 
         allowed = False
+        found_inclusive = False
 
         for ext in result_filter:
             exclude_ext = None
@@ -963,14 +965,17 @@ class Search:
             elif not ext.startswith("."):
                 ext = "." + ext
 
-            if not ext.startswith("!") and value.endswith(ext):
-                allowed = True
-
-            elif ext.startswith("!") and not value.endswith(exclude_ext):
-                allowed = True
-
-            elif ext.startswith("!") and value.endswith(exclude_ext):
+            if ext.startswith("!") and value.endswith(exclude_ext):
                 return False
+
+            if not ext.startswith("!"):
+                found_inclusive = True
+
+                if value.endswith(ext):
+                    allowed = True
+
+        if not found_inclusive:
+            allowed = True
 
         return allowed
 
@@ -1553,6 +1558,26 @@ class Search:
 
             self.push_history(filter_id, value)
             self.active_filter_count += 1
+
+        # Replace generic file type filters with real file extensions
+        file_type_filters = filters["filtertype"]
+
+        for filter_name, file_extensions in (
+            ("audio", FileTypes.AUDIO),
+            ("image", FileTypes.IMAGE),
+            ("video", FileTypes.VIDEO),
+            ("text", FileTypes.DOCUMENT_TEXT),
+            ("archive", FileTypes.ARCHIVE)
+        ):
+            excluded_filter_name = f"!{filter_name}"
+
+            if filter_name in file_type_filters:
+                file_type_filters.remove(filter_name)
+                file_type_filters += list(file_extensions)
+
+            elif excluded_filter_name in file_type_filters:
+                file_type_filters.remove(excluded_filter_name)
+                file_type_filters += ["!" + x for x in file_extensions]
 
         # Apply the new filters
         self.filters = filters

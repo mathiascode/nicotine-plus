@@ -90,9 +90,6 @@ class FileTypes:
         "aac", "ac3", "afc", "aifc", "aif", "aiff", "ape", "dff", "dts", "flac", "it", "m4a", "mid", "midi", "mod",
         "mp1", "mp2", "mp3", "oga", "ogg", "opus", "s3m", "wav", "wma", "wv", "xm"
     }
-    EXECUTABLE = {
-        "bat", "exe", "sh"
-    }
     IMAGE = {
         "apng", "avif", "bmp", "gif", "heic", "heif", "ico", "jfif", "jp2", "jpg", "jpe", "jpeg", "png", "psd",
         "raw", "svg", "svgz", "tif", "tiff", "webp"
