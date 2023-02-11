@@ -109,86 +109,64 @@ class PopupMenu:
         return action
 
     def _create_menu_item(self, item):
-        """
-        Types of menu items:
-            > - submenu
-            $ - boolean
-            O - choice
-            # - regular
-            = - hidden when disabled
-            U - user
-        """
 
-        submenu = False
-        boolean = False
-        choice = False
-        item_type = item[0][0]
-        label = item[0][1:]
+        label = item["label"]
+        item_type = item.get("type", "default")
+        action = None
+        action_id = item.get("action_id")
+        submenu = item.get("submenu")
 
-        if item_type == ">":
-            submenu = True
-
-        elif item_type == "$":
-            boolean = True
-
-        elif item_type == "O":
-            choice = True
-
-        if isinstance(item[1], str):
-            # Action name provided, don't create action here
-            action_id = item[1]
-            action = None
-
-        else:
+        if not action_id:
             normalized_label = "-".join(label.translate(TRANSLATE_PUNCTUATION).lower().split())
             action_id = f"app.menu-{normalized_label}-{self.popup_id}"
-            action = self._create_action(action_id[4:], (boolean or choice))
+            action = self._create_action(action_id[4:], (item_type in ("boolean", "choice")))
+            action_name = "change-state" if item_type in ("boolean", "choice") else "activate"
+            callback = item["callback"]
+            callback_args = item.get("callback_args", {})
 
-        if choice and len(item) > 2 and isinstance(item[2], str):
+            action.connect(action_name, callback, *callback_args.values())
+
+        if item_type == "choice":
             # Choice target name
-            action_id = f"{action_id}::{item[2]}"
+            target_name = item["target_name"]
+            action_id = f"{action_id}::{target_name}"
 
-        menuitem = Gio.MenuItem.new(label, action_id)
+        menu_item = Gio.MenuItem.new(label, action_id)
 
-        if item_type == "U":
-            self.useritem = menuitem
+        if item.get("hidden_disabled"):
+            menu_item.set_attribute_value("hidden-when", GLib.Variant("s", "action-disabled"))
 
-        elif item_type == "=":
-            menuitem.set_attribute_value("hidden-when", GLib.Variant("s", "action-disabled"))
+        if item_type == "user":
+            self.useritem = menu_item
 
         if submenu:
-            menuitem.set_submenu(item[1].model)
-            self.submenus.append(item[1])
+            menu_item.set_submenu(submenu.model)
+            self.submenus.append(submenu)
 
             if GTK_API_VERSION == 3:
                 # Ideally, we wouldn't hide disabled submenus, but a GTK limitation forces us to
                 # https://discourse.gnome.org/t/question-how-do-i-disable-a-menubar-menu-in-gtk-is-it-even-possible/906/9
-                menuitem.set_attribute_value("hidden-when", GLib.Variant("s", "action-disabled"))
+                menu_item.set_attribute_value("hidden-when", GLib.Variant("s", "action-disabled"))
 
-        elif action and item[1]:
-            # Callback
-            action_name = "change-state" if boolean or choice else "activate"
-            action.connect(action_name, *item[1:])
-
-        self.items[label] = menuitem
+        self.items[label] = menu_item
         self.actions[label] = action
 
-        return menuitem
+        return menu_item
 
     def _add_item_to_section(self, item):
 
-        if not self.menu_section or not item[0]:
+        if not self.menu_section or not item:
             # Create new section
 
             self.menu_section = Gio.Menu()
-            menuitem = Gio.MenuItem.new_section(label=None, section=self.menu_section)
-            self.model.append_item(menuitem)
+            menu_item = Gio.MenuItem.new_section(label=None, section=self.menu_section)
+            self.model.append_item(menu_item)
 
-            if not item[0]:
+            if not item:
                 return
 
-        menuitem = self._create_menu_item(item)
-        self.menu_section.append_item(menuitem)
+        menu_item = self._create_menu_item(item)
+        self.menu_section.append_item(menu_item)
 
     def update_model(self):
         """ This function is called before a menu model needs to be manipulated
@@ -206,6 +184,11 @@ class PopupMenu:
             submenu.update_model()
 
     def add_items(self, *items):
+        #for item in items:
+        #    self.pending_items.append(item)
+        pass
+
+    def add_items2(self, *items):
         for item in items:
             self.pending_items.append(item)
 

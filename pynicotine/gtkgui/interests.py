@@ -157,28 +157,80 @@ class Interests:
 
         # Popup menus
         popup = PopupMenu(self.window.application, self.likes_list_view.widget)
-        popup.add_items(
-            ("#" + _("Re_commendations for Item"), self.on_recommend_item, self.likes_list_view, "likes"),
-            ("#" + _("_Search for Item"), self.on_recommend_search, self.likes_list_view, "likes"),
-            ("", None),
-            ("#" + _("_Remove Item"), self.on_remove_thing_i_like)
+        callback_args = {
+            "list_view": self.likes_list_view,
+            "column_id": "likes"
+        }
+        popup.add_items2(
+            {
+                "label": _("Re_commendations for Item"),
+                "callback": self.on_recommend_item,
+                "callback_args": callback_args
+            },
+            {
+                "label": _("_Search for Item"),
+                "callback": self.on_recommend_search,
+                "callback_args": callback_args
+            },
+            {},
+            {
+                "label": _("_Remove Item"),
+                "callback": self.on_remove_thing_i_like
+            }
         )
 
         popup = PopupMenu(self.window.application, self.dislikes_list_view.widget)
-        popup.add_items(
-            ("#" + _("Re_commendations for Item"), self.on_recommend_item, self.dislikes_list_view, "dislikes"),
-            ("#" + _("_Search for Item"), self.on_recommend_search, self.dislikes_list_view, "dislikes"),
-            ("", None),
-            ("#" + _("_Remove Item"), self.on_remove_thing_i_dislike)
+        callback_args = {
+            "list_view": self.dislikes_list_view,
+            "column_id": "dislikes"
+        }
+        popup.add_items2(
+            {
+                "label": _("Re_commendations for Item"),
+                "callback": self.on_recommend_item,
+                "callback_args": callback_args
+            },
+            {
+                "label": _("_Search for Item"),
+                "callback": self.on_recommend_search,
+                "callback_args": callback_args
+            },
+            {},
+            {
+                "label": _("_Remove Item"),
+                "callback": self.on_remove_thing_i_dislike
+            }
         )
 
         popup = PopupMenu(self.window.application, self.recommendations_list_view.widget, self.on_popup_r_menu)
-        popup.add_items(
-            ("$" + _("I _Like This"), self.on_like_recommendation, self.recommendations_list_view, "item"),
-            ("$" + _("I _Dislike This"), self.on_dislike_recommendation, self.recommendations_list_view, "item"),
-            ("", None),
-            ("#" + _("_Recommendations for Item"), self.on_recommend_item, self.recommendations_list_view, "item"),
-            ("#" + _("_Search for Item"), self.on_recommend_search, self.recommendations_list_view, "item")
+        callback_args = {
+            "list_view": self.recommendations_list_view,
+            "column_id": "item"
+        }
+        popup.add_items2(
+            {
+                "label": _("I _Like This"),
+                "type": "boolean",
+                "callback": self.on_like_recommendation,
+                "callback_args": callback_args
+            },
+            {
+                "label": _("I _Dislike This"),
+                "type": "boolean",
+                "callback": self.on_dislike_recommendation,
+                "callback_args": callback_args
+            },
+            {},
+            {
+                "label": _("_Recommendations for Item"),
+                "callback": self.on_recommend_item,
+                "callback_args": callback_args
+            },
+            {
+                "label": _("_Search for Item"),
+                "callback": self.on_recommend_search,
+                "callback_args": callback_args
+            }
         )
 
         popup = UserPopupMenu(self.window.application, self.similar_users_list_view.widget, self.on_popup_ru_menu)

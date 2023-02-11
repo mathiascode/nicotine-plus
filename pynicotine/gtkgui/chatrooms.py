@@ -484,15 +484,6 @@ class ChatRoom:
         ChatEntry(self.window.application, self.chat_entry, chatrooms.completion, room, slskmessages.SayChatroom,
                   core.chatrooms.send_message, is_chatroom=True)
 
-        self.log_toggle.set_active(config.sections["logging"]["chatrooms"])
-        if not self.log_toggle.get_active():
-            self.log_toggle.set_active(self.room in config.sections["logging"]["rooms"])
-
-        self.auto_join_toggle.set_active(room in config.sections["server"]["autojoin"])
-        self.auto_join_toggle.connect("toggled", self.on_autojoin)
-
-        self.toggle_chat_buttons()
-
         if room not in config.sections["columns"]["chat_room"]:
             config.sections["columns"]["chat_room"][room] = {}
 
@@ -588,6 +579,14 @@ class ChatRoom:
             ("#" + _("_Leave Room"), self.on_leave_room)
         )
 
+        self.log_toggle.set_active(config.sections["logging"]["chatrooms"])
+        if not self.log_toggle.get_active():
+            self.log_toggle.set_active(self.room in config.sections["logging"]["rooms"])
+
+        self.auto_join_toggle.set_active(room in config.sections["server"]["autojoin"])
+        self.auto_join_toggle.connect("toggled", self.on_autojoin)
+
+        self.toggle_chat_buttons()
         self.setup_public_feed()
         self.chat_entry.grab_focus()
 
