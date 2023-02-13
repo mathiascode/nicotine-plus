@@ -258,33 +258,55 @@ class MessageDialog(Window):
                 parent = active_dialog
                 break
 
-        widget = Gtk.MessageDialog(
-            transient_for=parent.widget if parent else None, destroy_with_parent=True, message_type=message_type,
-            default_width=width, text=title, secondary_text=message
+        widget = Gtk.Window(
+            transient_for=parent.widget if parent else None,
+            default_width=width,
+            resizable=False,
+            child=Gtk.Box(orientation=Gtk.Orientation.VERTICAL, visible=True),
+            title="",
         )
         super().__init__(widget=widget)
-        widget.connect("response", self.on_response, callback, callback_data)
 
         if not buttons:
             buttons = [(_("Close"), Gtk.ResponseType.CLOSE)]
 
-        for button_label, response_type in buttons:
-            widget.add_button(button_label, response_type)
-
         self.parent = parent
-        self.container = self.widget.get_message_area()
+        self.action_area = self.container = None
 
-        self._make_message_selectable()
+        self._add_title_message(title, message)
+        self._add_buttons(buttons, callback, callback_data)
         self._add_long_message(long_message)
 
-    def _make_message_selectable(self):
+    def _add_title_message(self, title, message):
+
+        vbox = self.widget.get_child()
+        second_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20, visible=True)
+        box = Gtk.Box(margin_start=30, margin_end=30, spacing=30, visible=True)
+        self.container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, spacing=10, visible=True)
+        title_label = Gtk.Label(label=title, visible=True)
+        secondary_label = Gtk.Label(label=message, selectable=True, visible=True)
+        self.action_area = Gtk.Box(hexpand=True, homogeneous=True, visible=True)
+
+        add_css_class(self.widget, "dialog")
+        add_css_class(self.widget, "message")
+        add_css_class(vbox, "dialog-vbox")
+        add_css_class(title_label, "title")
+        add_css_class(self.action_area, "dialog-action-area")
 
         if GTK_API_VERSION >= 4:
-            label = self.container.get_last_child()
+            vbox.append(second_vbox)
+            second_vbox.append(box)
+            box.append(self.container)
+            self.container.append(title_label)
+            self.container.append(secondary_label)
+            vbox.append(self.action_area)
         else:
-            label = self.container.get_children()[-1]
-
-        label.set_selectable(True)
+            vbox.add(second_vbox)
+            second_vbox.add(box)
+            box.add(self.container)
+            self.container.add(title_label)
+            self.container.add(secondary_label)
+            vbox.add(self.action_area)
 
     def _add_long_message(self, text):
 
@@ -305,6 +327,17 @@ class MessageDialog(Window):
 
         textview = TextView(scrolled_window, editable=False)
         textview.append_line(text)
+
+    def _add_buttons(self, buttons, callback, callback_data):
+
+        for button_label, response_type in buttons:
+            button = Gtk.Button(label=button_label, hexpand=True, use_underline=True, visible=True)
+            button.connect("clicked", self.on_response, response_type, callback, callback_data)
+
+            if GTK_API_VERSION >= 4:
+                self.action_area.append(button)
+            else:
+                self.action_area.add(button)
 
     def _add_option_toggle(self, option_label, option_value):
 
