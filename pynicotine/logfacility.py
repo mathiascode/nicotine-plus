@@ -79,6 +79,7 @@ class Logger:
         self._log_levels = {LogLevel.DEFAULT}
         self._log_files = {}
 
+        events.connect("log-message", self._log_debug_file)
         events.schedule(delay=10, callback=self._close_inactive_log_files, repeat=True)
 
     """ Log Levels """
@@ -150,13 +151,10 @@ class Logger:
             log_file.last_active = time.time()
 
         except Exception as error:
-            # Avoid infinite recursion
-            should_log_file = (folder_path != config.sections["logging"]["debuglogsdir"])
-
             self.add(_('Couldn\'t write to log file "%(filename)s": %(error)s'), {
                 "filename": os.path.join(folder_path, base_name),
                 "error": error
-            }, should_log_file=should_log_file)
+            })
 
     def close_log_file(self, log_file):
 
@@ -209,7 +207,18 @@ class Logger:
     def delete_log_callback(self, path):
         os.remove(encode_path(path))
 
-    def log_transfer(self, msg, msg_args=None):
+    def _log_debug_file(self, _timestamp_format, msg, _title, _level):
+
+        if not config.sections["logging"].get("debug_file_output", False):
+            return
+
+        # Logging is done in different threads, write to file in the main thread for safety
+        events.invoke_main_thread(
+            self.write_log_file, folder_path=config.sections["logging"]["debuglogsdir"],
+            base_name=self.debug_file_name, text=msg
+        )
+
+    def _log_transfer_file(self, msg, msg_args=None):
 
         if not config.sections["logging"]["transfers"]:
             return
@@ -234,7 +243,7 @@ class Logger:
 
         return msg
 
-    def add(self, msg, msg_args=None, title=None, level=LogLevel.DEFAULT, should_log_file=True):
+    def add(self, msg, msg_args=None, title=None, level=LogLevel.DEFAULT):
 
         if level not in self._log_levels:
             return
@@ -250,10 +259,6 @@ class Logger:
 
         msg = self._format_log_message(level, msg, msg_args)
 
-        if should_log_file and config.sections["logging"].get("debug_file_output", False):
-            self.write_log_file(
-                folder_path=config.sections["logging"]["debuglogsdir"], base_name=self.debug_file_name, text=msg)
-
         try:
             timestamp_format = config.sections["logging"].get("log_timestamp", "%Y-%m-%d %H:%M:%S")
             events.emit("log-message", timestamp_format, msg, title, level)
@@ -267,11 +272,11 @@ class Logger:
                 sys.stdout = open(os.devnull, "w", encoding="utf-8")  # pylint: disable=consider-using-with
 
     def add_download(self, msg, msg_args=None):
-        self.log_transfer(msg, msg_args)
+        self._log_transfer_file(msg, msg_args)
         self.add(msg, msg_args=msg_args, level=LogLevel.DOWNLOAD)
 
     def add_upload(self, msg, msg_args=None):
-        self.log_transfer(msg, msg_args)
+        self._log_transfer_file(msg, msg_args)
         self.add(msg, msg_args=msg_args, level=LogLevel.UPLOAD)
 
     def add_search(self, msg, msg_args=None):
