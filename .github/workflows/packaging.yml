@@ -76,18 +76,19 @@ jobs:
           install: >-
             mingw-w64-${{ matrix.arch }}-gettext
             mingw-w64-${{ matrix.arch }}-gtk${{ matrix.gtk }}
-            mingw-w64-${{ matrix.arch }}-python-chardet
-            mingw-w64-${{ matrix.arch }}-python-cx-freeze
-            mingw-w64-${{ matrix.arch }}-python-flake8
-            mingw-w64-${{ matrix.arch }}-python-pip
-            mingw-w64-${{ matrix.arch }}-python-pylint
-            mingw-w64-${{ matrix.arch }}-python-gobject
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: setup.py
 
       - name: Install additional dependencies
-        run: python3 packaging/windows/dependencies.py
+        run: python packaging/windows/dependencies.py
 
       - name: Freeze application
-        run: python3 packaging/windows/setup.py bdist_msi
+        run: python packaging/windows/setup.py bdist_msi
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v3
