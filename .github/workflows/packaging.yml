@@ -123,10 +123,10 @@ jobs:
           cache-dependency-path: setup.py
 
       - name: Install build dependencies
-        run: python3 packaging/macos/dependencies.py
+        run: python packaging/macos/dependencies.py
 
       - name: Freeze application
-        run: python3 packaging/macos/setup.py bdist_dmg
+        run: python packaging/macos/setup.py bdist_dmg
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v3
