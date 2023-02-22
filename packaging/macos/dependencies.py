@@ -31,6 +31,7 @@ def install_brew():
     use_libadwaita = gtk_version == "4" and os.environ.get("NICOTINE_LIBADWAITA") == "1"
 
     packages = ["adwaita-icon-theme",
+                "gdbm",
                 "gettext",
                 "gobject-introspection",
                 f"gtk+{gtk_version}"]
