@@ -34,13 +34,7 @@ def install_pacman():
 
     packages = [f"{prefix}ca-certificates",
                 f"{prefix}gettext",
-                f"{prefix}gtk{gtk_version}",
-                f"{prefix}python-chardet",
-                f"{prefix}python-cx-freeze",
-                f"{prefix}python-flake8",
-                f"{prefix}python-pip",
-                f"{prefix}python-pylint",
-                f"{prefix}python-gobject"]
+                f"{prefix}gtk{gtk_version}"]
 
     if use_libadwaita:
         packages.append(prefix + "libadwaita")
@@ -51,8 +45,8 @@ def install_pacman():
 def install_pypi():
     """ Install dependencies from PyPi """
 
-    packages = ["semidbm"]
-    subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", ".[packaging,test]",
+                           "chardet", "semidbm"])
 
 
 if __name__ == "__main__":
