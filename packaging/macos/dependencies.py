@@ -31,7 +31,6 @@ def install_brew():
     use_libadwaita = gtk_version == "4" and os.environ.get("NICOTINE_LIBADWAITA") == "1"
 
     packages = ["adwaita-icon-theme",
-                "gdbm",
                 "gettext",
                 "gobject-introspection",
                 f"gtk+{gtk_version}"]
@@ -46,7 +45,7 @@ def install_pypi():
     """ Install dependencies from PyPi """
 
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary", "cx_Freeze",
-                           "-e", ".[packaging,test]"])
+                           "-e", ".[packaging,test]", "semidbm"])
 
 
 if __name__ == "__main__":
