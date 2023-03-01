@@ -19,23 +19,21 @@
 
 import os
 import subprocess
+import sys
 
-""" Script used to install core dependencies in Homebrew """
+""" Script used to install dependencies in Homebrew """
 
 
 def install_brew():
     """ Install dependencies from the main Homebrew repos """
 
-    gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or '3'
-    use_libadwaita = gtk_version == '4' and os.environ.get("NICOTINE_LIBADWAITA") == '1'
+    gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or "3"
+    use_libadwaita = gtk_version == "4" and os.environ.get("NICOTINE_LIBADWAITA") == "1"
 
     packages = ["adwaita-icon-theme",
-                "flake8",
                 "gettext",
                 "gobject-introspection",
-                "gtk+" + gtk_version,
-                "pygobject3",
-                "pylint"]
+                f"gtk+{gtk_version}"]
 
     if use_libadwaita:
         packages.append("libadwaita")
@@ -43,5 +41,13 @@ def install_brew():
     subprocess.check_call(["brew", "install"] + packages)
 
 
-if __name__ == '__main__':
+def install_pypi():
+    """ Install dependencies from PyPi """
+
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary", "cx_Freeze",
+                           "-e", ".[packaging,test]", "semidbm"])
+
+
+if __name__ == "__main__":
     install_brew()
+    install_pypi()

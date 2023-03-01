@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# COPYRIGHT (C) 2020-2022 Nicotine+ Contributors
+# COPYRIGHT (C) 2022 Nicotine+ Contributors
 #
 # GNU GENERAL PUBLIC LICENSE
 #    Version 3, 29 June 2007
@@ -17,18 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
-import sys
 
-""" Script used to install packaging dependencies in Homebrew """
+def run():
+    """ Run application in headless (no GUI) mode """
 
-
-def install_pypi():
-    """ Install dependencies from PyPi """
-
-    packages = ["cx_Freeze"]
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary", ','.join(packages)] + packages)
-
-
-if __name__ == '__main__':
-    install_pypi()
+    from pynicotine.headless.application import Application
+    return Application().run()

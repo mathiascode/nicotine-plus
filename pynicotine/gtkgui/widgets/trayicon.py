@@ -1,4 +1,4 @@
-# COPYRIGHT (C) 2020-2022 Nicotine+ Contributors
+# COPYRIGHT (C) 2020-2023 Nicotine+ Contributors
 #
 # GNU GENERAL PUBLIC LICENSE
 #    Version 3, 29 June 2007
@@ -19,13 +19,13 @@
 import os
 import sys
 
-from collections import OrderedDict
+from locale import strxfrm
 
 from gi.repository import Gio
 from gi.repository import GLib
-from gi.repository import Gtk
 
 from pynicotine.config import config
+from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_GUI_DIR
 from pynicotine.gtkgui.widgets.dialogs import EntryDialog
 from pynicotine.logfacility import log
@@ -42,14 +42,17 @@ class ImplementationUnavailable(Exception):
 
 class BaseImplementation:
 
-    def __init__(self, frame, core):
+    def __init__(self, application):
 
-        self.frame = frame
-        self.core = core
-        self.menu_items = OrderedDict()
+        self.application = application
+        self.menu_items = {}
         self.menu_item_id = 1
 
         self.create_menu()
+
+    def unload(self):
+        # Implemented in subclasses
+        pass
 
     def create_item(self, text=None, callback=None, check=False):
 
@@ -87,10 +90,8 @@ class BaseImplementation:
 
     def create_menu(self):
 
-        self.show_item = self.create_item(_("Show Nicotine+"), self.frame.on_window_hide_unhide)
-        self.hide_item = self.create_item(_("Hide Nicotine+"), self.frame.on_window_hide_unhide)
-        self.alt_speed_item = self.create_item(
-            _("Alternative Speed Limits"), self.frame.on_alternative_speed_limit, check=True)
+        self.show_item = self.create_item(_("Show Nicotine+"), self.on_window_hide_unhide)
+        self.hide_item = self.create_item(_("Hide Nicotine+"), self.on_window_hide_unhide)
 
         self.create_item()
 
@@ -99,24 +100,27 @@ class BaseImplementation:
 
         self.create_item()
 
-        self.connect_item = self.create_item(_("Connect"), self.frame.on_connect)
-        self.disconnect_item = self.create_item(_("Disconnect"), self.frame.on_disconnect)
-        self.away_item = self.create_item(_("Away"), self.frame.on_away, check=True)
+        self.connect_item = self.create_item(_("Connect"), self.application.on_connect)
+        self.disconnect_item = self.create_item(_("Disconnect"), self.application.on_disconnect)
+        self.away_item = self.create_item(_("Away"), self.application.on_away, check=True)
 
         self.create_item()
 
         self.send_message_item = self.create_item(_("Send Message"), self.on_open_private_chat)
-        self.lookup_info_item = self.create_item(_("Request User's Info"), self.on_get_a_users_info)
-        self.lookup_shares_item = self.create_item(_("Request User's Shares"), self.on_get_a_users_shares)
+        self.lookup_info_item = self.create_item(_("View User Profile"), self.on_get_a_users_info)
+        self.lookup_shares_item = self.create_item(_("Browse Shares"), self.on_get_a_users_shares)
 
         self.create_item()
 
-        self.create_item(_("Preferences"), self.frame.on_preferences)
-        self.create_item(_("Quit"), self.core.quit)
+        self.create_item(_("Preferences"), self.application.on_preferences)
+        self.create_item(_("Quit"), core.quit)
 
     def update_window_visibility(self):
 
-        visible = self.frame.window.get_property("visible")
+        if self.application.window is None:
+            return
+
+        visible = self.application.window.is_visible()
 
         self.set_item_visible(self.show_item, not visible)
         self.set_item_visible(self.hide_item, visible)
@@ -125,7 +129,7 @@ class BaseImplementation:
 
     def update_user_status(self):
 
-        sensitive = self.core.user_status != UserStatus.OFFLINE
+        sensitive = core.user_status != UserStatus.OFFLINE
 
         for item in (self.away_item, self.send_message_item,
                      self.lookup_info_item, self.lookup_shares_item):
@@ -135,13 +139,9 @@ class BaseImplementation:
 
         self.set_item_visible(self.connect_item, not sensitive)
         self.set_item_visible(self.disconnect_item, sensitive)
-        self.set_item_toggled(self.away_item, self.core.user_status == UserStatus.AWAY)
+        self.set_item_toggled(self.away_item, core.user_status == UserStatus.AWAY)
 
         self.update_icon()
-        self.update_menu()
-
-    def update_alternative_speed_limit_status(self):
-        self.set_item_toggled(self.alt_speed_item, config.sections["transfers"]["usealtlimits"])
         self.update_menu()
 
     def update_icon(self, force_update=False):
@@ -149,22 +149,22 @@ class BaseImplementation:
         if not force_update and not self.is_visible():
             return
 
-        # Check for hilites, and display hilite icon if there is a room or private hilite
-        if (self.core.notifications
-                and (self.core.notifications.chat_hilites["rooms"]
-                     or self.core.notifications.chat_hilites["private"])):
+        # Check for highlights, and display highlight icon if there is a highlighted room or private chat
+        if (self.application.window
+                and (self.application.window.chatrooms.highlighted_rooms
+                     or self.application.window.privatechat.highlighted_users)):
             icon_name = "msg"
 
-        elif self.core.user_status == UserStatus.ONLINE:
+        elif core.user_status == UserStatus.ONLINE:
             icon_name = "connect"
 
-        elif self.core.user_status == UserStatus.AWAY:
+        elif core.user_status == UserStatus.AWAY:
             icon_name = "away"
 
         else:
             icon_name = "disconnect"
 
-        icon_name = config.application_id + "-" + icon_name
+        icon_name = f"{config.application_id}-{icon_name}"
         self.set_icon_name(icon_name)
 
     def set_icon_name(self, icon_name):
@@ -187,13 +187,21 @@ class BaseImplementation:
         self.set_item_text(self.uploads_item, status)
         self.update_menu()
 
+    def on_window_hide_unhide(self, *_args):
+
+        if self.application.window.is_visible():
+            self.application.window.hide()
+            return
+
+        self.application.window.show()
+
     def on_downloads(self, *_args):
-        self.frame.change_main_page(self.frame.downloads_page)
-        self.frame.show()
+        self.application.window.change_main_page(self.application.window.downloads_page)
+        self.application.window.show()
 
     def on_uploads(self, *_args):
-        self.frame.change_main_page(self.frame.uploads_page)
-        self.frame.show()
+        self.application.window.change_main_page(self.application.window.uploads_page)
+        self.application.window.show()
 
     def on_open_private_chat_response(self, dialog, _response_id, _data):
 
@@ -202,18 +210,17 @@ class BaseImplementation:
         if not user:
             return
 
-        self.core.privatechats.show_user(user)
-        self.frame.show()
+        core.privatechat.show_user(user)
+        self.application.window.show()
 
     def on_open_private_chat(self, *_args):
 
-        users = (i[0] for i in config.sections["server"]["userlist"])
         EntryDialog(
-            parent=self.frame.application.get_active_window(),
-            title=config.application_name + ": " + _("Start Messaging"),
-            message=_('Enter the name of the user whom you want to send a message:'),
+            parent=self.application.window,
+            title=_("Start Messaging"),
+            message=_("Enter the name of the user whom you want to send a message:"),
             callback=self.on_open_private_chat_response,
-            droplist=users
+            droplist=sorted(core.userlist.buddies, key=strxfrm)
         ).show()
 
     def on_get_a_users_info_response(self, dialog, _response_id, _data):
@@ -223,18 +230,17 @@ class BaseImplementation:
         if not user:
             return
 
-        self.core.userinfo.request_user_info(user)
-        self.frame.show()
+        core.userinfo.show_user(user)
+        self.application.window.show()
 
     def on_get_a_users_info(self, *_args):
 
-        users = (i[0] for i in config.sections["server"]["userlist"])
         EntryDialog(
-            parent=self.frame.application.get_active_window(),
-            title=config.application_name + ": " + _("Request User Info"),
-            message=_('Enter the name of the user whose info you want to see:'),
+            parent=self.application.window,
+            title=_("View User Profile"),
+            message=_("Enter the name of the user whose profile you want to see:"),
             callback=self.on_get_a_users_info_response,
-            droplist=users
+            droplist=sorted(core.userlist.buddies, key=strxfrm)
         ).show()
 
     def on_get_a_users_shares_response(self, dialog, _response_id, _data):
@@ -244,29 +250,24 @@ class BaseImplementation:
         if not user:
             return
 
-        self.core.userbrowse.browse_user(user)
-        self.frame.show()
+        core.userbrowse.browse_user(user)
+        self.application.window.show()
 
     def on_get_a_users_shares(self, *_args):
 
-        users = (i[0] for i in config.sections["server"]["userlist"])
         EntryDialog(
-            parent=self.frame.application.get_active_window(),
-            title=config.application_name + ": " + _("Request Shares List"),
-            message=_('Enter the name of the user whose shares you want to see:'),
+            parent=self.application.window,
+            title=_("Browse Shares"),
+            message=_("Enter the name of the user whose shares you want to see:"),
             callback=self.on_get_a_users_shares_response,
-            droplist=users
+            droplist=sorted(core.userlist.buddies, key=strxfrm)
         ).show()
 
     def is_visible(self):  # pylint:disable=no-self-use
         # Implemented in subclasses
         return False
 
-    def show(self):
-        # Implemented in subclasses
-        pass
-
-    def hide(self):
+    def set_visible(self, _visible):
         # Implemented in subclasses
         pass
 
@@ -311,41 +312,40 @@ class StatusNotifierImplementation(BaseImplementation):
 
         def register(self):
 
-            xml_output = "<node name='/'><interface name='%s'>" % self._interface_name
+            xml_output = f"<node name='/'><interface name='{self._interface_name}'>"
 
             for property_name, prop in self.properties.items():
-                xml_output += "<property name='%s' type='%s' access='read'/>" % (property_name, prop.signature)
+                xml_output += f"<property name='{property_name}' type='{prop.signature}' access='read'/>"
 
             for method_name, method in self.methods.items():
-                xml_output += "<method name='%s'>" % method_name
+                xml_output += f"<method name='{method_name}'>"
 
                 for in_signature in method.in_args:
-                    xml_output += "<arg type='%s' direction='in'/>" % in_signature
+                    xml_output += f"<arg type='{in_signature}' direction='in'/>"
                 for out_signature in method.out_args:
-                    xml_output += "<arg type='%s' direction='out'/>" % out_signature
+                    xml_output += f"<arg type='{out_signature}' direction='out'/>"
 
                 xml_output += "</method>"
 
             for signal_name, signal in self.signals.items():
-                xml_output += "<signal name='%s'>" % signal_name
+                xml_output += f"<signal name='{signal_name}'>"
 
                 for signature in signal.args:
-                    xml_output += "<arg type='%s'/>" % signature
+                    xml_output += f"<arg type='{signature}'/>"
 
                 xml_output += "</signal>"
 
             xml_output += "</interface></node>"
 
             registration_id = self._bus.register_object(
-                self._object_path,
-                Gio.DBusNodeInfo.new_for_xml(xml_output).interfaces[0],
-                self.on_method_call,
-                self.on_get_property,
-                None
+                object_path=self._object_path,
+                interface_info=Gio.DBusNodeInfo.new_for_xml(xml_output).interfaces[0],
+                method_call_closure=self.on_method_call,
+                get_property_closure=self.on_get_property
             )
 
             if not registration_id:
-                raise GLib.Error("Failed to register object with path %s" % self._object_path)
+                raise GLib.Error(f"Failed to register object with path {self._object_path}")
 
             self._registration_id = registration_id
 
@@ -368,22 +368,25 @@ class StatusNotifierImplementation(BaseImplementation):
 
         def emit_signal(self, name, *args):
 
+            arg_types = "".join(self.signals[name].args)
+
             self._bus.emit_signal(
-                None,
-                self._object_path,
-                self._interface_name,
-                name,
-                GLib.Variant("(%s)" % "".join(self.signals[name].args), args)
+                destination_bus_name=None,
+                object_path=self._object_path,
+                interface_name=self._interface_name,
+                signal_name=name,
+                parameters=GLib.Variant(f"({arg_types})", args)
             )
 
         def on_method_call(self, _connection, _sender, _path, _interface_name, method_name, parameters, invocation):
 
             method = self.methods[method_name]
             result = method.callback(*parameters.unpack())
+            out_arg_types = "".join(method.out_args)
             return_value = None
 
             if method.out_args:
-                return_value = GLib.Variant("(%s)" % "".join(method.out_args), result)
+                return_value = GLib.Variant(f"({out_arg_types})", result)
 
             invocation.return_value(return_value)
 
@@ -401,7 +404,7 @@ class StatusNotifierImplementation(BaseImplementation):
                 bus_type=Gio.BusType.SESSION
             )
 
-            self._items = OrderedDict()
+            self._items = {}
             self._revision = 0
 
             for method_name, in_args, out_args, callback in (
@@ -513,36 +516,39 @@ class StatusNotifierImplementation(BaseImplementation):
             super().unregister()
             self.menu.unregister()
 
-    def __init__(self, frame, core):
+    def __init__(self, application):
 
-        super().__init__(frame, core)
+        super().__init__(application)
 
         self.tray_icon = None
         self.custom_icons = False
 
         try:
-            self.bus = Gio.bus_get_sync(Gio.BusType.SESSION)
-            self.tray_icon = self.StatusNotifierItemService(activate_callback=frame.on_window_hide_unhide)
+            self.bus = Gio.bus_get_sync(bus_type=Gio.BusType.SESSION)
+            self.tray_icon = self.StatusNotifierItemService(activate_callback=self.on_window_hide_unhide)
             self.tray_icon.register()
 
             self.bus.call_sync(
-                "org.kde.StatusNotifierWatcher",
-                "/StatusNotifierWatcher",
-                "org.kde.StatusNotifierWatcher",
-                "RegisterStatusNotifierItem",
-                GLib.Variant("(s)", ("/org/ayatana/NotificationItem/Nicotine",)),
-                None,
-                Gio.DBusCallFlags.NONE, -1
+                bus_name="org.kde.StatusNotifierWatcher",
+                object_path="/StatusNotifierWatcher",
+                interface_name="org.kde.StatusNotifierWatcher",
+                method_name="RegisterStatusNotifierItem",
+                parameters=GLib.Variant("(s)", ("/org/ayatana/NotificationItem/Nicotine",)),
+                reply_type=None,
+                flags=Gio.DBusCallFlags.NONE,
+                timeout_msec=-1
             )
 
         except GLib.Error as error:
-            if self.tray_icon is not None:
-                self.tray_icon.unregister()
-
-            raise ImplementationUnavailable("StatusNotifier implementation not available: %s" % error) from error
+            self.unload()
+            raise ImplementationUnavailable(f"StatusNotifier implementation not available: {error}") from error
 
         self.update_menu()
         self.update_icon_theme()
+
+    def unload(self):
+        if self.tray_icon is not None:
+            self.tray_icon.unregister()
 
     @staticmethod
     def check_icon_path(icon_name, icon_path):
@@ -551,7 +557,7 @@ class StatusNotifierImplementation(BaseImplementation):
         if not icon_path:
             return False
 
-        icon_scheme = config.application_id + "-" + icon_name + "."
+        icon_scheme = f"{config.application_id}-{icon_name}."
 
         try:
             with os.scandir(encode_path(icon_path)) as entries:
@@ -619,116 +625,19 @@ class StatusNotifierImplementation(BaseImplementation):
     def is_visible(self):
         return self.tray_icon.properties["Status"].value == "Active"
 
-    def show(self):
+    def set_visible(self, visible):
 
-        status = "Active"
+        status = "Active" if visible else "Passive"
+
         self.tray_icon.properties["Status"].value = status
         self.tray_icon.emit_signal("NewStatus", status)
-
-    def hide(self):
-
-        status = "Passive"
-        self.tray_icon.properties["Status"].value = status
-        self.tray_icon.emit_signal("NewStatus", status)
-
-
-class StatusIconImplementation(BaseImplementation):
-
-    def __init__(self, frame, core):
-
-        super().__init__(frame, core)
-
-        if not hasattr(Gtk, "StatusIcon") or sys.platform == "darwin" or os.getenv("WAYLAND_DISPLAY"):
-            # GtkStatusIcon does not work on macOS and Wayland
-            raise ImplementationUnavailable("StatusIcon implementation not available")
-
-        self.tray_icon = Gtk.StatusIcon(tooltip_text=config.application_name)
-        self.tray_icon.connect("activate", self.frame.on_window_hide_unhide)
-        self.tray_icon.connect("popup-menu", self.on_status_icon_popup)
-
-        self.gtk_menu = self.build_gtk_menu()
-
-    def on_status_icon_popup(self, _status_icon, button, _activate_time):
-
-        if button == 3:
-            time = Gtk.get_current_event_time()
-            self.gtk_menu.popup(None, None, None, None, button, time)
-
-    @staticmethod
-    def set_item_text(item, text):
-        BaseImplementation.set_item_text(item, text)
-        item["gtk_menu_item"].set_label(text)
-
-    @staticmethod
-    def set_item_sensitive(item, sensitive):
-        BaseImplementation.set_item_sensitive(item, sensitive)
-        item["gtk_menu_item"].set_sensitive(sensitive)
-
-    @staticmethod
-    def set_item_visible(item, visible):
-        BaseImplementation.set_item_visible(item, visible)
-        item["gtk_menu_item"].set_visible(visible)
-
-    @staticmethod
-    def set_item_toggled(item, toggled):
-
-        BaseImplementation.set_item_toggled(item, toggled)
-        gtk_menu_item = item["gtk_menu_item"]
-
-        with gtk_menu_item.handler_block(item["gtk_handler"]):
-            gtk_menu_item.set_active(toggled)
-
-    def build_gtk_menu(self):
-
-        gtk_menu = Gtk.Menu()
-
-        for item in self.menu_items.values():
-            text = item.get("text")
-
-            if text is None:
-                gtk_menu_item = Gtk.SeparatorMenuItem()
-            else:
-                if "toggled" in item:
-                    gtk_menu_item = Gtk.CheckMenuItem.new_with_label(text)
-                else:
-                    gtk_menu_item = Gtk.MenuItem.new_with_label(text)
-
-                item["gtk_handler"] = gtk_menu_item.connect("activate", item["callback"])
-
-            item["gtk_menu_item"] = gtk_menu_item
-
-            gtk_menu_item.show()
-            gtk_menu.append(gtk_menu_item)
-
-        return gtk_menu
-
-    def set_icon_name(self, icon_name):
-        self.tray_icon.set_from_icon_name(icon_name)
-
-    def is_visible(self):
-        return self.tray_icon.get_visible() and self.tray_icon.is_embedded()
-
-    def show(self):
-
-        if self.is_visible():
-            return
-
-        self.tray_icon.set_visible(True)
-
-    def hide(self):
-
-        if not self.is_visible():
-            return
-
-        self.tray_icon.set_visible(False)
 
 
 class TrayIcon:
 
-    def __init__(self, frame, core):
+    def __init__(self, application):
 
-        self.frame = frame
-        self.core = core
+        self.application = application
         self.available = True
         self.implementation = None
 
@@ -741,11 +650,11 @@ class TrayIcon:
             return
 
         Gio.bus_watch_name(
-            Gio.BusType.SESSION,
-            "org.kde.StatusNotifierWatcher",
-            Gio.BusNameWatcherFlags.NONE,
-            self.load,
-            None
+            bus_type=Gio.BusType.SESSION,
+            name="org.kde.StatusNotifierWatcher",
+            flags=Gio.BusNameWatcherFlags.NONE,
+            name_appeared_closure=self.load,
+            name_vanished_closure=self.unload
         )
 
     def load(self, *_args):
@@ -762,23 +671,23 @@ class TrayIcon:
 
         if self.implementation is None:
             try:
-                self.implementation = StatusNotifierImplementation(self.frame, self.core)
+                self.implementation = StatusNotifierImplementation(self.application)
 
             except ImplementationUnavailable:
-                try:
-                    self.implementation = StatusIconImplementation(self.frame, self.core)
-
-                except ImplementationUnavailable:
-                    self.available = False
-                    return
+                self.available = False
+                return
 
             self.refresh_state()
 
-        if config.sections["ui"]["trayicon"]:
-            self.show()
-            return
+        self.set_visible(config.sections["ui"]["trayicon"])
 
-        self.hide()
+    def unload(self, *_args):
+
+        self.available = False
+
+        if self.implementation:
+            self.implementation.unload()
+            self.implementation = None
 
     def update_window_visibility(self):
         if self.implementation:
@@ -787,10 +696,6 @@ class TrayIcon:
     def update_user_status(self):
         if self.implementation:
             self.implementation.update_user_status()
-
-    def update_alternative_speed_limit_status(self):
-        if self.implementation:
-            self.implementation.update_alternative_speed_limit_status()
 
     def update_icon(self, force_update=False):
         if self.implementation:
@@ -813,7 +718,6 @@ class TrayIcon:
         self.update_icon(force_update=True)
         self.update_window_visibility()
         self.update_user_status()
-        self.update_alternative_speed_limit_status()
 
     def is_visible(self):
 
@@ -822,10 +726,6 @@ class TrayIcon:
 
         return False
 
-    def show(self):
+    def set_visible(self, visible):
         if self.implementation:
-            self.implementation.show()
-
-    def hide(self):
-        if self.implementation:
-            self.implementation.hide()
+            self.implementation.set_visible(visible)

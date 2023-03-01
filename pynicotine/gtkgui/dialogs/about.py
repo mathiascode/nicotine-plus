@@ -1,4 +1,4 @@
-# COPYRIGHT (C) 2020-2022 Nicotine+ Contributors
+# COPYRIGHT (C) 2020-2023 Nicotine+ Contributors
 #
 # GNU GENERAL PUBLIC LICENSE
 #    Version 3, 29 June 2007
@@ -21,337 +21,364 @@ from gi.repository import Gtk
 from pynicotine.config import config
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.widgets.dialogs import Dialog
+from pynicotine.gtkgui.widgets.ui import UserInterface
 from pynicotine.utils import open_uri
 
 
 class About(Dialog):
 
-    AUTHORS = """Nicotine+ Team
-–––––––––––––––––––––––––––––––––––––––>
+    AUTHORS = [
+        "<b>Nicotine+ Team</b>",
 
-> Mat (mathiascode)
+        """>> <b>Mat (mathiascode)</b>
    - Maintainer (2020–present)
-   - Developer
+   - Developer""",
 
-> eLvErDe
+        """>> <b>eLvErDe</b>
    - Maintainer (2013–2016)
    - Domain name administrator
    - Source code migration from SVN to GitHub
-   - Developer
+   - Developer""",
 
-> Han Boetes
+        """>> <b>Han Boetes</b>
    - Tester
    - Documentation
    - Bug hunting
-   - Translation management
+   - Translation management""",
 
-> alekksander
+        """>> <b>alekksander</b>
    - Tester
-   - Redesign of some graphics
+   - Redesign of some graphics""",
 
-> slook
+        """>> <b>slook</b>
    - Tester
-   - Accessibility improvements
+   - Accessibility improvements""",
 
 
-Inactive
+        "\nInactive",
 
-> daelstorm
+        """>> <b>daelstorm</b>
    - Maintainer (2004–2009)
-   - Developer
+   - Developer""",
 
-> quinox
+        """>> <b>quinox</b>
    - Maintainer (2009–2012)
-   - Developer
+   - Developer""",
 
-> Michael Labouebe (gfarmerfr)
+        """>> <b>Michael Labouebe (gfarmerfr)</b>
    - Maintainer (2016–2017)
-   - Developer
+   - Developer""",
 
-> Kip Warner
+        """>> <b>Kip Warner</b>
    - Maintainer (2018–2020)
    - Developer
-   - Debianization
+   - Debianization""",
 
-> gallows (aka 'burp O')
+        """>> <b>gallows (aka 'burp O')</b>
    - Developer
    - Packager
-   - Submitted Slack.Build file
+   - Submitted Slack.Build file""",
 
-> hedonist (formerly known as alexbk)
+        """>> <b>hedonist (formerly known as alexbk)</b>
    - OS X Nicotine.app maintainer / developer
-   - Author of PySoulSeek, used for Nicotine core
+   - Author of PySoulSeek, used for Nicotine core""",
 
-> lee8oi
+        """>> <b>lee8oi</b>
    - Bash commander
-   - New and updated /alias
+   - New and updated /alias""",
 
-> INMCM
-   - Nicotine+ topic maintainer on ubuntuforums.org
+        """>> <b>INMCM</b>
+   - Nicotine+ topic maintainer on ubuntuforums.org""",
 
-> suser-guru
+        """>> <b>suser-guru</b>
    - Suse Linux packager
-   - Nicotine+ RPM's for Suse 9.1, 9.2, 9.3, 10.0, 10.1
+   - Nicotine+ RPM's for Suse 9.1, 9.2, 9.3, 10.0, 10.1""",
 
-> osiris
+        """>> <b>osiris</b>
    - Handy-man
    - Documentation
    - Some GNU/Linux packaging
    - Nicotine+ on Win32
-   - Author of Nicotine+ guide
+   - Author of Nicotine+ guide""",
 
-> Mutnick
+        """>> <b>Mutnick</b>
    - Created Nicotine+ GitHub organization
-   - Developer
+   - Developer""",
 
-> Lene Preuss
+        """>> <b>Lene Preuss</b>
    - Python 3 migration
-   - Unit and DEP-8 continuous integration testing
+   - Unit and DEP-8 continuous integration testing""",
 
 
-Nicotine Team
-–––––––––––––––––––––––––––––––––––––––>
+        "\n<b>Nicotine Team</b>",
 
-> Ingmar K. Steen (Hyriand)
-   - Maintainer (2003–2004)
+        """>> <b>Ingmar K. Steen (Hyriand)</b>
+   - Maintainer (2003–2004)""",
 
-> daelstorm
+        """>> <b>daelstorm</b>
    - Beta tester
    - Designer of most of the settings
-   - Made the Nicotine icons
+   - Made the Nicotine icons""",
 
-> SmackleFunky
+        """>> <b>SmackleFunky</b>
+   - Beta tester""",
+
+        """>> <b>Wretched</b>
    - Beta tester
+   - Bringer of great ideas""",
 
-> Wretched
+        """>> <b>(va)\\*10^3</b>
    - Beta tester
-   - Bringer of great ideas
+   - Designer of Nicotine homepage and artwork (logos)""",
 
-> (va)\\*10^3
-   - Beta tester
-   - Designer of Nicotine homepage and artwork (logos)
-
-> sierracat
+        """>> <b>sierracat</b>
    - MacOSX tester
-   - soulseeX developer
+   - soulseeX developer""",
 
-> Gustavo J. A. M. Carneiro
-   - Created the exception dialog
+        """>> <b>Gustavo J. A. M. Carneiro</b>
+   - Created the exception dialog""",
 
-> SeeSchloss
+        """>> <b>SeeSchloss</b>
    - Developer
    - Created 1.0.8 Win32 installer
-   - Created Soulfind,
-     open source Soulseek server written in D
+   - Created Soulfind, open source Soulseek server written in D""",
 
-> vasi
+        """>> <b>vasi</b>
    - Mac developer
-   - Packaged Nicotine on OSX PowerPC
+   - Packaged Nicotine on OSX PowerPC""",
 
 
-PySoulSeek Contributors
-–––––––––––––––––––––––––––––––––––––––>
+        "\n<b>PySoulSeek Contributors</b>",
 
-> Alexander Kanavin
-   - Maintainer (2001–2003)
+        """>> <b>Alexander Kanavin</b>
+   - Maintainer (2001–2003)""",
 
-> Nir Arbel
-   - Helped with many protocol questions I had, and
-     of course he designed and implemented the whole
-     system.
+        """>> <b>Nir Arbel</b>
+   - Helped with many protocol questions, and of course he designed and implemented the whole system""",
 
-> Brett W. Thompson (Zip)
-   - I used his client code to get an initial
-     impression of how the system works.
-   - Supplied the patch for logging chat conversations.
+        """>> <b>Brett W. Thompson (Zip)</b>
+   - His client code was used to get an initial impression of how the system works
+   - Supplied the patch for logging chat conversations""",
 
-> Josselin Mouette
-   - Official Debian package maintainer
+        """>> <b>Josselin Mouette</b>
+   - Official Debian package maintainer""",
 
-> blueboy
-   - Former unofficial Debian package maintainer
+        """>> <b>blueboy</b>
+   - Former unofficial Debian package maintainer""",
 
-> Christian Swinehart
-   - Fink package maintainer
+        """>> <b>Christian Swinehart</b>
+   - Fink package maintainer""",
 
-> Ingmar K. Steen (Hyriand)
-   - Patches for upload bandwidth management,
-     banning, various UI improvements and more
+        """>> <b>Ingmar K. Steen (Hyriand)</b>
+   - Patches for upload bandwidth management, banning, various UI improvements and more""",
 
-> Geert Kloosterman
+        """>> <b>Geert Kloosterman</b>
    - A script for importing Windows Soulseek
-     configuration
+     configuration""",
 
-> Joe Halliwell
-   - Submitted a patch for optionally discarding search
-     results after closing a search tab
+        """>> <b>Joe Halliwell</b>
+   - Submitted a patch for optionally discarding search results after closing a search tab""",
 
-> Alexey Vyskubov
-   - Code cleanups
+        """>> <b>Alexey Vyskubov</b>
+   - Code cleanups""",
 
-> Jason Green (SmackleFunky)
-   - Ignore list and auto-join checkbox, wishlists
+        """>> <b>Jason Green (SmackleFunky)</b>
+   - Ignore list and auto-join checkbox, wishlists"""]
 
+    TRANSLATORS = [
+        "<b>Nicotine+ Translators</b>",
 
-Third-Party Attributions
-–––––––––––––––––––––––––––––––––––––––>
+        """>> <b>Catalan</b>
+   - Maite Guix (2022)""",
 
-- This program includes IP2Location LITE data
-  available from:
-  https://lite.ip2location.com
+        """>> <b>Chinese (Simplified)</b>
+   - hylau (2023)
+   - hadwin (2022)""",
 
-- Country flags licensed under the MIT License.
-  Copyright (c) 2016–2017 Bowtie AB
-  Copyright (c) 2018–2020 Jack Marsh
-  https://github.com/jackiboy/flagpack
+        """>> <b>Czech</b>
+   - burnmail123 (2021)""",
 
-- tinytag licensed under the MIT License.
-  Copyright (c) 2014–2022 Tom Wallroth
-  https://github.com/devsnd/tinytag/
+        """>> <b>Danish</b>
+   - mathsped (2003–2004)""",
 
+        """>> <b>Dutch</b>
+   - Han Boetes (hboetes) (2021–2023)
+   - Kenny Verstraete (2009)
+   - nince78 (2007)
+   - Ingmar K. Steen (Hyriand) (2003–2004)""",
 
-"""
+        """>> <b>English</b>
+   - slook (2021–2023)
+   - Han Boetes (hboetes) (2021–2023)
+   - Mat (mathiascode) (2020–2023)
+   - Michael Labouebe (gfarmerfr) (2016)
+   - daelstorm (2004–2009)
+   - Ingmar K. Steen (Hyriand) (2003–2004)""",
 
-    TRANSLATORS = """Nicotine+ Translators
-–––––––––––––––––––––––––––––––––––––––>
+        """>> <b>Euskara</b>
+   - Julen (2006–2007)""",
 
-Catalan
- - Maite Guix (2022)
+        """>> <b>Finnish</b>
+   - Kari Viittanen (Kalevi) (2006–2007)""",
 
-Chinese (Simplified)
- - hadwin (2022)
+        """>> <b>French</b>
+   - Lisapple (2021–2022)
+   - melmorabity (2021–2022)
+   - m-balthazar (2020)
+   - Michael Labouebe (gfarmerfr) (2016–2017)
+   - Monsieur Poisson (2009–2010)
+   - ManWell (2007)
+   - zniavre (2007–2023)
+   - systr (2006)
+   - Julien Wajsberg (flashfr) (2003–2004)""",
 
-Czech
- - burnmail123 (2021)
+        """>> <b>German</b>
+   - Han Boetes (hboetes) (2021–2023)
+   - Meokater (2007)
+   - (._.) (2007)
+   - lippel (2004)
+   - Ingmar K. Steen (Hyriand) (2003–2004)""",
 
-Danish
- - mathsped (2003–2004)
+        """>> <b>Hungarian</b>
+   - Szia Tomi (2022-2023)
+   - Nils (2009)
+   - David Balazs (djbaloo) (2006–2020)""",
 
-Dutch
- - Han Boetes (hboetes) (2021–2022)
- - Kenny Verstraete (2009)
- - nince78 (2007)
- - Ingmar K. Steen (Hyriand) (2003–2004)
+        """>> <b>Italian</b>
+   - Gabboxl (2022)
+   - Gianluca Boiano (2020–2022)
+   - nicola (2007)
+   - dbazza (2003–2004)""",
 
-English
- - slook (2021–2022)
- - Han Boetes (hboetes) (2021–2022)
- - Mat (mathiascode) (2020–2022)
- - Michael Labouebe (gfarmerfr) (2016)
- - daelstorm (2004–2009)
- - Ingmar K. Steen (Hyriand) (2003–2004)
+        """>> <b>Latvian</b>
+   - Pagal3 (2022-2023)""",
 
-Euskara
- - Julen (2006–2007)
+        """>> <b>Lithuanian</b>
+   - mantas (2020)
+   - Žygimantas Beručka (2006–2009)""",
 
-Finnish
- - Kari Viittanen (Kalevi) (2006–2007)
+        """>> <b>Norwegian Bokmål</b>
+   - Allan Nordhøy (comradekingu) (2021)""",
 
-French
- - Lisapple (2021–2022)
- - melmorabity (2021–2022)
- - m-balthazar (2020)
- - Michael Labouebe (gfarmerfr) (2016–2017)
- - Monsieur Poisson (2009–2010)
- - ManWell (2007)
- - zniavre (2007–2022)
- - systr (2006)
- - Julien Wajsberg (flashfr) (2003–2004)
+        """>> <b>Polish</b>
+   - mariachini (2017–2022)
+   - Amun-Ra (2007)
+   - thine (2007)
+   - Wojciech Owczarek (owczi) (2003–2004)""",
 
-German
- - Han Boetes (hboetes) (2021–2022)
- - Meokater (2007)
- - (._.) (2007)
- - lippel (2004)
- - Ingmar K. Steen (Hyriand) (2003–2004)
+        """>> <b>Portuguese (Brazil)</b>
+   - Guilherme Santos (2022)
+   - b1llso (2022)
+   - Nicolas Abril (2021)
+   - yyyyyyyan (2020)
+   - Felipe Nogaroto Gonzalez (Suicide|Solution) (2006)""",
 
-Hungarian
- - Szia Tomi (2022)
- - Nils (2009)
- - David Balazs (djbaloo) (2006–2020)
+        """>> <b>Russian</b>
+   - AHOHNMYC (2022)
+   - SnIPeRSnIPeR (2022)
+   - Mehavoid (2021–2022)""",
 
-Italian
- - Gabboxl (2022)
- - Gianluca Boiano (2020–2022)
- - nicola (2007)
- - dbazza (2003–2004)
+        """>> <b>Slovak</b>
+   - Jozef Říha (2006-2008)""",
 
-Latvian
- - Pagal3 (2022)
+        """>> <b>Spanish (Chile)</b>
+   - MELERIX (2021–2022)
+   - tagomago (2021–2022)
+   - Strange (2021)
+   - Silvio Orta (2007)
+   - Dreslo (2003–2004)""",
 
-Lithuanian
- - mantas (2020)
- - Žygimantas Beručka (2006–2009)
+        """>> <b>Spanish (Spain)</b>
+   - MELERIX (2021)
+   - tagomago (2021–2022)
+   - Strange (2021)
+   - Silvio Orta (2007)
+   - Dreslo (2003–2004)""",
 
-Norwegian Bokmål
- - Allan Nordhøy (comradekingu) (2021)
+        """>> <b>Swedish</b>
+   - mitramai (2021)
+   - Markus Magnuson (alimony) (2003–2004)""",
 
-Polish
- - mariachini (2017–2022)
- - Amun-Ra (2007)
- - thine (2007)
- - Wojciech Owczarek (owczi) (2003–2004)
+        """>> <b>Turkish</b>
+   - Oğuz Ersen (2021–2022)""",
 
-Portuguese (Brazil)
- - Guilherme Santos (2022)
- - b1llso (2022)
- - Nicolas Abril (2021)
- - yyyyyyyan (2020)
- - Felipe Nogaroto Gonzalez (Suicide|Solution) (2006)
+        """>> <b>Ukrainian</b>
+   - uniss2209 (2022)"""]
 
-Russian
- - AHOHNMYC (2022)
- - SnIPeRSnIPeR (2022)
- - Mehavoid (2021–2022)
+    LICENSE = [
+        """Nicotine+ is licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">
+GNU General Public License v3.0 or later</a>, with the following exceptions:""",
 
-Slovak
- - Jozef Říha (2006-2008)
+        """<b>Country flags licensed under the MIT License.</b>
+Copyright (c) 2016–2017 Bowtie AB
+Copyright (c) 2018–2020 Jack Marsh
+<a href="https://github.com/jackiboy/flagpack">https://github.com/jackiboy/flagpack</a>""",
 
-Spanish (Chile)
- - MELERIX (2021–2022)
- - tagomago (2021–2022)
- - Strange (2021)
- - Silvio Orta (2007)
- - Dreslo (2003–2004)
+        """<b>tinytag licensed under the MIT License.</b>
+Copyright (c) 2014–2022 Tom Wallroth
+<a href="https://github.com/devsnd/tinytag">https://github.com/devsnd/tinytag</a>""",
 
-Spanish (Spain)
- - MELERIX (2021)
- - tagomago (2021–2022)
- - Strange (2021)
- - Silvio Orta (2007)
- - Dreslo (2003–2004)
+        """<b>Country database licensed under the CC-BY-SA-4.0 License.</b>
+Copyright (c) 2001-2022 Hexasoft Development Sdn. Bhd.
+This program includes IP2Location LITE data available from:
+<a href="https://lite.ip2location.com">https://lite.ip2location.com</a>""",
 
-Swedish
- - mitramai (2021)
- - Markus Magnuson (alimony) (2003–2004)
+        """<b>Country database reader licensed under the MIT License.</b>
+Copyright (c) 2017 IP2Location.com
+<a href="https://github.com/chrislim2888/IP2Location-Python">https://github.com/chrislim2888/IP2Location-Python</a>"""]
 
-Turkish
- - Oğuz Ersen (2021–2022)
+    def __init__(self, application):
 
-Ukrainian
- - uniss2209 (2022)
+        ui_template = UserInterface(scope=self, path="dialogs/about.ui")
+        (
+            self.application_name_label,
+            self.authors_container,
+            self.container,
+            self.copyright_label,
+            self.license_container,
+            self.main_icon,
+            self.translators_container,
+            self.version_label,
+            self.website_label
+        ) = ui_template.widgets
 
-"""
-
-    def __init__(self, frame):
-
-        dialog = Gtk.AboutDialog(
-            logo_icon_name=config.application_id,
-            comments=config.summary,
-            copyright=config.copyright,
-            license_type=Gtk.License.GPL_3_0,
-            version=config.version + "  •  GTK " + config.gtk_version,
-            website=config.website_url,
-            authors=self.AUTHORS.splitlines(),
-            translator_credits=self.TRANSLATORS + config.translations_url
+        super().__init__(
+            parent=application.window,
+            content_box=self.container,
+            close_callback=self.on_close,
+            title=_("About"),
+            width=425,
+            height=500,
+            resizable=False,
+            show_title=False,
+            close_destroy=False
         )
-        super().__init__(dialog=dialog, parent=frame.window)
 
-        # Override link handler with our own
-        dialog.connect("activate-link", lambda x, url: open_uri(url))
+        self.main_icon.set_property("icon-name", config.application_id)
+        self.website_label.connect("activate-link", lambda x, url: open_uri(url))
 
-        if GTK_API_VERSION == 3:
-            dialog.connect("response", self.on_close)
+        for label_widget, text in (
+            (self.application_name_label, config.application_name),
+            (self.version_label, (f"{config.version}   •   Python {config.python_version}   •   "
+                                  f"GTK {config.gtk_version}")),
+            (self.website_label, f"<a href='{config.website_url}' title='{config.website_url}'>{_('Website')}</a>"),
+            (self.copyright_label, f"<small>{config.copyright}</small>")
+        ):
+            label_widget.set_markup(text)
+
+        for entries, container in (
+            (self.AUTHORS, self.authors_container),
+            (self.TRANSLATORS, self.translators_container),
+            (self.LICENSE, self.license_container)
+        ):
+            for text in entries:
+                label = Gtk.Label(label=text, use_markup=True, selectable=True, wrap=True, xalign=0, visible=True)
+
+                if GTK_API_VERSION >= 4:
+                    container.append(label)  # pylint: disable=no-member
+                else:
+                    container.add(label)     # pylint: disable=no-member
 
     def on_close(self, *_args):
-        self.close()
+        self.main_icon.grab_focus()
+        self.container.get_vadjustment().set_value(0)

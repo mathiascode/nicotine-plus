@@ -24,64 +24,63 @@
 import random
 
 from itertools import islice
+from locale import strxfrm
 from operator import itemgetter
 
 from pynicotine import slskmessages
+from pynicotine.config import config
+from pynicotine.core import core
+from pynicotine.events import events
 from pynicotine.logfacility import log
-from pynicotine.scheduler import scheduler
 from pynicotine.slskmessages import increment_token
 from pynicotine.utils import TRANSLATE_PUNCTUATION
 
 
 class Search:
 
-    def __init__(self, core, config, queue, share_dbs, geoip, ui_callback=None):
+    def __init__(self):
 
-        self.core = core
-        self.config = config
-        self.queue = queue
-        self.ui_callback = None
         self.searches = {}
         self.token = int(random.random() * (2 ** 31 - 1))
         self.wishlist_interval = 0
-        self.wishlist_timer_id = None
-        self.share_dbs = share_dbs
-        self.geoip = geoip
+        self._wishlist_timer_id = None
 
         # Create wishlist searches
         for term in config.sections["server"]["autosearch"]:
             self.token = increment_token(self.token)
             self.searches[self.token] = {"id": self.token, "term": term, "mode": "wishlist", "ignore": True}
 
-        if hasattr(ui_callback, "search"):
-            self.ui_callback = ui_callback.search
+        for event_name, callback in (
+            ("file-search-request-distributed", self._file_search_request_distributed),
+            ("file-search-request-server", self._file_search_request_server),
+            ("file-search-response", self._file_search_response),
+            ("quit", self._quit),
+            ("server-disconnect", self._server_disconnect),
+            ("set-wishlist-interval", self._set_wishlist_interval)
+        ):
+            events.connect(event_name, callback)
 
-    def server_login(self):
-        if self.ui_callback:
-            self.ui_callback.server_login()
+    def _quit(self):
+        self.searches.clear()
 
-    def server_disconnect(self):
-
-        scheduler.cancel(self.wishlist_timer_id)
+    def _server_disconnect(self, _msg):
+        events.cancel_scheduled(self._wishlist_timer_id)
         self.wishlist_interval = 0
-
-        if self.ui_callback:
-            self.ui_callback.server_disconnect()
 
     def request_folder_download(self, user, folder, visible_files):
 
         # First queue the visible search results
-        visible_files.sort(key=itemgetter(1), reverse=self.config.sections["transfers"]["reverseorder"])
+        visible_files.sort(key=lambda x: strxfrm(x[1]))
 
         for file in visible_files:
             user, fullpath, destination, size, bitrate, length = file
 
-            self.core.transfers.get_file(
+            core.transfers.get_file(
                 user, fullpath, destination,
                 size=size, bitrate=bitrate, length=length)
 
         # Ask for the rest of the files in the folder
-        self.core.transfers.get_folder(user, folder)
+        core.transfers.get_folder(user, folder)
 
     """ Outgoing search requests """
 
@@ -107,21 +106,23 @@ class Search:
         if search is None:
             return
 
-        if search["term"] in self.config.sections["server"]["autosearch"]:
+        if search["term"] in config.sections["server"]["autosearch"]:
             search["ignore"] = True
         else:
             del self.searches[token]
 
-        if self.ui_callback:
-            self.ui_callback.remove_search(token)
+        events.emit("remove-search", token)
+
+    def show_search(self, token):
+        events.emit("show-search", token)
 
     def process_search_term(self, search_term, mode, room=None, user=None):
 
         users = []
 
         if mode == "global":
-            if self.core:
-                feedback = self.core.pluginhandler.outgoing_global_search_event(search_term)
+            if core:
+                feedback = core.pluginhandler.outgoing_global_search_event(search_term)
 
                 if feedback is not None:
                     search_term = feedback[0]
@@ -130,15 +131,15 @@ class Search:
             if not room:
                 room = _("Joined Rooms ")
 
-            if self.core:
-                feedback = self.core.pluginhandler.outgoing_room_search_event(room, search_term)
+            if core:
+                feedback = core.pluginhandler.outgoing_room_search_event(room, search_term)
 
                 if feedback is not None:
                     room, search_term = feedback
 
         elif mode == "buddies":
-            if self.core:
-                feedback = self.core.pluginhandler.outgoing_buddy_search_event(search_term)
+            if core:
+                feedback = core.pluginhandler.outgoing_buddy_search_event(search_term)
 
                 if feedback is not None:
                     search_term = feedback[0]
@@ -147,11 +148,11 @@ class Search:
             if user:
                 users.append(user)
 
-            if self.core:
+            if core:
                 if not users:
-                    users.append(self.core.login_username)
+                    users.append(core.login_username)
 
-                feedback = self.core.pluginhandler.outgoing_user_search_event(users, search_term)
+                feedback = core.pluginhandler.outgoing_user_search_event(users, search_term)
 
                 if feedback is not None:
                     users, search_term = feedback
@@ -161,17 +162,17 @@ class Search:
 
         # Get excluded words (starting with "-")
         search_term_words = search_term.split()
-        search_term_words_special = [p for p in search_term_words if p.startswith(('-', '*')) and len(p) > 1]
+        search_term_words_special = [p for p in search_term_words if p.startswith(("-", "*")) and len(p) > 1]
 
         # Remove words starting with "-", results containing these are excluded by us later
-        search_term_without_special = ' '.join(p for p in search_term_words if p not in search_term_words_special)
+        search_term_without_special = " ".join(p for p in search_term_words if p not in search_term_words_special)
 
-        if self.config.sections["searches"]["remove_special_chars"]:
+        if config.sections["searches"]["remove_special_chars"]:
             """
             Remove special characters from search term
             SoulseekQt doesn't seem to send search results if special characters are included (July 7, 2020)
             """
-            stripped_search_term = ' '.join(search_term_without_special.translate(TRANSLATE_PUNCTUATION).split())
+            stripped_search_term = " ".join(search_term_without_special.translate(TRANSLATE_PUNCTUATION).split())
 
             # Only modify search term if string also contains non-special characters
             if stripped_search_term:
@@ -194,8 +195,8 @@ class Search:
         # Get a new search token
         self.token = increment_token(self.token)
 
-        if self.config.sections["searches"]["enable_history"]:
-            items = self.config.sections["searches"]["history"]
+        if config.sections["searches"]["enable_history"]:
+            items = config.sections["searches"]["history"]
 
             if search_term in items:
                 items.remove(search_term)
@@ -204,7 +205,7 @@ class Search:
 
             # Clear old items
             del items[200:]
-            self.config.write_configuration()
+            config.write_configuration()
 
         if mode == "global":
             self.do_global_search(search_term)
@@ -220,36 +221,32 @@ class Search:
 
         self.add_search(search_term, mode, ignore=False)
 
-        if self.ui_callback:
-            self.ui_callback.do_search(self.token, search_term, mode, room, users, switch_page)
+        events.emit("do-search", self.token, search_term, mode, room, users, switch_page)
 
     def do_global_search(self, text):
-        self.queue.append(slskmessages.FileSearch(self.token, text))
+        core.queue.append(slskmessages.FileSearch(self.token, text))
 
         """ Request a list of related searches from the server.
         Seemingly non-functional since 2018 (always receiving empty lists). """
 
-        # self.queue.append(slskmessages.RelatedSearch(text))
+        # core.queue.append(slskmessages.RelatedSearch(text))
 
     def do_rooms_search(self, text, room=None):
 
         if room != _("Joined Rooms "):
-            self.queue.append(slskmessages.RoomSearch(room, self.token, text))
+            core.queue.append(slskmessages.RoomSearch(room, self.token, text))
+            return
 
-        elif self.core.chatrooms.ui_callback is not None:
-            for joined_room in self.core.chatrooms.ui_callback.pages:
-                self.queue.append(slskmessages.RoomSearch(joined_room, self.token, text))
+        for joined_room in core.chatrooms.joined_rooms:
+            core.queue.append(slskmessages.RoomSearch(joined_room, self.token, text))
 
     def do_buddies_search(self, text):
-
-        for row in self.config.sections["server"]["userlist"]:
-            if row and isinstance(row, list):
-                user = str(row[0])
-                self.queue.append(slskmessages.UserSearch(user, self.token, text))
+        for user in core.userlist.buddies:
+            core.queue.append(slskmessages.UserSearch(user, self.token, text))
 
     def do_peer_search(self, text, users):
         for user in users:
-            self.queue.append(slskmessages.UserSearch(user, self.token, text))
+            core.queue.append(slskmessages.UserSearch(user, self.token, text))
 
     def do_wishlist_search(self, token, text):
 
@@ -258,14 +255,14 @@ class Search:
         if not text:
             return
 
-        log.add_search(_("Searching for wishlist item \"%s\""), text)
+        log.add_search(_('Searching for wishlist item "%s"'), text)
 
         self.add_allowed_token(token)
-        self.queue.append(slskmessages.WishlistSearch(token, text))
+        core.queue.append(slskmessages.WishlistSearch(token, text))
 
     def do_wishlist_search_interval(self):
 
-        searches = self.config.sections["server"]["autosearch"]
+        searches = config.sections["server"]["autosearch"]
 
         if not searches:
             return
@@ -288,31 +285,31 @@ class Search:
         # Get a new search token
         self.token = increment_token(self.token)
 
-        if wish not in self.config.sections["server"]["autosearch"]:
-            self.config.sections["server"]["autosearch"].append(wish)
+        if wish not in config.sections["server"]["autosearch"]:
+            config.sections["server"]["autosearch"].append(wish)
+            config.write_configuration()
 
         self.add_search(wish, "wishlist", ignore=True)
 
-        if self.ui_callback:
-            self.ui_callback.add_wish(wish)
+        events.emit("add-wish", wish)
 
     def remove_wish(self, wish):
 
-        if wish in self.config.sections["server"]["autosearch"]:
-            self.config.sections["server"]["autosearch"].remove(wish)
+        if wish in config.sections["server"]["autosearch"]:
+            config.sections["server"]["autosearch"].remove(wish)
+            config.write_configuration()
 
             for search in self.searches.values():
                 if search["term"] == wish and search["mode"] == "wishlist":
                     del search
                     break
 
-        if self.ui_callback:
-            self.ui_callback.remove_wish(wish)
+        events.emit("remove-wish", wish)
 
     def is_wish(self, wish):
-        return wish in self.config.sections["server"]["autosearch"]
+        return wish in config.sections["server"]["autosearch"]
 
-    def set_wishlist_interval(self, msg):
+    def _set_wishlist_interval(self, msg):
         """ Server code: 104 """
 
         self.wishlist_interval = msg.seconds
@@ -320,56 +317,45 @@ class Search:
         if self.wishlist_interval > 0:
             log.add_search(_("Wishlist wait period set to %s seconds"), self.wishlist_interval)
 
-            scheduler.cancel(self.wishlist_timer_id)
-            self.wishlist_timer_id = scheduler.add(
+            events.cancel_scheduled(self._wishlist_timer_id)
+            self._wishlist_timer_id = events.schedule(
                 delay=self.wishlist_interval, callback=self.do_wishlist_search_interval, repeat=True)
         else:
             log.add(_("Server does not permit performing wishlist searches at this time"))
 
-        if self.ui_callback:
-            self.ui_callback.set_wishlist_interval(msg)
-
-    def file_search_result(self, msg):
+    def _file_search_response(self, msg):
         """ Peer message: 9 """
 
-        if not self.ui_callback or msg.token not in slskmessages.SEARCH_TOKENS_ALLOWED:
+        if msg.token not in slskmessages.SEARCH_TOKENS_ALLOWED:
             return
 
         search = self.searches.get(msg.token)
 
         if search is None or search["ignore"]:
+            msg.token = None
             return
 
         username = msg.init.target_user
         ip_address = msg.init.addr[0]
 
-        if self.core.network_filter.is_user_ignored(username):
+        if core.network_filter.is_user_ignored(username):
+            msg.token = None
             return
 
-        if self.core.network_filter.is_ip_ignored(ip_address):
-            return
+        if core.network_filter.is_user_ip_ignored(username, ip_address):
+            msg.token = None
 
-        if ip_address:
-            country = self.geoip.get_country_code(ip_address)
-        else:
-            country = ""
-
-        if country == "-":
-            country = ""
-
-        self.ui_callback.show_search_result(msg, username, country)
-
-    def search_request(self, msg):
+    def _file_search_request_server(self, msg):
         """ Server code: 26, 42 and 120 """
 
         self.process_search_request(msg.searchterm, msg.user, msg.token, direct=True)
-        self.core.pluginhandler.search_request_notification(msg.searchterm, msg.user, msg.token)
+        core.pluginhandler.search_request_notification(msg.searchterm, msg.user, msg.token)
 
-    def distrib_search(self, msg):
+    def _file_search_request_distributed(self, msg):
         """ Distrib code: 3 """
 
         self.process_search_request(msg.searchterm, msg.user, msg.token, direct=False)
-        self.core.pluginhandler.distrib_search_notification(msg.searchterm, msg.user, msg.token)
+        core.pluginhandler.distrib_search_notification(msg.searchterm, msg.user, msg.token)
 
     """ Incoming search requests """
 
@@ -455,16 +441,16 @@ class Search:
         if not searchterm:
             return
 
-        if not self.config.sections["searches"]["search_results"]:
+        if not config.sections["searches"]["search_results"]:
             # Don't return _any_ results when this option is disabled
             return
 
-        if not direct and user == self.core.login_username:
+        if not direct and user == core.login_username:
             # We shouldn't send a search response if we initiated the search request,
             # unless we're specifically searching our own username
             return
 
-        maxresults = self.config.sections["searches"]["maxresults"]
+        maxresults = config.sections["searches"]["maxresults"]
 
         if maxresults == 0:
             return
@@ -473,16 +459,16 @@ class Search:
         excluded_words = []
         partial_words = []
 
-        if '-' in searchterm or '*' in searchterm:
+        if "-" in searchterm or "*" in searchterm:
             for word in searchterm.split():
                 if len(word) < 1:
                     continue
 
-                if word.startswith('-'):
+                if word.startswith("-"):
                     for subword in word.translate(TRANSLATE_PUNCTUATION).split():
                         excluded_words.append(subword)
 
-                elif word.startswith('*'):
+                elif word.startswith("*"):
                     for subword in word.translate(TRANSLATE_PUNCTUATION).split():
                         partial_words.append(subword)
 
@@ -490,19 +476,19 @@ class Search:
         searchterm_old = searchterm
         searchterm = searchterm.lower().translate(TRANSLATE_PUNCTUATION).strip()
 
-        if len(searchterm) < self.config.sections["searches"]["min_search_chars"]:
+        if len(searchterm) < config.sections["searches"]["min_search_chars"]:
             # Don't send search response if search term contains too few characters
             return
 
-        checkuser, _reason = self.core.network_filter.check_user(user, None)
+        checkuser, _reason = core.network_filter.check_user(user)
 
         if not checkuser:
             return
 
         if checkuser == 2:
-            wordindex = self.share_dbs.get("buddywordindex")
+            wordindex = core.shares.share_dbs.get("buddywordindex")
         else:
-            wordindex = self.share_dbs.get("wordindex")
+            wordindex = core.shares.share_dbs.get("wordindex")
 
         if wordindex is None:
             return
@@ -514,9 +500,9 @@ class Search:
             return
 
         if checkuser == 2:
-            fileindex = self.share_dbs.get("buddyfileindex")
+            fileindex = core.shares.share_dbs.get("buddyfileindex")
         else:
-            fileindex = self.share_dbs.get("fileindex")
+            fileindex = core.shares.share_dbs.get("fileindex")
 
         if fileindex is None:
             return
@@ -531,7 +517,7 @@ class Search:
                 fileinfos.append(fileinfo)
 
         if numresults != len(fileinfos):
-            log.add_debug(("Error: File index inconsistency while responding to search request \"%(query)s\". "
+            log.add_debug(('Error: File index inconsistency while responding to search request "%(query)s". '
                            "Expected %(expected_num)i results, but found %(total_num)i results in database."), {
                 "query": searchterm_old,
                 "expected_num": numresults,
@@ -544,19 +530,19 @@ class Search:
 
         fileinfos.sort(key=itemgetter(1))
 
-        uploadspeed = self.core.transfers.upload_speed
-        queuesize = self.core.transfers.get_upload_queue_size()
-        slotsavail = self.core.transfers.allow_new_uploads()
-        fifoqueue = self.config.sections["transfers"]["fifoqueue"]
+        uploadspeed = core.transfers.upload_speed
+        queuesize = core.transfers.get_upload_queue_size()
+        slotsavail = core.transfers.allow_new_uploads()
+        fifoqueue = config.sections["transfers"]["fifoqueue"]
 
-        message = slskmessages.FileSearchResult(
-            None, self.core.login_username,
+        message = slskmessages.FileSearchResponse(
+            None, core.login_username,
             token, fileinfos, slotsavail, uploadspeed, queuesize, fifoqueue)
 
-        self.core.send_message_to_peer(user, message)
+        core.send_message_to_peer(user, message)
 
-        log.add_search(_("User %(user)s is searching for \"%(query)s\", found %(num)i results"), {
-            'user': user,
-            'query': searchterm_old,
-            'num': numresults
+        log.add_search(_('User %(user)s is searching for "%(query)s", found %(num)i results'), {
+            "user": user,
+            "query": searchterm_old,
+            "num": numresults
         })

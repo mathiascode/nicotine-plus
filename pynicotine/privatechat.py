@@ -17,58 +17,68 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pynicotine import slskmessages
+from pynicotine.config import config
+from pynicotine.core import core
+from pynicotine.events import events
 from pynicotine.logfacility import log
 from pynicotine.slskmessages import UserStatus
-from pynicotine.utils import get_completion_list
 
 
-class PrivateChats:
-
-    # List of allowed commands
-    CMDS = {
-        "/al ", "/alias ", "/un ", "/unalias ", "/w ", "/whois ", "/browse ", "/b ", "/ip ", "/pm ", "/m ", "/msg ",
-        "/s ", "/search ", "/us ", "/usearch ", "/rs ", "/rsearch ", "/bs ", "/bsearch ", "/j ", "/join ",
-        "/ad ", "/add ", "/buddy ", "/rem ", "/unbuddy ", "/ban ", "/ignore ", "/ignoreip ", "/unban ",
-        "/unignore ", "/c ", "/close ", "/clear ", "/cl ", "/me ", "/a ", "/away ", "/q ", "/quit ", "/exit ",
-        "/now ", "/rescan ", "/info ", "/toggle ", "/ctcpversion "
-    }
+class PrivateChat:
 
     CTCP_VERSION = "\x01VERSION\x01"
 
-    def __init__(self, core, config, queue, ui_callback=None):
+    def __init__(self):
 
-        self.core = core
-        self.config = config
-        self.queue = queue
         self.completion_list = []
         self.private_message_queue = {}
         self.away_message_users = set()
         self.users = set()
-        self.ui_callback = None
-
-        if hasattr(ui_callback, "privatechat"):
-            self.ui_callback = ui_callback.privatechat
 
         # Clear list of previously open chats if we don't want to restore them
         if not config.sections["privatechat"]["store"]:
             config.sections["privatechat"]["users"].clear()
 
-    def server_login(self):
+        for event_name, callback in (
+            ("message-user", self._message_user),
+            ("peer-address", self._get_peer_address),
+            ("quit", self._quit),
+            ("server-login", self._server_login),
+            ("server-disconnect", self._server_disconnect),
+            ("start", self._start),
+            ("set-away-mode", self._set_away_mode),
+            ("user-status", self._user_status)
+        ):
+            events.connect(event_name, callback)
+
+    def _start(self):
+
+        if not config.sections["privatechat"]["store"]:
+            return
+
+        for user in config.sections["privatechat"]["users"]:
+            if isinstance(user, str) and user not in self.users:
+                self.show_user(user, switch_page=False)
+
+        self.update_completions()
+
+    def _quit(self):
+        self.completion_list.clear()
+        self.users.clear()
+
+    def _server_login(self, msg):
+
+        if not msg.success:
+            return
 
         for user in self.users:
-            self.core.watch_user(user)  # Get notified of user status
+            core.watch_user(user)  # Get notified of user status
 
-        if self.ui_callback:
-            self.ui_callback.server_login()
-
-    def server_disconnect(self):
-
+    def _server_disconnect(self, _msg):
+        self.private_message_queue.clear()
         self.away_message_users.clear()
 
-        if self.ui_callback:
-            self.ui_callback.server_disconnect()
-
-    def set_away_mode(self, is_away):
+    def _set_away_mode(self, is_away):
 
         if not is_away:
             # Reset list of users we've sent away messages to when the away session ends
@@ -81,47 +91,30 @@ class PrivateChats:
 
         self.users.add(user)
 
-        if user not in self.config.sections["privatechat"]["users"]:
-            self.config.sections["privatechat"]["users"].append(user)
+        if user not in config.sections["privatechat"]["users"]:
+            config.sections["privatechat"]["users"].append(user)
 
     def remove_user(self, user):
 
-        if user in self.config.sections["privatechat"]["users"]:
-            self.config.sections["privatechat"]["users"].remove(user)
+        if user in config.sections["privatechat"]["users"]:
+            config.sections["privatechat"]["users"].remove(user)
 
         self.users.remove(user)
-
-        if self.ui_callback:
-            self.ui_callback.remove_user(user)
+        events.emit("private-chat-remove-user", user)
 
     def show_user(self, user, switch_page=True):
 
         self.add_user(user)
+        events.emit("private-chat-show-user", user, switch_page)
+        core.watch_user(user)
 
-        if self.ui_callback:
-            self.ui_callback.show_user(user, switch_page)
-
-        self.core.watch_user(user)
-
-    def load_users(self):
-
-        if not self.config.sections["privatechat"]["store"]:
-            return
-
-        for user in self.config.sections["privatechat"]["users"]:
-            if isinstance(user, str) and user not in self.users:
-                self.show_user(user, switch_page=False)
-
-        self.update_completions()
-
-    def clear_messages(self, user):
-        if self.ui_callback:
-            self.ui_callback.clear_messages(user)
+    def clear_private_messages(self, user):
+        events.emit("clear-private-messages", user)
 
     def auto_replace(self, message):
 
-        if self.config.sections["words"]["replacewords"]:
-            autoreplaced = self.config.sections["words"]["autoreplaced"]
+        if config.sections["words"]["replacewords"]:
+            autoreplaced = config.sections["words"]["autoreplaced"]
 
             for word, replacement in autoreplaced.items():
                 message = message.replace(str(word), str(replacement))
@@ -130,9 +123,9 @@ class PrivateChats:
 
     def censor_chat(self, message):
 
-        if self.config.sections["words"]["censorwords"]:
-            filler = self.config.sections["words"]["censorfill"]
-            censored = self.config.sections["words"]["censored"]
+        if config.sections["words"]["censorwords"]:
+            filler = config.sections["words"]["censorfill"]
+            censored = config.sections["words"]["censored"]
 
             for word in censored:
                 word = str(word)
@@ -150,27 +143,15 @@ class PrivateChats:
         else:
             self.private_message_queue[user].append(msg)
 
-    def private_message_queue_process(self, user):
-        """ Received a user's IP address, process any queued private messages and check
-        if the IP is ignored """
-
-        if user not in self.private_message_queue:
-            return
-
-        for msg in self.private_message_queue[user][:]:
-            self.private_message_queue[user].remove(msg)
-            self.message_user(msg, queued_message=True)
-
     def send_automatic_message(self, user, message):
-        self.send_message(user, "[Automatic Message] " + message)
+        self.send_message(user, f"[Automatic Message] {message}")
 
     def echo_message(self, user, message, message_type="local"):
-        if self.ui_callback:
-            self.ui_callback.echo_message(user, message, message_type)
+        events.emit("echo-private-message", user, message, message_type)
 
     def send_message(self, user, message):
 
-        user_text = self.core.pluginhandler.outgoing_private_chat_event(user, message)
+        user_text = core.pluginhandler.outgoing_private_chat_event(user, message)
         if user_text is None:
             return
 
@@ -181,19 +162,49 @@ class PrivateChats:
         else:
             message = ui_message = self.auto_replace(message)
 
-        self.queue.append(slskmessages.MessageUser(user, message))
-        self.core.pluginhandler.outgoing_private_chat_notification(user, message)
+        core.queue.append(slskmessages.MessageUser(user, message))
+        core.pluginhandler.outgoing_private_chat_notification(user, message)
 
-        if self.ui_callback:
-            self.ui_callback.send_message(user, ui_message)
+        events.emit("send-private-message", user, ui_message)
 
-    def get_user_status(self, msg):
+    def send_message_users(self, target, message):
+
+        if not message:
+            return
+
+        users = None
+
+        if target == "buddies":
+            users = set(core.userlist.buddies)
+
+        elif target == "downloading":
+            users = core.transfers.get_downloading_users()
+
+        if users:
+            core.queue.append(slskmessages.MessageUsers(users, message))
+
+    def _get_peer_address(self, msg):
+        """ Server code: 3 """
+        """ Received a user's IP address, process any queued private messages and check
+        if the IP is ignored """
+
+        user = msg.user
+
+        if user not in self.private_message_queue:
+            return
+
+        for msg_obj in self.private_message_queue[user][:]:
+            self.private_message_queue[user].remove(msg_obj)
+            msg_obj.user = user
+            events.emit("message-user", msg_obj, queued_message=True)
+
+    def _user_status(self, msg):
         """ Server code: 7 """
 
-        if self.ui_callback:
-            self.ui_callback.get_user_status(msg)
+        if msg.status == UserStatus.OFFLINE:
+            self.private_message_queue.pop(msg.user, None)
 
-    def message_user(self, msg, queued_message=False):
+    def _message_user(self, msg, queued_message=False):
         """ Server code: 22 """
 
         user = msg.user
@@ -204,30 +215,33 @@ class PrivateChats:
                 "message": msg.msg
             })
 
-            self.queue.append(slskmessages.MessageAcked(msg.msgid))
+            core.queue.append(slskmessages.MessageAcked(msg.msgid))
 
         if user != "server":
             # Check ignore status for all other users except "server"
-            if self.core.network_filter.is_user_ignored(user):
+            if core.network_filter.is_user_ignored(user):
+                msg.user = None
                 return
 
-            user_address = self.core.protothread.user_addresses.get(user)
+            user_address = core.user_addresses.get(user)
 
             if user_address is not None:
-                ip_address, _port = user_address
-                if self.core.network_filter.is_ip_ignored(ip_address):
+                if core.network_filter.is_user_ip_ignored(user):
+                    msg.user = None
                     return
 
             elif not queued_message:
                 # Ask for user's IP address and queue the private message until we receive the address
                 if user not in self.private_message_queue:
-                    self.queue.append(slskmessages.GetPeerAddress(user))
+                    core.queue.append(slskmessages.GetPeerAddress(user))
 
                 self.private_message_queue_add(msg)
+                msg.user = None
                 return
 
-        user_text = self.core.pluginhandler.incoming_private_chat_event(user, msg.msg)
+        user_text = core.pluginhandler.incoming_private_chat_event(user, msg.msg)
         if user_text is None:
+            msg.user = None
             return
 
         self.show_user(user, switch_page=False)
@@ -241,39 +255,32 @@ class PrivateChats:
             ctcpversion = True
             msg.msg = "CTCP VERSION"
 
-        if self.ui_callback:
-            self.ui_callback.message_user(msg)
+        core.pluginhandler.incoming_private_chat_notification(user, msg.msg)
 
-        self.core.pluginhandler.incoming_private_chat_notification(user, msg.msg)
-
-        if ctcpversion and not self.config.sections["server"]["ctcpmsgs"]:
-            self.send_message(user, "%s %s" % (self.config.application_name, self.config.version))
+        if ctcpversion and not config.sections["server"]["ctcpmsgs"]:
+            self.send_message(user, f"{config.application_name} {config.version}")
 
         if not msg.newmessage:
             # Message was sent while offline, don't auto-reply
             return
 
-        autoreply = self.config.sections["server"]["autoreply"]
+        autoreply = config.sections["server"]["autoreply"]
 
-        if autoreply and self.core.user_status == UserStatus.AWAY and user not in self.away_message_users:
+        if autoreply and core.user_status == UserStatus.AWAY and user not in self.away_message_users:
             self.send_automatic_message(user, autoreply)
             self.away_message_users.add(user)
 
-    def p_message_user(self, msg):
-        """ Peer code: 22 """
-
-        username = msg.init.target_user
-
-        if username != msg.user:
-            msg.msg = _("(Warning: %(realuser)s is attempting to spoof %(fakeuser)s) ") % {
-                "realuser": username, "fakeuser": msg.user} + msg.msg
-            msg.user = username
-
-        self.message_user(msg)
-
     def update_completions(self):
 
-        self.completion_list = get_completion_list(self.CMDS, self.core.chatrooms.server_rooms)
+        self.completion_list = [config.sections["server"]["login"]]
 
-        if self.ui_callback:
-            self.ui_callback.set_completion_list(self.completion_list)
+        if config.sections["words"]["roomnames"]:
+            self.completion_list += core.chatrooms.server_rooms
+
+        if config.sections["words"]["buddies"]:
+            self.completion_list += list(core.userlist.buddies)
+
+        if config.sections["words"]["commands"]:
+            self.completion_list += list(core.pluginhandler.private_chat_commands)
+
+        events.emit("private-chat-completion-list", self.completion_list)

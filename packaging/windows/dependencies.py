@@ -21,38 +21,31 @@ import os
 import subprocess
 import sys
 
-""" Script used to install core dependencies in MinGW """
+""" Script used to install dependencies in MinGW """
 
 
 def install_pacman():
     """ Install dependencies from the main MinGW repos """
 
     arch = os.environ.get("ARCH") or "x86_64"
-    prefix = "mingw-w64-" + arch + "-"
-    mingw_type = "mingw32" if arch == "i686" else "mingw64"
-    gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or '3'
-    use_libadwaita = gtk_version == '4' and os.environ.get("NICOTINE_LIBADWAITA") == '1'
+    prefix = f"mingw-w64-{arch}-"
+    gtk_version = os.environ.get("NICOTINE_GTK_VERSION") or "3"
+    use_libadwaita = gtk_version == "4" and os.environ.get("NICOTINE_LIBADWAITA") == "1"
 
-    packages = [prefix + "gettext",
-                prefix + "gtk" + gtk_version,
-                prefix + "python-chardet",
-                prefix + "python-flake8",
-                prefix + "python-pip",
-                prefix + "python-pylint",
-                prefix + "python-gobject"]
+    packages = [f"{prefix}ca-certificates",
+                f"{prefix}gettext",
+                f"{prefix}gtk{gtk_version}",
+                f"{prefix}python-chardet",
+                f"{prefix}python-cx-freeze",
+                f"{prefix}python-flake8",
+                f"{prefix}python-pip",
+                f"{prefix}python-pylint",
+                f"{prefix}python-gobject"]
 
     if use_libadwaita:
         packages.append(prefix + "libadwaita")
 
     subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
-
-    # Downgrade Cairo for now due to text rendering performance issues
-    downgrade_packages = [prefix + "cairo-1.17.4-4-any.pkg.tar.zst"]
-
-    for package in downgrade_packages:
-        subprocess.check_call(["curl", "-O", "https://repo.msys2.org/mingw/%s/%s" % (mingw_type, package)])
-
-    subprocess.check_call(["pacman", "--noconfirm", "-U"] + downgrade_packages)
 
 
 def install_pypi():
@@ -62,6 +55,6 @@ def install_pypi():
     subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     install_pacman()
     install_pypi()

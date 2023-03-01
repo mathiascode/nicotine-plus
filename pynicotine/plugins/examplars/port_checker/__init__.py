@@ -1,4 +1,4 @@
-# COPYRIGHT (C) 2020-2022 Nicotine+ Contributors
+# COPYRIGHT (C) 2020-2023 Nicotine+ Contributors
 # COPYRIGHT (C) 2008-2011 quinox <quinox@users.sf.net>
 #
 # GNU GENERAL PUBLIC LICENSE
@@ -20,7 +20,7 @@
 import socket
 import threading
 
-from pynicotine.pluginsystem import BasePlugin, ResponseThrottle, returncode
+from pynicotine.pluginsystem import BasePlugin, ResponseThrottle
 from pynicotine.slskmessages import GetPeerAddress
 
 
@@ -31,34 +31,40 @@ class Plugin(BasePlugin):
         super().__init__(*args, **kwargs)
 
         self.settings = {
-            'keyword_enabled': False,
-            'socket_timeout': 10
+            "keyword_enabled": False,
+            "socket_timeout": 10
         }
         self.metasettings = {
-            'keyword_enabled': {
-                'description': 'Enable "portscan" keyword trigger',
-                'type': 'bool'
+            "keyword_enabled": {
+                "description": 'Enable "portscan" keyword trigger',
+                "type": "bool"
             },
-            'socket_timeout': {
-                'description': 'Socket timeout (in seconds)',
-                'type': 'int'
+            "socket_timeout": {
+                "description": "Socket timeout (in seconds)",
+                "type": "int"
             }
         }
-        self.__publiccommands__ = self.__privatecommands__ = [('port', self.port_checker_command)]
-
+        self.commands = {
+            "port": {
+                "callback": self.port_checker_command,
+                "description": "Check firewall state of user",
+                "usage": ["<user>"],
+                "usage_private_chat": ["[user]"]
+            }
+        }
         self.throttle = ResponseThrottle(self.core, self.human_name)
         self.checkroom = "nicotine"
         self.pending_user = ""
 
     def incoming_public_chat_notification(self, room, user, line):
 
-        if room != self.checkroom or not self.settings['keyword_enabled'] or self.core.login_username == user:
+        if room != self.checkroom or not self.settings["keyword_enabled"] or self.core.login_username == user:
             return
 
         if not self.throttle.ok_to_respond(room, user, line, 10):
             return
 
-        if 'portscan' in line.lower():
+        if "portscan" in line.lower():
             self.log("%s requested a port scan", user)
             self.resolve(user, True)
 
@@ -73,7 +79,7 @@ class Plugin(BasePlugin):
 
     def resolve(self, user, announce):
 
-        user_address = self.core.protothread.user_addresses.get(user)
+        user_address = self.core.user_addresses.get(user)
 
         if user_address is not None:
             ip_address, port = user_address
@@ -86,19 +92,19 @@ class Plugin(BasePlugin):
 
         status = self._check_port(ip_address, port)
 
-        if announce and status in ('open', 'closed'):
+        if announce and status in ("open", "closed"):
             self.throttle.responded()
-            self.send_public(self.checkroom, '%s: Your port is %s' % (user, status))
+            self.send_public(self.checkroom, "%s: Your port is %s" % (user, status))
 
         self.log("User %s on %s:%s port is %s.", (user, ip_address, port, status))
 
     def _check_port(self, ip_address, port):
 
-        if ip_address in ('0.0.0.0',) or port in (0,):
-            return 'unknown'
+        if ip_address in ("0.0.0.0",) or port in (0,):
+            return "unknown"
 
-        timeout = self.settings['socket_timeout']
-        self.log('Scanning %s:%d (socket timeout %d seconds)...', (ip_address, port, timeout))
+        timeout = self.settings["socket_timeout"]
+        self.log("Scanning %s:%d (socket timeout %d seconds)...", (ip_address, port, timeout))
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)
@@ -107,15 +113,13 @@ class Plugin(BasePlugin):
         sock.close()
 
         if result == 0:
-            return 'open'
+            return "open"
 
-        return 'closed'
+        return "closed"
 
-    def port_checker_command(self, _, user):
+    def port_checker_command(self, args, user=None, **_room):
 
-        if user:
-            self.resolve(user, False)
-        else:
-            self.log("Provide a user name as parameter.")
+        if args:
+            user = args
 
-        return returncode['zap']
+        self.resolve(user, False)

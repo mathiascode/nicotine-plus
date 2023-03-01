@@ -1,6 +1,6 @@
 # Soulseek Protocol Documentation
 
-Last updated on September 1, 2022
+Last updated on February 28, 2023
 
 Since the official Soulseek client and server is proprietary software, this documentation has been compiled thanks to years of reverse engineering efforts. To preserve the health of the Soulseek network, please do not modify or extend the protocol in ways that negatively impact the network.
 
@@ -64,6 +64,7 @@ If you find any inconsistencies, errors or omissions in the documentation, pleas
 |-----------------|----------------------------------------------------------------------------------|
 | INVALIDUSERNAME | Username is longer than 30 characters or contains invalid characters (non-ASCII) |
 | INVALIDPASS     | Password for existing user is incorrect                                          |
+| INVALIDVERSION  | Client version is outdated                                                       |
 
 ### User Status Codes
 
@@ -82,20 +83,29 @@ If you find any inconsistencies, errors or omissions in the documentation, pleas
 
 ### Transfer Status Strings
 
+#### In Use
+
 | String                | Comments                                    |
 | --------------------- | ------------------------------------------- |
-| Banned                |                                             |
-| Blocked country       |                                             |
+| Banned                | SoulseekQt uses 'File not shared.' instead  |
 | Cancelled             |                                             |
 | Complete              |                                             |
 | Disallowed extension  | Sent by Soulseek NS for filtered extensions |
-| File not shared       |                                             |
-| File not shared.      | Newer variant containing a dot              |
-| Pending shutdown.     |                                             |
+| File not shared.      | Note: Ends with a dot                       |
+| Pending shutdown.     | Note: Ends with a dot                       |
 | Queued                |                                             |
 | Remote file error     |                                             |
 | Too many files        |                                             |
 | Too many megabytes    |                                             |
+
+#### Deprecated
+
+| String                             | Comments                                                    |
+| ---------------------------------- | ----------------------------------------------------------- |
+| Blocked country                    | Exclusive to Nicotine+, no longer used in Nicotine+ >=3.2.0 |
+| File not shared                    | Exclusive to Nicotine+, no longer used in Nicotine+ >=3.1.1 |
+| User limit of x megabytes exceeded | Exclusive to Nicotine+, no longer used in Nicotine+ >=3.1.1 |
+| User limit of x files exceeded     | Exclusive to Nicotine+, no longer used in Nicotine+ >=3.1.1 |
 
 ### File Attribute Types
 
@@ -154,9 +164,9 @@ but it handles the protocol well enough (and can be modified).
 | 1    | [Login](#server-code-1)                           |            |
 | 2    | [Set Listen Port](#server-code-2)                 |            |
 | 3    | [Get Peer Address](#server-code-3)                |            |
-| 5    | [Add User](#server-code-5)                        |            |
-| 6    | [Remove User](#server-code-6)                     |            |
-| 7    | [Get Status](#server-code-7)                      |            |
+| 5    | [Watch User](#server-code-5)                      |            |
+| 6    | [Unwatch User](#server-code-6)                    |            |
+| 7    | [Get User Status](#server-code-7)                 |            |
 | 13   | [Say in Chat Room](#server-code-13)               |            |
 | 14   | [Join Room](#server-code-14)                      |            |
 | 15   | [Leave Room](#server-code-15)                     |            |
@@ -241,9 +251,9 @@ but it handles the protocol well enough (and can be modified).
 | 146  | [Private Room Operator Removed](#server-code-146) |            |
 | 148  | [Private Room Owned](#server-code-148)            |            |
 | 149  | [Message Users](#server-code-149)                 |            |
-| 150  | [Ask Public Chat](#server-code-150)               | Deprecated |
-| 151  | [Stop Public Chat](#server-code-151)              | Deprecated |
-| 152  | [Public Chat Message](#server-code-152)           | Deprecated |
+| 150  | [Join Global Room](#server-code-150)              | Deprecated |
+| 151  | [Leave Global Room](#server-code-151)             | Deprecated |
+| 152  | [Global Room Message](#server-code-152)           | Deprecated |
 | 153  | [Related Searches](#server-code-153)              | Obsolete   |
 | 1001 | [Can't Connect To Peer](#server-code-1001)        |            |
 | 1003 | [Can't Create Room](#server-code-1003)            |            |
@@ -326,7 +336,7 @@ We send this to the server to ask for a peer's address (IP address and port), gi
 
 ## Server Code 5
 
-### AddUser
+### WatchUser
 
 Used to be kept updated about a user's stats. When a user's stats have changed, the server sends a [GetUserStats](#server-code-36) response message with the new user stats.
 
@@ -348,7 +358,7 @@ Used to be kept updated about a user's stats. When a user's stats have changed, 
 
 ## Server Code 6
 
-### RemoveUser
+### UnwatchUser
 
 Used when we no longer want to be kept updated about a user's stats.
 
@@ -646,7 +656,7 @@ We send this to server to indicate the number of folder and files that we share.
 
 ### GetUserStats
 
-The server sends this to indicate a change in a user's statistics, if we've requested to watch the user in [AddUser](#server-code-5) previously. A user's stats can also be requested by sending a [GetUserStats](#server-code-36) message to the server, but [AddUser](#server-code-5) should be used instead.
+The server sends this to indicate a change in a user's statistics, if we've requested to watch the user in [WatchUser](#server-code-5) previously. A user's stats can also be requested by sending a [GetUserStats](#server-code-36) message to the server, but [WatchUser](#server-code-5) should be used instead.
 
 ### Data Order
 
@@ -820,7 +830,7 @@ We send this to the server to run an admin command (e.g. to ban or silence a use
 
 ### PlaceInLineResponse
 
-**OBSOLETE, use [PlaceInQueue](#peer-code-44) peer message**
+**OBSOLETE, use [PlaceInQueueResponse](#peer-code-44) peer message**
 
 The server sends this to indicate change in place in queue while we're waiting for files from another peer.
 
@@ -1410,7 +1420,7 @@ We send this after a finished upload to let the server update the speed statisti
 
 ### UserPrivileged
 
-**DEPRECATED, use [AddUser](#server-code-5) and [GetUserStatus](#server-code-7) server messages**
+**DEPRECATED, use [WatchUser](#server-code-5) and [GetUserStatus](#server-code-7) server messages**
 
 We ask the server whether a user is privileged or not.
 
@@ -1733,7 +1743,7 @@ The server sends us a list of operators in a specific room, that we can remove o
 
 ### MessageUsers
 
-Sends a broadcast private message to the given list of users.
+Sends a broadcast private message to the given list of online users.
 
 ### Data Order
 
@@ -1747,7 +1757,7 @@ Sends a broadcast private message to the given list of users.
 
 ## Server Code 150
 
-### JoinPublicRoom
+### JoinGlobalRoom
 
 **DEPRECATED, used in Soulseek NS but not SoulseekQt**
 
@@ -1762,7 +1772,7 @@ We ask the server to send us messages from all public rooms, also known as publi
 
 ## Server Code 151
 
-### LeavePublicRoom
+### LeaveGlobalRoom
 
 **DEPRECATED, used in Soulseek NS but not SoulseekQt**
 
@@ -1777,7 +1787,7 @@ We ask the server to stop sending us messages from all public rooms, also known 
 
 ## Server Code 152
 
-### PublicRoomMessage
+### GlobalRoomMessage
 
 **DEPRECATED, used in Soulseek NS but not SoulseekQt**
 
@@ -1949,24 +1959,24 @@ Peer messages are sent to peers over a 'P' connection. Only a single active conn
 | Code | Message                                    | Status                     |
 |------|--------------------------------------------|----------------------------|
 | 1    | Private Message                            | Obsolete, contents unknown |
-| 4    | [Shares Request](#peer-code-4)             |                            |
-| 5    | [Shares Reply](#peer-code-5)               |                            |
-| 8    | [Search Request](#peer-code-8)             | Obsolete                   |
-| 9    | [Search Reply](#peer-code-9)               |                            |
+| 4    | [Shared File List Request](#peer-code-4)   |                            |
+| 5    | [Shared File List Response](#peer-code-5)  |                            |
+| 8    | [File Search Request](#peer-code-8)        | Obsolete                   |
+| 9    | [File Search Response](#peer-code-9)       |                            |
 | 10   | Room Invitation                            | Obsolete, contents unknown |
 | 14   | Cancelled Queued Transfer                  | Obsolete, contents unknown |
 | 15   | [User Info Request](#peer-code-15)         |                            |
-| 16   | [User Info Reply](#peer-code-16)           |                            |
+| 16   | [User Info Response](#peer-code-16)        |                            |
 | 33   | Send Connect Token                         | Obsolete, contents unknown |
 | 34   | Move Download To Top                       | Obsolete, contents unknown |
 | 36   | [Folder Contents Request](#peer-code-36)   |                            |
-| 37   | [Folder Contents Reply](#peer-code-37)     |                            |
+| 37   | [Folder Contents Response](#peer-code-37)  |                            |
 | 40   | [Transfer Request](#peer-code-40)          |                            |
-| 41   | [Download Reply](#peer-code-41-a)          | Deprecated                 |
-| 41   | [Upload Reply](#peer-code-41-b)            |                            |
+| 41   | [Download Response](#peer-code-41-a)       | Deprecated                 |
+| 41   | [Upload Response](#peer-code-41-b)         |                            |
 | 42   | [Upload Placehold](#peer-code-42)          | Obsolete                   |
 | 43   | [Queue Upload](#peer-code-43)              |                            |
-| 44   | [Place In Queue Reply](#peer-code-44)      |                            |
+| 44   | [Place In Queue Response](#peer-code-44)   |                            |
 | 46   | [Upload Failed](#peer-code-46)             |                            |
 | 47   | Exact File Search Request                  | Obsolete, contents unknown |
 | 48   | Queued Downloads                           | Obsolete, contents unknown |
@@ -1990,9 +2000,9 @@ We send this to a peer to ask for a list of shared files.
 
 ## Peer Code 5
 
-### SharedFileList
+### SharedFileListResponse
 
-A peer responds with a list of shared files after we've sent a [GetSharedFileList](#peer-code-4).
+A peer responds with a list of shared files after we've sent a [SharedFileListRequest](#peer-code-4).
 
 ### Data Order
 
@@ -2048,7 +2058,7 @@ We send this to the peer when we search for a file. Alternatively, the peer send
 
 ## Peer Code 9
 
-### FileSearchResult
+### FileSearchResponse
 
 A peer sends this message when it has a file search match. The token is taken from original [FileSearch](#server-code-26), [UserSearch](#server-code-42) or [RoomSearch](#server-code-120) server message.
 
@@ -2125,7 +2135,7 @@ We ask the other peer to send us their user information, picture and all.
 
 ## Peer Code 16
 
-### UserInfoReply
+### UserInfoResponse
 
 A peer responds with this after we've sent a [UserInfoRequest](#peer-code-15).
 
@@ -2238,7 +2248,7 @@ This message was formerly used to send a download request (direction 0) as well,
 
 ## Peer Code 41 a
 
-### TransferResponse *Download Reply*
+### TransferResponse *Download Response*
 
 **DEPRECATED, use [QueueUpload](#peer-code-43) to request files**
 
@@ -2263,7 +2273,7 @@ We (or the other peer) either agrees, or tells the reason for rejecting the file
 
 ## Peer Code 41 b
 
-### TransferResponse *Upload Reply*
+### TransferResponse *Upload Response*
 
 Response to [TransferRequest](#peer-code-40)
 
@@ -2310,7 +2320,7 @@ This message is used to tell a peer that an upload should be queued on their end
 
 ## Peer Code 44
 
-### PlaceInQueue
+### PlaceInQueueResponse
 
 The peer replies with the upload queue placement of the requested file.
 

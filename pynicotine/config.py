@@ -30,6 +30,7 @@ This module contains configuration classes for Nicotine.
 
 import configparser
 import os
+import platform
 import sys
 
 from ast import literal_eval
@@ -54,21 +55,20 @@ class Config:
 
         config_dir, self.data_dir = self.get_user_directories()
         self.filename = os.path.join(config_dir, "config")
-        self.version = "3.3.0.dev3"
-        self.python_version = sys.version
+        self.version = "3.3.0.dev4"
+        self.python_version = platform.python_version()
         self.gtk_version = ""
 
         self.application_name = "Nicotine+"
         self.application_id = "org.nicotine_plus.Nicotine"
-        self.summary = _("Graphical client for the Soulseek peer-to-peer network")
         self.author = "Nicotine+ Team"
-        self.copyright = """© 2004–2022 Nicotine+ Contributors
+        self.copyright = """© 2004–2023 Nicotine+ Contributors
 © 2003–2004 Nicotine Contributors
 © 2001–2003 PySoulSeek Contributors"""
 
-        self.website_url = "https://nicotine-plus.org/"
-        self.privileges_url = "https://www.slsknet.org/userlogin.php?username=%s"
-        self.portchecker_url = "http://tools.slsknet.org/porttest.php?port=%s"
+        self.website_url = "https://nicotine-plus.org"
+        self.privileges_url = "https://www.slsknet.org/qtlogin.php?username=%s"
+        self.portchecker_url = "https://www.slsknet.org/porttest.php?port=%s"
         self.issue_tracker_url = "https://github.com/nicotine-plus/nicotine-plus/issues"
         self.translations_url = "https://nicotine-plus.org/doc/TRANSLATIONS"
 
@@ -86,7 +86,7 @@ class Config:
 
         if sys.platform == "win32":
             try:
-                data_dir = os.path.join(os.environ['APPDATA'], 'nicotine')
+                data_dir = os.path.join(os.environ["APPDATA"], "nicotine")
             except KeyError:
                 data_dir, _filename = os.path.split(sys.argv[0])
 
@@ -95,7 +95,7 @@ class Config:
 
         home = os.path.expanduser("~")
 
-        legacy_dir = os.path.join(home, '.nicotine')
+        legacy_dir = os.path.join(home, ".nicotine")
 
         if os.path.isdir(legacy_dir.encode("utf-8")):
             return legacy_dir, legacy_dir
@@ -103,12 +103,12 @@ class Config:
         def xdg_path(xdg, default):
             path = os.environ.get(xdg)
 
-            path = path.split(':')[0] if path else default
+            path = path.split(":")[0] if path else default
 
-            return os.path.join(path, 'nicotine')
+            return os.path.join(path, "nicotine")
 
-        config_dir = xdg_path('XDG_CONFIG_HOME', os.path.join(home, '.config'))
-        data_dir = xdg_path('XDG_DATA_HOME', os.path.join(home, '.local', 'share'))
+        config_dir = xdg_path("XDG_CONFIG_HOME", os.path.join(home, ".config"))
+        data_dir = xdg_path("XDG_DATA_HOME", os.path.join(home, ".local", "share"))
 
         return config_dir, data_dir
 
@@ -133,13 +133,13 @@ class Config:
             from pynicotine.logfacility import log
 
             log.add(_("Can't create directory '%(path)s', reported error: %(error)s"),
-                    {'path': path, 'error': msg})
+                    {"path": path, "error": msg})
             return False
 
         return True
 
     def create_data_folder(self):
-        """ Create the folder for storing data in (aliases, shared files etc.),
+        """ Create the folder for storing data in (shared files etc.),
         if the folder doesn't exist """
 
         from pynicotine.utils import encode_path
@@ -153,7 +153,7 @@ class Config:
             from pynicotine.logfacility import log
 
             log.add(_("Can't create directory '%(path)s', reported error: %(error)s"),
-                    {'path': self.data_dir, 'error': msg})
+                    {"path": self.data_dir, "error": msg})
 
     def load_config(self):
 
@@ -185,18 +185,18 @@ class Config:
                 "command_aliases": {}
             },
             "transfers": {
-                "incompletedir": os.path.join(self.data_dir, 'incomplete'),
-                "downloaddir": os.path.join(self.data_dir, 'downloads'),
-                "uploaddir": os.path.join(self.data_dir, 'received'),
+                "incompletedir": os.path.join(self.data_dir, "incomplete"),
+                "downloaddir": os.path.join(self.data_dir, "downloads"),
+                "uploaddir": os.path.join(self.data_dir, "received"),
                 "usernamesubfolders": False,
                 "shared": [],
                 "buddyshared": [],
                 "uploadbandwidth": 50,
-                "uselimit": False,
-                "usealtlimits": False,
+                "use_upload_speed_limit": "unlimited",
                 "uploadlimit": 1000,
                 "uploadlimitalt": 100,
-                "downloadlimit": 0,
+                "use_download_speed_limit": "unlimited",
+                "downloadlimit": 1000,
                 "downloadlimitalt": 100,
                 "preferfriends": False,
                 "useupslots": False,
@@ -204,7 +204,7 @@ class Config:
                 "afterfinish": "",
                 "afterfolder": "",
                 "lock": True,
-                "reverseorder": False,
+                "reverseorder": False,  # TODO: remove in 3.3.0
                 "fifoqueue": False,
                 "usecustomban": False,
                 "limitby": True,
@@ -229,7 +229,6 @@ class Config:
                 "downloadregexp": "",
                 "downloadfilters": [
                     ["desktop.ini", 1],
-                    ["folder.jpg", 1],
                     ["*.url", 1],
                     ["thumbs.db", 1],
                     ["albumart(_{........-....-....-....-............}_)?(_?(large|small))?\\.jpg", 0]
@@ -261,7 +260,7 @@ class Config:
                 "censorwords": False,
                 "replacewords": False,
                 "tab": True,
-                "cycle": False,
+                "cycle": False,  # TODO: remove in 3.3.0
                 "dropdown": False,
                 "characters": 3,
                 "roomnames": False,
@@ -269,7 +268,7 @@ class Config:
                 "roomusers": True,
                 "commands": True,
                 "aliases": True,
-                "onematch": False
+                "onematch": False  # TODO: remove in 3.3.0
             },
             "logging": {
                 "debug": False,
@@ -326,12 +325,14 @@ class Config:
                 "private_search_results": True
             },
             "ui": {
+                "language": "",
                 "dark_mode": False,
                 "header_bar": True,
                 "icontheme": "",
                 "chatme": "#908e8b",
                 "chatremote": "",
                 "chatlocal": "",
+                "chatcommand": "#908e8b",
                 "chathilite": "#5288ce",
                 "urlcolor": "#5288ce",
                 "useronline": "#16bb5c",
@@ -357,6 +358,7 @@ class Config:
                 "tabsearch": "Top",
                 "tab_status_icons": True,
                 "globalfont": "",
+                "textviewfont": "",
                 "chatfont": "",
                 "tabclosers": True,
                 "searchfont": "",
@@ -400,7 +402,8 @@ class Config:
                 "maximized": True,
                 "urgencyhint": True,
                 "file_path_tooltips": True,
-                "reverse_file_paths": True
+                "reverse_file_paths": True,
+                "exact_file_sizes": False
             },
             "private_rooms": {
                 "rooms": {}
@@ -456,7 +459,9 @@ class Config:
                 "geopanic",
                 "enablebuddyshares",
                 "friendsonly",
-                "enabletransferbuttons"
+                "enabletransferbuttons",
+                "uselimit",
+                "usealtlimits"
             ),
             "server": (
                 "lastportstatuscheck",
@@ -554,14 +559,6 @@ class Config:
             )
         }
 
-        # Windows specific stuff
-        if sys.platform == "win32":
-            self.defaults['players']['npplayer'] = 'other'
-
-        # Initialize config with default values
-        for key, value in self.defaults.items():
-            self.sections[key] = value.copy()
-
         self.create_config_folder()
         self.create_data_folder()
 
@@ -570,33 +567,14 @@ class Config:
         # Update config values from file
         self.set_config()
 
-        # Convert special download folder share to regular share
-        if self.sections["transfers"].get("sharedownloaddir", False):
-            shares = self.sections["transfers"]["shared"]
-            virtual_name = "Downloaded"
-            shared_folder = (virtual_name, self.sections["transfers"]["downloaddir"])
+        language = self.sections["ui"]["language"]
 
-            if shared_folder not in shares and virtual_name not in (x[0] for x in shares):
-                shares.append(shared_folder)
-
-        # Load command aliases from legacy file
-        try:
-            from pynicotine.utils import encode_path
-            encoded_alias_path = encode_path(self.filename + ".alias")
-
-            if not self.sections["server"]["command_aliases"] and os.path.exists(encoded_alias_path):
-                with open(encoded_alias_path, 'rb') as file_handle:
-                    from pynicotine.utils import RestrictedUnpickler
-
-                    self.sections["server"]["command_aliases"] = RestrictedUnpickler(
-                        file_handle, encoding='utf-8').load()
-
-        except Exception:
-            pass
-
-        self.config_loaded = True
+        if language:
+            from pynicotine.i18n import apply_translations
+            apply_translations(language)
 
         from pynicotine.logfacility import log
+        log.init_log_levels()
         log.add_debug("Using configuration: %(file)s", {"file": self.filename})
 
     def parse_config(self, filename):
@@ -605,7 +583,7 @@ class Config:
         from pynicotine.utils import encode_path
 
         try:
-            with open(encode_path(filename), 'a+', encoding="utf-8") as file_handle:
+            with open(encode_path(filename), "a+", encoding="utf-8") as file_handle:
                 file_handle.seek(0)
                 self.parser.read_file(file_handle)
 
@@ -628,18 +606,18 @@ class Config:
             sys.exit()
 
         from pynicotine.utils import encode_path
-        conv_filename = encode_path(self.filename + ".conv")
+        conv_filename = encode_path(f"{self.filename}.conv")
         os.replace(self.filename, conv_filename)
 
-        with open(conv_filename, 'rb') as file_handle:
+        with open(conv_filename, "rb") as file_handle:
             rawdata = file_handle.read()
 
-        from_encoding = detect(rawdata)['encoding']
+        from_encoding = detect(rawdata)["encoding"]
 
         with open(conv_filename, encoding=from_encoding) as file_read:
-            with open(encode_path(self.filename), 'w', encoding="utf-8") as file_write:
+            with open(encode_path(self.filename), "w", encoding="utf-8") as file_write:
                 for line in file_read:
-                    file_write.write(line[:-1] + '\r\n')
+                    file_write.write(line[:-1] + "\r\n")
 
         os.remove(conv_filename)
 
@@ -667,7 +645,7 @@ class Config:
                 elif (j not in self.defaults.get(i, {}) and j not in self.removed_options.get(i, {})
                         and i != "plugins" and j != "filter"):
                     log.add_debug("Unknown config option '%(option)s' in section '%(section)s'",
-                                  {'option': j, 'section': i})
+                                  {"option": j, "section": i})
 
                 else:
                     """ Attempt to get the default value for a config option. If there's no default
@@ -714,29 +692,76 @@ class Config:
                         self.sections[i][j] = default_val
 
                         log.add("Config error: Couldn't decode '%s' section '%s' value '%s', value has been reset", (
-                            (i[:120] + '…') if len(i) > 120 else i,
-                            (j[:120] + '…') if len(j) > 120 else j,
-                            (val[:120] + '…') if len(val) > 120 else val
+                            (i[:120] + "…") if len(i) > 120 else i,
+                            (j[:120] + "…") if len(j) > 120 else j,
+                            (val[:120] + "…") if len(val) > 120 else val
                         ))
 
-        server = self.sections["server"]
+        # Add any default options not present in the config file
+        for section, options in self.defaults.items():
+            if section not in self.sections:
+                self.sections[section] = {}
+
+            for option, value in options.items():
+                if option in self.sections[section]:
+                    continue
+
+                # Migrate download speed limit preference
+                if option == "use_download_speed_limit" and section == "transfers":
+                    if self.sections[section].get("usealtlimits", False):
+                        use_speed_limit = "alternative"
+
+                    elif self.sections[section].get("downloadlimit", 0) > 0:
+                        use_speed_limit = "primary"
+
+                    else:
+                        use_speed_limit = "unlimited"
+
+                    self.sections[section][option] = use_speed_limit
+                    continue
+
+                # Migrate upload speed limit preference
+                if option == "use_upload_speed_limit" and section == "transfers":
+                    if self.sections[section].get("usealtlimits", False):
+                        use_speed_limit = "alternative"
+
+                    elif self.sections[section].get("uselimit", False):
+                        use_speed_limit = "primary"
+
+                    else:
+                        use_speed_limit = "unlimited"
+
+                    self.sections[section][option] = use_speed_limit
+                    continue
+
+                # Set default value
+                self.sections[section][option] = value
+
+        # Convert special download folder share to regular share
+        if self.sections["transfers"].get("sharedownloaddir", False):
+            shares = self.sections["transfers"]["shared"]
+            virtual_name = "Downloaded"
+            shared_folder = (virtual_name, self.sections["transfers"]["downloaddir"])
+
+            if shared_folder not in shares and virtual_name not in (x[0] for x in shares):
+                shares.append(shared_folder)
 
         # Check if server value is valid
-        if (len(server["server"]) != 2
-                or not isinstance(server["server"][0], str)
-                or not isinstance(server["server"][1], int)):
+        server_addr = self.sections["server"]["server"]
 
-            server["server"] = self.defaults["server"]["server"]
+        if (len(server_addr) != 2 or not isinstance(server_addr[0], str) or not isinstance(server_addr[1], int)):
+            self.sections["server"]["server"] = self.defaults["server"]["server"]
 
         # Check if port range value is valid
-        if (len(server["portrange"]) != 2
-                or not all(isinstance(i, int) for i in server["portrange"])):
+        port_range = self.sections["server"]["portrange"]
 
-            server["portrange"] = self.defaults["server"]["portrange"]
-
+        if (len(port_range) != 2 or not all(isinstance(i, int) for i in port_range)):
+            self.sections["server"]["portrange"] = self.defaults["server"]["portrange"]
         else:
             # Setting the port range in numerical order
-            server["portrange"] = (min(server["portrange"]), max(server["portrange"]))
+            self.sections["server"]["portrange"] = (min(port_range), max(port_range))
+
+        self.config_loaded = True
 
     def write_config_callback(self, filename):
         self.parser.write(filename)
@@ -752,6 +777,9 @@ class Config:
                 self.parser.add_section(section)
 
             for option, value in options.items():
+                if value is None:
+                    value = ""
+
                 self.parser.set(section, option, str(value))
 
         # Remove legacy config options
@@ -783,7 +811,7 @@ class Config:
 
         try:
             if os.path.exists(filename_encoded):
-                raise FileExistsError("File %s exists" % filename)
+                raise FileExistsError(f"File {filename} exists")
 
             import tarfile
             with tarfile.open(filename_encoded, "w:bz2") as tar:

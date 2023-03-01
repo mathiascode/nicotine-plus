@@ -16,20 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pynicotine.gtkgui.widgets.popover import Popover
-from pynicotine.gtkgui.widgets.ui import UserInterface
+from pynicotine.gtkgui.popovers.transferspeeds import TransferSpeeds
 
 
-class ChatRoomCommands(Popover):
+class DownloadSpeeds(TransferSpeeds):
 
     def __init__(self, window):
-
-        ui_template = UserInterface(scope=self, path="popovers/chatroomcommands.ui")
-        (self.container,) = ui_template.widgets
-
-        super().__init__(
-            window=window,
-            content_box=self.container,
-            width=600,
-            height=450
-        )
+        super().__init__(window=window, transfer_type="download")

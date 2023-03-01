@@ -20,10 +20,8 @@ import re
 import time
 
 from gi.repository import Gdk
-from gi.repository import GLib
 from gi.repository import Gtk
 
-from pynicotine.config import config
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.utils import copy_text
 from pynicotine.gtkgui.widgets.theme import update_tag_visuals
@@ -35,26 +33,40 @@ from pynicotine.utils import open_uri
 
 class TextView:
 
-    def __init__(self, textview, font=None, auto_scroll=False, parse_urls=True):
+    if GTK_API_VERSION >= 4:
+        POINTER_CURSOR = Gdk.Cursor(name="pointer")
+        TEXT_CURSOR = Gdk.Cursor(name="text")
+    else:
+        POINTER_CURSOR = Gdk.Cursor.new_from_name(Gdk.Display.get_default(), "pointer")
+        TEXT_CURSOR = Gdk.Cursor.new_from_name(Gdk.Display.get_default(), "text")
 
-        self.textview = textview
-        self.textbuffer = textview.get_buffer()
-        self.scrollable = textview.get_ancestor(Gtk.ScrolledWindow)
-        self.adjustment = self.scrollable.get_vadjustment()
+    def __init__(self, parent, auto_scroll=False, parse_urls=True, editable=True,
+                 horizontal_margin=12, vertical_margin=8, pixels_above_lines=1, pixels_below_lines=1):
+
+        self.widget = Gtk.TextView(
+            accepts_tab=False, cursor_visible=editable, editable=editable,
+            left_margin=horizontal_margin, right_margin=horizontal_margin,
+            top_margin=vertical_margin, bottom_margin=vertical_margin,
+            pixels_above_lines=pixels_above_lines, pixels_below_lines=pixels_below_lines,
+            wrap_mode=Gtk.WrapMode.WORD_CHAR, visible=True
+        )
+        parent.set_property("child", self.widget)
+
+        self.textbuffer = self.widget.get_buffer()
+        self.scrollable = self.widget.get_ancestor(Gtk.ScrolledWindow)
         scrollable_container = self.scrollable.get_ancestor(Gtk.Box)
 
-        self.font = font
-        self.auto_scroll = self.should_auto_scroll = auto_scroll
+        self.adjustment = self.scrollable.get_vadjustment()
+        self.auto_scroll = auto_scroll
+        self.adjustment_bottom = self.adjustment_value = 0
+        self.adjustment.connect("notify::upper", self.on_adjustment_upper_changed)
+        self.adjustment.connect("notify::value", self.on_adjustment_value_changed)
+
+        self.pressed_x = self.pressed_y = 0
+        self.max_num_lines = 50000
         self.parse_urls = parse_urls
         self.tag_urls = {}
         self.url_regex = re.compile("(\\w+\\://[^\\s]+)|(www\\.\\w+\\.[^\\s]+)|(mailto\\:[^\\s]+)")
-
-        self.pressed_x = 0
-        self.pressed_y = 0
-        self.max_num_lines = 50000
-
-        self.adjustment.connect("notify::upper", self.on_adjustment_changed)
-        self.adjustment.connect("notify::value", self.on_adjustment_changed, True)
 
         if GTK_API_VERSION >= 4:
             self.gesture_click_primary = Gtk.GestureClick()
@@ -63,22 +75,18 @@ class TextView:
             self.gesture_click_secondary = Gtk.GestureClick()
             scrollable_container.add_controller(self.gesture_click_secondary)
 
-            self.pointer_cursor = Gdk.Cursor(name="pointer")
-            self.text_cursor = Gdk.Cursor(name="text")
-            self.cursor_window = self.textview
+            self.cursor_window = self.widget
 
             self.motion_controller = Gtk.EventControllerMotion()
             self.motion_controller.connect("motion", self.on_move_cursor)
-            textview.add_controller(self.motion_controller)
+            self.widget.add_controller(self.motion_controller)  # pylint: disable=no-member
         else:
             self.gesture_click_primary = Gtk.GestureMultiPress(widget=scrollable_container)
             self.gesture_click_secondary = Gtk.GestureMultiPress(widget=scrollable_container)
 
-            self.pointer_cursor = Gdk.Cursor.new_from_name(textview.get_display(), "pointer")
-            self.text_cursor = Gdk.Cursor.new_from_name(textview.get_display(), "text")
             self.cursor_window = None
 
-            textview.connect("motion-notify-event", self.on_move_cursor_event)
+            self.widget.connect("motion-notify-event", self.on_move_cursor_event)
 
         self.gesture_click_primary.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         self.gesture_click_primary.connect("released", self.on_released_primary)
@@ -87,13 +95,9 @@ class TextView:
         self.gesture_click_secondary.set_button(Gdk.BUTTON_SECONDARY)
         self.gesture_click_secondary.connect("pressed", self.on_pressed_secondary)
 
-    def scroll_bottom(self, *_args):
-
-        if not self.textview.get_realized():
-            # Avoid GTK warnings
-            return
-
-        self.adjustment.set_value(self.adjustment.get_upper() - self.adjustment.get_page_size())
+    def scroll_bottom(self):
+        self.adjustment_value = (self.adjustment.get_upper() - self.adjustment.get_page_size())
+        self.adjustment.set_value(self.adjustment_value)
 
     def _insert_text(self, text, tag=None):
 
@@ -137,7 +141,7 @@ class TextView:
             line = "\n" + line
 
         # Tag usernames with popup menu creating tag, and away/online/offline colors
-        if username and config.sections["ui"]["usernamehotspots"] and username in line:
+        if username and username in line:
             start = line.find(username)
 
             self._insert_text(line[:start], tag)
@@ -170,10 +174,14 @@ class TextView:
     def get_has_selection(self):
         return self.textbuffer.get_has_selection()
 
+    def get_text(self):
+        start_iter, end_iter = self.textbuffer.get_bounds()
+        return self.textbuffer.get_text(start_iter, end_iter, include_hidden_chars=True)
+
     def get_tags_for_pos(self, pos_x, pos_y):
 
-        buf_x, buf_y = self.textview.window_to_buffer_coords(Gtk.TextWindowType.WIDGET, pos_x, pos_y)
-        over_text, iterator, _trailing = self.textview.get_iter_at_position(buf_x, buf_y)
+        buf_x, buf_y = self.widget.window_to_buffer_coords(Gtk.TextWindowType.WIDGET, pos_x, pos_y)
+        over_text, iterator, _trailing = self.widget.get_iter_at_position(buf_x, buf_y)
 
         if not over_text:
             # Iterators are returned for whitespace after the last character, avoid accidental URL clicks
@@ -191,14 +199,14 @@ class TextView:
 
     def update_cursor(self, pos_x, pos_y):
 
-        cursor = self.text_cursor
+        cursor = self.TEXT_CURSOR
 
         if self.cursor_window is None:
-            self.cursor_window = self.textview.get_window(Gtk.TextWindowType.TEXT)
+            self.cursor_window = self.widget.get_window(Gtk.TextWindowType.TEXT)  # pylint: disable=no-member
 
         for tag in self.get_tags_for_pos(pos_x, pos_y):
             if hasattr(tag, "url") or hasattr(tag, "username"):
-                cursor = self.pointer_cursor
+                cursor = self.POINTER_CURSOR
                 break
 
         if cursor != self.cursor_window.get_cursor():
@@ -213,16 +221,13 @@ class TextView:
 
     """ Text Tags (usernames, URLs) """
 
-    def create_tag(self, color=None, callback=None, username=None, url=None):
+    def create_tag(self, color_id=None, callback=None, username=None, url=None):
 
         tag = self.textbuffer.create_tag()
 
-        if color:
-            update_tag_visuals(tag, color=color)
-            tag.color = color
-
-        if self.font:
-            update_tag_visuals(tag, font=self.font)
+        if color_id:
+            update_tag_visuals(tag, color_id=color_id)
+            tag.color_id = color_id
 
         if url:
             if url[:4] == "www.":
@@ -236,12 +241,12 @@ class TextView:
 
         return tag
 
-    def update_tag(self, tag, color=None):
+    def update_tag(self, tag, color_id=None):
 
-        if color is not None:
-            tag.color = color
+        if color_id is not None:
+            tag.color_id = color_id
 
-        update_tag_visuals(tag, tag.color, self.font)
+        update_tag_visuals(tag, color_id=tag.color_id)
 
     def update_tags(self):
         for tag in self.tag_urls.values():
@@ -290,31 +295,33 @@ class TextView:
         self.update_cursor(event.x, event.y)
 
     def on_copy_text(self, *_args):
-        self.textview.emit("copy-clipboard")
+        self.widget.emit("copy-clipboard")
 
     def on_copy_link(self, *_args):
         copy_text(self.get_url_for_current_pos())
 
     def on_copy_all_text(self, *_args):
-
-        textbuffer = self.textview.get_buffer()
-        start_iter, end_iter = textbuffer.get_bounds()
-        text = textbuffer.get_text(start_iter, end_iter, True)
-
-        copy_text(text)
+        copy_text(self.get_text())
 
     def on_clear_all_text(self, *_args):
         self.clear()
 
-    def on_adjustment_changed(self, adjustment, _param, force_scroll=False):
+    def on_adjustment_upper_changed(self, *_args):
 
-        if not self.auto_scroll:
+        new_adjustment_bottom = (self.adjustment.get_upper() - self.adjustment.get_page_size())
+
+        if self.auto_scroll and (self.adjustment_bottom - self.adjustment_value) <= 0:
+            # Scroll to bottom if we were at the bottom previously
+            self.scroll_bottom()
+
+        self.adjustment_bottom = new_adjustment_bottom
+
+    def on_adjustment_value_changed(self, *_args):
+
+        new_value = self.adjustment.get_value()
+
+        if new_value.is_integer() and (0 < new_value < self.adjustment_bottom):
+            # The textview scrolls up on its own sometimes. Ignore these garbage values.
             return
 
-        if force_scroll or not self.should_auto_scroll:
-            # Scroll to bottom if we were at the bottom previously
-            bottom = adjustment.get_upper() - adjustment.get_page_size()
-            self.should_auto_scroll = (bottom - adjustment.get_value() <= 0)
-
-        if self.should_auto_scroll:
-            GLib.idle_add(self.scroll_bottom, priority=GLib.PRIORITY_LOW)
+        self.adjustment_value = new_value

@@ -28,7 +28,6 @@ uploaddir =
 shared = []
 buddyshared = []
 uploadbandwidth = 10
-uselimit = False
 uploadlimit = 150
 downloadlimit = 0
 preferfriends = False
@@ -66,9 +65,10 @@ downloadsexpanded = True
 uploadsexpanded = True
 buddysharestrustedonly = False
 usernamesubfolders = False
-usealtlimits = False
 uploadlimitalt = 100
 downloadlimitalt = 100
+use_upload_speed_limit = unlimited
+use_download_speed_limit = unlimited
 
 [userinfo]
 descr = ''
@@ -202,6 +202,10 @@ maximized = True
 urgencyhint = True
 file_path_tooltips = True
 reverse_file_paths = True
+language = 
+textviewfont = 
+chatcommand = #908e8b
+exact_file_sizes = False
 
 [private_rooms]
 rooms = {}
@@ -230,6 +234,7 @@ notification_popup_folder = True
 notification_popup_private_message = True
 notification_popup_chatroom = False
 notification_popup_chatroom_mention = True
+notification_popup_wish = True
 
 [plugins]
 enable = True
@@ -242,6 +247,7 @@ downloaded_size = 0
 started_uploads = 0
 completed_uploads = 0
 uploaded_size = 0
+since_timestamp = 0
 
 [userbrowse]
 expand_folders = True

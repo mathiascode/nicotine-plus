@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import Gtk
-
+from pynicotine.core import core
 from pynicotine.gtkgui.widgets.ui import UserInterface
 from pynicotine.gtkgui.widgets.dialogs import Dialog
 from pynicotine.utils import human_length
@@ -28,9 +27,8 @@ from pynicotine.utils import humanize
 
 class FileProperties(Dialog):
 
-    def __init__(self, frame, core, download_button=True):
+    def __init__(self, application, download_button=True):
 
-        self.core = core
         self.properties = {}
         self.total_size = 0
         self.total_length = 0
@@ -60,18 +58,13 @@ class FileProperties(Dialog):
             self.username_value_label
         ) = ui_template.widgets
 
-        buttons = [(self.previous_button, Gtk.ResponseType.HELP),
-                   (self.next_button, Gtk.ResponseType.HELP)]
-
-        if download_button:
-            buttons.append((self.download_button, Gtk.ResponseType.NONE))
-
         Dialog.__init__(
             self,
-            parent=frame.window,
+            parent=application.window,
             content_box=self.container,
-            buttons=buttons,
-            show_callback=self.on_show,
+            buttons_start=(self.previous_button, self.next_button),
+            buttons_end=(self.download_button,) if download_button else (),
+            default_button=self.next_button,
             title=_("File Properties"),
             width=600,
             close_destroy=False
@@ -85,13 +78,13 @@ class FileProperties(Dialog):
 
         if self.total_length:
             self.set_title(_("File Properties (%(num)i of %(total)i  /  %(size)s  /  %(length)s)") % {
-                'num': index, 'total': total_files, 'size': total_size,
-                'length': human_length(self.total_length)
+                "num": index, "total": total_files, "size": total_size,
+                "length": human_length(self.total_length)
             })
             return
 
         self.set_title(_("File Properties (%(num)i of %(total)i  /  %(size)s)") % {
-                       'num': index, 'total': total_files, 'size': total_size})
+                       "num": index, "total": total_files, "size": total_size})
 
     def update_current_file(self):
         """ Updates the UI with properties for the selected file """
@@ -101,10 +94,13 @@ class FileProperties(Dialog):
         for button in (self.previous_button, self.next_button):
             button.set_visible(len(self.properties) > 1)
 
-        self.filename_value_label.set_text(str(properties["filename"]))
-        self.folder_value_label.set_text(str(properties["directory"]))
-        self.filesize_value_label.set_text("%s (%s B)" % (human_size(properties["size"]), humanize(properties["size"])))
-        self.username_value_label.set_text(str(properties["user"]))
+        h_size = human_size(properties["size"])
+        bytes_size = humanize(properties["size"])
+
+        self.filename_value_label.set_text(properties["filename"])
+        self.folder_value_label.set_text(properties["directory"])
+        self.filesize_value_label.set_text(f"{h_size} ({bytes_size} B)")
+        self.username_value_label.set_text(properties["user"])
 
         path = properties.get("path") or ""
         bitrate = properties.get("bitrate") or ""
@@ -113,13 +109,13 @@ class FileProperties(Dialog):
         speed = properties.get("speed") or 0
         country = properties.get("country") or ""
 
-        self.path_value_label.set_text(str(path))
+        self.path_value_label.set_text(path)
         self.path_row.set_visible(bool(path))
 
-        self.bitrate_value_label.set_text(str(bitrate))
+        self.bitrate_value_label.set_text(bitrate)
         self.bitrate_row.set_visible(bool(bitrate))
 
-        self.length_value_label.set_text(str(length))
+        self.length_value_label.set_text(length)
         self.length_row.set_visible(bool(length))
 
         self.queue_value_label.set_text(humanize(queue_position))
@@ -128,7 +124,7 @@ class FileProperties(Dialog):
         self.speed_value_label.set_text(human_speed(speed))
         self.speed_row.set_visible(bool(speed))
 
-        self.country_value_label.set_text(str(country))
+        self.country_value_label.set_text(country)
         self.country_row.set_visible(bool(country))
 
         self.update_title()
@@ -164,10 +160,7 @@ class FileProperties(Dialog):
 
         properties = self.properties[self.current_index]
 
-        self.core.transfers.get_file(
+        core.transfers.get_file(
             properties["user"], properties["fn"], size=properties["size"],
             bitrate=properties.get("bitrate"), length=properties.get("length")
         )
-
-    def on_show(self, *_args):
-        self.next_button.grab_focus()
