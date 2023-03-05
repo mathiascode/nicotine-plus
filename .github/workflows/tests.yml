@@ -59,10 +59,10 @@ jobs:
   fedora-rocky:
     strategy:
       matrix:
-        container: [fedora:rawhide, rockylinux:8]
+        container: ['fedora:rawhide', 'rockylinux:8']
         gtk: [3, 4]
         exclude:
-          - container: rockylinux:8
+          - container: 'rockylinux:8'
             gtk: 4
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
