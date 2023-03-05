@@ -41,7 +41,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-20.04, ubuntu-22.04]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -56,12 +56,13 @@ jobs:
       - name: Run autopkgtest
         run: sudo autopkgtest . -- null
 
-  fedora:
+  fedora-rocky:
     runs-on: ubuntu-latest
-    container: fedora:rawhide
     strategy:
       matrix:
+        container: [fedora:rawhide, rockylinux:8]
         gtk: [3, 4]
+    container: ${{ matrix.container }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
