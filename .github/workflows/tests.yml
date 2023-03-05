@@ -75,7 +75,7 @@ jobs:
       - name: Install dependencies
         run: |
           dnf -y install gettext gtk${{ matrix.gtk }} python3-gobject
-          python -m pip install -e ".[test]"
+          python3 -m pip install -e ".[test]"
 
       - name: Flake8 linter
         run: python3 -m flake8
@@ -84,7 +84,7 @@ jobs:
         run: python3 -m pylint pynicotine test
 
       - name: Integration and unit tests
-        run: xvfb-run python -m unittest -v
+        run: xvfb-run python3 -m unittest -v
 
   windows:
     runs-on: windows-latest
