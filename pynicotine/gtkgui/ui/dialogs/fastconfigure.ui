@@ -115,9 +115,11 @@
         <child>
           <object class="GtkImage">
             <property name="visible">True</property>
+            <property name="can-focus">True</property>
             <property name="halign">center</property>
             <property name="icon-name">dialog-password-symbolic</property>
             <property name="pixel-size">64</property>
+            <property name="tooltip-text" translatable="yes">Account</property>
           </object>
         </child>
         <child>
@@ -239,9 +241,11 @@
         <child>
           <object class="GtkImage">
             <property name="visible">True</property>
+            <property name="can-focus">True</property>
             <property name="halign">center</property>
             <property name="icon-name">network-wireless-symbolic</property>
             <property name="pixel-size">64</property>
+            <property name="tooltip-text" translatable="yes">Listening Port</property>
           </object>
         </child>
         <child>

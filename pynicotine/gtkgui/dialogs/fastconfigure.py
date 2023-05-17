@@ -55,7 +55,13 @@ class FastConfigure(Dialog):
             self.welcome_page
         ) = ui.load(scope=self, path="dialogs/fastconfigure.ui")
 
-        self.pages = [self.welcome_page, self.account_page, self.port_page, self.share_page, self.summary_page]
+        self.pages = {
+            self.welcome_page: _("Introduction"),
+            self.account_page: _("Account"),
+            self.port_page: _("Listening Port"),
+            self.share_page: _("Shares"),
+            self.summary_page: _("Summary")
+        }
 
         super().__init__(
             parent=application.window,
@@ -227,12 +233,26 @@ class FastConfigure(Dialog):
     def on_page_change(self, *_args):
 
         page = self.stack.get_visible_child()
+        page_index = list(self.pages).index(page)
+        previous_title = next_title = None
+
+        for previous_page, title in reversed(list(self.pages.items())[:page_index]):
+            if previous_page.get_visible():
+                previous_title = title
+                break
+
+        for next_page, title in list(self.pages.items())[page_index + 1:]:
+            if next_page.get_visible():
+                next_title = title
+                break
+
+        self.previous_button.set_tooltip_text(previous_title)
+        self.next_button.set_tooltip_text(next_title)
+
+        self.set_title(list(self.pages.values())[page_index])
 
         if page == self.welcome_page:
             self.set_up_button.grab_focus()
-
-        elif page == self.account_page:
-            self.username_entry.grab_focus()
 
         self.reset_completeness()
 
@@ -242,21 +262,23 @@ class FastConfigure(Dialog):
             self.close()
             return
 
-        start_page_index = self.pages.index(self.stack.get_visible_child()) + 1
+        page_list = list(self.pages)
+        start_page_index = page_list.index(self.stack.get_visible_child()) + 1
 
-        for page in self.pages[start_page_index:]:
+        for page in page_list[start_page_index:]:
             if page.get_visible():
-                self.next_button.grab_focus()
+                #self.next_button.grab_focus()
                 self.stack.set_visible_child(page)
                 return
 
     def on_previous(self, *_args):
 
-        start_page_index = self.pages.index(self.stack.get_visible_child())
+        page_list = list(self.pages)
+        start_page_index = page_list.index(self.stack.get_visible_child())
 
-        for page in reversed(self.pages[:start_page_index]):
+        for page in reversed(page_list[:start_page_index]):
             if page.get_visible():
-                self.previous_button.grab_focus()
+                #self.previous_button.grab_focus()
                 self.stack.set_visible_child(page)
                 return
 
