@@ -76,7 +76,7 @@ class ChatRooms(IconNotebook):
 
         self.autojoin_rooms = set()
         self.highlighted_rooms = {}
-        self.completion = ChatCompletion()
+        self.completion = ChatCompletion(window)
         self.roomlist = RoomList(window)
         self.command_help = None
 

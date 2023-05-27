@@ -61,7 +61,7 @@ class PrivateChats(IconNotebook):
         )
 
         self.highlighted_users = []
-        self.completion = ChatCompletion()
+        self.completion = ChatCompletion(window)
         self.history = ChatHistory(window)
         self.command_help = None
 

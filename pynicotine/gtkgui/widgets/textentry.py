@@ -24,6 +24,7 @@ from pynicotine import slskmessages
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
+from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 
 
 """ Text Entry-related """
@@ -108,7 +109,7 @@ class ChatEntry:
 
 class ChatCompletion:
 
-    def __init__(self):
+    def __init__(self, window):
 
         self.completions = {}
         self.current_completions = []
@@ -117,17 +118,13 @@ class ChatCompletion:
 
         self.entry = None
         self.entry_changed_handler = None
-        self.entry_completion = None
-        self.model = Gtk.ListStore(str)
 
-        self.column_numbers = list(range(self.model.get_n_columns()))
-
-    def create_entry_completion(self):
-
-        self.entry_completion = Gtk.EntryCompletion(model=self.model, popup_single_match=False)
-        self.entry_completion.set_text_column(0)
-        self.entry_completion.set_match_func(self.entry_completion_find_match)
-        self.entry_completion.connect("match-selected", self.entry_completion_found_match)
+        self.menu = PopupMenu(window.application)
+        self.popover = Gtk.PopoverMenu(menu_model=self.menu.model, position=Gtk.PositionType.TOP, autohide=False)
+        Accelerator("Escape", self.popover, self.close_pop)
+        Accelerator("Down", self.popover, self.down_pop)
+        Accelerator("Left", self.popover, self.no_pop)
+        Accelerator("Right", self.popover, self.no_pop)
 
     def set_entry(self, entry):
 
@@ -135,12 +132,31 @@ class ChatCompletion:
             self.entry.set_completion(None)
             self.entry.disconnect(self.entry_changed_handler)
 
-        # Reusing an existing GtkEntryCompletion object after unsetting it doesn't work well
-        self.create_entry_completion()
-        entry.set_completion(self.entry_completion)
+        self.popover.set_parent(entry)
 
         self.entry = entry
         self.entry_changed_handler = entry.connect("changed", self.on_entry_changed)
+
+        #Accelerator("Up", self.entry, self.focus_pop)
+        #Accelerator("Down", self.entry, self.focus_pop)
+
+    def focus_pop(self, *_args):
+        self.popover.child_focus(Gtk.DirectionType.TAB_FORWARD)
+        return True
+
+    def close_pop(self, *args):
+        self.popover.popdown()
+        self.entry.grab_focus_without_selecting()
+        return True
+
+    def down_pop(self, *args):
+        if not self.popover.is_focus():
+            self.popover.child_focus(Gtk.DirectionType.TAB_FORWARD)
+            return True
+
+    def no_pop(self, *args):
+        self.entry.grab_focus_without_selecting()
+        return True
 
     def add_completion(self, item):
 
@@ -148,7 +164,7 @@ class ChatCompletion:
             return
 
         if config.sections["words"]["dropdown"]:
-            iterator = self.model.insert_with_valuesv(-1, self.column_numbers, [item])
+            iterator = None
 
         elif config.sections["words"]["tab"]:
             iterator = None
@@ -159,23 +175,13 @@ class ChatCompletion:
         self.completions[item] = iterator
 
     def remove_completion(self, item):
-
-        iterator = self.completions.pop(item)
-
-        if iterator is not None:
-            self.model.remove(iterator)
+        self.completions.pop(item)
 
     def set_completion_list(self, completion_list):
 
-        if self.entry_completion is None:
-            return
-
         config_words = config.sections["words"]
 
-        self.entry_completion.set_popup_completion(config_words["dropdown"])
-        self.entry_completion.set_minimum_key_length(config_words["characters"])
-
-        self.model.clear()
+        self.menu.clear()
         self.completions.clear()
 
         if completion_list is None:
@@ -185,7 +191,7 @@ class ChatCompletion:
             word = str(word)
 
             if config_words["dropdown"]:
-                iterator = self.model.insert_with_valuesv(-1, self.column_numbers, [word])
+                iterator = None
 
             elif config_words["tab"]:
                 iterator = None
@@ -195,33 +201,10 @@ class ChatCompletion:
 
             self.completions[word] = iterator
 
-    def entry_completion_find_match(self, _completion, entry_text, iterator):
-
-        if not entry_text:
-            return False
-
-        # Get word to the left of current position
-        if " " in entry_text:
-            i = self.entry.get_position()
-            split_key = entry_text[:i].split(" ")[-1]
-        else:
-            split_key = entry_text
-
-        if not split_key or len(split_key) < config.sections["words"]["characters"]:
-            return False
-
-        # Case-insensitive matching
-        item_text = self.model.get_value(iterator, 0).lower()
-
-        if item_text.startswith(split_key) and item_text != split_key:
-            return True
-
-        return False
-
-    def entry_completion_found_match(self, _completion, model, iterator):
+    def on_found_match(self, menu, shit, item):
 
         current_text = self.entry.get_text()
-        completion_value = model.get_value(iterator, 0)
+        completion_value = item
 
         # if more than a word has been typed, we throw away the
         # one to the left of our current position because we want
@@ -242,12 +225,48 @@ class ChatCompletion:
             self.entry.set_text(completion_value)
             self.entry.set_position(-1)
 
-        # stop the event propagation
-        return True
+        self.entry.grab_focus_without_selecting()
 
     def on_entry_changed(self, *_args):
+
         # If the entry was modified, and we don't block the handler, we're no longer completing
         self.midway_completion = False
+
+        if not config.sections["words"]["dropdown"]:
+            return
+
+        self.menu.clear()
+        entry_text = self.entry.get_text()
+
+        # Get word to the left of current position
+        if " " in entry_text:
+            i = self.entry.get_position()
+            split_key = entry_text[:i].split(" ")[-1]
+        else:
+            split_key = entry_text
+
+        if not split_key or len(split_key) < config.sections["words"]["characters"]:
+            self.popover.popdown()
+            return
+
+        # Case-insensitive matching
+        for item in self.completions:
+            if len(self.menu.pending_items) >= 10:
+                break
+
+            item = item.lower()
+
+            if item.startswith(split_key) and item != split_key:
+                self.menu.add_items(("#" + item, self.on_found_match, item))
+
+        if len(self.menu.pending_items) <= 1:
+            self.popover.popdown()
+            return
+
+        self.menu.update_model()
+        self.popover.popdown()
+        self.popover.popup()
+        self.entry.grab_focus_without_selecting()
 
     def on_tab_complete_accelerator(self, _widget, _state, backwards=False):
         """ Tab and Shift+Tab: tab complete chat """
