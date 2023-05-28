@@ -37,11 +37,16 @@ jobs:
       - name: Integration and unit tests
         run: xvfb-run python -m unittest -v
 
-  ubuntu:
+  ubuntu-debian:
     strategy:
       matrix:
+        container: ['', 'debian:bookworm']
         os: [ubuntu-20.04, ubuntu-22.04]
+        exclude:
+          - container: 'debian:bookworm'
+            os: ubuntu-20.04
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
