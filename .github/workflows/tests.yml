@@ -40,12 +40,8 @@ jobs:
   ubuntu-debian:
     strategy:
       matrix:
-        container: ['']
-        os: [ubuntu-20.04, ubuntu-22.04]
-        include:
-          - container: 'debian:bookworm'
-            os: ubuntu-22.04
-    runs-on: ${{ matrix.os }}
+        container: ['debian:bookworm', 'ubuntu:jammy', 'ubuntu:focal']
+    runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
       - name: Checkout code
