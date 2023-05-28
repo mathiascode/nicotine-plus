@@ -40,11 +40,11 @@ jobs:
   ubuntu-debian:
     strategy:
       matrix:
-        container: ['', 'debian:bookworm']
+        container: ['']
         os: [ubuntu-20.04, ubuntu-22.04]
-        exclude:
+        include:
           - container: 'debian:bookworm'
-            os: ubuntu-20.04
+            os: ubuntu-22.04
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
     steps:
@@ -55,11 +55,12 @@ jobs:
 
       - name: Install autopkgtest dependencies
         run: |
-          sudo apt update
-          sudo apt -y install autopkgtest
+          su -
+          apt update
+          apt -y install autopkgtest
 
       - name: Run autopkgtest
-        run: sudo autopkgtest . -- null
+        run: autopkgtest . -- null
 
   fedora-rocky:
     strategy:
