@@ -55,7 +55,6 @@ jobs:
 
       - name: Install autopkgtest dependencies
         run: |
-          su -
           apt update
           apt -y install autopkgtest
 
