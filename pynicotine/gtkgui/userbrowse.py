@@ -37,6 +37,7 @@ from pynicotine.gtkgui.dialogs.fileproperties import FileProperties
 from pynicotine.gtkgui.widgets import clipboard
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
+from pynicotine.gtkgui.widgets.dropdown import DropDown
 from pynicotine.gtkgui.widgets.filechooser import FolderChooser
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
 from pynicotine.gtkgui.widgets.infobar import InfoBar
@@ -61,6 +62,11 @@ class UserBrowses(IconNotebook):
             parent_page=window.userbrowse_page
         )
         self.file_properties = None
+
+        self.userbrowse_combobox = DropDown(
+            container=self.window.userbrowse_title, has_entry=True, has_entry_completion=True,
+            entry=self.window.userbrowse_entry
+        )
 
         # Events
         for event_name, callback in (

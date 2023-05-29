@@ -35,6 +35,7 @@ from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.widgets import clipboard
 from pynicotine.gtkgui.widgets import ui
+from pynicotine.gtkgui.widgets.dropdown import DropDown
 from pynicotine.gtkgui.widgets.filechooser import FileChooserSave
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
 from pynicotine.gtkgui.widgets.infobar import InfoBar
@@ -56,6 +57,11 @@ class UserInfos(IconNotebook):
             window,
             parent=window.userinfo_content,
             parent_page=window.userinfo_page
+        )
+
+        self.userinfo_combobox = DropDown(
+            container=self.window.userinfo_title, has_entry=True, has_entry_completion=True,
+            entry=self.window.userinfo_entry
         )
 
         # Events

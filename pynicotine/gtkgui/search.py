@@ -38,12 +38,12 @@ from pynicotine.gtkgui.dialogs.fileproperties import FileProperties
 from pynicotine.gtkgui.widgets import clipboard
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
+from pynicotine.gtkgui.widgets.dropdown import DropDown
 from pynicotine.gtkgui.widgets.filechooser import FolderChooser
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.popupmenu import FilePopupMenu
 from pynicotine.gtkgui.widgets.popupmenu import UserPopupMenu
-from pynicotine.gtkgui.widgets.textentry import CompletionEntry
 from pynicotine.gtkgui.widgets.theme import add_css_class
 from pynicotine.gtkgui.widgets.theme import get_file_type_icon_name
 from pynicotine.gtkgui.widgets.theme import get_flag_icon_name
@@ -96,8 +96,23 @@ class Searches(IconNotebook):
         if GTK_API_VERSION >= 4:
             add_css_class(window.search_mode_button.get_first_child(), "arrow-button")
 
-        CompletionEntry(window.room_search_entry, window.room_search_combobox.get_model())
-        CompletionEntry(window.search_entry, window.search_combobox.get_model())
+        self.room_search_combobox = DropDown(
+            container=self.window.search_title, has_entry=True, has_entry_completion=True,
+            entry=self.window.room_search_entry, visible=False,
+            items=(
+                (core.chatrooms.JOINED_ROOMS_NAME, None),
+            )
+        )
+
+        self.user_search_combobox = DropDown(
+            container=self.window.search_title, has_entry=True, has_entry_completion=True,
+            entry=self.window.user_search_entry, visible=False
+        )
+
+        self.search_combobox = DropDown(
+            container=self.window.search_title, has_entry=True, has_entry_completion=True,
+            entry=self.window.search_entry
+        )
 
         self.file_properties = None
 
@@ -132,8 +147,8 @@ class Searches(IconNotebook):
 
         self.window.search_mode_label.set_label(self.modes[search_mode])
 
-        self.window.user_search_combobox.set_visible(search_mode == "user")
-        self.window.room_search_combobox.set_visible(search_mode == "rooms")
+        self.user_search_combobox.set_visible(search_mode == "user")
+        self.room_search_combobox.set_visible(search_mode == "rooms")
 
         # Hide popover after click
         self.window.search_mode_button.get_popover().set_visible(False)
@@ -146,8 +161,8 @@ class Searches(IconNotebook):
             return
 
         mode = self.window.lookup_action("search-mode").get_state().get_string()
-        room = self.window.room_search_entry.get_text()
-        user = self.window.user_search_entry.get_text()
+        room = self.room_search_combobox.get_text()
+        user = self.user_search_combobox.get_text()
 
         self.window.search_entry.set_text("")
         core.search.do_search(text, mode, room=room, user=user)
@@ -156,14 +171,14 @@ class Searches(IconNotebook):
 
         should_enable_history = config.sections["searches"]["enable_history"]
 
-        self.window.search_combobox.remove_all()
-        self.window.search_combobox_button.set_visible(should_enable_history)
+        self.search_combobox.clear()
+        #self.window.search_combobox_button.set_visible(should_enable_history)
 
         if not should_enable_history:
             return
 
         for term in config.sections["searches"]["history"]:
-            self.window.search_combobox.append_text(str(term))
+            self.search_combobox.append(str(term))
 
     def create_page(self, token, text, mode=None, mode_label=None, show_page=True):
 
@@ -241,7 +256,7 @@ class Searches(IconNotebook):
         config.sections["searches"]["history"] = []
         config.write_configuration()
 
-        self.window.search_combobox.remove_all()
+        self.search_combobox.clear()
 
     def clear_filter_history(self):
 

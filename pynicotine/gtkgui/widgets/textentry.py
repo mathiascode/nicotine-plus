@@ -307,16 +307,32 @@ class ChatCompletion:
 
 class CompletionEntry:
 
-    def __init__(self, widget, model, column=0):
+    def __init__(self, widget, model=None, column=0):
 
         self.model = model
         self.column = column
+        self.completions = {}
+
+        if model is None:
+            self.model = model = Gtk.ListStore(str)
+            self.column_numbers = list(range(self.model.get_n_columns()))
 
         completion = Gtk.EntryCompletion(inline_completion=True, inline_selection=True,
                                          popup_single_match=False, model=model)
         completion.set_text_column(column)
         completion.set_match_func(self.entry_completion_find_match)
         widget.set_completion(completion)
+
+    def add_completion(self, item):
+        if item not in self.completions:
+            self.completions[item] = self.model.insert_with_valuesv(-1, self.column_numbers, [item])
+
+    def remove_completion(self, item):
+        iterator = self.completions.pop(item)
+        self.model.remove(iterator)
+
+    def clear(self):
+        self.model.clear()
 
     def entry_completion_find_match(self, _completion, entry_text, iterator):
 
