@@ -107,7 +107,8 @@ class Scanner(Process):
     """ Separate process responsible for building shares. It handles scanning of
     folders and files, as well as building databases and writing them to disk. """
 
-    def __init__(self, config_obj, queue, shared_folders, share_db_paths, init=False, rescan=True, rebuild=False):
+    def __init__(self, config_obj, queue, shared_folders, share_db_paths, init=False, rescan=True,
+                 rebuild=False, is_buddy_visible=False):
 
         super().__init__(daemon=True)
 
@@ -119,8 +120,9 @@ class Scanner(Process):
         self.init = init
         self.rescan = rescan
         self.rebuild = rebuild
+        self.is_buddy_visible = is_buddy_visible
         self.tinytag = None
-        self.version = 2
+        self.version = 3
 
     def run(self):
 
@@ -130,8 +132,15 @@ class Scanner(Process):
             from pynicotine.external.tinytag import TinyTag
             self.tinytag = TinyTag()
 
-            if not Shares.load_shares(self.share_dbs, self.share_db_paths, remove_failed=True):
-                # Failed to load shares, rebuild
+            shares_loaded = Shares.load_shares(self.share_dbs, self.share_db_paths, remove_failed=True)
+            old_mtimes = self.share_dbs.get("mtimes")
+            share_version = None
+
+            if old_mtimes is not None:
+                share_version = old_mtimes.get("__NICOTINE_SHARE_VERSION__")
+
+            if not shares_loaded or share_version != self.version:
+                # Failed to load shares or version is invalid, rebuild
                 self.rescan = self.rebuild = True
 
             if self.init:
@@ -144,11 +153,13 @@ class Scanner(Process):
                 self.queue.put((_("Rebuilding shares…") if self.rebuild else _("Rescanning shares…"),
                                None, LogLevel.DEFAULT))
 
-                new_mtimes, new_files, new_streams = self.rescan_dirs("public", rebuild=self.rebuild)
-                _new_mtimes, new_files, _new_streams = self.rescan_dirs("buddy", new_mtimes, new_files,
-                                                                        new_streams, self.rebuild)
+                num_public_folders = self.rescan_dirs("public", rebuild=self.rebuild)
+                num_buddy_folders = self.rescan_dirs("buddy", rebuild=self.rebuild)
 
-                self.queue.put((_("Rescan complete: %(num)s folders found"), {"num": len(new_files)}, LogLevel.DEFAULT))
+                self.queue.put(
+                    (_("Rescan complete: %(num)s folders found"), {"num": num_public_folders + num_buddy_folders},
+                     LogLevel.DEFAULT)
+                )
 
                 self.create_compressed_shares()
 
@@ -171,14 +182,17 @@ class Scanner(Process):
     def create_compressed_shares_message(self, share_type):
         """ Create a message that will later contain a compressed list of our shares """
 
-        if share_type == "public":
-            streams = self.share_dbs.get("streams")
-        else:
-            streams = self.share_dbs.get(f"{share_type}streams")
+        streams = self.share_dbs.get("streams")
+        buddy_streams = self.share_dbs.get("buddystreams")
 
-        compressed_shares = slskmessages.SharedFileListResponse(shares=streams)
+        if share_type == "public" and not self.is_buddy_visible:
+            buddy_streams = None
+
+        compressed_shares = slskmessages.SharedFileListResponse(
+            shares=streams, buddy_shares=buddy_streams, share_type=share_type
+        )
         compressed_shares.make_network_message()
-        compressed_shares.list = None
+        compressed_shares.list = compressed_shares.privatelist = []
         compressed_shares.type = share_type
 
         self.queue.put(compressed_shares)
@@ -233,7 +247,7 @@ class Scanner(Process):
 
         return "__INTERNAL_ERROR__" + path
 
-    def set_shares(self, share_type, files=None, streams=None, mtimes=None, wordindex=None):
+    def set_shares(self, share_type=None, files=None, streams=None, mtimes=None, wordindex=None):
 
         self.config.create_data_folder()
 
@@ -248,7 +262,7 @@ class Scanner(Process):
             if source is None:
                 continue
 
-            if share_type != "public":
+            if share_type and share_type != "public":
                 destination = f"{share_type}{destination}"
 
             try:
@@ -260,7 +274,7 @@ class Scanner(Process):
                                 {"filename": destination + ".db", "error": error}, LogLevel.DEFAULT))
                 return
 
-    def rescan_dirs(self, share_type, mtimes=None, files=None, streams=None, rebuild=False):
+    def rescan_dirs(self, share_type, rebuild=False):
         """
         Check for modified or new files via OS's last mtime on a directory,
         or, if rebuild is True, all directories
@@ -280,24 +294,7 @@ class Scanner(Process):
         new_streams = {}
         new_mtimes = {}
 
-        if files is not None:
-            new_files = {**files, **new_files}
-
-        if streams is not None:
-            new_streams = {**streams, **new_streams}
-
-        if mtimes is not None:
-            new_mtimes = {**mtimes, **new_mtimes}
-
         old_mtimes = self.share_dbs.get(prefix + "mtimes")
-        share_version = None
-
-        if old_mtimes is not None:
-            share_version = old_mtimes.get("__NICOTINE_SHARE_VERSION__")
-
-        # Rebuild shares if share version is outdated
-        if share_version is None or share_version < self.version:
-            rebuild = True
 
         for folder in shared_folders:
             # Get mtimes for top-level shared folders, then every subfolder
@@ -318,20 +315,23 @@ class Scanner(Process):
 
         # Save data to databases
         new_mtimes["__NICOTINE_SHARE_VERSION__"] = self.version
+        num_folders = len(new_files)
         self.set_shares(share_type, files=new_files, streams=new_streams, mtimes=new_mtimes)
 
         # Update Search Index
         # wordindex is a dict in format {word: [num, num, ..], ... } with num matching keys in newfileindex
         # fileindex is a dict in format { num: (path, size, (bitrate, vbr), length), ... }
-        wordindex = self.get_files_index(new_files, prefix + "fileindex")
+        old_wordindex = dict(self.share_dbs.get("wordindex")) if share_type != "public" else None
+        wordindex = self.get_files_index(new_files, prefix + "fileindex", wordindex=old_wordindex)
 
         # Save data to databases
-        self.set_shares(share_type, wordindex=wordindex)
+        self.set_shares(wordindex=wordindex)
 
-        del wordindex
+        for dictionary in (new_files, new_streams, new_mtimes, wordindex):
+            dictionary.clear()
+
         gc.collect()
-
-        return new_mtimes, new_files, new_streams
+        return num_folders
 
     @staticmethod
     def is_hidden(folder, filename=None, entry=None):
@@ -508,7 +508,7 @@ class Scanner(Process):
 
         return stream
 
-    def get_files_index(self, shared_files, fileindex_dest):
+    def get_files_index(self, shared_files, fileindex_dest, wordindex=None):
         """ Update Search index with new files """
 
         """ We dump data directly into the file index database to save memory.
@@ -517,8 +517,12 @@ class Scanner(Process):
 
         self.share_dbs[fileindex_dest] = fileindex_db = self.create_db_file(fileindex_dest)
 
-        wordindex = {}
-        file_index = -1
+        if wordindex is None:
+            wordindex = {}
+            file_index = -1
+        else:
+            file_index = len(wordindex)
+
         num_shared_files = len(shared_files)
         last_percent = 0.0
 
@@ -557,11 +561,10 @@ class Shares:
         self.requested_share_times = {}
         self.pending_network_msgs = []
         self.rescanning = False
-        self.should_compress_shares = False
-        self.compressed_shares = {}
-
-        for share_type in ["public", "buddy"]:
-            self.compressed_shares[share_type] = slskmessages.SharedFileListResponse()
+        self.compressed_shares = {
+            "public": slskmessages.SharedFileListResponse(),
+            "buddy": slskmessages.SharedFileListResponse()
+        }
 
         self.convert_shares()
         self.share_db_paths = [
@@ -572,7 +575,6 @@ class Shares:
             ("mtimes", os.path.join(config.data_dir, "mtimes.db")),
             ("buddyfiles", os.path.join(config.data_dir, "buddyfiles.db")),
             ("buddystreams", os.path.join(config.data_dir, "buddystreams.db")),
-            ("buddywordindex", os.path.join(config.data_dir, "buddywordindex.db")),
             ("buddyfileindex", os.path.join(config.data_dir, "buddyfileindex.db")),
             ("buddymtimes", os.path.join(config.data_dir, "buddymtimes.db"))
         ]
@@ -741,15 +743,6 @@ class Shares:
 
         return True
 
-    def get_compressed_shares_message(self, share_type):
-        """ Returns the compressed shares message. Creates a new one if necessary, e.g.
-        if an individual file was added to our shares. """
-
-        if self.should_compress_shares:
-            self.rescan_shares(init=True, rescan=False)
-
-        return self.compressed_shares.get(share_type)
-
     @staticmethod
     def close_shares(share_dbs):
         for database in share_dbs.copy():
@@ -798,7 +791,8 @@ class Shares:
             self.share_db_paths,
             init,
             rescan,
-            rebuild
+            rebuild,
+            is_buddy_visible=config.sections["transfers"]["buddy_shares_visible_everyone"]
         )
         return scanner, scanner_queue
 
@@ -837,7 +831,6 @@ class Shares:
 
                 elif isinstance(item, slskmessages.SharedFileListResponse):
                     self.compressed_shares[item.type] = item
-                    self.should_compress_shares = False
 
         return False
 
@@ -936,11 +929,11 @@ class Shares:
 
         if checkuser == 1:
             # Send public shares
-            shares_list = self.get_compressed_shares_message("public")
+            shares_list = self.compressed_shares.get("public")
 
         elif checkuser == 2:
             # Send buddy shares
-            shares_list = self.get_compressed_shares_message("buddy")
+            shares_list = self.compressed_shares.get("buddy")
 
         if not shares_list:
             # Nyah, nyah

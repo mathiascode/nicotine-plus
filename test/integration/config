@@ -69,6 +69,7 @@ downloadsexpanded = True
 uploadsexpanded = True
 use_upload_speed_limit = unlimited
 use_download_speed_limit = unlimited
+buddy_shares_visible_everyone = False
 
 [userinfo]
 descr = ''

@@ -543,6 +543,7 @@ class SharesPage:
 
         (
             self.buddy_shares_trusted_only_toggle,
+            self.buddy_shares_visible_everyone_toggle,
             self.container,
             self.rescan_on_startup_toggle,
             self.shares_list_container
@@ -551,6 +552,7 @@ class SharesPage:
         self.application = application
 
         self.rescan_required = False
+        self.recompress_shares_required = False
         self.shared_folders = []
         self.buddy_shared_folders = []
 
@@ -583,6 +585,7 @@ class SharesPage:
         self.options = {
             "transfers": {
                 "rescanonstartup": self.rescan_on_startup_toggle,
+                "buddy_shares_visible_everyone": self.buddy_shares_visible_everyone_toggle,
                 "buddysharestrustedonly": self.buddy_shares_trusted_only_toggle
             }
         }
@@ -604,7 +607,7 @@ class SharesPage:
             is_buddy_only = False
             self.shares_list_view.add_row([str(virtual_name), str(folder_path), is_buddy_only], select_row=False)
 
-        self.rescan_required = False
+        self.rescan_required = self.recompress_shares_required = False
 
     def get_settings(self):
 
@@ -613,6 +616,7 @@ class SharesPage:
                 "shared": self.shared_folders[:],
                 "buddyshared": self.buddy_shared_folders[:],
                 "rescanonstartup": self.rescan_on_startup_toggle.get_active(),
+                "buddy_shares_visible_everyone": self.buddy_shares_visible_everyone_toggle.get_active(),
                 "buddysharestrustedonly": self.buddy_shares_trusted_only_toggle.get_active()
             }
         }
@@ -637,6 +641,9 @@ class SharesPage:
 
         self.buddy_shared_folders.remove(mapping)
         self.shared_folders.append(mapping)
+
+    def on_buddy_share_visible_changed(self, *_args):
+        self.recompress_shares_required = True
 
     def on_add_shared_folder_selected(self, selected, _data):
 
@@ -2861,6 +2868,12 @@ class Preferences(Dialog):
             rescan_required = False
 
         try:
+            recompress_shares_required = self.pages["shares"].recompress_shares_required
+
+        except KeyError:
+            recompress_shares_required = False
+
+        try:
             user_profile_required = self.pages["user-profile"].user_profile_required
 
         except KeyError:
@@ -2884,12 +2897,23 @@ class Preferences(Dialog):
         except KeyError:
             search_required = False
 
-        return (portmap_required, rescan_required, user_profile_required, completion_required,
-                ip_ban_required, search_required, options)
+        return (portmap_required, rescan_required, recompress_shares_required, user_profile_required,
+                completion_required, ip_ban_required, search_required, options)
+
+    def _update_settings_closed(self, rescan_required=False):
+
+        if rescan_required:
+            core.shares.rescan_shares()
+
+        if not config.sections["ui"]["trayicon"]:
+            self.application.window.show()
+
+        if config.need_config():
+            core.setup()
 
     def update_settings(self, settings_closed=False):
 
-        (portmap_required, rescan_required, user_profile_required, completion_required,
+        (portmap_required, rescan_required, recompress_shares_required, user_profile_required, completion_required,
             ip_ban_required, search_required, options) = self.get_settings()
 
         for key, data in options.items():
@@ -2912,6 +2936,9 @@ class Preferences(Dialog):
 
         if search_required:
             self.application.window.search.populate_search_history()
+
+        if recompress_shares_required:
+            core.shares.rescan_shares(init=True, rescan=False)
 
         # Dark mode
         dark_mode_state = config.sections["ui"]["dark_mode"]
@@ -2967,16 +2994,10 @@ class Preferences(Dialog):
         if not settings_closed:
             return
 
-        if rescan_required:
-            core.shares.rescan_shares()
-
         self.close()
 
-        if not config.sections["ui"]["trayicon"]:
-            self.application.window.show()
-
-        if config.need_config():
-            core.setup()
+        # Slight delay to allow dialog to close completely
+        GLib.idle_add(self._update_settings_closed, rescan_required)
 
     @staticmethod
     def on_back_up_config_response(selected, _data):
