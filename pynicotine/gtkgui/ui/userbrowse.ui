@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <requires lib="gtk+" version="3.0"/>
-  <object class="GtkButton" id="retry_button">
-    <property name="label" translatable="yes">_Retry</property>
-    <property name="use-underline">True</property>
-    <property name="visible">True</property>
-    <signal name="clicked" handler="on_refresh"/>
-  </object>
   <object class="GtkBox" id="container">
     <property name="visible">True</property>
     <child>
@@ -15,12 +9,82 @@
         <property name="orientation">vertical</property>
         <property name="visible">True</property>
         <child>
-          <object class="GtkRevealer">
-            <property name="transition-type">slide-down</property>
-            <property name="visible">True</property>
+          <object class="GtkBox" id="info_container">
+            <property name="visible">False</property>
+            <signal name="notify::visible" handler="on_focus"/>
             <child>
-              <object class="GtkInfoBar" id="info_bar">
+              <object class="GtkBox">
+                <property name="halign">center</property>
+                <property name="hexpand">True</property>
+                <property name="margin-bottom">30</property>
+                <property name="margin-end">24</property>
+                <property name="margin-start">24</property>
+                <property name="margin-top">30</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">30</property>
+                <property name="valign">center</property>
+                <property name="vexpand">True</property>
                 <property name="visible">True</property>
+                <child>
+                  <object class="GtkImage" id="info_icon">
+                    <property name="can-focus">True</property>
+                    <property name="pixel-size">128</property>
+                    <property name="visible">True</property>
+                    <style>
+                      <class name="dim-label"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">12</property>
+                    <property name="visible">True</property>
+                    <child>
+                      <object class="GtkLabel" id="info_title">
+                        <property name="justify">center</property>
+                        <property name="mnemonic-widget">info_icon</property>
+                        <property name="selectable">True</property>
+                        <property name="visible">True</property>
+                        <property name="wrap">True</property>
+                        <style>
+                          <class name="title-1"/>
+                        </style>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="info_message">
+                        <property name="justify">center</property>
+                        <property name="max-width-chars">55</property>
+                        <property name="selectable">True</property>
+                        <property name="visible">True</property>
+                        <property name="wrap">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="_retry_button">
+                    <property name="halign">center</property>
+                    <property name="height-request">42</property>
+                    <property name="margin-top">6</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_refresh"/>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label" translatable="yes">_Retry</property>
+                        <property name="margin-end">24</property>
+                        <property name="margin-start">24</property>
+                        <property name="mnemonic-widget">_retry_button</property>
+                        <property name="use-underline">True</property>
+                        <property name="visible">True</property>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="circular"/>
+                    </style>
+                  </object>
+                </child>
               </object>
             </child>
           </object>
@@ -32,7 +96,7 @@
             <property name="row-spacing">1</property>
             <property name="selection-mode">none</property>
             <property name="vexpand">True</property>
-            <property name="visible">True</property>
+            <property name="visible" bind-source="info_container" bind-property="visible" bind-flags="bidirectional|invert-boolean|sync-create"/>
             <child>
               <object class="GtkFlowBoxChild">
                 <property name="can-focus">False</property>

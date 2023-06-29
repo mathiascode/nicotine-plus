@@ -129,6 +129,10 @@ def set_global_css():
     css = b"""
     /* Tweaks */
 
+    .accento {
+        background: @accent_bg_color;
+    }
+
     flowbox, flowboxchild {
         /* GTK adds unwanted padding to flowbox children by default */
         border: 0;

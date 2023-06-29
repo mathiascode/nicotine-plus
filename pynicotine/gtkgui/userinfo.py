@@ -37,7 +37,6 @@ from pynicotine.gtkgui.widgets import clipboard
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.filechooser import FileChooserSave
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
-from pynicotine.gtkgui.widgets.infobar import InfoBar
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.popupmenu import UserPopupMenu
 from pynicotine.gtkgui.widgets.textentry import ComboBox
@@ -219,7 +218,8 @@ class UserInfo:
             self.free_upload_slots_label,
             self.horizontal_paned,
             self.ignore_unignore_user_label,
-            self.info_bar,
+            self.info_icon,
+            self.info_message,
             self.likes_list_container,
             self.picture_container,
             self.picture_view,
@@ -227,7 +227,6 @@ class UserInfo:
             self.progress_bar,
             self.queued_uploads_label,
             self.refresh_button,
-            self.retry_button,
             self.shared_files_label,
             self.shared_folders_label,
             self.upload_slots_label,
@@ -238,7 +237,6 @@ class UserInfo:
         self.userinfos = userinfos
         self.window = userinfos.window
 
-        self.info_bar = InfoBar(self.info_bar, button=self.retry_button)
         self.description_view = TextView(self.description_view_container, editable=False, vertical_margin=5)
         self.user_label.set_text(user)
 
@@ -387,12 +385,11 @@ class UserInfo:
         if self.refresh_button.get_sensitive():
             return
 
-        self.info_bar.show_message(
-            _("Unable to request information from user. Either you both have a closed listening "
-              "port, the user is offline, or there's a temporary connectivity issue."),
-            message_type=Gtk.MessageType.ERROR
+        self.info_message.set_label(
+            _("%(user)s is either offline, the listening ports "
+              "are closed on both sides, or there is a temporary connectivity issue") % {"user": self.user}
         )
-
+        self.horizontal_paned.set_visible(False)
         self.set_finished()
 
     def set_finished(self):
@@ -420,7 +417,7 @@ class UserInfo:
         GLib.timeout_add(320, self.pulse_progress, False)
         GLib.timeout_add(1000, self.pulse_progress)
 
-        self.info_bar.set_visible(False)
+        self.horizontal_paned.set_visible(True)
         self.refresh_button.set_sensitive(False)
 
     def user_info_progress(self, position, total):
@@ -482,7 +479,7 @@ class UserInfo:
         self.picture_data = None
         self.load_picture(msg.pic)
 
-        self.info_bar.set_visible(False)
+        self.horizontal_paned.set_visible(True)
         self.set_finished()
 
     def user_stats(self, msg):
@@ -621,7 +618,12 @@ class UserInfo:
         core.userinfo.show_user(self.user, refresh=True)
 
     def on_focus(self, *_args):
-        self.description_view.widget.grab_focus()
+
+        if self.horizontal_paned.get_visible():
+            self.description_view.widget.grab_focus()
+            return
+
+        self.info_icon.grab_focus()
 
     def on_close(self, *_args):
         core.userinfo.remove_user(self.user)
