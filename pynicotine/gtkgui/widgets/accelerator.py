@@ -18,7 +18,10 @@
 
 import sys
 
+from collections import defaultdict
+
 from gi.repository import Gdk
+from gi.repository import GObject
 from gi.repository import Gtk
 
 from pynicotine.gtkgui.application import GTK_API_VERSION
@@ -31,7 +34,8 @@ class Accelerator:
 
     if GTK_API_VERSION >= 4:
         shortcut_controllers = {}
-        shortcut_triggers = {}
+        shortcuts = {}
+        widget_classes = defaultdict(dict)
     else:
         KEYMAP = Gdk.Keymap.get_for_display(Gdk.Display.get_default())
         keycodes_mods = {}
@@ -44,7 +48,6 @@ class Accelerator:
                 accelerator = accelerator.replace("<Primary>", "<Meta>")
 
             shortcut_controller = self.shortcut_controllers.get(widget)
-            shortcut_trigger = self.shortcut_triggers.get(accelerator)
 
             if not shortcut_controller:
                 self.shortcut_controllers[widget] = shortcut_controller = Gtk.ShortcutController(
@@ -52,15 +55,24 @@ class Accelerator:
                 )
                 widget.add_controller(shortcut_controller)
 
-            if not shortcut_trigger:
-                self.shortcut_triggers[accelerator] = shortcut_trigger = Gtk.ShortcutTrigger.parse_string(accelerator)
+            signal_name = "".join(c for c in accelerator.lower() if c.isalnum())
+            shortcut = self.shortcuts.get(accelerator)
 
-            shortcut_controller.add_shortcut(
-                Gtk.Shortcut(
-                    trigger=shortcut_trigger,
-                    action=Gtk.CallbackAction.new(callback, user_data)
+            if not shortcut:
+                self.shortcuts[accelerator] = shortcut = Gtk.Shortcut(
+                    trigger=Gtk.ShortcutTrigger.parse_string(accelerator),
+                    action=Gtk.SignalAction(signal_name=signal_name)
                 )
-            )
+
+            widget_class_signals = self.widget_classes[widget.__class__]
+            signal = widget_class_signals.get(accelerator)
+
+            if not signal:
+                widget_class_signals[accelerator] = GObject.signal_new(
+                    signal_name, widget, GObject.SIGNAL_ACTION, GObject.TYPE_NONE, ())
+
+            shortcut_controller.add_shortcut(shortcut)
+            widget.connect(signal_name, callback, user_data)
             return
 
         # GTK 3 replacement for Gtk.ShortcutController
