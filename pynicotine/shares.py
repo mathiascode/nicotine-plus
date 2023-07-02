@@ -421,7 +421,7 @@ class Scanner(Process):
 
                             continue
 
-                        path = os.path.join(folder, entry.name.decode("utf-8", "replace"))
+                        path = entry.path.decode("utf-8", "replace")
 
                         if self.is_hidden(path, entry=entry):
                             continue
