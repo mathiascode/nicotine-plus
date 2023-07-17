@@ -125,7 +125,7 @@ def set_up_python():
         os.environ["SSL_CERT_FILE"] = os.path.join(executable_folder, "lib/cert.pem")
 
         # Support file scanning process in frozen binaries
-        multiprocessing.freeze_support()
+        # multiprocessing.freeze_support()
 
     multiprocessing.set_start_method("spawn")
 
