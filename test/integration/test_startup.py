@@ -42,12 +42,12 @@ class StartupTest(TestCase):
 
             with subprocess.Popen(command) as process:
                 try:
-                    process.communicate(timeout=5)
+                    process.wait(5)
 
                 except subprocess.TimeoutExpired:
                     # Program was still running, success!
-                    process.terminate()
                     is_success = True
+                    process.terminate()
 
             self.assertTrue(is_success)
 
