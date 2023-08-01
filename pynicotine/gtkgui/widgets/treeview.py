@@ -742,6 +742,41 @@ class TreeView:
         return True
 
 
+class TransferTreeView(TreeView):
+
+    MIRROR_LABELS = {
+        "download": _("Use Download Layout"),
+        "upload": _("Use Upload Layout")
+    }
+
+    def __init__(self, *args, mirror_name=None, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self._mirror_name = mirror_name
+
+    def on_column_mirror_layout(self, *_args):
+
+        for column_id, data in config.sections["columns"][self._mirror_name].items():
+            column = self.widget.get_columns()[self._column_ids[column_id]]
+            column.set_visible(data["visible"])
+
+            if not column.get_expand():
+                column.set_fixed_width(data["width"])
+
+        self._set_last_column_autosize()
+
+    def on_column_header_menu(self, menu, treeview):
+
+        super().on_column_header_menu(menu, treeview)
+
+        menu.add_items(
+            ("", None),
+            ("$" + self.MIRROR_LABELS[self._mirror_name], self.on_column_mirror_layout)
+        )
+        menu.update_model()
+
+
 """ Legacy functions (to be removed) """
 
 

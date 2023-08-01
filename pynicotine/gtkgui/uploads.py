@@ -44,6 +44,7 @@ class Uploads(TransferList):
         self.retry_label = _("_Retry")
         self.abort_label = _("_Abort")
         self.deprioritized_statuses = {"Cancelled", "Finished"}
+        self.mirror_view_name = "download"
 
         self.transfer_page = window.uploads_page
         self.user_counter = window.upload_users_label

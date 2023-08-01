@@ -36,7 +36,7 @@ from pynicotine.gtkgui.widgets.popupmenu import UserPopupMenu
 from pynicotine.gtkgui.widgets.theme import add_css_class
 from pynicotine.gtkgui.widgets.theme import get_file_type_icon_name
 from pynicotine.gtkgui.widgets.theme import remove_css_class
-from pynicotine.gtkgui.widgets.treeview import TreeView
+from pynicotine.gtkgui.widgets.treeview import TransferTreeView
 from pynicotine.gtkgui.widgets.treeview import create_grouping_menu
 from pynicotine.transfers import Transfer
 from pynicotine.utils import UINT64_LIMIT
@@ -102,10 +102,11 @@ class TransferList:
             "Remote file error": _("Remote file error")
         }
 
-        self.tree_view = TreeView(
+        self.tree_view = TransferTreeView(
             window, parent=self.tree_container, name=transfer_type,
             multi_select=True, activate_row_callback=self.on_row_activated,
             delete_accelerator_callback=self.on_clear_transfers_accelerator,
+            mirror_name=self.mirror_view_name,
             columns={
                 # Visible columns
                 "user": {
