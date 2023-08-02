@@ -64,6 +64,7 @@ class Interests:
         # Columns
         self.likes_list_view = TreeView(
             window, parent=self.likes_list_container,
+            delete_accelerator_callback=self.on_remove_thing_i_like,
             columns={
                 "likes": {
                     "column_type": "text",
@@ -75,6 +76,7 @@ class Interests:
 
         self.dislikes_list_view = TreeView(
             window, parent=self.dislikes_list_container,
+            delete_accelerator_callback=self.on_remove_thing_i_dislike,
             columns={
                 "dislikes": {
                     "column_type": "text",
@@ -184,8 +186,10 @@ class Interests:
             ("#" + _("_Search for Item"), self.on_recommend_search, self.recommendations_list_view, "item")
         )
 
-        popup = UserPopupMenu(self.window.application, self.similar_users_list_view.widget, self.on_popup_ru_menu)
-        popup.setup_user_menu()
+        popup = UserPopupMenu(
+            self.window.application, parent=self.similar_users_list_view.widget, callback=self.on_popup_ru_menu,
+            tab_name="interests"
+        )
 
         for event_name, callback in (
             ("add-dislike", self.add_thing_i_hate),

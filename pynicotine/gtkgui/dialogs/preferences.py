@@ -24,7 +24,6 @@
 
 import os
 import re
-import socket
 import sys
 import time
 
@@ -41,15 +40,16 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.application import GTK_MINOR_VERSION
+from pynicotine.gtkgui.dialogs.pluginsettings import PluginSettings
 from pynicotine.gtkgui.popovers.searchfilterhelp import SearchFilterHelp
 from pynicotine.gtkgui.widgets import ui
+from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.filechooser import FileChooserButton
 from pynicotine.gtkgui.widgets.filechooser import FileChooserSave
 from pynicotine.gtkgui.widgets.filechooser import FolderChooser
 from pynicotine.gtkgui.widgets.dialogs import Dialog
 from pynicotine.gtkgui.widgets.dialogs import EntryDialog
 from pynicotine.gtkgui.widgets.dialogs import MessageDialog
-from pynicotine.gtkgui.widgets.dialogs import PluginSettingsDialog
 from pynicotine.gtkgui.widgets.textentry import ComboBox
 from pynicotine.gtkgui.widgets.textview import TextView
 from pynicotine.gtkgui.widgets.theme import USER_STATUS_ICON_NAMES
@@ -59,6 +59,7 @@ from pynicotine.gtkgui.widgets.theme import set_dark_mode
 from pynicotine.gtkgui.widgets.theme import update_custom_css
 from pynicotine.gtkgui.widgets.treeview import TreeView
 from pynicotine.i18n import LANGUAGES
+from pynicotine.slskproto import NetworkInterfaces
 from pynicotine.utils import open_file_path
 from pynicotine.utils import open_uri
 from pynicotine.utils import unescape
@@ -125,30 +126,23 @@ class NetworkPage:
     def set_settings(self):
 
         # Network interfaces
-        if sys.platform == "win32":
-            self.network_interface_label.get_parent().set_visible(False)
-        else:
-            self.network_interface_combobox.clear()
-            self.network_interface_combobox.append("")
+        self.network_interface_combobox.clear()
+        self.network_interface_combobox.append("")
 
-            try:
-                for _i, interface in socket.if_nameindex():
-                    self.network_interface_combobox.append(interface)
-
-            except (AttributeError, OSError):
-                pass
+        for interface in NetworkInterfaces.get_interface_addresses():
+            self.network_interface_combobox.append(interface)
 
         self.application.preferences.set_widgets_data(self.options)
         unknown_label = _("Unknown")
 
         # Listening port status
-        if core.protothread.listen_port:
-            url = config.portchecker_url % str(core.protothread.listen_port)
+        if core.public_port:
+            url = config.portchecker_url % str(core.public_port)
             port_status_text = _("Check Port Status")
 
             self.current_port_label.set_markup(_("<b>%(ip)s</b>, port %(port)s") % {
                 "ip": core.public_ip_address or unknown_label,
-                "port": core.protothread.listen_port or unknown_label
+                "port": core.public_port or unknown_label
             })
             self.check_port_status_label.set_markup(f"<a href='{url}' title='{url}'>{port_status_text}</a>")
             self.check_port_status_label.set_visible(True)
@@ -308,6 +302,7 @@ class DownloadsPage:
         self.filter_list_view = TreeView(
             application.window, parent=self.filter_list_container, multi_select=True,
             activate_row_callback=self.on_edit_filter,
+            delete_accelerator_callback=self.on_remove_filter,
             columns={
                 "filter": {
                     "column_type": "text",
@@ -559,6 +554,7 @@ class SharesPage:
         self.shares_list_view = TreeView(
             application.window, parent=self.shares_list_container, multi_select=True,
             activate_row_callback=self.on_edit_shared_folder,
+            delete_accelerator_callback=self.on_remove_shared_folder,
             columns={
                 "virtual_name": {
                     "column_type": "text",
@@ -621,46 +617,44 @@ class SharesPage:
             }
         }
 
-    def _set_shared_folder_buddy_only(self, iterator, is_buddy_only):
+    def _edit_shared_folder(self, iterator, new_virtual_name, new_is_buddy_only):
 
-        if is_buddy_only == self.shares_list_view.get_row_value(iterator, "buddy_only"):
+        virtual_name = self.shares_list_view.get_row_value(iterator, "virtual_name")
+        is_buddy_only = self.shares_list_view.get_row_value(iterator, "buddy_only")
+
+        if new_virtual_name == virtual_name and new_is_buddy_only == is_buddy_only:
             return
 
         self.rescan_required = True
 
-        virtual_name = self.shares_list_view.get_row_value(iterator, "virtual_name")
         folder_path = self.shares_list_view.get_row_value(iterator, "folder")
-        mapping = (virtual_name, folder_path)
+        group_name = "buddy" if new_is_buddy_only else "public"
 
-        self.shares_list_view.set_row_value(iterator, "buddy_only", is_buddy_only)
+        core.shares.remove_share(
+            virtual_name, share_groups=(self.shared_folders, self.buddy_shared_folders)
+        )
+        new_virtual_name = core.shares.add_share(
+            folder_path, group_name=group_name, virtual_name=new_virtual_name,
+            share_groups=(self.shared_folders, self.buddy_shared_folders), validate_path=False
+        )
 
-        if is_buddy_only:
-            self.shared_folders.remove(mapping)
-            self.buddy_shared_folders.append(mapping)
-            return
-
-        self.buddy_shared_folders.remove(mapping)
-        self.shared_folders.append(mapping)
+        self.shares_list_view.set_row_value(iterator, "virtual_name", new_virtual_name)
+        self.shares_list_view.set_row_value(iterator, "buddy_only", new_is_buddy_only)
 
     def on_add_shared_folder_selected(self, selected, _data):
 
         for folder_path in selected:
-            if folder_path is None:
-                continue
+            virtual_name = core.shares.add_share(
+                folder_path, share_groups=(self.shared_folders, self.buddy_shared_folders)
+            )
 
-            if folder_path in (x[1] for x in self.shared_folders + self.buddy_shared_folders):
+            if not virtual_name:
                 continue
 
             self.rescan_required = True
-
-            virtual_name = core.shares.get_normalized_virtual_name(
-                os.path.basename(folder_path), shared_folders=(self.shared_folders + self.buddy_shared_folders)
-            )
-            mapping = (virtual_name, folder_path)
             is_buddy_only = False
 
             self.shares_list_view.add_row([virtual_name, folder_path, is_buddy_only])
-            self.shared_folders.append(mapping)
 
     def on_add_shared_folder(self, *_args):
 
@@ -673,33 +667,10 @@ class SharesPage:
 
     def on_edit_shared_folder_response(self, dialog, _response_id, iterator):
 
-        virtual_name = dialog.get_entry_value()
-        is_buddy_only = dialog.get_option_value()
+        new_virtual_name = dialog.get_entry_value()
+        new_is_buddy_only = dialog.get_option_value()
 
-        if not virtual_name:
-            return
-
-        self.rescan_required = True
-
-        virtual_name = core.shares.get_normalized_virtual_name(
-            virtual_name, shared_folders=(self.shared_folders + self.buddy_shared_folders)
-        )
-        old_virtual_name = self.shares_list_view.get_row_value(iterator, "virtual_name")
-        folder_path = self.shares_list_view.get_row_value(iterator, "folder")
-
-        old_mapping = (old_virtual_name, folder_path)
-        new_mapping = (virtual_name, folder_path)
-
-        if old_mapping in self.buddy_shared_folders:
-            shared_folders = self.buddy_shared_folders
-        else:
-            shared_folders = self.shared_folders
-
-        shared_folders.remove(old_mapping)
-        shared_folders.append(new_mapping)
-
-        self.shares_list_view.set_row_value(iterator, "virtual_name", virtual_name)
-        self._set_shared_folder_buddy_only(iterator, is_buddy_only)
+        self._edit_shared_folder(iterator, new_virtual_name, new_is_buddy_only)
 
     def on_edit_shared_folder(self, *_args):
 
@@ -722,7 +693,11 @@ class SharesPage:
             return
 
     def on_toggle_folder_buddy_only(self, list_view, iterator):
-        self._set_shared_folder_buddy_only(iterator, is_buddy_only=not list_view.get_row_value(iterator, "buddy_only"))
+
+        virtual_name = list_view.get_row_value(iterator, "virtual_name")
+        is_buddy_only = list_view.get_row_value(iterator, "buddy_only")
+
+        self._edit_shared_folder(iterator, virtual_name, not is_buddy_only)
 
     def on_remove_shared_folder(self, *_args):
 
@@ -730,14 +705,10 @@ class SharesPage:
 
         for iterator in iterators:
             virtual_name = self.shares_list_view.get_row_value(iterator, "virtual_name")
-            folder_path = self.shares_list_view.get_row_value(iterator, "folder")
-            mapping = (virtual_name, folder_path)
 
-            if mapping in self.buddy_shared_folders:
-                self.buddy_shared_folders.remove(mapping)
-            else:
-                self.shared_folders.remove(mapping)
-
+            core.shares.remove_share(
+                virtual_name, share_groups=(self.shared_folders, self.buddy_shared_folders)
+            )
             self.shares_list_view.remove_row(iterator)
 
         if iterators:
@@ -923,6 +894,7 @@ class IgnoredUsersPage:
         self.ignored_users = []
         self.ignored_users_list_view = TreeView(
             application.window, parent=self.ignored_users_container, multi_select=True,
+            delete_accelerator_callback=self.on_remove_ignored_user,
             columns={
                 "username": {
                     "column_type": "text",
@@ -935,6 +907,7 @@ class IgnoredUsersPage:
         self.ignored_ips = {}
         self.ignored_ips_list_view = TreeView(
             application.window, parent=self.ignored_ips_container, multi_select=True,
+            delete_accelerator_callback=self.on_remove_ignored_ip,
             columns={
                 "ip_address": {
                     "column_type": "text",
@@ -1057,6 +1030,7 @@ class BannedUsersPage:
         self.banned_users = []
         self.banned_users_list_view = TreeView(
             application.window, parent=self.banned_users_container, multi_select=True,
+            delete_accelerator_callback=self.on_remove_banned_user,
             columns={
                 "username": {
                     "column_type": "text",
@@ -1069,6 +1043,7 @@ class BannedUsersPage:
         self.banned_ips = {}
         self.banned_ips_list_view = TreeView(
             application.window, parent=self.banned_ips_container, multi_select=True,
+            delete_accelerator_callback=self.on_remove_banned_ip,
             columns={
                 "ip_address": {
                     "column_type": "text",
@@ -1248,6 +1223,7 @@ class ChatsPage:
         self.censor_list_view = TreeView(
             application.window, parent=self.censor_list_container, multi_select=True,
             activate_row_callback=self.on_edit_censored,
+            delete_accelerator_callback=self.on_remove_censored,
             columns={
                 "pattern": {
                     "column_type": "text",
@@ -1261,6 +1237,7 @@ class ChatsPage:
         self.replacement_list_view = TreeView(
             application.window, parent=self.replacement_list_container, multi_select=True,
             activate_row_callback=self.on_edit_replacement,
+            delete_accelerator_callback=self.on_remove_replacement,
             columns={
                 "pattern": {
                     "column_type": "text",
@@ -2237,6 +2214,7 @@ class UrlHandlersPage:
         self.protocol_list_view = TreeView(
             application.window, parent=self.protocol_list_container, multi_select=True,
             activate_row_callback=self.on_edit_handler,
+            delete_accelerator_callback=self.on_remove_handler,
             columns={
                 "protocol": {
                     "column_type": "text",
@@ -2687,7 +2665,7 @@ class PluginsPage:
         if self.selected_plugin is None:
             return
 
-        PluginSettingsDialog(
+        PluginSettings(
             self.application,
             plugin_id=self.selected_plugin,
             plugin_settings=core.pluginhandler.get_plugin_settings(self.selected_plugin)
@@ -2746,6 +2724,9 @@ class Preferences(Dialog):
                 box.add(label)  # pylint: disable=no-member
 
             self.preferences_list.insert(box, -1)
+
+        Accelerator("Tab", self.preferences_list, self.on_sidebar_tab_accelerator)
+        Accelerator("<Shift>Tab", self.preferences_list, self.on_sidebar_shift_tab_accelerator)
 
     def set_active_page(self, page_id):
 
@@ -2910,9 +2891,9 @@ class Preferences(Dialog):
             config.sections[key].update(data)
 
         if portmap_required:
-            core.protothread.portmapper.add_port_mapping()
+            core.portmapper.add_port_mapping()
         else:
-            core.protothread.portmapper.remove_port_mapping()
+            core.portmapper.remove_port_mapping()
 
         if user_profile_required and core.login_username:
             core.userinfo.show_user(core.login_username, refresh=True)
@@ -3093,6 +3074,18 @@ class Preferences(Dialog):
 
         # Scroll to the top
         self.content.get_vadjustment().set_value(0)
+
+    def on_sidebar_tab_accelerator(self, *_args):
+        """ Tab: navigate to widget after preferences sidebar """
+
+        self.content.child_focus(Gtk.DirectionType.TAB_FORWARD)
+        return True
+
+    def on_sidebar_shift_tab_accelerator(self, *_args):
+        """ Shift+Tab: navigate to widget before preferences sidebar """
+
+        self.ok_button.grab_focus()
+        return True
 
     def on_cancel(self, *_args):
         self.close()

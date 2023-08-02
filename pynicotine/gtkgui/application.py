@@ -85,7 +85,6 @@ class Application:
         sys.excepthook = self.on_critical_error
 
         self.connect("activate", self.on_activate)
-        self.connect("shutdown", self.on_shutdown)
 
         for event_name, callback in (
             ("confirm-quit", self.on_confirm_quit),
@@ -705,8 +704,7 @@ class Application:
         GLib.idle_add(self.raise_exception, exc_value)
 
     def on_process_thread_events(self):
-        events.process_thread_events()
-        return not core.shutdown
+        return events.process_thread_events()
 
     def on_activate(self, *_args):
 
@@ -745,9 +743,6 @@ class Application:
         # Process thread events 20 times per second
         # High priority to ensure there are no delays
         GLib.timeout_add(50, self.on_process_thread_events, priority=GLib.PRIORITY_HIGH_IDLE)
-
-    def on_shutdown(self, *_args):
-        self.tray_icon.unload(is_shutdown=True)
 
     def on_confirm_quit_request(self, *_args):
         core.confirm_quit()

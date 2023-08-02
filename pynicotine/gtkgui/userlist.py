@@ -56,6 +56,7 @@ class UserList:
         self.list_view = TreeView(
             window, parent=self.list_container, name="buddy_list",
             activate_row_callback=self.on_row_activated,
+            delete_accelerator_callback=self.on_remove_buddy,
             columns={
                 # Visible columns
                 "status": {
@@ -133,8 +134,10 @@ class UserList:
         # Popup menus
         self.popup_menu_private_rooms = UserPopupMenu(window.application)
 
-        self.popup_menu = popup = UserPopupMenu(window.application, self.list_view.widget, self.on_popup_menu)
-        popup.setup_user_menu(page="userlist")
+        self.popup_menu = popup = UserPopupMenu(
+            window.application, parent=self.list_view.widget, callback=self.on_popup_menu,
+            tab_name="userlist"
+        )
         popup.add_items(
             ("", None),
             ("#" + _("Add User _Note…"), self.on_add_note),
@@ -192,7 +195,7 @@ class UserList:
         menu.toggle_user_items()
         menu.populate_private_rooms(self.popup_menu_private_rooms)
 
-        private_rooms_enabled = (self.popup_menu_private_rooms.items and menu.user != core.login_username)
+        private_rooms_enabled = (self.popup_menu_private_rooms.items and username != core.login_username)
         menu.actions[_("Private Rooms")].set_enabled(private_rooms_enabled)
 
     def user_status(self, msg):

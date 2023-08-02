@@ -73,7 +73,7 @@ class Searches:
             events.connect(event_name, callback)
 
     def _quit(self):
-        self.searches.clear()
+        self.remove_all_searches()
 
     def _server_disconnect(self, _msg):
         events.cancel_scheduled(self._wishlist_timer_id)
@@ -125,12 +125,14 @@ class Searches:
 
         events.emit("remove-search", token)
 
+    def remove_all_searches(self):
+        for token in self.searches.copy():
+            self.remove_search(token)
+
     def show_search(self, token):
         events.emit("show-search", token)
 
-    def process_search_term(self, search_term, mode, room=None, user=None):
-
-        users = []
+    def process_search_term(self, search_term, mode, room=None, users=None):
 
         if mode == "global":
             if core:
@@ -157,12 +159,9 @@ class Searches:
                     search_term = feedback[0]
 
         elif mode == "user":
-            if user:
-                users.append(user)
-
             if core:
                 if not users:
-                    users.append(core.login_username)
+                    users = [core.login_username]
 
                 feedback = core.pluginhandler.outgoing_user_search_event(users, search_term)
 
@@ -199,10 +198,11 @@ class Searches:
 
         return search_term, search_term_without_special, room, users
 
-    def do_search(self, search_term, mode, room=None, user=None, switch_page=True):
+    def do_search(self, search_term, mode, room=None, users=None, switch_page=True):
 
         # Validate search term and run it through plugins
-        search_term, _search_term_without_special, room, users = self.process_search_term(search_term, mode, room, user)
+        search_term, _search_term_without_special, room, users = self.process_search_term(
+            search_term, mode, room, users)
 
         # Get a new search token
         self.token = slskmessages.increment_token(self.token)
@@ -235,29 +235,29 @@ class Searches:
         events.emit("add-search", search.token, search, switch_page)
 
     def do_global_search(self, text):
-        core.queue.append(slskmessages.FileSearch(self.token, text))
+        core.send_message_to_server(slskmessages.FileSearch(self.token, text))
 
-        """ Request a list of related searches from the server.
-        Seemingly non-functional since 2018 (always receiving empty lists). """
+        # Request a list of related searches from the server.
+        # Seemingly non-functional since 2018 (always receiving empty lists).
 
-        # core.queue.append(slskmessages.RelatedSearch(text))
+        # core.send_message_to_server(slskmessages.RelatedSearch(text))
 
     def do_rooms_search(self, text, room=None):
 
         if room != core.chatrooms.JOINED_ROOMS_NAME:
-            core.queue.append(slskmessages.RoomSearch(room, self.token, text))
+            core.send_message_to_server(slskmessages.RoomSearch(room, self.token, text))
             return
 
         for joined_room in core.chatrooms.joined_rooms:
-            core.queue.append(slskmessages.RoomSearch(joined_room, self.token, text))
+            core.send_message_to_server(slskmessages.RoomSearch(joined_room, self.token, text))
 
     def do_buddies_search(self, text):
         for user in core.userlist.buddies:
-            core.queue.append(slskmessages.UserSearch(user, self.token, text))
+            core.send_message_to_server(slskmessages.UserSearch(user, self.token, text))
 
     def do_peer_search(self, text, users):
         for user in users:
-            core.queue.append(slskmessages.UserSearch(user, self.token, text))
+            core.send_message_to_server(slskmessages.UserSearch(user, self.token, text))
 
     def do_wishlist_search(self, token, text):
 
@@ -269,7 +269,7 @@ class Searches:
         log.add_search(_('Searching for wishlist item "%s"'), text)
 
         self.add_allowed_token(token)
-        core.queue.append(slskmessages.WishlistSearch(token, text))
+        core.send_message_to_server(slskmessages.WishlistSearch(token, text))
 
     def do_wishlist_search_interval(self):
 

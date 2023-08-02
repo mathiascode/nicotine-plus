@@ -70,10 +70,16 @@ class PrivateChats(IconNotebook):
             ("private-chat-remove-user", self.remove_user),
             ("send-private-message", self.send_message),
             ("server-disconnect", self.server_disconnect),
-            ("server-login", self.server_login),
             ("user-status", self.user_status)
         ):
             events.connect(event_name, callback)
+
+    def on_remove_all_pages(self, *_args):
+        core.privatechat.remove_all_users()
+
+    def on_restore_removed_page(self, page_args):
+        username, = page_args
+        core.privatechat.show_user(username)
 
     def on_reordered_page(self, *_args):
 
@@ -173,7 +179,7 @@ class PrivateChats(IconNotebook):
             return
 
         page.clear()
-        self.remove_page(page.container)
+        self.remove_page(page.container, page_args=(user,))
         del self.pages[user]
 
     def highlight_user(self, user):
@@ -232,10 +238,6 @@ class PrivateChats(IconNotebook):
         for page in self.pages.values():
             page.update_tags()
 
-    def server_login(self, *_args):
-        for page in self.pages.values():
-            page.server_login()
-
     def server_disconnect(self, *_args):
 
         for user, page in self.pages.items():
@@ -265,8 +267,8 @@ class PrivateChat:
         self.loaded = False
         self.offline_message = False
 
-        self.chat_view = ChatView(self.chat_view_container, editable=False, horizontal_margin=10,
-                                  vertical_margin=5, pixels_below_lines=2, users={self.user},
+        self.chat_view = ChatView(self.chat_view_container, chat_entry=self.chat_entry, editable=False,
+                                  horizontal_margin=10, vertical_margin=5, pixels_below_lines=2,
                                   username_event=self.username_event)
 
         # Text Search
@@ -274,18 +276,23 @@ class PrivateChat:
                                         controller_widget=self.container, focus_widget=self.chat_entry)
 
         # Chat Entry
-        ChatEntry(self.window.application, self.chat_entry, chats.completion, user, core.privatechat.send_message)
+        ChatEntry(self.window.application, self.chat_entry, self.chat_view, chats.completion, user,
+                  core.privatechat.send_message)
 
         self.log_toggle.set_active(config.sections["logging"]["privatechat"])
 
         self.toggle_chat_buttons()
 
-        self.popup_menu_user_chat = UserPopupMenu(self.window.application, self.chat_view.widget,
-                                                  connect_events=False)
-        self.popup_menu_user_tab = UserPopupMenu(self.window.application, None, self.on_popup_menu_user)
+        self.popup_menu_user_chat = UserPopupMenu(
+            self.window.application, parent=self.chat_view.widget, connect_events=False,
+            username=user, tab_name="privatechat"
+        )
+        self.popup_menu_user_tab = UserPopupMenu(
+            self.window.application, callback=self.on_popup_menu_user, username=user,
+            tab_name="privatechat"
+        )
 
         for menu in (self.popup_menu_user_chat, self.popup_menu_user_tab):
-            menu.setup_user_menu(user, page="privatechat")
             menu.add_items(
                 ("", None),
                 ("#" + _("Close All Tabs…"), self.on_close_all_tabs),
@@ -328,14 +335,9 @@ class PrivateChat:
             path, numlines, timestamp_format=config.sections["logging"]["private_timestamp"]
         )
 
-    def server_login(self):
-        self.chat_view.users.add(core.login_username)
-
     def server_disconnect(self):
-
         self.offline_message = False
         self.chat_view.update_user_tags()
-        self.chat_view.users.discard(core.login_username)
 
     def clear(self):
 

@@ -35,8 +35,6 @@ import signal
 import sys
 import threading
 
-from collections import deque
-
 from pynicotine import slskmessages
 from pynicotine.cli import cli
 from pynicotine.config import config
@@ -63,7 +61,7 @@ class Core:
         self.chatrooms = None
         self.pluginhandler = None
         self.now_playing = None
-        self.protothread = None
+        self.portmapper = None
         self.notifications = None
         self.update_checker = None
 
@@ -71,19 +69,17 @@ class Core:
         for signal_type in (signal.SIGINT, signal.SIGTERM):
             signal.signal(signal_type, self.quit)
 
-        self.bindip = None
-        self.port = None
+        self.cli_interface_address = None
+        self.cli_listen_port = None
 
-        self.shutdown = False
         self.enable_cli = False
         self.user_status = slskmessages.UserStatus.OFFLINE
         self.login_username = None  # Only present while logged in
         self.public_ip_address = None
+        self.public_port = None
         self.privileges_left = None
         self.ban_message = 'You are banned from downloading my shared files. Ban message: "%s"'
 
-        self.queue = deque()
-        self.message_events = {}
         self.user_addresses = {}
         self.user_countries = {}
         self.user_statuses = {}
@@ -96,6 +92,7 @@ class Core:
             ("check-privileges", self._check_privileges),
             ("peer-address", self._get_peer_address),
             ("privileged-users", self._privileged_users),
+            ("quit", self._quit),
             ("server-disconnect", self._server_disconnect),
             ("server-login", self._server_login),
             ("server-timeout", self._server_timeout),
@@ -114,6 +111,7 @@ class Core:
         from pynicotine.notifications import Notifications
         from pynicotine.nowplaying import NowPlaying
         from pynicotine.pluginsystem import PluginHandler
+        from pynicotine.portmapper import PortMapper
         from pynicotine.privatechat import PrivateChat
         from pynicotine.search import Searches
         from pynicotine.shares import Shares
@@ -138,8 +136,8 @@ class Core:
         log.add_debug("Using %(program)s executable: %(exe)s", {"program": config.application_name, "exe": script_dir})
         log.add(_("Loading %(program)s %(version)s"), {"program": config.application_name, "version": config.version})
 
-        self.queue.clear()
-        self.protothread = SoulseekNetworkThread(queue=self.queue, user_addresses=self.user_addresses)
+        self.portmapper = PortMapper()
+        SoulseekNetworkThread(user_addresses=self.user_addresses, portmapper=self.portmapper)
 
         self.notifications = Notifications()
         self.network_filter = NetworkFilter()
@@ -213,19 +211,8 @@ class Core:
             "status": _("terminating") if signal_type == signal.SIGTERM else _("application closing")
         })
 
-        # Indicate that a shutdown has started, to prevent UI callbacks from networking thread
-        self.shutdown = True
-        manual_disconnect = True
-
-        events.emit("server-disconnect", manual_disconnect)
-        events.emit("quit")
-
-        log.add(_("Quit %(program)s %(version)s, %(status)s!"), {
-            "program": config.application_name,
-            "version": config.version,
-            "status": _("terminated") if signal_type == signal.SIGTERM else _("done")
-        })
-        log.close_log_files()
+        # Allow the networking thread to finish up before quitting
+        events.emit("schedule-quit")
 
     def connect(self):
 
@@ -236,22 +223,28 @@ class Core:
 
         events.emit("enable-message-queue")
 
-        self.queue.append(slskmessages.ServerConnect(
+        self.send_message_to_network_thread(slskmessages.ServerConnect(
             addr=config.sections["server"]["server"],
             login=(config.sections["server"]["login"], config.sections["server"]["passw"]),
-            interface=config.sections["server"]["interface"],
-            bound_ip=self.bindip,
-            listen_port=self.port if self.port else config.sections["server"]["portrange"][0]
+            interface_name=config.sections["server"]["interface"],
+            interface_address=self.cli_interface_address,
+            listen_port=self.cli_listen_port or config.sections["server"]["portrange"][0]
         ))
 
     def disconnect(self):
-        self.queue.append(slskmessages.ServerDisconnect())
+        self.send_message_to_network_thread(slskmessages.ServerDisconnect())
 
-    def send_message_to_peer(self, user, message):
-        """ Sends message to a peer. Used when we know the username of a peer,
-        but don't have/know an active connection. """
+    def send_message_to_network_thread(self, message):
+        """ Sends message to the networking thread to inform about something """
+        events.emit("queue-network-message", message)
 
-        self.queue.append(slskmessages.SendNetworkMessage(user, message))
+    def send_message_to_server(self, message):
+        """ Sends message to the server """
+        events.emit("queue-network-message", message)
+
+    def send_message_to_peer(self, username, message):
+        """ Sends message to a peer """
+        events.emit("queue-network-message", slskmessages.SendNetworkMessage(username, message))
 
     def set_away_mode(self, is_away, save_state=False):
 
@@ -265,13 +258,13 @@ class Core:
         events.emit("set-away-mode", is_away)
 
     def request_change_password(self, password):
-        self.queue.append(slskmessages.ChangePassword(password))
+        self.send_message_to_server(slskmessages.ChangePassword(password))
 
     def request_check_privileges(self):
-        self.queue.append(slskmessages.CheckPrivileges())
+        self.send_message_to_server(slskmessages.CheckPrivileges())
 
-    def request_give_privileges(self, user, days):
-        self.queue.append(slskmessages.GivePrivileges(user, days))
+    def request_give_privileges(self, username, days):
+        self.send_message_to_server(slskmessages.GivePrivileges(username, days))
 
     def request_ip_address(self, username, notify=False):
 
@@ -279,10 +272,13 @@ class Core:
             return
 
         self._ip_requested[username] = notify
-        self.queue.append(slskmessages.GetPeerAddress(username))
+        self.send_message_to_server(slskmessages.GetPeerAddress(username))
 
     def request_set_status(self, status):
-        self.queue.append(slskmessages.SetStatus(status))
+        self.send_message_to_server(slskmessages.SetStatus(status))
+
+    def request_user_stats(self, username):
+        self.send_message_to_server(slskmessages.GetUserStats(username))
 
     def watch_user(self, user):
         """ Tell the server we want to be notified of status/stat updates
@@ -294,8 +290,8 @@ class Core:
         if user in self.watched_users:
             return
 
-        self.queue.append(slskmessages.WatchUser(user))
-        self.queue.append(slskmessages.GetUserStatus(user))  # Get privilege status
+        self.send_message_to_server(slskmessages.WatchUser(user))
+        self.send_message_to_server(slskmessages.GetUserStatus(user))  # Get privilege status
 
         self.watched_users[user] = {}
 
@@ -303,6 +299,13 @@ class Core:
 
     def _thread_callback(self, callback, *args, **kwargs):
         callback(*args, **kwargs)
+
+    def _quit(self):
+
+        log.add(_("Quit %(program)s %(version)s!"), {
+            "program": config.application_name,
+            "version": config.version
+        })
 
     def _server_timeout(self):
         if not config.need_config():
@@ -317,11 +320,14 @@ class Core:
         self.user_countries.clear()
         self.user_statuses.clear()
         self.watched_users.clear()
+        self._ip_requested.clear()
 
         if self.pluginhandler:
             self.pluginhandler.server_disconnect_notification(manual_disconnect)
 
         self.login_username = None
+        self.public_ip_address = None
+        self.public_port = None
 
     def _server_login(self, msg):
         """ Server code: 1 """
@@ -329,6 +335,7 @@ class Core:
         if msg.success:
             self.user_status = slskmessages.UserStatus.ONLINE
             self.login_username = msg.username
+            self.public_port = self.cli_listen_port or config.sections["server"]["portrange"][0]
 
             self.set_away_mode(config.sections["server"]["away"])
             self.watch_user(msg.username)
@@ -340,7 +347,7 @@ class Core:
             if msg.banner:
                 log.add(msg.banner)
 
-            self.queue.append(slskmessages.PrivateRoomToggle(config.sections["server"]["private_chatrooms"]))
+            self.send_message_to_server(slskmessages.PrivateRoomToggle(config.sections["server"]["private_chatrooms"]))
             self.pluginhandler.server_connect_notification()
 
         else:

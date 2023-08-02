@@ -28,6 +28,7 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.widgets import clipboard
+from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.theme import update_tag_visuals
 from pynicotine.gtkgui.widgets.theme import USER_STATUS_COLORS
 from pynicotine.slskmessages import UserStatus
@@ -343,12 +344,18 @@ class TextView:
 
 class ChatView(TextView):
 
-    def __init__(self, *args, users=None, username_event=None, **kwargs):
+    def __init__(self, *args, chat_entry=None, status_users=None, username_event=None, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-        self.users = users
+        self.tag_users = self.status_users = {}
+        self.chat_entry = chat_entry
         self.username_event = username_event
+
+        if status_users:
+            # In chatrooms, we only want to set the online status for users that are
+            # currently in the room, even though we might know their global status
+            self.status_users = status_users
 
         self.tag_remote = self.create_tag("chatremote")
         self.tag_local = self.create_tag("chatlocal")
@@ -356,7 +363,8 @@ class ChatView(TextView):
         self.tag_action = self.create_tag("chatme")
         self.tag_highlight = self.create_tag("chathilite")
 
-        self.tag_users = {}
+        Accelerator("Down", self.widget, self.on_page_down_accelerator)
+        Accelerator("Page_Down", self.widget, self.on_page_down_accelerator)
 
     @staticmethod
     def find_whole_word(word, text):
@@ -466,7 +474,7 @@ class ChatView(TextView):
         if username not in self.tag_users:
             self.tag_users[username] = self.create_tag(callback=self.username_event, username=username)
 
-        if username in self.users:
+        if username in self.status_users:
             status = core.user_statuses.get(username, UserStatus.OFFLINE)
 
         color = USER_STATUS_COLORS.get(status)
@@ -475,3 +483,10 @@ class ChatView(TextView):
     def update_user_tags(self):
         for username in self.tag_users:
             self.update_user_tag(username)
+
+    def on_page_down_accelerator(self, *_args):
+        """ Page_Down, Down: Give focus to text entry if already scrolled at the bottom """
+
+        if self.adjustment_value >= self.adjustment_bottom:
+            # Give focus to text entry upon scrolling down to the bottom
+            self.chat_entry.grab_focus_without_selecting()

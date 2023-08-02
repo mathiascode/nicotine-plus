@@ -456,7 +456,7 @@ class Scanner(Process):
         # We skip metadata scanning of files without meaningful content
         if size > 128:
             try:
-                audio = self.tinytag.get(encode_path(pathname), size, tags=False)
+                audio = self.tinytag.get(encode_path(pathname), tags=False, size=size)
 
             except Exception as error:
                 self.queue.put((_("Error while scanning metadata for file %(path)s: %(error)s"),
@@ -625,25 +625,6 @@ class Shares:
 
         return "__INTERNAL_ERROR__" + path
 
-    @staticmethod
-    def get_normalized_virtual_name(virtual_name, shared_folders):
-
-        # Provide a default name for root folders
-        if not virtual_name:
-            virtual_name = "Shared"
-
-        # Remove slashes from share name to avoid path conflicts
-        virtual_name = virtual_name.replace("/", "_").replace("\\", "_")
-        new_virtual_name = str(virtual_name)
-
-        # Check if virtual share name is already in use
-        counter = 1
-        while new_virtual_name in (x[0] for x in shared_folders):
-            new_virtual_name = f"{virtual_name}{counter}"
-            counter += 1
-
-        return new_virtual_name
-
     def convert_shares(self):
         """ Convert fs-based shared to virtual shared (pre 1.4.0) """
 
@@ -744,6 +725,71 @@ class Shares:
 
         return self.compressed_shares.get(share_type)
 
+    def get_shared_folders(self):
+
+        shared_folders = config.sections["transfers"]["shared"]
+        shared_folders_buddy = config.sections["transfers"]["buddyshared"]
+
+        return shared_folders, shared_folders_buddy
+
+    def get_normalized_virtual_name(self, virtual_name, shared_folders=None):
+
+        if shared_folders is None:
+            public_shares, buddy_shares = self.get_shared_folders()
+            shared_folders = (public_shares + buddy_shares)
+
+        # Provide a default name for root folders
+        if not virtual_name:
+            virtual_name = "Shared"
+
+        # Remove slashes from share name to avoid path conflicts
+        virtual_name = virtual_name.replace("/", "_").replace("\\", "_").strip(' "')
+        new_virtual_name = str(virtual_name)
+
+        # Check if virtual share name is already in use
+        counter = 1
+        while new_virtual_name in (x[0] for x in shared_folders):
+            new_virtual_name = f"{virtual_name}{counter}"
+            counter += 1
+
+        return new_virtual_name
+
+    def add_share(self, folder_path, group_name="public", virtual_name=None, share_groups=None, validate_path=True):
+
+        if validate_path and not os.access(encode_path(folder_path), os.R_OK):
+            return None
+
+        if share_groups is None:
+            share_groups = self.get_shared_folders()
+
+        # Remove previous share with same path if present
+        core.shares.remove_share(folder_path, share_groups=share_groups)
+
+        public_shares, buddy_shares = share_groups
+        virtual_name = core.shares.get_normalized_virtual_name(
+            virtual_name or os.path.basename(folder_path), shared_folders=(public_shares + buddy_shares)
+        )
+        shares = buddy_shares if group_name == "buddy" else public_shares
+
+        shares.append((virtual_name, os.path.normpath(folder_path)))
+        return virtual_name
+
+    def remove_share(self, virtual_name_or_folder_path, share_groups=None):
+
+        if share_groups is None:
+            share_groups = self.get_shared_folders()
+
+        normalized_folder_path = os.path.normpath(virtual_name_or_folder_path)
+
+        for shares in share_groups:
+            for virtual_name, folder_path in shares:
+                if (virtual_name_or_folder_path in (virtual_name, folder_path)
+                        or folder_path == normalized_folder_path):
+                    shares.remove((virtual_name, folder_path))
+                    return True
+
+        return False
+
     @staticmethod
     def close_shares(share_dbs):
         for database in share_dbs.copy():
@@ -775,7 +821,7 @@ class Shares:
                 sharedfolders = len(list(shared))
                 sharedfiles = len(list(index))
 
-            core.queue.append(slskmessages.SharedFoldersFiles(sharedfolders, sharedfiles))
+            core.send_message_to_server(slskmessages.SharedFoldersFiles(sharedfolders, sharedfiles))
 
         except Exception as error:
             log.add(_("Failed to send number of shared files to the server: %s"), error)
@@ -798,13 +844,6 @@ class Shares:
 
     def rebuild_shares(self, use_thread=True):
         return self.rescan_shares(rebuild=True, use_thread=use_thread)
-
-    def get_shared_folders(self):
-
-        shared_folders = config.sections["transfers"]["shared"][:]
-        shared_folders_buddy = config.sections["transfers"]["buddyshared"][:]
-
-        return shared_folders, shared_folders_buddy
 
     def process_scanner_messages(self, scanner, scanner_queue, emit_event):
 
@@ -898,10 +937,10 @@ class Shares:
             self.send_num_shared_folders_files()
 
         # Process any file transfer queue requests that arrived while scanning
-        for msg in self.pending_network_msgs:
-            core.protothread.emit_network_message_event(msg)
+        if self.pending_network_msgs:
+            core.send_message_to_network_thread(slskmessages.EmitNetworkMessageEvents(self.pending_network_msgs[:]))
+            self.pending_network_msgs.clear()
 
-        self.pending_network_msgs.clear()
         return error
 
     """ Network Messages """
@@ -940,15 +979,13 @@ class Shares:
 
         if not shares_list:
             # Nyah, nyah
-            shares_list = slskmessages.SharedFileListResponse(init=msg.init)
+            shares_list = slskmessages.SharedFileListResponse()
 
-        shares_list.init = msg.init
-        core.queue.append(shares_list)
+        core.send_message_to_peer(user, shares_list)
 
     def _folder_contents_request(self, msg):
         """ Peer code: 36 """
 
-        init = msg.init
         ip_address, _port = msg.init.addr
         username = msg.init.target_user
         checkuser, reason = core.network_filter.check_user(username, ip_address)
@@ -972,17 +1009,17 @@ class Shares:
         if checkuser:
             try:
                 if msg.dir in shares:
-                    core.queue.append(slskmessages.FolderContentsResponse(
-                        init=init, directory=msg.dir, token=msg.token, shares=shares[msg.dir]))
+                    core.send_message_to_peer(username, slskmessages.FolderContentsResponse(
+                        directory=msg.dir, token=msg.token, shares=shares[msg.dir]))
                     return
 
                 if msg.dir.rstrip("\\") in shares:
-                    core.queue.append(slskmessages.FolderContentsResponse(
-                        init=init, directory=msg.dir, token=msg.token, shares=shares[msg.dir.rstrip("\\")]))
+                    core.send_message_to_peer(username, slskmessages.FolderContentsResponse(
+                        directory=msg.dir, token=msg.token, shares=shares[msg.dir.rstrip("\\")]))
                     return
 
             except Exception as error:
                 log.add(_("Failed to fetch the shared folder %(folder)s: %(error)s"),
                         {"folder": msg.dir, "error": error})
 
-            core.queue.append(slskmessages.FolderContentsResponse(init=init, directory=msg.dir, token=msg.token))
+            core.send_message_to_peer(username, slskmessages.FolderContentsResponse(directory=msg.dir, token=msg.token))

@@ -34,6 +34,7 @@ server messages and p2p messages (between clients). """
 
 
 INT32_UNPACK = Struct("<i").unpack_from
+DOUBLE_UINT32_UNPACK = Struct("<II").unpack_from
 UINT32_UNPACK = Struct("<I").unpack_from
 UINT64_UNPACK = Struct("<Q").unpack_from
 
@@ -147,13 +148,13 @@ class CloseConnectionIP(InternalMessage):
 class ServerConnect(InternalMessage):
     """ Core sends this to make networking thread establish a server connection. """
 
-    __slots__ = ("addr", "login", "interface", "bound_ip", "listen_port")
+    __slots__ = ("addr", "login", "interface_name", "interface_address", "listen_port")
 
-    def __init__(self, addr=None, login=None, interface=None, bound_ip=None, listen_port=None):
+    def __init__(self, addr=None, login=None, interface_name=None, interface_address=None, listen_port=None):
         self.addr = addr
         self.login = login
-        self.interface = interface
-        self.bound_ip = bound_ip
+        self.interface_name = interface_name
+        self.interface_address = interface_address
         self.listen_port = listen_port
 
 
@@ -178,6 +179,17 @@ class SendNetworkMessage(InternalMessage):
     def __init__(self, user=None, message=None):
         self.user = user
         self.message = message
+
+
+class EmitNetworkMessageEvents(InternalMessage):
+    """ Sent to the networking thread to tell it to emit events for list of
+    network messages. Currently used after shares have rescanned to process
+    any QueueUpload messages that arrived while scanning. """
+
+    __slots__ = ("msgs",)
+
+    def __init__(self, msgs=None):
+        self.msgs = msgs
 
 
 class DownloadFile(InternalMessage):
@@ -834,17 +846,15 @@ class SetStatus(ServerMessage):
 
 class ServerPing(ServerMessage):
     """ Server code: 32 """
-    """ We test if the server responds. """
-    """ DEPRECATED """
+    """ We send this to the server at most once per minute to ensure the
+    connection stays alive.
+
+    Nicotine+ uses TCP keepalive instead. """
 
     __slots__ = ()
 
     def make_network_message(self):
         return b""
-
-    def parse_network_message(self, message):
-        # Empty message
-        pass
 
 
 class SendConnectToken(ServerMessage):
@@ -3475,7 +3485,7 @@ SERVER_MESSAGE_CODES = {
     FileSearchRoom: 25,           # Obsolete
     FileSearch: 26,
     SetStatus: 28,
-    ServerPing: 32,               # Deprecated
+    ServerPing: 32,
     SendConnectToken: 33,         # Obsolete
     SendDownloadSpeed: 34,        # Obsolete
     SharedFoldersFiles: 35,
