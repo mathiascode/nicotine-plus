@@ -21,7 +21,7 @@ jobs:
         run: |
           python3 setup.py sdist
           mk-origtargz dist/nicotine-plus-*.tar.gz
-          debuild -sa -us -uc
+          debuild -sa -us -uc --lintian-opts --fail-on error
 
       - name: Prepare artifacts
         run: |
