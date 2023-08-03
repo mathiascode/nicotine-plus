@@ -1,3 +1,4 @@
-mo
-po
+data/*.appdata.xml
+data/*.desktop
+po/*.po
 test
