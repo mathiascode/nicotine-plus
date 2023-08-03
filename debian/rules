@@ -9,6 +9,9 @@
 export DH_VERBOSE=1
 export DH_OPTIONS=-v
 
+# Enforce lintian
+export DEBUILD_LINTIAN_OPTS=--fail-on error
+
 # Disable tests requiring internet connection
 export PYBUILD_TEST_ARGS=-k "not test_update_check"
 
