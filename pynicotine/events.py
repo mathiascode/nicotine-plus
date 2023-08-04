@@ -162,8 +162,10 @@ EVENT_NAMES = {
     "clear-downloads",
     "clear-upload",
     "clear-uploads",
+    "close-file",
     "download-connection-closed",
     "download-file-error",
+    "download-finished",
     "download-large-folder",
     "download-notification",
     "file-download-init",
@@ -171,6 +173,7 @@ EVENT_NAMES = {
     "file-download-progress",
     "file-upload-progress",
     "folder-contents-response",
+    "open-file",
     "place-in-queue-request",
     "place-in-queue-response",
     "queue-upload",
@@ -187,6 +190,9 @@ EVENT_NAMES = {
     "upload-failed",
     "upload-file-error",
     "upload-notification",
+    "write-file",
+    "write-file-error",
+    "write-file-finished",
 
     # User info
     "user-info-progress",

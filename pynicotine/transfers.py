@@ -120,6 +120,7 @@ class Transfers:
             ("add-privileged-user", self._add_to_privileged),
             ("download-connection-closed", self._download_connection_closed),
             ("download-file-error", self._download_file_error),
+            ("download-finished", self._download_finished),
             ("file-download-init", self._file_download_init),
             ("file-download-progress", self._file_download_progress),
             ("file-upload-init", self._file_upload_init),
@@ -1223,6 +1224,7 @@ class Transfers:
 
                 # Seek to the end of the file for resuming the download
                 offset = file_handle.seek(0, os.SEEK_END)
+                events.emit("open-file", incomplete_file_path, file_handle, offset, download.size)
 
             except OSError as error:
                 log.add(_("Cannot save file in %(folder_path)s: %(error)s"), {
@@ -1235,7 +1237,7 @@ class Transfers:
                 need_update = False
 
             else:
-                download.file = file_handle
+                download.file = incomplete_file_path
                 download.last_byte_offset = offset
                 download.queue_position = 0
                 download.last_update = time.time()
@@ -1247,19 +1249,19 @@ class Transfers:
                 log.add_download(
                     _("Download started: user %(user)s, file %(file)s"), {
                         "user": username,
-                        "file": file_handle.name.decode("utf-8", "replace")
+                        "file": incomplete_file_path
                     }
                 )
 
                 if download.size > offset:
                     download.status = "Transferring"
                     core.send_message_to_network_thread(slskmessages.DownloadFile(
-                        init=msg.init, token=token, file=file_handle, leftbytes=(download.size - offset)
+                        init=msg.init, token=token, file=incomplete_file_path, leftbytes=(download.size - offset)
                     ))
                     core.send_message_to_network_thread(slskmessages.FileOffset(init=msg.init, offset=offset))
 
                 else:
-                    self.download_finished(download, file_handle=file_handle)
+                    self.download_finished(download)
                     need_update = False
 
             events.emit("download-notification")
@@ -1509,16 +1511,20 @@ class Transfers:
             self.update_upload(upload)
             return
 
+    def _download_finished(self, username, token):
+
+        for download in self.downloads:
+            if download.token != token or download.user != username:
+                continue
+
+            self.download_finished(download)
+
     def _download_connection_closed(self, username, token):
         """ A file download connection has closed for any reason """
 
         for download in self.downloads:
             if download.token != token or download.user != username:
                 continue
-
-            if download.current_byte_offset is not None and download.current_byte_offset >= download.size:
-                self.download_finished(download, file_handle=download.file)
-                return
 
             status = None
 
@@ -2044,9 +2050,9 @@ class Transfers:
             except Exception:
                 log.add(_("Trouble executing on folder: %s"), config.sections["transfers"]["afterfolder"])
 
-    def download_finished(self, transfer, file_handle=None):
+    def download_finished(self, transfer):
 
-        self.close_file(file_handle, transfer)
+        events.emit("close-file", transfer.file)
 
         if transfer in self.transfer_request_times:
             del self.transfer_request_times[transfer]
@@ -2060,12 +2066,12 @@ class Transfers:
             if not os.path.isdir(download_folder_path_encoded):
                 os.makedirs(download_folder_path_encoded)
 
-            shutil.move(file_handle.name, encode_path(download_file_path))
+            shutil.move(encode_path(transfer.file), encode_path(download_file_path))
 
         except OSError as error:
             log.add(
                 _("Couldn't move '%(tempfile)s' to '%(file)s': %(error)s"), {
-                    "tempfile": file_handle.name.decode("utf-8", "replace"),
+                    "tempfile": transfer.file,
                     "file": download_file_path,
                     "error": error
                 }
@@ -2478,7 +2484,7 @@ class Transfers:
             download.sock = None
 
         if download.file is not None:
-            self.close_file(download.file, download)
+            events.emit("close-file", download.file)
 
             log.add_download(
                 _("Download aborted, user %(user)s file %(file)s"), {

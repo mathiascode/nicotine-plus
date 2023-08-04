@@ -366,6 +366,8 @@ class NetworkThread(Thread):
 
         super().__init__(name="NetworkThread")
 
+        self._files = {}
+
         self._queue = deque()
         self._pending_init_msgs = {}
         self._token_init_msgs = {}
@@ -429,7 +431,9 @@ class NetworkThread(Thread):
             ("enable-message-queue", self._enable_message_queue),
             ("queue-network-message", self._queue_network_message),
             ("schedule-quit", self._schedule_quit),
-            ("start", self.start)
+            ("start", self.start),
+            ("write-file-error", self._write_file_error),
+            ("write-file-finished", self._write_file_finished)
         ):
             events.connect(event_name, callback)
 
@@ -1804,6 +1808,19 @@ class NetworkThread(Thread):
         if limit > 0:
             limits[sock] = limit
 
+    def _write_file_error(self, file_path, error):
+
+        filedown = self._files.pop(file_path)
+
+        events.emit_main_thread(
+            "download-file-error", filedown.init.target_user, filedown.token, error)
+
+        self._close_connection(self._conns, filedown.init.sock)
+
+    def _write_file_finished(self, file_path):
+        filedown = self._files.pop(file_path)
+        events.emit_main_thread("download-finished", filedown.init.target_user, filedown.token)
+
     def _process_file_input(self, conn_obj, msg_buffer):
         """ We have a "F" connection (filetransfer), peer has sent us
         something, this function retrieves messages
@@ -1835,13 +1852,7 @@ class NetworkThread(Thread):
             added_bytes_mem = msg_buffer_mem[:idx]
 
             if added_bytes_mem:
-                try:
-                    conn_obj.filedown.file.write(added_bytes_mem)
-
-                except (OSError, ValueError) as error:
-                    events.emit_main_thread(
-                        "download-file-error", conn_obj.filedown.token, conn_obj.filedown.file, error)
-                    should_close_connection = True
+                events.emit("write-file", conn_obj.filedown.file, bytes(added_bytes_mem))
 
                 added_bytes_len = len(added_bytes_mem)
                 self._total_download_bandwidth += added_bytes_len
@@ -1857,9 +1868,6 @@ class NetworkThread(Thread):
                 events.emit_main_thread("file-download-progress", conn_obj.filedown.init.target_user,
                                         conn_obj.filedown.token, conn_obj.filedown.leftbytes)
                 conn_obj.lastcallback = current_time
-
-            if finished:
-                should_close_connection = True
 
             added_bytes_mem.release()
 
@@ -2239,6 +2247,7 @@ class NetworkThread(Thread):
 
             if conn_obj is not None:
                 conn_obj.filedown = msg_obj
+                self._files[msg_obj.file] = msg_obj
 
                 self._total_downloads += 1
                 self._calc_download_limit()
