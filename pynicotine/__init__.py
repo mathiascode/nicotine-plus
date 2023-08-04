@@ -127,8 +127,6 @@ def set_up_python():
         # Support file scanning process in frozen binaries
         multiprocessing.freeze_support()
 
-    multiprocessing.set_start_method("spawn")
-
 
 def rename_process(new_name, debug_info=False):
 
