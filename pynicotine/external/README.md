@@ -3,7 +3,7 @@
 ## Country Database
 
 - Last updated on May 2, 2023
-- Original file name "IP2LOCATION-LITE-DB1.BIN" renamed to "ipcountrydb.bin"
+- Original file name "IP2LOCATION-LITE-DB1.CSV" converted "ipcountries.py"
 - Fetched from https://lite.ip2location.com/database/ip-country
 
 ### License
