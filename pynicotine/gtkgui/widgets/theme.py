@@ -125,6 +125,8 @@ def set_visual_settings():
     set_dark_mode(config.sections["ui"]["dark_mode"])
     set_use_header_bar(config.sections["ui"]["header_bar"])
 
+    GTK_SETTINGS.set_property("gtk-cursor-blink", False)
+
 
 def set_global_css():
 
