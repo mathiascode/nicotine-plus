@@ -350,7 +350,7 @@ setup(
             script=os.path.join(PROJECT_PATH, SCRIPT_NAME),
             base=GUI_BASE,
             target_name=APPLICATION_NAME,
-            icon=os.path.join(CURRENT_PATH, ICON_NAME),
+            icon=os.path.join(CURRENT_PATH, ICON_NAME) if sys.platform != "darwin" else None,
             copyright=COPYRIGHT,
             shortcut_name=APPLICATION_NAME,
             shortcut_dir="ProgramMenuFolder"
