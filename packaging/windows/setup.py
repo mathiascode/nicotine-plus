@@ -336,7 +336,10 @@ setup(
             ],
             include_resources=include_resources,
             codesign_identity="-",
-            codesign_deep=True
+            codesign_deep=True,
+            codesign_strict="all",
+            codesign_verify=True,
+            spctl_assess=True
         ),
         "bdist_dmg": dict(
             applications_shortcut=True
