@@ -338,8 +338,7 @@ setup(
             codesign_identity="-",
             codesign_deep=True,
             codesign_strict="all",
-            codesign_verify=True,
-            spctl_assess=True
+            codesign_verify=True
         ),
         "bdist_dmg": dict(
             applications_shortcut=True
