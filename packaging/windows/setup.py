@@ -338,6 +338,8 @@ setup(
             codesign_identity="-",
             codesign_deep=True,
             codesign_strict="all",
+            codesign_options="runtime",
+            codesign_timestamp=True,
             codesign_verify=True
         ),
         "bdist_dmg": dict(
