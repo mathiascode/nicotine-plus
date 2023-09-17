@@ -431,8 +431,9 @@ class Search:
 
                     partial_results = set()
 
-                    for complete_word, indices in word_index_db.items():
+                    for complete_word in word_index_db:
                         if complete_word.endswith(word):
+                            indices = word_index_db[complete_word]
                             partial_results.update(indices)
 
                     if partial_results:
@@ -459,8 +460,7 @@ class Search:
         private_fileinfos = []
 
         for index in islice(results, min(len(results), max_results)):
-            index_str = repr(index)
-            fileinfo = file_index_db.get(index_str)
+            fileinfo = file_index_db.get(index)
 
             if fileinfo is not None:
                 fileinfos.append(fileinfo)
@@ -469,7 +469,7 @@ class Search:
             if not is_buddy and not is_buddy_share_visible:
                 continue
 
-            fileinfo = buddy_file_index_db.get(index_str)
+            fileinfo = buddy_file_index_db.get(index)
 
             if fileinfo is not None:
                 if is_buddy:
