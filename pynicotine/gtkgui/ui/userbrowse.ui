@@ -25,7 +25,7 @@
             <property name="margin-end">6</property>
             <property name="margin-start">6</property>
             <property name="margin-top">6</property>
-            <property name="spacing">18</property>
+            <property name="spacing">6</property>
             <property name="visible">True</property>
             <child>
               <object class="GtkBox">
@@ -39,7 +39,8 @@
                     <property name="visible">True</property>
                     <child>
                       <object class="GtkLabel">
-                        <property name="label" bind-source="_num_folders_button" bind-property="tooltip-text" bind-flags="bidirectional|sync-create"/>
+                        <property name="label" translatable="yes">Folders</property>
+                        <property name="mnemonic-widget">_num_folders_button</property>
                         <property name="visible">True</property>
                         <style>
                           <class name="heading"/>
@@ -47,43 +48,71 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkButton" id="_num_folders_button">
-                        <property name="tooltip-text" translatable="yes">Folders</property>
+                      <object class="GtkBox">
                         <property name="visible">True</property>
                         <child>
-                          <object class="GtkLabel" id="num_folders_label">
-                            <property name="label">0   /   0 B</property>
-                            <property name="mnemonic-widget">_num_folders_button</property>
+                          <object class="GtkButton" id="_num_folders_button">
                             <property name="visible">True</property>
+                            <child>
+                              <object class="GtkLabel" id="num_folders_label">
+                                <property name="label">0</property>
+                                <property name="mnemonic-widget">_num_folders_button</property>
+                                <property name="visible">True</property>
+                                <style>
+                                  <class name="bold"/>
+                                  <class name="dim-label"/>
+                                </style>
+                              </object>
+                            </child>
                             <style>
-                              <class name="bold"/>
-                              <class name="dim-label"/>
+                              <class name="circular"/>
+                              <class name="count"/>
+                            </style>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="_share_size_button">
+                            <property name="visible">True</property>
+                            <child>
+                              <object class="GtkLabel" id="share_size_label">
+                                <property name="label">0 B</property>
+                                <property name="mnemonic-widget">_share_size_button</property>
+                                <property name="visible">True</property>
+                                <style>
+                                  <class name="bold"/>
+                                  <class name="dim-label"/>
+                                </style>
+                              </object>
+                            </child>
+                            <style>
+                              <class name="circular"/>
+                              <class name="count"/>
                             </style>
                           </object>
                         </child>
                         <style>
-                          <class name="circular"/>
-                          <class name="count"/>
+                          <class name="linked"/>
                         </style>
                       </object>
                     </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkToggleButton" id="expand_button">
-                    <property name="tooltip-text" translatable="yes">Expand / Collapse All</property>
-                    <property name="visible">True</property>
-                    <signal name="toggled" handler="on_expand"/>
                     <child>
-                      <object class="GtkImage" id="expand_icon">
-                        <property name="icon-name">go-down-symbolic</property>
+                      <object class="GtkToggleButton" id="expand_button">
+                        <property name="tooltip-text" translatable="yes">Expand / Collapse All</property>
                         <property name="visible">True</property>
+                        <signal name="toggled" handler="on_expand"/>
+                        <child>
+                          <object class="GtkImage" id="expand_icon">
+                            <property name="icon-name">view-fullscreen-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <style>
+                          <class name="circular"/>
+                          <class name="flat"/>
+                          <class name="image-button"/>
+                        </style>
                       </object>
                     </child>
-                    <style>
-                      <class name="circular"/>
-                      <class name="image-button"/>
-                    </style>
                   </object>
                 </child>
               </object>
@@ -96,7 +125,7 @@
                 <property name="vscrollbar-policy">never</property>
                 <child>
                   <object class="GtkBox" id="path_bar">
-                    <property name="spacing">4</property>
+                    <property name="spacing">2</property>
                     <property name="visible">True</property>
                   </object>
                 </child>
@@ -107,13 +136,13 @@
                 <property name="spacing">6</property>
                 <property name="visible">True</property>
                 <child>
-                  <object class="GtkButton" id="refresh_button">
-                    <property name="tooltip-text" translatable="yes">Refresh Files</property>
+                  <object class="GtkToggleButton" id="search_button">
+                    <property name="tooltip-text" translatable="yes">Search Files</property>
                     <property name="visible">True</property>
-                    <signal name="clicked" handler="on_refresh"/>
+                    <signal name="toggled" handler="on_show_search"/>
                     <child>
                       <object class="GtkImage">
-                        <property name="icon-name">view-refresh-symbolic</property>
+                        <property name="icon-name">system-search-symbolic</property>
                         <property name="visible">True</property>
                       </object>
                     </child>
@@ -141,18 +170,18 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkToggleButton" id="search_button">
-                    <property name="tooltip-text" translatable="yes">Search Files</property>
+                  <object class="GtkButton" id="refresh_button">
+                    <property name="tooltip-text" translatable="yes">Refresh Files</property>
                     <property name="visible">True</property>
-                    <signal name="toggled" handler="on_show_search"/>
+                    <signal name="clicked" handler="on_refresh"/>
                     <child>
                       <object class="GtkImage">
-                        <property name="icon-name">system-search-symbolic</property>
+                        <property name="icon-name">view-refresh-symbolic</property>
                         <property name="visible">True</property>
                       </object>
                     </child>
                     <style>
-                      <class name="flat"/>
+                      <class name="circular"/>
                       <class name="image-button"/>
                     </style>
                   </object>

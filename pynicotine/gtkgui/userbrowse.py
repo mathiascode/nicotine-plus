@@ -203,7 +203,8 @@ class UserBrowse:
             self.save_button,
             self.search_button,
             self.search_entry,
-            self.search_entry_revealer
+            self.search_entry_revealer,
+            self.share_size_label
         ) = ui.load(scope=self, path="userbrowse.ui")
 
         self.userbrowses = userbrowses
@@ -461,7 +462,8 @@ class UserBrowse:
         self.share_size = size + private_size
         self.num_folders = num_folders + num_private_folders
 
-        self.num_folders_label.set_text(f"{humanize(self.num_folders)}   /   {human_size(self.share_size)}")
+        self.num_folders_label.set_text(humanize(self.num_folders))
+        self.share_size_label.set_text(human_size(self.share_size))
 
         if self.expand_button.get_active():
             self.folder_tree_view.expand_all_rows()
@@ -625,7 +627,7 @@ class UserBrowse:
             i_folder_path = "\\".join(folder_path.split("\\")[:index + 1])
 
             if index:
-                label = Gtk.Label(label="/", visible=True)
+                label = Gtk.Label(label="\\", visible=True)
 
                 add_css_class(label, "dim-label")
                 add_css_class(label, "heading")
@@ -1260,10 +1262,10 @@ class UserBrowse:
         active = self.expand_button.get_active()
 
         if active:
-            icon_name = "go-up-symbolic"
+            icon_name = "view-restore-symbolic"
             self.folder_tree_view.expand_all_rows()
         else:
-            icon_name = "go-down-symbolic"
+            icon_name = "view-fullscreen-symbolic"
             self.folder_tree_view.collapse_all_rows()
 
         icon_args = (Gtk.IconSize.BUTTON,) if GTK_API_VERSION == 3 else ()  # pylint: disable=no-member
