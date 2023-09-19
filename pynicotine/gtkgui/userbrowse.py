@@ -28,6 +28,7 @@ from locale import strxfrm
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import Pango
 
 from pynicotine.config import config
 from pynicotine.core import core
@@ -225,6 +226,7 @@ class UserBrowse:
         self.search_position = 0
 
         self.info_bar = InfoBar(parent=self.info_bar_container, button=self.retry_button)
+        self.path_bar.get_parent().get_hadjustment().connect("changed", self.on_path_bar_scroll)
 
         # Setup folder_tree_view
         self.folder_tree_view = TreeView(
@@ -414,7 +416,6 @@ class UserBrowse:
         )
 
         self.expand_button.set_active(config.sections["userbrowse"]["expand_folders"])
-        self.path_bar.get_parent().get_hadjustment().connect("changed", self.on_path_bar_size_changed)
 
     def clear(self):
 
@@ -637,7 +638,15 @@ class UserBrowse:
                 else:
                     self.path_bar.add(label)     # pylint: disable=no-member
 
-            button = Gtk.Button(label=folder, visible=True)
+            if len(folder) > 10:
+                width_chars = 10
+                ellipsize = Pango.EllipsizeMode.END
+            else:
+                width_chars = -1
+                ellipsize = Pango.EllipsizeMode.NONE
+
+            button_label = Gtk.Label(label=folder, ellipsize=ellipsize, width_chars=width_chars, visible=True)
+            button = Gtk.Button(child=button_label, visible=True)
             button.connect("clicked", self.on_path_bar_clicked, i_folder_path)
 
             add_css_class(button, "flat")
@@ -1248,13 +1257,11 @@ class UserBrowse:
 
         iterator = self.folder_tree_view.iterators.get(folder_path)
 
-        if not iterator:
-            return
+        if iterator:
+            self.folder_tree_view.select_row(iterator)
+            self.folder_tree_view.grab_focus()
 
-        self.folder_tree_view.select_row(iterator)
-        self.folder_tree_view.grab_focus()
-
-    def on_path_bar_size_changed(self, adjustment, *_args):
+    def on_path_bar_scroll(self, adjustment, *_args):
         adjustment.set_value(adjustment.get_upper())
 
     def on_expand(self, *_args):
