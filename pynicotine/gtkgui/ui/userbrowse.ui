@@ -137,6 +137,7 @@
                 <property name="visible">True</property>
                 <child>
                   <object class="GtkToggleButton" id="search_button">
+                    <property name="sensitive" bind-source="refresh_button" bind-property="sensitive" bind-flags="bidirectional|sync-create"/>
                     <property name="tooltip-text" translatable="yes">Search Files</property>
                     <property name="visible">True</property>
                     <signal name="toggled" handler="on_show_search"/>

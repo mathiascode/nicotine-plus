@@ -1362,8 +1362,10 @@ class UserBrowse:
     def on_search_accelerator(self, *_args):
         """Ctrl+F - Find."""
 
-        self.search_button.set_active(True)
-        self.search_entry.grab_focus()
+        if self.search_button.get_sensitive():
+            self.search_button.set_active(True)
+            self.search_entry.grab_focus()
+
         return True
 
     def on_search_next_accelerator(self, *_args):
