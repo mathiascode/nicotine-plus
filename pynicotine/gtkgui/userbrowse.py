@@ -649,6 +649,7 @@ class UserBrowse:
             button = Gtk.Button(child=button_label, visible=True)
             button.connect("clicked", self.on_path_bar_clicked, i_folder_path)
 
+            add_css_class(button_label, "normal")
             add_css_class(button, "flat")
             remove_css_class(button, "text-button")
 
@@ -656,6 +657,10 @@ class UserBrowse:
                 self.path_bar.append(button)  # pylint: disable=no-member
             else:
                 self.path_bar.add(button)     # pylint: disable=no-member
+
+        if folder_path:
+            remove_css_class(button_label, "normal")
+            add_css_class(button_label, "heading")
 
     def set_selected_folder(self, folder_path):
 
