@@ -245,19 +245,6 @@
                         </child>
                       </object>
                     </child>
-                    <child>
-                      <object class="GtkProgressBar" id="progress_bar">
-                        <property name="margin-bottom">6</property>
-                        <property name="margin-end">6</property>
-                        <property name="margin-start">6</property>
-                        <property name="margin-top">6</property>
-                        <property name="pulse-step">0.72</property>
-                        <property name="valign">center</property>
-                        <property name="visible">True</property>
-                        <signal name="map" handler="on_show_progress_bar"/>
-                        <signal name="unmap" handler="on_hide_progress_bar"/>
-                      </object>
-                    </child>
                     <style>
                       <class name="border-end"/>
                     </style>
@@ -287,6 +274,19 @@
                 </child>
               </object>
             </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkProgressBar" id="progress_bar">
+            <property name="margin-bottom">6</property>
+            <property name="margin-end">6</property>
+            <property name="margin-start">6</property>
+            <property name="margin-top">6</property>
+            <property name="pulse-step">0.72</property>
+            <property name="valign">center</property>
+            <property name="visible">True</property>
+            <signal name="map" handler="on_show_progress_bar"/>
+            <signal name="unmap" handler="on_hide_progress_bar"/>
           </object>
         </child>
       </object>
