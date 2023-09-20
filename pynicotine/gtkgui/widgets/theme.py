@@ -165,6 +165,19 @@ def set_global_css():
         padding: 0;
     }
 
+    treeview button {
+        /* Remove bottom border from column headers */
+        border: 0;
+        padding-bottom: 3px;
+        padding-top: 3px;
+    }
+
+    treeview button:not(:last-child):dir(ltr) > box,
+    treeview button:not(:first-child):dir(rtl) > box {
+        /* Add column header separators */
+        box-shadow: 1px 0 0 0 alpha(@borders, 2.8);
+    }
+
     /* Borders */
 
     .border-top,
@@ -283,20 +296,6 @@ def set_global_css():
     }
     """
 
-    css_libadwaita = b"""
-    /* Tweaks (libadwaita) */
-
-    treeview button {
-        border-bottom: 0;
-    }
-
-    treeview button:not(:last-child):dir(ltr) > box,
-    treeview button:not(:first-child):dir(rtl) > box {
-        /* Restore column header separators */
-        box-shadow: 1px 0 0 0 alpha(@borders, 2.8);
-    }
-    """
-
     css_libadwaita_1_4 = b"""
     /* Tweaks (libadwaita 1.4+) */
 
@@ -314,9 +313,6 @@ def set_global_css():
 
     if GTK_API_VERSION >= 4:
         css.extend(css_gtk4)
-
-        if LIBADWAITA_API_VERSION:
-            css.extend(css_libadwaita)
 
         if (LIBADWAITA_API_VERSION, LIBADWAITA_MINOR_VERSION) >= (1, 4):
             css.extend(css_libadwaita_1_4)
