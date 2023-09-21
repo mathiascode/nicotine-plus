@@ -588,6 +588,7 @@ class UserBrowse:
 
         self.indeterminate_progress = True
 
+        self.progress_bar.set_visible(True)
         self.progress_bar.pulse()
         GLib.timeout_add(320, self.pulse_progress, False)
         GLib.timeout_add(1000, self.pulse_progress)
@@ -616,6 +617,8 @@ class UserBrowse:
 
         self.userbrowses.request_tab_changed(self.container)
         self.progress_bar.set_fraction(1.0)
+        self.progress_bar.set_visible(False)
+
         self.refresh_button.set_sensitive(True)
         self.save_button.set_sensitive(not self.folder_tree_view.is_empty())
 
