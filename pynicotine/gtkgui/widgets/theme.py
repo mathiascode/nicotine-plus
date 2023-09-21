@@ -195,9 +195,19 @@ def set_global_css():
         box-shadow: -1px 0 0 0 @borders;
     }
 
+    .border-start-dim:dir(ltr),
+    .border-end-dim:dir(rtl) {
+        box-shadow: -1px 0 0 0 alpha(@borders, 0.75);
+    }
+
     .border-end:dir(ltr),
     .border-start:dir(rtl) {
         box-shadow: 1px 0 0 0 @borders;
+    }
+
+    .border-end-dim:dir(ltr),
+    .border-start-dim:dir(rtl) {
+        box-shadow: 1px 0 0 0 alpha(@borders, 0.75);
     }
 
     /* Buttons */

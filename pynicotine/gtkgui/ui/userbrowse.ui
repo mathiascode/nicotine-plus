@@ -265,7 +265,7 @@
                       </object>
                     </child>
                     <style>
-                      <class name="border-end"/>
+                      <class name="border-end-dim"/>
                     </style>
                   </object>
                 </child>
