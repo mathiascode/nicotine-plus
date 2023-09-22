@@ -452,7 +452,7 @@ class Search:
             log.add_debug("Error: DB closed during search, perhaps due to rescanning shares or closing the application")
             return None
 
-    def create_file_info_list(self, results, file_index_db, buddy_file_index_db, max_results, is_buddy=False):
+    def create_file_info_list(self, results, files_db, buddy_files_db, max_results, is_buddy=False):
         """ Given a list of file indices, retrieve the file information for each index """
 
         is_buddy_share_visible = config.sections["transfers"]["buddy_shares_visible_everyone"]
@@ -460,7 +460,8 @@ class Search:
         private_fileinfos = []
 
         for index in islice(results, min(len(results), max_results)):
-            fileinfo = file_index_db.get(index)
+            file_path = core.shares.file_path_index[index]
+            fileinfo = files_db.get(file_path)
 
             if fileinfo is not None:
                 fileinfos.append(fileinfo)
@@ -469,7 +470,7 @@ class Search:
             if not is_buddy and not is_buddy_share_visible:
                 continue
 
-            fileinfo = buddy_file_index_db.get(index)
+            fileinfo = buddy_files_db.get(file_path)
 
             if fileinfo is not None:
                 if is_buddy:
@@ -550,20 +551,21 @@ class Search:
 
         # Find common file matches for each word in search term
         results = self.create_search_result_list(search_term, word_index_db, excluded_words, partial_words)
+        print(results)
 
         if not results:
             return
 
-        file_index_db = core.shares.share_dbs.get("fileindex")
-        buddy_file_index_db = core.shares.share_dbs.get("buddyfileindex")
+        files_db = core.shares.share_dbs.get("files")
+        buddy_files_db = core.shares.share_dbs.get("buddyfiles")
 
-        if file_index_db is None or buddy_file_index_db is None:
+        if files_db is None or buddy_files_db is None:
             return
 
         # Get file information for each file index in result list
         num_results, fileinfos, private_fileinfos = self.create_file_info_list(
-            results, file_index_db, buddy_file_index_db, max_results, is_buddy=(checkuser == 2))
-
+            results, files_db, buddy_files_db, max_results, is_buddy=(checkuser == 2))
+        print(num_results)
         if not num_results:
             return
 
