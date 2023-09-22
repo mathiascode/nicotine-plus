@@ -309,8 +309,7 @@ class Scanner:
             # Get mtimes for top-level shared folders, then every subfolder
             try:
                 files, streams, mtimes = self.get_files_list(
-                    folder, old_mtimes, self.share_dbs.get(prefix + "files"),
-                    self.share_dbs.get(prefix + "streams"), rebuild
+                    folder, old_mtimes, self.share_dbs.get(prefix + "files"), rebuild
                 )
                 new_files = {**new_files, **files}
                 new_streams = {**new_streams, **streams}
@@ -373,74 +372,62 @@ class Scanner:
 
         return False
 
-    def get_files_list(self, shared_folder, oldmtimes, oldfiles, oldstreams, rebuild=False):
+    def get_files_list(self, shared_folder, oldmtimes, oldfiles, rebuild=False):
         """Get a list of files with their filelength, bitrate and track length
         in seconds."""
 
         files = {}
         streams = {}
         mtimes = {}
-        folders = deque([(shared_folder, None)])
+        folders = deque([shared_folder])
 
         while folders:
-            folder, folder_stat = folders.pop()
-
-            if folder_stat is None:
-                folder_stat = os.stat(encode_path(folder))
-
-            folder_unchanged = False
+            folder = folders.pop()
             virtual_folder = self.real2virtual(folder)
-            mtime = mtimes[folder] = folder_stat.st_mtime
             file_list = []
-
-            if not rebuild and folder in oldmtimes and mtime == oldmtimes[folder]:
-                try:
-                    files[virtual_folder] = oldfiles[virtual_folder]
-                    streams[virtual_folder] = oldstreams[virtual_folder]
-                    folder_unchanged = True
-
-                except KeyError:
-                    self.queue.put(("Inconsistent cache for '%(vdir)s', rebuilding '%(dir)s'", {
-                        "vdir": virtual_folder,
-                        "dir": folder
-                    }, LogLevel.MISCELLANEOUS))
 
             try:
                 with os.scandir(encode_path(folder, prefix=False)) as entries:
                     for entry in entries:
                         basename = entry.name.decode("utf-8", "replace")
-
-                        if entry.is_file():
-                            try:
-                                if not folder_unchanged:
-                                    if self.is_hidden(folder, basename, entry):
-                                        continue
-
-                                    # Get the metadata of the file
-                                    file_path = os.path.join(folder, basename)
-                                    data = self.get_file_info(basename, file_path, entry)
-                                    file_list.append(data)
-
-                            except Exception as error:
-                                self.queue.put((_("Error while scanning file %(path)s: %(error)s"),
-                                               {"path": entry.path, "error": error}, LogLevel.DEFAULT))
-
-                            continue
-
                         path = os.path.join(folder, basename)
 
-                        if self.is_hidden(path, entry=entry):
+                        if entry.is_dir():
+                            if self.is_hidden(path, entry=entry):
+                                continue
+
+                            folders.append(path)
                             continue
 
-                        folders.append((path, entry.stat()))
+                        try:
+                            if self.is_hidden(folder, basename, entry):
+                                continue
+
+                            file_stat = entry.stat()
+                            file_mtime = file_stat.st_mtime
+
+                            if (not rebuild and oldmtimes and oldfiles and file_mtime == oldmtimes.get(path)
+                                    and path in oldfiles):
+                                files[path] = oldfiles[path]
+                                continue
+
+                            # Get the metadata of the file
+                            file_data = self.get_file_info(basename, path, file_stat)
+                            file_list.append(file_data)
+
+                            file_data[0] = f"{virtual_folder}\\{basename}"
+                            mtimes[path] = file_mtime
+                            files[path] = file_data
+
+                        except Exception as error:
+                            self.queue.put((_("Error while scanning file %(path)s: %(error)s"),
+                                           {"path": entry.path, "error": error}, LogLevel.DEFAULT))
 
             except OSError as error:
                 self.queue.put((_("Error while scanning folder %(path)s: %(error)s"),
                                {"path": folder, "error": error}, LogLevel.DEFAULT))
 
-            if not folder_unchanged:
-                files[virtual_folder] = file_list
-                streams[virtual_folder] = self.get_dir_stream(file_list)
+            streams[virtual_folder] = self.get_dir_stream(file_list)
 
         return files, streams, mtimes
 
@@ -457,19 +444,13 @@ class Scanner:
 
         return tag
 
-    def get_file_info(self, basename, file_path, entry=None):
+    def get_file_info(self, basename, file_path, file_stat):
         """Get file metadata."""
 
         tag = None
         quality = None
         duration = None
         encoded_file_path = encode_path(file_path)
-
-        if entry is None:
-            file_stat = os.stat(encoded_file_path)
-        else:
-            file_stat = entry.stat()
-
         size = file_stat.st_size
 
         # We skip metadata scanning of files without meaningful content
@@ -543,29 +524,26 @@ class Scanner:
         num_shared_files = len(shared_files)
         last_percent = 0.0
 
-        for file_num, folder in enumerate(shared_files, start=1):
+        for file_index, file_path in enumerate(shared_files, start=file_index + 1):
             # Truncate the percentage to two decimal places to avoid sending data to the main process too often
-            percent = float(f"{(file_num / num_shared_files):.2f}")
+            percent = float(f"{(file_index / num_shared_files):.2f}")
 
             if last_percent < percent <= 1.0:
                 self.queue.put(percent)
                 last_percent = percent
 
-            for file_index, fileinfo in enumerate(shared_files[folder], start=file_index + 1):
-                fileinfo = fileinfo[:]
-                filename = fileinfo[0]
+            fileinfo = shared_files[file_path]
 
-                # Add to file index
-                fileinfo[0] = f"{folder}\\{filename}"
-                fileindex_db[f"{file_index}"] = fileinfo
+            # Add to file index
+            fileindex_db[f"{file_index}"] = fileinfo
 
-                # Collect words from filenames for Search index
-                # Use set to prevent duplicates
-                for k in set((f"{folder} {filename}").lower().translate(TRANSLATE_PUNCTUATION).split()):
-                    try:
-                        wordindex[k].append(file_index)
-                    except KeyError:
-                        wordindex[k] = [file_index]
+            # Collect words from filenames for Search index
+            # Use set to prevent duplicates
+            for k in set((fileinfo[0]).lower().translate(TRANSLATE_PUNCTUATION).split()):
+                try:
+                    wordindex[k].append(file_index)
+                except KeyError:
+                    wordindex[k] = [file_index]
 
         return wordindex
 
@@ -701,7 +679,6 @@ class Shares:
             "path": realfilename
         })
 
-        folder_path, _sep, basename = virtualfilename.rpartition("\\")
         shared_files = self.share_dbs.get("files")
         bshared_files = self.share_dbs.get("buddyfiles")
         file_is_shared = False
@@ -715,17 +692,11 @@ class Shares:
                     if config.sections["transfers"]["buddysharestrustedonly"] and not user_data.is_trusted:
                         pass
 
-                    else:
-                        for fileinfo in bshared_files.get(str(folder_path), []):
-                            if basename == fileinfo[0]:
-                                file_is_shared = True
-                                break
-
-            if not file_is_shared and shared_files is not None:
-                for fileinfo in shared_files.get(str(folder_path), []):
-                    if basename == fileinfo[0]:
+                    elif virtualfilename in bshared_files:
                         file_is_shared = True
-                        break
+
+            if not file_is_shared and shared_files is not None and virtualfilename in shared_files:
+                file_is_shared = True
 
         if not file_is_shared:
             log.add_transfer(("File is not present in the database of shared files, not sharing: "
