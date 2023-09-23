@@ -364,17 +364,9 @@ class UserPopupMenu(PopupMenu):
         if self.tab_name != "userbrowse":
             self.add_items(("#" + _("_Browse Files"), self.on_browse_user))
 
-        if self.tab_name != "userlist":
-            self.add_items(("$" + _("_Add Buddy"), self.on_add_to_list))
-
         self.add_items(
             ("#" + _("_Gift Privileges…"), self.on_give_privileges),
             ("", None),
-            ("$" + _("Ban User"), self.on_ban_user),
-            ("$" + _("Ignore User"), self.on_ignore_user),
-            ("", None),
-            ("$" + _("Ban IP Address"), self.on_ban_ip),
-            ("$" + _("Ignore IP Address"), self.on_ignore_ip),
             ("#" + _("Show IP A_ddress"), self.on_show_ip_address)
         )
 
@@ -404,19 +396,6 @@ class UserPopupMenu(PopupMenu):
 
         self.editing = True
         self.actions[_("_Gift Privileges…")].set_enabled(bool(core.privileges_left))
-
-        add_to_list = _("_Add Buddy")
-
-        if add_to_list in self.actions:
-            self.actions[add_to_list].set_state(GLib.Variant("b", self.username in core.userlist.buddies))
-
-        self.actions[_("Ban User")].set_state(GLib.Variant("b", core.network_filter.is_user_banned(self.username)))
-        self.actions[_("Ignore User")].set_state(
-            GLib.Variant("b", core.network_filter.is_user_ignored(self.username)))
-        self.actions[_("Ban IP Address")].set_state(
-            GLib.Variant("b", core.network_filter.is_user_ip_banned(self.username)))
-        self.actions[_("Ignore IP Address")].set_state(
-            GLib.Variant("b", core.network_filter.is_user_ip_ignored(self.username)))
 
         self.editing = False
 
