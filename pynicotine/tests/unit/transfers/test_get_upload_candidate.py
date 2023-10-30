@@ -22,6 +22,7 @@ from unittest import TestCase
 
 from pynicotine.config import config
 from pynicotine.core import core
+from pynicotine.slskmessages import UserStatus
 from pynicotine.transfers import Transfer
 
 NUM_ALLOWED_NONE = 2
@@ -37,6 +38,8 @@ class GetUploadCandidateTest(TestCase):
         core.init_components(enabled_components={"uploads", "userlist"})
         core.uploads.privileged_users = {"puser1", "puser2"}
 
+        self.token = 0
+
     def tearDown(self):
 
         core.quit()
@@ -44,24 +47,33 @@ class GetUploadCandidateTest(TestCase):
         self.assertIsNone(core.uploads)
         self.assertIsNone(core.userlist)
 
-    def add_transfers(self, users, status):
+    def add_transfers(self, users, is_active=False):
 
         transfer_list = []
 
         for username in users:
-            folder_path = f"{username}/{len(core.uploads.transfers)}"
-            transfer = Transfer(username=username, virtual_path=folder_path, status=status)
+            virtual_path = f"{username}/{len(core.uploads.transfers)}"
+            status = "Getting status" if is_active else "Queued"
+            transfer = Transfer(username=username, virtual_path=virtual_path, status=status)
 
             transfer_list.append(transfer)
-            core.uploads.append_upload(username, folder_path, transfer)
-            core.uploads.update_upload(transfer)
+            core.uploads.append_upload(username, virtual_path, transfer)
+
+            if is_active:
+                core.uploads.active_users[username][self.token] = transfer
+                transfer.token = self.token
+                self.token += 1
+            else:
+                core.uploads.queued_users[username][virtual_path] = transfer
+                core.uploads.queued_uploads.append(transfer)
 
         return transfer_list
 
     def set_finished(self, transfer):
 
-        transfer.status = "Finished"
+        core.uploads.abort_upload(transfer, abort_reason="Finished")
         core.uploads.update_upload(transfer)
+
         del core.uploads.transfers[transfer.username + transfer.virtual_path]
 
     def consume_transfers(self, queued, in_progress, clear_first=False):
@@ -102,11 +114,16 @@ class GetUploadCandidateTest(TestCase):
 
             none_count = 0
 
-            candidates.append(candidate)
             queued.remove(candidate)
+            core.uploads.abort_upload(candidate)
+
+            candidates.append(candidate)
             in_progress.append(candidate)
+            core.uploads.active_users[candidate.username][self.token] = candidate
 
             candidate.status = "Getting status"
+            candidate.token = self.token
+            self.token += 1
 
         return candidates
 
@@ -114,8 +131,8 @@ class GetUploadCandidateTest(TestCase):
 
         config.sections["transfers"]["fifoqueue"] = not round_robin
 
-        queued_transfers = self.add_transfers(queued, status="Queued")
-        in_progress_transfers = self.add_transfers(in_progress, status="Getting status")
+        queued_transfers = self.add_transfers(queued)
+        in_progress_transfers = self.add_transfers(in_progress, is_active=True)
 
         candidates = self.consume_transfers(queued_transfers, in_progress_transfers, clear_first=clear_first)
         users = [transfer.username if transfer else None for transfer in candidates]
