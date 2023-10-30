@@ -45,7 +45,6 @@ class Downloads(Transfers):
 
         super().__init__(transfers_file_path=os.path.join(config.data_folder_path, "downloads.json"))
 
-        self.transfers = {}
         self.requested_folders = defaultdict(dict)
         self.requested_folder_token = 0
 
@@ -75,7 +74,6 @@ class Downloads(Transfers):
 
         super()._quit()
 
-        self.transfers.clear()
         self.requested_folder_token = 0
 
     def _server_login(self, msg):
@@ -1189,13 +1187,3 @@ class Downloads(Transfers):
             errors += f"Filter: {dfilter} Error: {error} "
 
         log.add(_("Error: %(num)d Download filters failed! %(error)s "), {"num": len(failed), "error": errors})
-
-        # Saving #
-
-    def get_transfer_rows(self):
-        """Get a list of transfers to dump to file."""
-        return [
-            [transfer.username, transfer.virtual_path, transfer.folder_path, transfer.status, transfer.size,
-             transfer.current_byte_offset, transfer.file_attributes]
-            for transfer in self.transfers.values()
-        ]
