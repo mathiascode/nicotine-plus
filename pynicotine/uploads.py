@@ -20,8 +20,6 @@ import os
 import os.path
 import time
 
-from collections import deque
-
 from pynicotine import slskmessages
 from pynicotine.config import config
 from pynicotine.core import core
@@ -39,7 +37,6 @@ class Uploads(Transfers):
 
         super().__init__(transfers_file_path=os.path.join(config.data_folder_path, "uploads.json"))
 
-        self.transfers = deque()
         self.pending_shutdown = False
         self.pending_network_msgs = []
         self.privileged_users = set()
@@ -83,7 +80,6 @@ class Uploads(Transfers):
 
         super()._quit()
 
-        self.transfers.clear()
         self.upload_speed = 0
         self.token = 0
 
@@ -110,7 +106,7 @@ class Uploads(Transfers):
 
         need_update = False
 
-        for upload in self.transfers.copy():
+        for upload in self.transfers.copy().values():
             if upload.status != "Finished":
                 need_update = True
                 self.clear_upload(upload, update_parent=False)
@@ -132,7 +128,7 @@ class Uploads(Transfers):
 
         for transfer in self.get_stored_transfers(
                 self.transfers_file_path, self.load_transfers_file, load_only_finished=True):
-            self.transfers.appendleft(transfer)
+            self.transfers[transfer.username + transfer.virtual_path] = transfer
 
     # Privileges #
 
@@ -217,7 +213,7 @@ class Uploads(Transfers):
         num_files = 0
         queue_size = 0
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.username != username or upload.status != "Queued":
                 continue
 
@@ -245,7 +241,7 @@ class Uploads(Transfers):
         num_in_progress = 0
         active_statuses = {"Getting status", "Transferring"}
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.status in active_statuses:
                 num_in_progress += 1
 
@@ -263,7 +259,7 @@ class Uploads(Transfers):
 
         bandwidth_sum = 0
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.sock is not None and upload.speed is not None:
                 bandwidth_sum += upload.speed
 
@@ -294,7 +290,7 @@ class Uploads(Transfers):
         statuses = {"Queued", "Getting status", "Transferring"}
 
         return bool(next(
-            (upload for upload in self.transfers if upload.status in statuses), None
+            (upload for upload in self.transfers.values() if upload.status in statuses), None
         ))
 
     def file_is_upload_queued(self, username, virtual_path):
@@ -302,7 +298,7 @@ class Uploads(Transfers):
         statuses = {"Queued", "Getting status", "Transferring"}
 
         return bool(next(
-            (upload for upload in self.transfers
+            (upload for upload in self.transfers.values()
              if upload.virtual_path == virtual_path and upload.status in statuses and upload.username == username), None
         ))
 
@@ -358,7 +354,7 @@ class Uploads(Transfers):
                 events.emit("remove-privileged-user", username)
 
         # We need a copy due to upload auto-clearing modifying the deque during iteration
-        for upload in reversed(self.transfers.copy()):
+        for upload in self.transfers.copy().values():
             if upload.username == username and upload.status in upload_statuses:
                 if user_offline:
                     if not self.auto_clear_upload(upload):
@@ -406,7 +402,7 @@ class Uploads(Transfers):
         """We can't connect to the user, either way (TransferRequest,
         FileUploadInit)."""
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.token != token or upload.username != username:
                 continue
 
@@ -465,7 +461,10 @@ class Uploads(Transfers):
 
         transfer = Transfer(username=username, virtual_path=virtual_path, folder_path=os.path.dirname(real_path),
                             status="Queued", size=self.get_file_size(real_path))
-        self.append_upload(username, virtual_path, transfer)
+
+        if not self.append_upload(username, virtual_path, transfer):
+            return
+
         self.update_upload(transfer)
 
         core.pluginhandler.upload_queued_notification(username, virtual_path, real_path)
@@ -527,7 +526,7 @@ class Uploads(Transfers):
         already_downloading = False
         active_statuses = {"Getting status", "Transferring"}
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.status not in active_statuses or upload.username != username:
                 continue
 
@@ -537,8 +536,9 @@ class Uploads(Transfers):
         if not self.allow_new_uploads() or already_downloading:
             transfer = Transfer(username=username, virtual_path=virtual_path, folder_path=os.path.dirname(real_path),
                                 status="Queued", size=self.get_file_size(real_path))
-            self.append_upload(username, virtual_path, transfer)
-            self.update_upload(transfer)
+
+            if self.append_upload(username, virtual_path, transfer):
+                self.update_upload(transfer)
 
             return slskmessages.TransferResponse(allowed=False, reason="Queued", token=token)
 
@@ -547,9 +547,9 @@ class Uploads(Transfers):
         transfer = Transfer(username=username, virtual_path=virtual_path, folder_path=os.path.dirname(real_path),
                             status="Getting status", token=token, size=size)
 
-        self.transfer_request_times[transfer] = time.monotonic()
-        self.append_upload(username, virtual_path, transfer)
-        self.update_upload(transfer)
+        if self.append_upload(username, virtual_path, transfer):
+            self.transfer_request_times[transfer] = time.monotonic()
+            self.update_upload(transfer)
 
         return slskmessages.TransferResponse(allowed=True, token=token, filesize=size)
 
@@ -576,7 +576,7 @@ class Uploads(Transfers):
                 # Don't allow internal statuses as reason
                 reason = "Cancelled"
 
-            for upload in self.transfers:
+            for upload in self.transfers.values():
                 if upload.token != token or upload.username != username:
                     continue
 
@@ -598,7 +598,7 @@ class Uploads(Transfers):
 
             return
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.token != token or upload.username != username:
                 continue
 
@@ -633,7 +633,7 @@ class Uploads(Transfers):
     def _upload_file_error(self, username, token, error):
         """Networking thread encountered a local file error for upload."""
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.token != token or upload.username != username:
                 continue
 
@@ -649,7 +649,7 @@ class Uploads(Transfers):
         username = msg.init.target_user
         token = msg.token
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.token != token or upload.username != username:
                 continue
 
@@ -725,7 +725,7 @@ class Uploads(Transfers):
     def _file_upload_progress(self, username, token, offset, bytes_sent):
         """A file upload is in progress."""
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.token != token or upload.username != username:
                 continue
 
@@ -762,7 +762,7 @@ class Uploads(Transfers):
         """A file upload connection has closed for any reason."""
 
         # We need a copy due to upload auto-clearing modifying the deque during iteration
-        for upload in self.transfers.copy():
+        for upload in self.transfers.copy().values():
             if upload.token != token or upload.username != username:
                 continue
 
@@ -808,7 +808,7 @@ class Uploads(Transfers):
         transfer = None
 
         if config.sections["transfers"]["fifoqueue"]:
-            for upload in reversed(self.transfers):
+            for upload in self.transfers.values():
                 # Ignore non-queued files
                 if upload.status != "Queued":
                     continue
@@ -824,7 +824,7 @@ class Uploads(Transfers):
         else:
             num_queued_users = len(self.user_update_counters)
 
-            for upload in reversed(self.transfers):
+            for upload in self.transfers.values():
                 if upload.username != username:
                     continue
 
@@ -871,7 +871,9 @@ class Uploads(Transfers):
                 username=username, virtual_path=virtual_path, folder_path=folder_path, status="Queued",
                 size=size
             )
-            self.append_upload(username, virtual_path, transfer)
+
+            if not self.append_upload(username, virtual_path, transfer):
+                return
         else:
             transfer.virtual_path = virtual_path
             transfer.size = size
@@ -914,39 +916,39 @@ class Uploads(Transfers):
 
     def append_upload(self, username, virtual_path, transfer):
 
-        previously_queued = False
-        old_index = 0
-
         if self.is_privileged(username):
             transfer.modifier = "privileged" if username in self.privileged_users else "prioritized"
 
-        for upload in self.transfers:
-            if upload.virtual_path == virtual_path and upload.username == username:
-                if upload.status == "Queued":
-                    # This upload was queued previously
-                    # Use the previous queue position
-                    transfer.queue_position = upload.queue_position
-                    previously_queued = True
+        old_upload = self.transfers.get(username + virtual_path)
 
-                if upload.status != "Finished":
-                    transfer.current_byte_offset = upload.current_byte_offset
-                    transfer.time_elapsed = upload.time_elapsed
-                    transfer.time_left = upload.time_left
-                    transfer.speed = upload.speed
+        if old_upload is not None:
+            if old_upload.status in {"Getting status", "Transferring"}:
+                # Upload already in progress
+                return False
 
-                if upload in self.transfer_request_times:
-                    del self.transfer_request_times[upload]
+            if old_upload.status == "Queued":
+                old_upload.status = transfer.status
+                old_upload.token = transfer.token
+                old_upload.folder_path = transfer.folder_path
+                old_upload.size = transfer.size
 
-                self.clear_upload(upload)
-                break
+                self.update_upload(old_upload)
+                return True
 
-            old_index += 1
+            if old_upload in self.transfer_request_times:
+                del self.transfer_request_times[old_upload]
 
-        if previously_queued:
-            self.transfers.insert(old_index, transfer)
-            return
+            if old_upload.status != "Finished":
+                transfer.current_byte_offset = old_upload.current_byte_offset
+                transfer.time_elapsed = old_upload.time_elapsed
+                transfer.time_left = old_upload.time_left
+                transfer.speed = old_upload.speed
 
-        self.transfers.appendleft(transfer)
+            self.clear_upload(old_upload)
+
+        self.transfers[username + virtual_path] = transfer
+        self.update_upload(transfer)
+        return True
 
     def get_total_uploads_allowed(self):
 
@@ -958,7 +960,7 @@ class Uploads(Transfers):
 
             return maxupslots
 
-        lstlen = sum(1 for upload in self.transfers if upload.sock is not None)
+        lstlen = sum(1 for upload in self.transfers.values() if upload.sock is not None)
 
         if self.allow_new_uploads():
             return lstlen + 1
@@ -970,20 +972,20 @@ class Uploads(Transfers):
         if self.is_privileged(username):
             queue_size = 0
 
-            for upload in self.transfers:
+            for upload in self.transfers.values():
                 if upload.status == "Queued" and self.is_privileged(upload.username):
                     queue_size += 1
 
             return queue_size
 
-        return sum(1 for upload in self.transfers if upload.status == "Queued")
+        return sum(1 for upload in self.transfers.values() if upload.status == "Queued")
 
     def get_downloading_users(self):
 
         statuses = {"Queued", "Getting status", "Transferring"}
         users = set()
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.status in statuses:
                 users.add(upload.username)
 
@@ -1121,7 +1123,7 @@ class Uploads(Transfers):
         queued_users = {}
         uploading_users = set()
 
-        for upload in reversed(self.transfers):
+        for upload in self.transfers.values():
             if upload.status == "Queued":
                 username = upload.username
 
@@ -1236,7 +1238,7 @@ class Uploads(Transfers):
         else:
             banmsg = "Banned"
 
-        for upload in self.transfers.copy():
+        for upload in self.transfers.copy().values():
             if upload.username not in users:
                 continue
 
@@ -1257,7 +1259,7 @@ class Uploads(Transfers):
 
         username = transfer.username
 
-        for upload in self.transfers:
+        for upload in self.transfers.values():
             if upload.username != username:
                 continue
 
@@ -1276,7 +1278,7 @@ class Uploads(Transfers):
 
     def retry_failed_uploads(self):
 
-        for upload in reversed(self.transfers):
+        for upload in self.transfers.values():
             if upload.status == "Connection timeout":
                 upload.status = "Queued"
                 self.update_upload(upload)
@@ -1334,7 +1336,7 @@ class Uploads(Transfers):
     def clear_upload(self, upload, denied_message=None, update_parent=True):
 
         self.abort_upload(upload, denied_message=denied_message, abort_reason=None)
-        self.transfers.remove(upload)
+        del self.transfers[upload.username + upload.virtual_path]
 
         events.emit("clear-upload", upload, update_parent)
 
@@ -1342,7 +1344,7 @@ class Uploads(Transfers):
 
         if uploads is None:
             # Clear all uploads
-            uploads = self.transfers.copy()
+            uploads = self.transfers.copy().values()
         else:
             uploads = uploads.copy()
 
@@ -1353,13 +1355,3 @@ class Uploads(Transfers):
             self.clear_upload(upload, update_parent=False)
 
         events.emit("clear-uploads", uploads, statuses)
-
-    # Saving #
-
-    def get_transfer_rows(self):
-        """Get a list of transfers to dump to file."""
-        return [
-            [transfer.username, transfer.virtual_path, transfer.folder_path, transfer.status, transfer.size,
-             transfer.current_byte_offset, transfer.file_attributes]
-            for transfer in reversed(self.transfers)
-        ]

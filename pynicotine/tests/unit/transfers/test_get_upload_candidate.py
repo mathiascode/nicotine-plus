@@ -50,7 +50,7 @@ class GetUploadCandidateTest(TestCase):
 
         for username in users:
             folder_path = f"{username}/{len(core.uploads.transfers)}"
-            transfer = Transfer(username=username, folder_path=folder_path, status=status)
+            transfer = Transfer(username=username, virtual_path=folder_path, status=status)
 
             transfer_list.append(transfer)
             core.uploads.append_upload(username, folder_path, transfer)
@@ -62,7 +62,7 @@ class GetUploadCandidateTest(TestCase):
 
         transfer.status = "Finished"
         core.uploads.update_upload(transfer)
-        core.uploads.transfers.remove(transfer)
+        del core.uploads.transfers[transfer.username + transfer.virtual_path]
 
     def consume_transfers(self, queued, in_progress, clear_first=False):
         """Call core.uploads.get_upload_candidate until no uploads are left.
