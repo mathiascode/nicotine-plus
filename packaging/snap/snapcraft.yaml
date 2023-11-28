@@ -24,5 +24,4 @@ parts:
   nicotine:
     plugin: python
     source: ../../
-    stage-packages: [nicotine-plus]
     parse-info: [usr/share/metainfo/org.nicotine_plus.Nicotine.appdata.xml]
