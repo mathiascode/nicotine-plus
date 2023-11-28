@@ -1,14 +1,9 @@
 name: nicotine
-base: core22
-grade: stable
-confinement: strict
 adopt-info: nicotine
+license: GPL-3.0+
 
-architectures:
-  - build-on: amd64
-    build-for: amd64
-  - build-on: arm64
-    build-for: arm64
+base: core22
+confinement: strict
 
 apps:
   nicotine:
@@ -25,3 +20,9 @@ parts:
     plugin: python
     source: ../../
     parse-info: [usr/share/metainfo/org.nicotine_plus.Nicotine.appdata.xml]
+
+slots:
+  nicotine:
+    interface: dbus
+    bus: session
+    name: org.nicotine_plus.Nicotine
