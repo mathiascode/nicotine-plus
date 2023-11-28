@@ -1,4 +1,6 @@
 name: nicotine
+version: git
+summary: test
 adopt-info: nicotine
 license: GPL-3.0+
 
