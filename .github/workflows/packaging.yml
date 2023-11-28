@@ -55,6 +55,10 @@ jobs:
     - uses: snapcore/action-build@v1
       with:
         path: packaging/snap
+    - uses: actions/upload-artifact@v3
+      with:
+        name: snap
+        path: ${{ steps.snapcraft.outputs.snap }}
 
   windows:
     runs-on: windows-latest
