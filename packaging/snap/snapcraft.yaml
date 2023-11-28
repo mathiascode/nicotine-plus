@@ -1,0 +1,28 @@
+name: nicotine
+base: core22
+grade: stable
+confinement: strict
+adopt-info: nicotine
+
+architectures:
+  - build-on: amd64
+    build-for: amd64
+  - build-on: arm64
+    build-for: arm64
+
+apps:
+  nicotine:
+    command: usr/bin/nicotine
+    common-id: org.nicotine_plus.Nicotine
+    desktop: usr/share/applications/org.nicotine_plus.Nicotine.desktop
+    extensions: [gnome]
+    plugs:
+      - home
+      - network
+
+parts:
+  nicotine:
+    plugin: python
+    source: ../../
+    stage-packages: [nicotine-plus]
+    parse-info: [usr/share/metainfo/org.nicotine_plus.Nicotine.appdata.xml]
