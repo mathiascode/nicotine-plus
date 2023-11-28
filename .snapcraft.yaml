@@ -1,6 +1,7 @@
 name: nicotine
 version: git
 summary: test
+description: test
 adopt-info: nicotine
 license: GPL-3.0+
 
