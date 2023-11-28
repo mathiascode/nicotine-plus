@@ -37,6 +37,9 @@ jobs:
 
   flatpak:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x86_64]
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-45
       options: --privileged
