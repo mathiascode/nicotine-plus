@@ -8,7 +8,7 @@ confinement: strict
 
 apps:
   nicotine:
-    command: bin/nicotine
+    command: usr/bin/nicotine
     common-id: org.nicotine_plus.Nicotine
     desktop: share/applications/org.nicotine_plus.Nicotine.desktop
     extensions: [gnome]
