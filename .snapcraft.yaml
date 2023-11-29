@@ -35,7 +35,7 @@ parts:
     parse-info: [share/metainfo/org.nicotine_plus.Nicotine.appdata.xml]
     override-pull: |
       snapcraftctl pull
-      sed -e 's|Icon=org.nicotine_plus.Nicotine|Icon=/usr/share/icons/hicolor/scalable/apps/org.nicotine_plus.Nicotine.svg|' -i data/org.nicotine_plus.Nicotine.desktop.in
+      sed -E 's|Icon=.*|Icon=/usr/share/icons/hicolor/scalable/apps/org.nicotine_plus.Nicotine.svg|' -i data/*.desktop.in
 
 slots:
   nicotine:
