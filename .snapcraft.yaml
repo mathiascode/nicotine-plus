@@ -9,6 +9,7 @@ compression: lzo
 apps:
   nicotine:
     environment:
+      GDK_DEBUG: portals
       SNAPCRAFT_PRELOAD_REDIRECT_ONLY_SHM: 1
     command: bin/snapcraft-preload python3 -m pynicotine
     common-id: org.nicotine_plus.Nicotine
