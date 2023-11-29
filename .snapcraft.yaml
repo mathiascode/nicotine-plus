@@ -33,6 +33,8 @@ parts:
     plugin: python
     source: .
     parse-info: [share/metainfo/org.nicotine_plus.Nicotine.appdata.xml]
+    override-pull: |
+      sed -e 's|Icon=org.nicotine_plus.Nicotine|Icon=${SNAP}/usr/share/icons/hicolor/scalable/apps/org.nicotine_plus.Nicotine.svg|' -i data/org.nicotine_plus.Nicotine.desktop.in
 
 slots:
   nicotine:
