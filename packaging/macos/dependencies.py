@@ -49,6 +49,7 @@ def install_pypi():
     """Install dependencies from PyPi."""
 
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--force", "--no-cache", "--pre",
+                           "--break-system-packages",
                            "--extra-index-url", "https://marcelotduarte.github.io/packages/", "cx_Freeze"])
 
 
