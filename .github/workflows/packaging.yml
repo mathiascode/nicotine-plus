@@ -149,7 +149,7 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          brew install --overwrite python@3.12
+          brew unlink python@3.12
           brew link --overwrite python@3.12
           python3 packaging/macos/dependencies.py
 
