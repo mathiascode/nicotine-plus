@@ -45,7 +45,7 @@ def install_brew():
 def install_pypi():
     """Install dependencies from PyPi."""
 
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary", "cx_Freeze",
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary", "cx_Freeze==6.15.10",
                            "-e", ".[packaging,tests]", "build"])
 
 
