@@ -37,7 +37,7 @@ def install_brew():
     if use_libadwaita:
         packages.append("libadwaita")
 
-    subprocess.check_call(["brew", "reinstall"] + packages)
+    subprocess.check_call(["brew", "install", "--force", "--overwrite"] + packages)
 
 
 def install_pypi():
