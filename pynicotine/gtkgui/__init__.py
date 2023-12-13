@@ -61,15 +61,8 @@ def check_gtk_version(gtk_api_version):
         gtk_api_version = "3"
         pygobject_version = (3, 26, 1)
 
-    try:
-        import gi
-        gi.check_version(pygobject_version)
-
-    except (ImportError, ValueError):
-        if gtk_api_version == "4":
-            return check_gtk_version(gtk_api_version="3")
-
-        return _("Cannot find %s, please install it.") % ("PyGObject >=" + ".".join(str(x) for x in pygobject_version))
+    import gi
+    gi.check_version(pygobject_version)
 
     try:
         gi.require_version("Gtk", f"{gtk_api_version}.0")
