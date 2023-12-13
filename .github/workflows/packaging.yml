@@ -149,12 +149,12 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          brew unlink python@3.12
-          brew link --overwrite python@3.12
-          python3.12 packaging/macos/dependencies.py
+          brew unlink python
+          brew link --overwrite python
+          python3 packaging/macos/dependencies.py
 
       - name: Freeze application
-        run: python3.12 packaging/macos/setup.py bdist_dmg
+        run: python3 packaging/macos/setup.py bdist_dmg
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v3
