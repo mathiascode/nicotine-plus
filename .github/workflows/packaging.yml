@@ -149,7 +149,7 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          brew unlink python@3.12
+          find /usr/local/bin -lname '*/Library/Frameworks/Python.framework/*' -delete
           brew link --overwrite python@3.12
           python3 packaging/macos/dependencies.py
 
