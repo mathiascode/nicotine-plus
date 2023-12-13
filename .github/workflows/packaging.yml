@@ -149,7 +149,8 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
+          brew unlink python@3.12
+          brew link --overwrite python@3.12
           python3.12 packaging/macos/dependencies.py
 
       - name: Freeze application
