@@ -31,7 +31,10 @@ def install_brew():
     packages = ["adwaita-icon-theme",
                 "gettext",
                 "gobject-introspection",
-                f"gtk+{gtk_version}"]
+                f"gtk+{gtk_version}",
+                "pycodestyle",
+                "pygobject3",
+                "pylint"]
 
     if gtk_version == "3":
         packages.append("gspell")
@@ -45,8 +48,6 @@ def install_brew():
 def install_pypi():
     """Install dependencies from PyPi."""
 
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary",
-                           "-e", ".[packaging,tests]", "build"])
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--force", "--no-cache", "--pre",
                            "--extra-index-url", "https://marcelotduarte.github.io/packages/", "cx_Freeze"])
 
