@@ -31,7 +31,8 @@ def install_brew():
     packages = ["adwaita-icon-theme",
                 "gettext",
                 "gobject-introspection",
-                f"gtk+{gtk_version}"]
+                f"gtk+{gtk_version}",
+                "python"]
 
     if use_libadwaita:
         packages.append("libadwaita")
