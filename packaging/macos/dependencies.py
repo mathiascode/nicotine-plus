@@ -31,13 +31,12 @@ def install_brew():
     packages = ["adwaita-icon-theme",
                 "gettext",
                 "gobject-introspection",
-                f"gtk+{gtk_version}",
-                "python@3.11"]
+                f"gtk+{gtk_version}"]
 
     if use_libadwaita:
         packages.append("libadwaita")
 
-    subprocess.check_call(["brew", "install", "--force", "--overwrite"] + packages)
+    subprocess.check_call(["brew", "install"] + packages)
 
 
 def install_pypi():
