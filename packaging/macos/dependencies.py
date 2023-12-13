@@ -45,8 +45,10 @@ def install_brew():
 def install_pypi():
     """Install dependencies from PyPi."""
 
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary", "cx_Freeze==6.15.10",
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary",
                            "-e", ".[packaging,tests]", "build"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--force", "--no-cache", "--pre",
+                           "--extra-index-url", "https://marcelotduarte.github.io/packages/", "cx_Freeze"])
 
 
 if __name__ == "__main__":
