@@ -148,10 +148,13 @@ jobs:
         run: defaults write NSGlobalDomain AppleLanguages "(en-US)"
 
       - name: Install build dependencies
-        run: python packaging/macos/dependencies.py
+        run: |
+          brew uninstall python@3.11
+          brew install --overwrite python@3.11
+          python3 packaging/macos/dependencies.py
 
       - name: Freeze application
-        run: python packaging/macos/setup.py bdist_dmg
+        run: python3 packaging/macos/setup.py bdist_dmg
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v3
