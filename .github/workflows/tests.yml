@@ -91,8 +91,8 @@ jobs:
       - name: Install dependencies (Rocky Linux)
         if: matrix.container == 'rockylinux:8'
         run: |
-          dnf -y install gcc python3-devel python3-pip
-          python3 -m pip install --upgrade setuptools
+          dnf -y install python3.11 python3.11-pip
+          alternatives --set python3 /usr/bin/python3.11
           python3 -m pip install build .[tests]
 
       - name: PEP 8 style checks
