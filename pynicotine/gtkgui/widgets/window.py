@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 from pynicotine.gtkgui.application import GTK_API_VERSION
 
 
@@ -27,6 +29,22 @@ class Window:
     def __init__(self, widget):
         self.widget = widget
 
+        if sys.platform == "win32":
+            import ctypes
+            value = 1
+
+            hwnd = widget.get_handle()
+            DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+            DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19
+
+            result = ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
+                                                                ctypes.byref(ctypes.c_int(value)),
+                                                                ctypes.sizeof(ctypes.c_int(value)))
+            if result != 0:
+                result = ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1,
+                                                                    ctypes.byref(ctypes.c_int(value)),
+                                                                    ctypes.sizeof(ctypes.c_int(value)))
+    
     def get_surface(self):
 
         if GTK_API_VERSION >= 4:
