@@ -296,8 +296,6 @@ add_translations()
 setup(
     name=pynicotine.__application_name__,
     description=pynicotine.__application_name__,
-    author=pynicotine.__author__,
-    version=pynicotine.__version__,
     options={
         "build": {
             "build_base": BUILD_PATH
