@@ -339,6 +339,7 @@ setup(
             "applications_shortcut": True
         }
     },
+    data_files=[],
     packages=[],
     executables=[
         Executable(
