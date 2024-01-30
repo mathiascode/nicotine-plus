@@ -133,8 +133,6 @@ jobs:
           - arch: arm64
             platform: macos-14
     runs-on: ${{ matrix.platform }}
-    timeout-minutes: 15
-    if: github.event_name != 'pull_request'
     env:
       NICOTINE_GTK_VERSION: 4
       NICOTINE_LIBADWAITA: 1
@@ -149,7 +147,6 @@ jobs:
         run: |
           brew uninstall --ignore-dependencies python@3.11
           brew install --overwrite python@3.11
-          brew update
           python3 packaging/macos/dependencies.py
 
       - name: Freeze application
