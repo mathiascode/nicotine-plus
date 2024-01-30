@@ -49,9 +49,9 @@ def install_brew():
 
     output = subprocess.check_output(["brew", "fetch", "--force", f"--bottle-tag={bottle_tag}"] + packages)
 
-    for line in output.split("\n"):
-        if line.startswith("Downloaded to: "):
-            cached_packages.append(line.replace("Downloaded to: ", ""))
+    for line in output.split(b"\n"):
+        if line.startswith(b"Downloaded to: "):
+            cached_packages.append(line.replace(b"Downloaded to: ", ""))
 
     subprocess.check_call(["brew", "install"] + cached_packages)
 
