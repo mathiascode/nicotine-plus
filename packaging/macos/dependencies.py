@@ -32,7 +32,8 @@ def install_brew():
     packages = ["adwaita-icon-theme",
                 "gettext",
                 "gobject-introspection",
-                f"gtk+{gtk_version}"]
+                f"gtk+{gtk_version}",
+                "python@3.11"]
 
     if gtk_version == "3":
         packages.append("gspell")
