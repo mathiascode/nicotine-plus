@@ -44,10 +44,10 @@ def install_brew():
 
     if platform.machine() == "arm64":
         bottle_tag = f"arm64_{bottle_tag}"
-    
+
     output = subprocess.check_output(["brew", "fetch", "--force", f"--bottle-tag={bottle_tag}"] + packages)
-    output = output.replace("Downloaded to", "")
-    subprocess.check_call(["brew", "install"] + output.split())
+    subprocess.check_call(["brew", "install"] + output.split(b"Downloaded to "))
+
 
 def install_pypi():
     """Install dependencies from PyPi."""
