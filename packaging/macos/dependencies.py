@@ -45,8 +45,15 @@ def install_brew():
     if platform.machine() == "arm64":
         bottle_tag = f"arm64_{bottle_tag}"
 
+    cached_packages = []
+
     output = subprocess.check_output(["brew", "fetch", "--force", f"--bottle-tag={bottle_tag}"] + packages)
-    subprocess.check_call(["brew", "install"] + output.split(b"Downloaded to "))
+
+    for line in output.split("\n"):
+        if line.startswith("Downloaded to: "):
+            cached_packages.append(line.replace("Downloaded to: ", "")
+    
+    subprocess.check_call(["brew", "install"] + cached_packages)
 
 
 def install_pypi():
