@@ -54,7 +54,7 @@ def install_brew():
         if line.startswith(b"Downloaded to: "):
             cached_packages.append(line.replace(b"Downloaded to: ", b""))
 
-    subprocess.check_call(["brew", "install"] + cached_packages)
+    subprocess.check_call(["brew", "install", "--force"] + cached_packages)
 
 
 def install_pypi():
