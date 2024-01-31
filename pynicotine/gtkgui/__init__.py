@@ -55,11 +55,15 @@ def get_default_gtk_version():
     except ModuleNotFoundError:
         pass
 
+    log.add("Set default GTK version to 4")
     return "4"
 
 
 def check_gtk_version(gtk_api_version):
 
+    log.add("NICOTINE_GTK_VERSION set to %s", os.environ.get("NICOTINE_GTK_VERSION"))
+    log.add("gtk_api_version is %s", gtk_api_version)
+    
     # Require minor version of GTK
     if gtk_api_version == "4":
         pygobject_version = (3, 42, 1)
