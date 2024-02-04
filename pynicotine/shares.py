@@ -1061,7 +1061,7 @@ class Shares:
                     return None
 
         # Hand over database control to the scanner process
-        self.rescanning = True
+        """self.rescanning = True
         self.close_shares(self.share_dbs)
         self.file_path_index = ()
 
@@ -1078,7 +1078,8 @@ class Shares:
             ).start()
             return None
 
-        return self._process_scanner(scanner, scanner_queue, events.emit)
+        return self._process_scanner(scanner, scanner_queue, events.emit)"""
+        return None
 
     def _process_scanner(self, scanner, scanner_queue, emit_event):
 
