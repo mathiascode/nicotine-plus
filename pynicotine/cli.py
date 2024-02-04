@@ -34,13 +34,13 @@ class CLIInputProcessor(Thread):
 
         super().__init__(name="CLIInputProcessor", daemon=True)
 
-        try:
+        """try:
             # Enable line editing and history
             import readline  # noqa: F401  # pylint:disable=unused-import
 
         except ImportError:
             # Readline is not available on this OS
-            pass
+            pass"""
 
         self.has_custom_prompt = False
         self.prompt_message = ""
