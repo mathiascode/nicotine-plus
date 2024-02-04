@@ -136,8 +136,8 @@ def set_up_python():
         executable_folder = os.path.dirname(sys.executable)
         os.environ["SSL_CERT_FILE"] = os.path.join(executable_folder, "lib/cert.pem")
 
-    import multiprocessing
-    multiprocessing.set_start_method("spawn")
+    """import multiprocessing
+    multiprocessing.set_start_method("spawn")"""
 
 
 def rename_process(new_name, debug_info=False):
