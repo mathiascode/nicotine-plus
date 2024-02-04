@@ -201,7 +201,9 @@ def run():
         print(error)
         return 1
 
+    print("corestep1")
     core.init_components(enabled_components={"cli", "shares"} if rescan else None)
+    print("corestep2")
 
     # Dump tracebacks for C modules (in addition to pure Python code)
     try:
@@ -211,16 +213,20 @@ def run():
     except Exception as error:
         log.add(f"Faulthandler module could not be enabled. Error: {error}")
 
+    print("corestep3")
     if not os.path.isdir(LOCALE_PATH):
         log.add("Translation files (.mo) are unavailable, using default English strings")
 
     if rescan:
         return rescan_shares()
-
+    print("corestep4")
     # Initialize GTK-based GUI
     if not headless:
+        print("corestep5")
         from pynicotine import gtkgui as application
+        print("corestep6")
         exit_code = application.run(hidden, ci_mode, multi_instance)
+        print("corestep7")
 
         if exit_code is not None:
             return exit_code
