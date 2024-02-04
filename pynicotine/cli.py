@@ -172,7 +172,7 @@ class CLI:
         else:
             log_message = msg
 
-        if self._input_processor.has_custom_prompt:
+        if self._input_processor is not None and self._input_processor.has_custom_prompt:
             # Don't print log messages while custom prompt is active
             self._log_message_queue.append(log_message)
             return
