@@ -24,7 +24,10 @@ from pynicotine.logfacility import log
 
 def get_default_gtk_version():
 
+    print("step2")
+    
     if sys.platform in {"win32", "darwin"}:
+        print("step3")
         return "4"
 
     try:
@@ -60,6 +63,8 @@ def get_default_gtk_version():
 
 def check_gtk_version(gtk_api_version):
 
+    print("step4")
+    
     # Require minor version of GTK
     if gtk_api_version == "4":
         pygobject_version = (3, 42, 1)
@@ -70,31 +75,39 @@ def check_gtk_version(gtk_api_version):
     try:
         import gi
         gi.check_version(pygobject_version)
+        print("step5")
 
     except (ImportError, ValueError):
         if gtk_api_version == "4":
+            print("altstep1")
             return check_gtk_version(gtk_api_version="3")
 
         return _("Cannot find %s, please install it.") % ("PyGObject >=" + ".".join(str(x) for x in pygobject_version))
 
     try:
+        print("step6")
         gi.require_version("Gtk", f"{gtk_api_version}.0")
 
     except ValueError:
         if gtk_api_version == "4":
+            print("altstep2")
             return check_gtk_version(gtk_api_version="3")
 
         return _("Cannot find %s, please install it.") % f"GTK >={gtk_api_version}"
 
+    print("step7")
     from gi.repository import Gtk
+    print("step8")
 
     if sys.platform == "win32":
         # Ensure all Windows-specific APIs are available
         gi.require_version("GdkWin32", f"{gtk_api_version}.0")
         from gi.repository import GdkWin32  # noqa: F401  # pylint:disable=no-name-in-module,unused-import
 
+    print("step9")
     gtk_version = f"{Gtk.get_major_version()}.{Gtk.get_minor_version()}.{Gtk.get_micro_version()}"
     log.add(_("Loading %(program)s %(version)s"), {"program": "GTK", "version": gtk_version})
+    print("step10")
 
     return None
 
@@ -128,17 +141,25 @@ def run(hidden, ci_mode, multi_instance):
         # Disable client-side decorations when header bar is disabled
         os.environ["GTK_CSD"] = "0"
 
+    print("step1")
+    
     error = check_gtk_version(gtk_api_version=os.environ.get("NICOTINE_GTK_VERSION", get_default_gtk_version()))
+
+    print("step11")
 
     if error:
         log.add(error)
         return 1
 
+    print("step12")
     from gi.repository import Gdk
+    print("step13")
 
     if not ci_mode and Gdk.Display.get_default() is None:
         log.add(_("No graphical environment available, using headless (no GUI) mode"))
         return None
 
+    print("step14")
     from pynicotine.gtkgui.application import Application
+    print("step15")
     return Application(hidden, ci_mode, multi_instance).run()
