@@ -111,7 +111,7 @@ class CLI:
 
     def __init__(self):
 
-        self._input_processor = CLIInputProcessor()
+        self._input_processor = None
         self._log_message_queue = deque(maxlen=1000)
         self._tty_attributes = None
 
@@ -119,6 +119,10 @@ class CLI:
 
     def enable_prompt(self):
 
+        if getattr(sys, "frozen", False):
+            # Disable CLI prompt in frozen binaries (macOS and Windows)
+            return
+        
         try:
             import termios  # pylint: disable=import-error
             self._tty_attributes = termios.tcgetattr(sys.stdin)
@@ -127,6 +131,7 @@ class CLI:
             # Not a terminal, or using Windows
             pass
 
+        self._input_processor = CLIInputProcessor()
         self._input_processor.start()
 
     def enable_logging(self):
@@ -139,6 +144,9 @@ class CLI:
 
     def prompt(self, message, callback, is_silent=False):
 
+        if self._input_processor is None:
+            return
+        
         self._input_processor.prompt_message = message
         self._input_processor.prompt_callback = callback
         self._input_processor.prompt_silent = is_silent
