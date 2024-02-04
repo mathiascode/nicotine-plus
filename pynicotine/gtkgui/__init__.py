@@ -29,10 +29,10 @@ def check_gui_dependencies():
     }
 
     if os.getenv("NICOTINE_GTK_VERSION") is None:
-        os.environ["NICOTINE_GTK_VERSION"] = components.get("gtk").get(sys.platform, '3')
+        os.environ["NICOTINE_GTK_VERSION"] = components.get("gtk").get(sys.platform, '4')
 
     if os.getenv("NICOTINE_LIBADWAITA") is None:
-        os.environ["NICOTINE_LIBADWAITA"] = components.get("libadwaita").get(sys.platform, '0')
+        os.environ["NICOTINE_LIBADWAITA"] = components.get("libadwaita").get(sys.platform, '1')
 
     # Require minor version of GTK
     if os.getenv("NICOTINE_GTK_VERSION") == '4':
