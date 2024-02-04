@@ -31,7 +31,6 @@ __translations_url__ = "https://nicotine-plus.org/doc/TRANSLATIONS"
 
 import argparse
 import io
-import multiprocessing
 import os
 import sys
 
@@ -137,6 +136,7 @@ def set_up_python():
         executable_folder = os.path.dirname(sys.executable)
         os.environ["SSL_CERT_FILE"] = os.path.join(executable_folder, "lib/cert.pem")
 
+    import multiprocessing
     multiprocessing.set_start_method("spawn")
 
 
