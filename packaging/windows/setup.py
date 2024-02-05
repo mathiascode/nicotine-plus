@@ -79,7 +79,8 @@ include_files = []
 def process_files(folder_path, callback, callback_data=None, starts_with=None, ends_with=None, recursive=False):
 
     for full_path in glob.glob(os.path.join(folder_path, "**"), recursive=recursive):
-        full_path = os.path.realpath(full_path)
+        if os.path.islink(full_path):
+            continue
         basename = os.path.relpath(full_path, folder_path)
 
         if starts_with and not basename.startswith(starts_with):
