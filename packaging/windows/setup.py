@@ -79,24 +79,24 @@ include_files = []
 def process_files(folder_path, callback, callback_data=None, starts_with=None, ends_with=None, recursive=False):
 
     for full_path in glob.glob(os.path.join(folder_path, "**"), recursive=recursive):
-        short_path = os.path.relpath(full_path, folder_path)
-
-        if starts_with and not short_path.startswith(starts_with):
-            continue
-
-        if ends_with and not short_path.endswith(ends_with):
-            continue
-
         full_path = os.path.realpath(full_path)
-        callback(full_path, short_path, callback_data)
+        basename = os.path.relpath(full_path, folder_path)
+
+        if starts_with and not basename.startswith(starts_with):
+            continue
+
+        if ends_with and not basename.endswith(ends_with):
+            continue
+
+        callback(full_path, basename, callback_data)
 
 
 def add_file(file_path, output_path):
     include_files.append((file_path, output_path))
 
 
-def _add_files_callback(full_path, short_path, output_path):
-    add_file(full_path, os.path.join(output_path, short_path))
+def _add_files_callback(full_path, basename, output_path):
+    add_file(full_path, os.path.join(output_path, basename))
 
 
 def add_files(folder_path, output_path, starts_with=None, ends_with=None, recursive=False):
@@ -132,10 +132,10 @@ def add_pixbuf_loaders():
     )
 
 
-def _add_typelibs_callback(full_path, short_path, _callback_data=None):
+def _add_typelibs_callback(full_path, basename, _callback_data=None):
 
-    temp_file_gir = os.path.join(TEMP_PATH, short_path)
-    temp_file_typelib = os.path.join(TEMP_PATH, short_path.replace(".gir", ".typelib"))
+    temp_file_gir = os.path.join(TEMP_PATH, basename)
+    temp_file_typelib = os.path.join(TEMP_PATH, basename.replace(".gir", ".typelib"))
 
     with open(temp_file_gir, "w", encoding="utf-8") as temp_file_handle, \
          open(full_path, "r", encoding="utf-8") as real_file_handle:
