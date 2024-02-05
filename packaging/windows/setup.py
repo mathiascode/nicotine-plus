@@ -87,6 +87,7 @@ def process_files(folder_path, callback, callback_data=None, starts_with=None, e
         if ends_with and not short_path.endswith(ends_with):
             continue
 
+        full_path = os.path.realpath(full_path)
         callback(full_path, short_path, callback_data)
 
 
