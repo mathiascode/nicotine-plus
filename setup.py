@@ -27,7 +27,6 @@ if __name__ == "__main__":
     setup(
         data_files=[
             ("share/applications", ["data/org.nicotine_plus.Nicotine.desktop"]),
-            ("share/metainfo", ["data/org.nicotine_plus.Nicotine.appdata.xml"]),
             ("share/man/man1", ["data/nicotine.1"]),
             ("share/icons/hicolor/16x16/apps",
                 ["pynicotine/gtkgui/icons/hicolor/16x16/apps/org.nicotine_plus.Nicotine.png"]),
