@@ -291,9 +291,6 @@ setup(
     author=pynicotine.__author__,
     version=pynicotine.__version__,
     options={
-        "build": {
-            "build_base": BUILD_PATH
-        },
         "build_exe": {
             "build_exe": os.path.join(BUILD_PATH, "package", pynicotine.__application_name__),
             "packages": INCLUDED_MODULES,
@@ -304,7 +301,6 @@ setup(
         },
         "bdist_msi": {
             "all_users": True,
-            "dist_dir": BUILD_PATH,
             "install_icon": os.path.join(CURRENT_PATH, ICON_NAME),
             "upgrade_code": "{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         },
