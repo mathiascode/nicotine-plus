@@ -328,7 +328,6 @@ setup(
         }
     },
     data_files=[],
-    packages=[],
     executables=[
         Executable(
             script=os.path.join(PROJECT_PATH, SCRIPT_NAME),
