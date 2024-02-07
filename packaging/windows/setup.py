@@ -293,7 +293,6 @@ setup(
     options={
         "build_exe": {
             "build_exe": os.path.join(BUILD_PATH, "package", pynicotine.__application_name__),
-            "packages": INCLUDED_MODULES,
             "excludes": EXCLUDED_MODULES,
             "include_files": include_files,
             "zip_include_packages": ["*"],
