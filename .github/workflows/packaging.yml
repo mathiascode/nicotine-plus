@@ -96,6 +96,7 @@ jobs:
           release: false
           install: >-
             mingw-w64-${{ matrix.arch }}-angleproject
+            mingw-w64-${{ matrix.arch }}-appstream
             mingw-w64-${{ matrix.arch }}-ca-certificates
             mingw-w64-${{ matrix.arch }}-gettext-tools
             mingw-w64-${{ matrix.arch }}-gtk${{ env.NICOTINE_GTK_VERSION }}
