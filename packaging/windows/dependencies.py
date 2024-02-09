@@ -51,7 +51,7 @@ def install_pacman():
                           f"{prefix}python-cx-freeze-6.15.13-1-any.pkg.tar.zst"]
 
     for package in downgrade_packages:
-        subprocess.check_call(["curl", "-O", f"https://repo.msys2.org/mingw/{mingw_type}/{package}"])
+        subprocess.check_call(["curl", "-O", f"https://repo.msys2.org/mingw/mingw64/{package}"])
 
     subprocess.check_call(["pacman", "--noconfirm", "-U"] + downgrade_packages)
 
