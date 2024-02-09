@@ -53,7 +53,7 @@ def install_pacman():
     for package in downgrade_packages:
         subprocess.check_call(["curl", "-O", f"https://repo.msys2.org/mingw/mingw64/{package}"])
 
-    subprocess.check_call(["pacman", "--noconfirm", "-U"] + downgrade_packages)
+    subprocess.check_call(["pacman", "--noconfirm", "--force", "-U"] + downgrade_packages)
 
 
 if __name__ == "__main__":
