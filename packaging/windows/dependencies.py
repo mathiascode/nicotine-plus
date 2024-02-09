@@ -29,9 +29,7 @@ def install_pacman():
     gtk_version = os.environ.get("NICOTINE_GTK_VERSION", "4")
     use_libadwaita = (gtk_version == "4" and os.environ.get("NICOTINE_LIBADWAITA") == "1")
 
-    packages = [f"{prefix}appstream",
-                f"{prefix}appstream-glib",
-                f"{prefix}ca-certificates",
+    packages = [f"{prefix}ca-certificates",
                 f"{prefix}gtk{gtk_version}",
                 f"{prefix}python-build",
                 f"{prefix}python-cx-freeze",
@@ -53,7 +51,7 @@ def install_pacman():
     for package in downgrade_packages:
         subprocess.check_call(["curl", "-O", f"https://repo.msys2.org/mingw/mingw64/{package}"])
 
-    subprocess.check_call(["pacman", "--noconfirm", "--force", "-U"] + downgrade_packages)
+    subprocess.check_call(["pacman", "--noconfirm", "-U"] + downgrade_packages)
 
 
 if __name__ == "__main__":
