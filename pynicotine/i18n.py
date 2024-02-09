@@ -103,3 +103,7 @@ def build_translations():
     for desktop_file_path in glob.glob(os.path.join(BASE_PATH, "data", "*.desktop.in")):
         subprocess.check_call(["msgfmt", "--desktop", f"--template={desktop_file_path}", "-d", "po",
                                "-o", desktop_file_path[:-3]])
+
+    for appdata_file_path in glob.glob(os.path.join(BASE_PATH, "data", "*.appdata.xml.in")):
+        subprocess.check_call(["msgfmt", "--xml", f"--template={appdata_file_path}", "-d", "po",
+                               "-o", appdata_file_path[:-3]])
