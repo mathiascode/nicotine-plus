@@ -32,7 +32,6 @@ def install_pacman():
     packages = [f"{prefix}appstream",
                 f"{prefix}appstream-glib",
                 f"{prefix}ca-certificates",
-                f"{prefix}gettext-tools",
                 f"{prefix}gtk{gtk_version}",
                 f"{prefix}python-build",
                 f"{prefix}python-cx-freeze",
@@ -47,6 +46,14 @@ def install_pacman():
         packages.append(f"{prefix}libadwaita")
 
     subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
+
+    downgrade_packages = [f"{prefix}gettext-0.22.4-3-any.pkg.tar.zst",
+                          f"{prefix}python-cx-freeze-6.15.13-1-any.pkg.tar.zst"]
+
+    for package in downgrade_packages:
+        subprocess.check_call(["curl", "-O", f"https://repo.msys2.org/mingw/{mingw_type}/{package}"])
+
+    subprocess.check_call(["pacman", "--noconfirm", "-U"] + downgrade_packages)
 
 
 if __name__ == "__main__":
