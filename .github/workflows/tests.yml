@@ -151,19 +151,16 @@ jobs:
         run: defaults write NSGlobalDomain AppleLanguages "(en-US)"
 
       - name: Install dependencies
-        run: |
-          brew uninstall --ignore-dependencies python@3.11
-          brew install --overwrite python@3.11
-          python3 packaging/macos/dependencies.py
+        run: python3.12 packaging/macos/dependencies.py
 
       - name: PEP 8 style checks
-        run: python3 -m pycodestyle
+        run: python3.12 -m pycodestyle
 
       - name: Linting
-        run: python3 -m pylint --recursive=y .
+        run: python3.12 -m pylint --recursive=y .
 
       - name: Integration and unit tests
-        run: python3 -m unittest -v
+        run: python3.12 -m unittest -v
 
       - name: Build
-        run: python3 -m build
+        run: python3.12 -m build

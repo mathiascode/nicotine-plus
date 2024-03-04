@@ -31,7 +31,8 @@ def install_brew():
     packages = ["adwaita-icon-theme",
                 "gettext",
                 "gobject-introspection",
-                f"gtk+{gtk_version}"]
+                f"gtk+{gtk_version}",
+                "pipx"]
 
     if gtk_version == "3":
         packages.append("gspell")
@@ -45,8 +46,12 @@ def install_brew():
 def install_pypi():
     """Install dependencies from PyPi."""
 
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary", ":all:",
-                           "-e", ".[packaging,tests]", "build"])
+    packages = ["build",
+                "git+https://github.com/marcelotduarte/cx_Freeze",
+                ".[packaging,tests]"]
+
+    subprocess.check_call(
+        ["pipx", "install", "--no-binary", ":all:"] + packages)
 
 
 if __name__ == "__main__":
