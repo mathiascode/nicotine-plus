@@ -155,7 +155,7 @@ jobs:
           venv/bin/python3 packaging/macos/dependencies.py
 
       - name: PEP 8 style checks
-        run: venv/bin/python3 -m pycodestyle
+        run: venv/bin/python3 -m pycodestyle .
 
       - name: Linting
         run: venv/bin/python3 -m pylint --recursive=y .
