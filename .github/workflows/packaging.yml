@@ -144,7 +144,7 @@ jobs:
 
       - name: Create Python virtual environment
         run: |
-          brew install python@3.11
+          brew reinstall python@3.11
           python3.11 -m venv venv
 
       - name: Install build dependencies
