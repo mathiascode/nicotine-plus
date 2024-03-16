@@ -46,7 +46,8 @@ def install_pypi():
     """Install dependencies from PyPi."""
 
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary", ":all:",
-                           "-e", ".[packaging,tests]", "build"])
+                           "-e", ".[packaging,tests]", "build",
+                           "git+https://github.com/marcelotduarte/cx_Freeze"])
 
 
 if __name__ == "__main__":
