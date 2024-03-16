@@ -151,8 +151,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install --overwrite python@3.12
-          python3 -m venv venv
+          python3.12 -m venv venv
           source venv/bin/activate
           python3 packaging/macos/dependencies.py
 
