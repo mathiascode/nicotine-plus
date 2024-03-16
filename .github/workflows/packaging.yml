@@ -144,12 +144,11 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          brew uninstall --ignore-dependencies python@3.11
-          brew install --overwrite python@3.11
-          python3 packaging/macos/dependencies.py
+          python3.12 -m venv venv
+          venv/bin/python3 packaging/macos/dependencies.py
 
       - name: Freeze application
-        run: python3 packaging/macos/setup.py bdist_dmg
+        run: venv/bin/python3 packaging/macos/setup.py bdist_dmg
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v4
