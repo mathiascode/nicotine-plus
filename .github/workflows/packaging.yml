@@ -143,7 +143,9 @@ jobs:
         run: defaults write NSGlobalDomain AppleLanguages "(en-US)"
 
       - name: Create Python virtual environment
-        run: python3.11 -m venv venv
+        run: |
+          brew install python@3.11
+          python3.11 -m venv venv
 
       - name: Install build dependencies
         run: venv/bin/python3 packaging/macos/dependencies.py
