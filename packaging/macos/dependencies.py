@@ -46,7 +46,7 @@ def install_pypi():
     """Install dependencies from PyPi."""
 
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-binary", ":all:",
-                           "hatchling==1.21.1", ".[packaging,tests]", "build"])
+                           "pygobject==3.46.0", ".[packaging,tests]", "build"])
 
 
 if __name__ == "__main__":
