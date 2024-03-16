@@ -144,7 +144,7 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          python3.12 -m venv venv
+          python3.11 -m venv venv
           venv/bin/python3 packaging/macos/dependencies.py
 
       - name: Freeze application
