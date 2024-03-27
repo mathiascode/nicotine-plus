@@ -146,6 +146,7 @@ jobs:
         run: |
           brew uninstall --ignore-dependencies python@3.11
           brew install --overwrite python@3.11
+          brew update
           python3.11 -m venv venv
 
       - name: Install build dependencies
