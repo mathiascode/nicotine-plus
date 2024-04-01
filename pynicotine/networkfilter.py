@@ -16,13 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+from bisect import bisect_left
+from socket import inet_aton
+from struct import Struct
 
 from pynicotine import slskmessages
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
-from pynicotine.external.ip2location import IP2Location
+from pynicotine.external.data.ipcountry import ip_ranges
+from pynicotine.external.data.ipcountry import country_values
+from pynicotine.logfacility import log
+
+UINT32_UNPACK = Struct(">I").unpack_from
 
 
 class NetworkFilter:
@@ -285,7 +291,6 @@ class NetworkFilter:
 
         self.ip_ban_requested = {}
         self.ip_ignore_requested = {}
-        self._ip2location = IP2Location(os.path.join(os.path.dirname(__file__), "external", "ipcountrydb.bin"))
 
         for event_name, callback in (
             ("peer-address", self._get_peer_address),
@@ -407,9 +412,16 @@ class NetworkFilter:
 
     def get_country_code(self, ip_address):
 
-        country_code = self._ip2location.get_country_code(ip_address)
+        try:
+            ip_num, = UINT32_UNPACK(inet_aton(ip_address))
+            ip_index = bisect_left(ip_ranges, ip_num)
+            country_code = country_values[ip_index]
 
-        if country_code is None or country_code == "-":
+        except Exception as error:
+            log.add_debug("Failed to parse country code for IP address %(address)s: %(error)s", {
+                "address": ip_address,
+                "error": error
+            })
             country_code = ""
 
         return country_code

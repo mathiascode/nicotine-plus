@@ -175,7 +175,3 @@
    Copyright (c) 2001–2024 Hexasoft Development Sdn. Bhd.  
    This program includes IP2Location LITE data available from:  
    https://lite.ip2location.com
-
- - Country database reader licensed under the MIT License.  
-   Copyright (c) 2017 IP2Location.com  
-   https://github.com/chrislim2888/IP2Location-Python
