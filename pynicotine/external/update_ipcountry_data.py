@@ -32,18 +32,9 @@ MAX_IPV4_RANGE = 4294967295
 def update_ip_country_data():
     """Dowmload IP2Location country data and convert it for use in Python."""
 
-    output = bytearray(b"""# IP2Location LITE (c) 2001-2024 Hexasoft Development Sdn. Bhd.
-
-    # IP2Location LITE is licensed under a
-    # Creative Commons Attribution-ShareAlike 4.0 International License.
-
-    # You should have received a copy of the license along with this
-    # work. If not, see <http://creativecommons.org/licenses/by-sa/4.0/>.
-
-    """)
+    output = bytearray()
     country_codes = set()
-    ip_ranges = []
-    country_values = []
+    ip_countries = {}
 
     with zipfile.ZipFile(FILE_PATH, "r") as zip_file_handle:
         with zip_file_handle.open(zip_file_handle.namelist()[-1]) as csv_file_handle:
@@ -59,35 +50,12 @@ def update_ip_country_data():
                     raise ValueError("Invalid IP address")
 
                 country_codes.add(country_code)
-                ip_ranges.append(address_to)
-                country_values.append(country_code)
+                ip_countries[address_to] = country_code
 
-    output.extend(b"# Country code mapping\n")
+    for ip_address, country_code in ip_countries.items():
+        output.extend(f'{ip_address},{country_code.replace("-", "")}\n'.encode("utf-8"))
 
-    for country_code in sorted(country_codes):
-        output.extend(f'{country_code.replace("-", "_")},'.encode("utf-8"))
-
-    output.extend(b" = ")
-
-    for country_code in sorted(country_codes):
-        output.extend(f'"{country_code.replace("-", "")}",'.encode("utf-8"))
-
-    output.extend(b"\n\n# IP ranges\n")
-    output.extend(b"ip_ranges = (")
-
-    for ip_address in ip_ranges:
-        output.extend(f"{ip_address},".encode("utf-8"))
-
-    output.extend(b")\n\n")
-    output.extend(b"# Country codes for IP ranges\n")
-    output.extend(b"country_values = (")
-
-    for country_code in country_values:
-        output.extend(f'{country_code.replace("-", "_")},'.encode("utf-8"))
-
-    output.extend(b")\n\n")
-
-    with open(os.path.join(CURRENT_PATH, "data", "ipcountry.py"), "wb") as file_handle:
+    with open(os.path.join(CURRENT_PATH, "data", "ipcountry.csv"), "wb") as file_handle:
         file_handle.write(output)
 
 
