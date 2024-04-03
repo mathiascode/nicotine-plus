@@ -23,37 +23,7 @@ import subprocess
 
 from setuptools import setup  # pylint: disable=import-error
 
-from pynicotine.i18n import BASE_PATH
-
-
-def build_translations():
-    """Builds .mo translation files in the 'mo' folder of the project
-    repository."""
-
-    locale_path = os.path.join(BASE_PATH, "pynicotine", "locale")
-
-    with open(os.path.join(BASE_PATH, "po", "LINGUAS"), encoding="utf-8") as file_handle:
-        languages = file_handle.read().splitlines()
-        print(languages)
-
-    for language_code in languages:
-        lc_messages_folder_path = os.path.join(locale_path, language_code, "LC_MESSAGES")
-        po_file_path = os.path.join(BASE_PATH, "po", f"{language_code}.po")
-        mo_file_path = os.path.join(lc_messages_folder_path, "nicotine.mo")
-
-        if not os.path.exists(lc_messages_folder_path):
-            os.makedirs(lc_messages_folder_path)
-
-        subprocess.check_call(["msgfmt", "--check", po_file_path, "-o", mo_file_path])
-
-    # Merge translations into .desktop and appdata files
-    for desktop_file_path in glob.glob(os.path.join(BASE_PATH, "data", "*.desktop.in")):
-        subprocess.check_call(["msgfmt", "--desktop", f"--template={desktop_file_path}", "-d", "po",
-                               "-o", desktop_file_path[:-3]])
-
-    for appdata_file_path in glob.glob(os.path.join(BASE_PATH, "data", "*.appdata.xml.in")):
-        subprocess.check_call(["msgfmt", "--xml", f"--template={appdata_file_path}", "-d", "po",
-                               "-o", appdata_file_path[:-3]])
+from pynicotine.i18n import build_translations
 
 
 if __name__ == "__main__":
