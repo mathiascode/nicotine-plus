@@ -11,6 +11,8 @@
 # Pot backup files
 *.po~
 
+pynicotine/locale/**/*
+
 # Temporary test files
 pynicotine/tests/**/*temp_config*
 pynicotine/tests/**/*.db

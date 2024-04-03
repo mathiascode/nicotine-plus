@@ -85,17 +85,28 @@ def build_translations():
 
     import glob
     import subprocess
+    print("REACHED")
 
     for language_code, _language_name in LANGUAGES:
         if language_code == "en":
             continue
 
+        print("GENERATE")
         lc_messages_folder_path = os.path.join(LOCALE_PATH, language_code, "LC_MESSAGES")
         po_file_path = os.path.join(BASE_PATH, "po", f"{language_code}.po")
         mo_file_path = os.path.join(lc_messages_folder_path, "nicotine.mo")
 
         if not os.path.exists(lc_messages_folder_path):
             os.makedirs(lc_messages_folder_path)
+
+        """with open(os.path.join(LOCALE_PATH, "__init__.py"), "wb"):
+            pass
+
+        with open(os.path.join(LOCALE_PATH, language_code, "__init__.py"), "wb"):
+            pass
+
+        with open(os.path.join(lc_messages_folder_path, "__init__.py"), "wb"):
+            pass"""
 
         subprocess.check_call(["msgfmt", "--check", po_file_path, "-o", mo_file_path])
 
