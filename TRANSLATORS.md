@@ -1,34 +1,34 @@
 # Nicotine+ Translators
 
-## Albanian
+### Albanian
  - W L (2023)
 
-## Arabic
+### Arabic
  - ButterflyOfFire (2024)
 
-## Catalan
+### Catalan
  - Maite Guix (2022)
 
-## Chinese (Simplified)
+### Chinese (Simplified)
  - Ys413 (2024)
  - Bonislaw (2023)
  - hylau (2023)
  - hadwin (2022)
 
-## Czech
+### Czech
  - burnmail123 (2021-2023)
 
-## Danish
+### Danish
  - mathsped (2003–2004)
 
-## Dutch
+### Dutch
  - Toine Rademacher (2023-2024)
  - Han Boetes (hboetes) (2021–2024)
  - Kenny Verstraete (2009)
  - nince78 (2007)
  - Ingmar K. Steen (Hyriand) (2003–2004)
 
-## English
+### English
  - slook (2021–2024)
  - Han Boetes (hboetes) (2021–2024)
  - Mat (mathiascode) (2020–2024)
@@ -36,20 +36,20 @@
  - daelstorm (2004–2009)
  - Ingmar K. Steen (Hyriand) (2003–2004)
 
-## Esperanto
+### Esperanto
  - phlostically (2021)
 
-## Estonian
+### Estonian
  - rimasx (2024)
  - PriitUring (2023)
 
-## Euskara
+### Euskara
  - Julen (2006–2007)
 
-## Finnish
+### Finnish
  - Kari Viittanen (Kalevi) (2006–2007)
 
-## French
+### French
  - Saumon (2023)
  - subu_versus (2023)
  - zniavre (2007–2023)
@@ -62,7 +62,7 @@
  - systr (2006)
  - Julien Wajsberg (flashfr) (2003–2004)
 
-## German
+### German
  - Han Boetes (hboetes) (2021–2024)
  - phelissimo_ (2023)
  - Meokater (2007)
@@ -70,39 +70,39 @@
  - lippel (2004)
  - Ingmar K. Steen (Hyriand) (2003–2004)
 
-## Hungarian
+### Hungarian
  - Szia Tomi (2022–2024)
  - Nils (2009)
  - David Balazs (djbaloo) (2006–2020)
 
-## Italian
+### Italian
  - Gabboxl (2022–2023)
  - ms-afk (2023)
  - Gianluca Boiano (2020–2022)
  - nicola (2007)
  - dbazza (2003–2004)
 
-## Latvian
+### Latvian
  - Pagal3 (2022–2024)
 
-## Lithuanian
+### Lithuanian
  - mantas (2020)
  - Žygimantas Beručka (2006–2009)
 
-## Norwegian Bokmål
+### Norwegian Bokmål
  - Allan Nordhøy (comradekingu) (2021)
 
-## Polish
+### Polish
  - Mariusz (mariachini) (2017–2023)
  - Amun-Ra (2007)
  - thine (2007)
  - Wojciech Owczarek (owczi) (2003–2004)
 
-## Portuguese
+### Portuguese
  - ssantos (2023)
  - Vinícius Soares (2023)
 
-## Portuguese (Brazil)
+### Portuguese (Brazil)
  - Havokdan (2022–2023)
  - Guilherme Santos (2022)
  - b1llso (2022)
@@ -110,25 +110,25 @@
  - yyyyyyyan (2020)
  - Felipe Nogaroto Gonzalez (Suicide|Solution) (2006)
 
-## Romanian
+### Romanian
  - xslendix (2023)
 
-## Russian
+### Russian
  - Kirill Feoktistov (SnIPeRSnIPeR) (2022–2023)
  - Mehavoid (2021–2023)
  - AHOHNMYC (2022)
 
-## Slovak
+### Slovak
  - Jozef Říha (2006–2008)
 
-## Spanish (Chile)
+### Spanish (Chile)
  - MELERIX (2021–2023)
  - tagomago (2021–2022)
  - Strange (2021)
  - Silvio Orta (2007)
  - Dreslo (2003–2004)
 
-## Spanish (Spain)
+### Spanish (Spain)
  - gallegonovato (2023)
  - MELERIX (2021–2023)
  - tagomago (2021–2022)
@@ -136,13 +136,13 @@
  - Silvio Orta (2007)
  - Dreslo (2003–2004)
 
-## Swedish
+### Swedish
  - mitramai (2021)
  - Markus Magnuson (alimony) (2003–2004)
 
-## Turkish
+### Turkish
  - Oğuz Ersen (2021–2024)
 
-## Ukrainian
+### Ukrainian
  - Oleg Gritsun (2024)
  - uniss2209 (2022)
