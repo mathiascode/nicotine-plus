@@ -117,7 +117,7 @@ jobs:
             mingw-w64-${{ matrix.arch }}-python-gobject
 
       - name: Install additional dependencies
-        run: python3 packaging/windows/dependencies.py
+        run: python3 build-aux/windows/dependencies.py
 
       - name: PEP 8 style checks
         run: python3 -m pycodestyle
@@ -157,7 +157,7 @@ jobs:
           python3.12 -m venv venv
 
       - name: Install dependencies
-        run: venv/bin/python3 packaging/macos/dependencies.py
+        run: venv/bin/python3 build-aux/macos/dependencies.py
 
       - name: PEP 8 style checks
         run: venv/bin/python3 -m pycodestyle
