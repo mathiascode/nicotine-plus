@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2021-2023 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 
@@ -48,12 +47,14 @@ class Accelerator:
                 widget.add_controller(widget.shortcut_controller)
 
             if not shortcut_trigger:
-                self.shortcut_triggers[accelerator] = shortcut_trigger = Gtk.ShortcutTrigger.parse_string(accelerator)
+                self.shortcut_triggers[accelerator] = shortcut_trigger = (
+                    Gtk.ShortcutTrigger.parse_string(accelerator)
+                )
 
             widget.shortcut_controller.add_shortcut(
                 Gtk.Shortcut(
                     trigger=shortcut_trigger,
-                    action=Gtk.CallbackAction.new(callback, user_data)
+                    action=Gtk.CallbackAction.new(callback, user_data),
                 )
             )
             return
@@ -79,7 +80,10 @@ class Accelerator:
             else:
                 keycodes = []
 
-            cls.keycodes_mods[accelerator] = keycodes_mods_accel = (keycodes, mods)
+            cls.keycodes_mods[accelerator] = keycodes_mods_accel = (
+                keycodes,
+                mods,
+            )
 
         return keycodes_mods_accel
 
@@ -105,6 +109,8 @@ class Accelerator:
 
 
 if GTK_API_VERSION == 3:
-    ALL_MODIFIERS = (Accelerator.parse_accelerator("<Primary>")[1]
-                     | Accelerator.parse_accelerator("<Shift>")[1]
-                     | Accelerator.parse_accelerator("<Alt>")[1])
+    ALL_MODIFIERS = (
+        Accelerator.parse_accelerator("<Primary>")[1]
+        | Accelerator.parse_accelerator("<Shift>")[1]
+        | Accelerator.parse_accelerator("<Alt>")[1]
+    )

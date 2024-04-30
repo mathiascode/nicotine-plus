@@ -21,7 +21,7 @@
 
 ## Testing
 
-- [pycodestyle](https://pycodestyle.pycqa.org/) for code style checks;
+- [black](https://black.readthedocs.io/) for code formatting;
 - [pylint](https://pylint.readthedocs.io/) for linting.
 
 
@@ -74,19 +74,19 @@ sudo zypper install gettext-runtime python3-build python3-setuptools
 - On Debian/Ubuntu-based distributions:
 
 ```sh
-sudo apt install pylint3 python3-pycodestyle
+sudo apt install pylint3 python3-black
 ```
 
 - On Redhat/Fedora-based distributions:
 
 ```sh
-sudo dnf install pylint python3-pycodestyle
+sudo dnf install pylint python3-black
 ```
 
 - On SUSE-based distributions:
 
 ```sh
-sudo zypper install python3-pylint python3-pycodestyle
+sudo zypper install python3-black python3-pylint
 ```
 
 ### Windows and macOS

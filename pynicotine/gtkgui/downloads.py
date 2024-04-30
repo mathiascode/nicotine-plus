@@ -1,27 +1,25 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2016-2018 Mutnick <mutnick@techie.com>
-# COPYRIGHT (C) 2013 eLvErDe <gandalf@le-vert.net>
-# COPYRIGHT (C) 2008-2012 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2009 hedonist <ak@sensi.org>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2016-2017
+# Michael Labouebe <gfarmerfr@free.fr> COPYRIGHT (C) 2016-2018 Mutnick
+# <mutnick@techie.com> COPYRIGHT (C) 2013 eLvErDe <gandalf@le-vert.net>
+# COPYRIGHT (C) 2008-2012 quinox <quinox@users.sf.net> COPYRIGHT (C) 2009
+# hedonist <ak@sensi.org> COPYRIGHT (C) 2006-2009 daelstorm
+# <daelstorm@gmail.com> COPYRIGHT (C) 2003-2004 Hyriand
+# <hyriand@thegraveyard.org>
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 
@@ -67,7 +65,10 @@ class Downloads(Transfers):
             window.downloads_content.add(self.container)
 
         self.popup_menu_clear.add_items(
-            ("#" + _("Finished / Filtered"), self.on_clear_finished_filtered),
+            (
+                "#" + _("Finished / Filtered"),
+                self.on_clear_finished_filtered,
+            ),
             ("", None),
             ("#" + _("Finished"), self.on_clear_finished),
             ("#" + _("Paused"), self.on_clear_paused),
@@ -87,7 +88,7 @@ class Downloads(Transfers):
             ("download-large-folder", self.download_large_folder),
             ("folder-download-finished", self.folder_download_finished),
             ("start", self.start),
-            ("update-download", self.update_model)
+            ("update-download", self.update_model),
         ):
             events.connect(event_name, callback)
 
@@ -119,7 +120,7 @@ class Downloads(Transfers):
             title=_("Clear Queued Downloads"),
             message=_("Do you really want to clear all queued downloads?"),
             destructive_response_id="ok",
-            callback=self.on_clear_queued
+            callback=self.on_clear_queued,
         ).present()
 
     def on_clear_all_response(self, *_args):
@@ -132,7 +133,7 @@ class Downloads(Transfers):
             title=_("Clear All Downloads"),
             message=_("Do you really want to clear all downloads?"),
             destructive_response_id="ok",
-            callback=self.on_clear_all_response
+            callback=self.on_clear_all_response,
         ).present()
 
     def folder_download_response(self, _dialog, _response_id, data):
@@ -141,21 +142,33 @@ class Downloads(Transfers):
 
     def folder_download_finished(self, _folder_path):
         if self.window.current_page_id != self.transfer_page.id:
-            self.window.notebook.request_tab_changed(self.transfer_page, is_important=True)
+            self.window.notebook.request_tab_changed(
+                self.transfer_page, is_important=True
+            )
 
-    def download_large_folder(self, username, folder, numfiles, download_callback, callback_args):
+    def download_large_folder(
+        self,
+        username,
+        folder,
+        numfiles,
+        download_callback,
+        callback_args,
+    ):
 
         OptionDialog(
             parent=self.window,
             title=_("Download %(num)i files?") % {"num": numfiles},
-            message=_("Do you really want to download %(num)i files from %(user)s's folder %(folder)s?") % {
-                "num": numfiles, "user": username, "folder": folder},
+            message=_(
+                "Do you really want to download %(num)i files from"
+                " %(user)s's folder %(folder)s?"
+            )
+            % {"num": numfiles, "user": username, "folder": folder},
             buttons=[
                 ("cancel", _("_Cancel")),
-                ("download", _("_Download Folder"))
+                ("download", _("_Download Folder")),
             ],
             callback=self.folder_download_response,
-            callback_data=(download_callback, callback_args)
+            callback_data=(download_callback, callback_args),
         ).present()
 
     def on_copy_url(self, *_args):
@@ -163,7 +176,9 @@ class Downloads(Transfers):
         transfer = next(iter(self.selected_transfers), None)
 
         if transfer:
-            url = core.userbrowse.get_soulseek_url(transfer.username, transfer.virtual_path)
+            url = core.userbrowse.get_soulseek_url(
+                transfer.username, transfer.virtual_path
+            )
             clipboard.copy_text(url)
 
     def on_copy_folder_url(self, *_args):
@@ -171,8 +186,12 @@ class Downloads(Transfers):
         transfer = next(iter(self.selected_transfers), None)
 
         if transfer:
-            folder_path, separator, _basename = transfer.virtual_path.rpartition("\\")
-            url = core.userbrowse.get_soulseek_url(transfer.username, folder_path + separator)
+            folder_path, separator, _basename = (
+                transfer.virtual_path.rpartition("\\")
+            )
+            url = core.userbrowse.get_soulseek_url(
+                transfer.username, folder_path + separator
+            )
 
             clipboard.copy_text(url)
 
@@ -218,7 +237,9 @@ class Downloads(Transfers):
         core.downloads.clear_downloads(statuses={TransferStatus.PAUSED})
 
     def on_clear_finished_filtered(self, *_args):
-        core.downloads.clear_downloads(statuses={TransferStatus.FINISHED, TransferStatus.FILTERED})
+        core.downloads.clear_downloads(
+            statuses={TransferStatus.FINISHED, TransferStatus.FILTERED}
+        )
 
     def on_clear_filtered(self, *_args):
         core.downloads.clear_downloads(statuses={TransferStatus.FILTERED})

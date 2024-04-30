@@ -35,13 +35,16 @@ class Plugin(BasePlugin):
             "file": {
                 "description": "Select a file",
                 "type": "file",
-                "chooser": "file"},
+                "chooser": "file",
+            },
             "folder": {
                 "description": "Select a folder",
                 "type": "file",
-                "chooser": "folder"},
+                "chooser": "folder",
+            },
             "image": {
                 "description": "Select an image",
                 "type": "file",
-                "chooser": "image"},
+                "chooser": "image",
+            },
         }

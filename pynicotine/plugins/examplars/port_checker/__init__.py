@@ -29,26 +29,23 @@ class Plugin(BasePlugin):
 
         super().__init__(*args, **kwargs)
 
-        self.settings = {
-            "keyword_enabled": False,
-            "socket_timeout": 10
-        }
+        self.settings = {"keyword_enabled": False, "socket_timeout": 10}
         self.metasettings = {
             "keyword_enabled": {
                 "description": 'Enable "portscan" keyword trigger',
-                "type": "bool"
+                "type": "bool",
             },
             "socket_timeout": {
                 "description": "Socket timeout (in seconds)",
-                "type": "int"
-            }
+                "type": "int",
+            },
         }
         self.commands = {
             "port": {
                 "callback": self.port_checker_command,
                 "description": "Check firewall state of user",
                 "parameters": ["<user>"],
-                "parameters_private_chat": ["[user]"]
+                "parameters_private_chat": ["[user]"],
             }
         }
         self.throttle = ResponseThrottle(self.core, self.human_name)
@@ -56,7 +53,11 @@ class Plugin(BasePlugin):
 
     def incoming_public_chat_notification(self, room, user, line):
 
-        if room != self.checkroom or not self.settings["keyword_enabled"] or self.core.users.login_username == user:
+        if (
+            room != self.checkroom
+            or not self.settings["keyword_enabled"]
+            or self.core.users.login_username == user
+        ):
             return
 
         if not self.throttle.ok_to_respond(room, user, line, 10):
@@ -72,7 +73,10 @@ class Plugin(BasePlugin):
 
         if user_address is not None:
             ip_address, port = user_address
-            threading.Thread(target=self.check_port, args=(user, ip_address, port, announce)).start()
+            threading.Thread(
+                target=self.check_port,
+                args=(user, ip_address, port, announce),
+            ).start()
 
     def check_port(self, user, ip_address, port, announce):
 
@@ -82,7 +86,10 @@ class Plugin(BasePlugin):
             self.throttle.responded()
             self.send_public(self.checkroom, f"{user}: Your port is {status}")
 
-        self.log("User %s on %s:%s port is %s.", (user, ip_address, port, status))
+        self.log(
+            "User %s on %s:%s port is %s.",
+            (user, ip_address, port, status),
+        )
 
     def _check_port(self, ip_address, port):
 
@@ -90,7 +97,10 @@ class Plugin(BasePlugin):
             return "unknown"
 
         timeout = self.settings["socket_timeout"]
-        self.log("Scanning %s:%d (socket timeout %d seconds)...", (ip_address, port, timeout))
+        self.log(
+            "Scanning %s:%d (socket timeout %d seconds)...",
+            (ip_address, port, timeout),
+        )
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)

@@ -1,25 +1,23 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2018 Mutnick <mutnick@techie.com>
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2009 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2018 Mutnick
+# <mutnick@techie.com> COPYRIGHT (C) 2016-2017 Michael Labouebe
+# <gfarmerfr@free.fr> COPYRIGHT (C) 2009 quinox <quinox@users.sf.net> COPYRIGHT
+# (C) 2006-2009 daelstorm <daelstorm@gmail.com> COPYRIGHT (C) 2003-2004 Hyriand
+# <hyriand@thegraveyard.org>
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import time
 
@@ -45,11 +43,9 @@ class Buddies:
 
     def __init__(self, window):
 
-        (
-            self.container,
-            self.list_container,
-            self.side_toolbar
-        ) = ui.load(scope=self, path="buddies.ui")
+        (self.container, self.list_container, self.side_toolbar) = ui.load(
+            scope=self, path="buddies.ui"
+        )
 
         self.window = window
         self.page = window.userlist_page
@@ -61,8 +57,11 @@ class Buddies:
 
         # Columns
         self.list_view = TreeView(
-            window, parent=self.list_container, name="buddy_list",
-            persistent_sort=True, activate_row_callback=self.on_row_activated,
+            window,
+            parent=self.list_container,
+            name="buddy_list",
+            persistent_sort=True,
+            activate_row_callback=self.on_row_activated,
             delete_accelerator_callback=self.on_remove_buddy,
             columns={
                 # Visible columns
@@ -70,79 +69,80 @@ class Buddies:
                     "column_type": "icon",
                     "title": _("Status"),
                     "width": 25,
-                    "hide_header": True
+                    "hide_header": True,
                 },
                 "country": {
                     "column_type": "icon",
                     "title": _("Country"),
                     "width": 30,
-                    "hide_header": True
+                    "hide_header": True,
                 },
                 "user": {
                     "column_type": "text",
                     "title": _("User"),
                     "width": 250,
                     "default_sort_type": "ascending",
-                    "iterator_key": True
+                    "iterator_key": True,
                 },
                 "speed": {
                     "column_type": "number",
                     "title": _("Speed"),
                     "width": 150,
-                    "sort_column": "speed_data"
+                    "sort_column": "speed_data",
                 },
                 "files": {
                     "column_type": "number",
                     "title": _("Files"),
                     "width": 150,
-                    "sort_column": "files_data"
+                    "sort_column": "files_data",
                 },
                 "trusted": {
                     "column_type": "toggle",
                     "title": _("Trusted"),
                     "width": 0,
-                    "toggle_callback": self.on_trusted
+                    "toggle_callback": self.on_trusted,
                 },
                 "notify": {
                     "column_type": "toggle",
                     "title": _("Notify"),
                     "width": 0,
-                    "toggle_callback": self.on_notify
+                    "toggle_callback": self.on_notify,
                 },
                 "privileged": {
                     "column_type": "toggle",
                     "title": _("Prioritized"),
                     "width": 0,
-                    "toggle_callback": self.on_prioritized
+                    "toggle_callback": self.on_prioritized,
                 },
                 "last_seen": {
                     "column_type": "text",
                     "title": _("Last Seen"),
                     "width": 160,
-                    "sort_column": "last_seen_data"
+                    "sort_column": "last_seen_data",
                 },
                 "comments": {
                     "column_type": "text",
                     "title": _("Note"),
-                    "width": 400
+                    "width": 400,
                 },
-
                 # Hidden data columns
                 "speed_data": {"data_type": GObject.TYPE_UINT},
                 "files_data": {"data_type": GObject.TYPE_UINT},
-                "last_seen_data": {"data_type": GObject.TYPE_UINT64}
-            }
+                "last_seen_data": {"data_type": GObject.TYPE_UINT64},
+            },
         )
 
         # Popup menus
         self.popup_menu = popup = UserPopupMenu(
-            window.application, parent=self.list_view.widget, callback=self.on_popup_menu,
-            tab_name="userlist"
+            window.application,
+            parent=self.list_view.widget,
+            callback=self.on_popup_menu,
+            tab_name="userlist",
         )
         popup.add_items(
             ("#" + _("Add User _Note…"), self.on_add_note),
             ("", None),
-            ("#" + _("Remove"), self.on_remove_buddy)
+            ("#" + _("Remove"), self.on_remove_buddy),
         )
 
         # Events
@@ -157,7 +157,7 @@ class Buddies:
             ("server-disconnect", self.server_disconnect),
             ("user-country", self.user_country),
             ("user-stats", self.user_stats),
-            ("user-status", self.user_status)
+            ("user-status", self.user_status),
         ):
             events.connect(event_name, callback)
 
@@ -220,7 +220,9 @@ class Buddies:
 
         if mode == "chatrooms":
             if GTK_API_VERSION >= 4:
-                self.window.chatrooms_buddy_list_container.append(self.container)
+                self.window.chatrooms_buddy_list_container.append(
+                    self.container
+                )
             else:
                 self.window.chatrooms_buddy_list_container.add(self.container)
 
@@ -238,10 +240,15 @@ class Buddies:
 
     def update_visible(self):
 
-        if config.sections["ui"]["buddylistinchatrooms"] in {"always", "chatrooms"}:
+        if config.sections["ui"]["buddylistinchatrooms"] in {
+            "always",
+            "chatrooms",
+        }:
             return
 
-        self.window.userlist_content.set_visible(bool(self.list_view.iterators))
+        self.window.userlist_content.set_visible(
+            bool(self.list_view.iterators)
+        )
 
     def get_selected_username(self):
 
@@ -279,7 +286,11 @@ class Buddies:
         status = msg.status
         status_icon_name = USER_STATUS_ICON_NAMES.get(status)
 
-        if not status_icon_name or status_icon_name == self.list_view.get_row_value(iterator, "status"):
+        if (
+            not status_icon_name
+            or status_icon_name
+            == self.list_view.get_row_value(iterator, "status")
+        ):
             return
 
         self.list_view.set_row_value(iterator, "status", status_icon_name)
@@ -323,7 +334,9 @@ class Buddies:
 
         if user_data.last_seen:
             try:
-                last_seen_time = time.strptime(user_data.last_seen, "%m/%d/%Y %H:%M:%S")
+                last_seen_time = time.strptime(
+                    user_data.last_seen, "%m/%d/%Y %H:%M:%S"
+                )
                 last_seen = time.mktime(last_seen_time)
                 h_last_seen = time.strftime("%x %X", last_seen_time)
 
@@ -331,26 +344,29 @@ class Buddies:
                 last_seen = 0
                 h_last_seen = _("Never seen")
 
-        self.list_view.add_row([
-            USER_STATUS_ICON_NAMES.get(status, ""),
-            get_flag_icon_name(country_code),
-            str(user),
-            h_speed,
-            h_files,
-            bool(user_data.is_trusted),
-            bool(user_data.notify_status),
-            bool(user_data.is_prioritized),
-            str(h_last_seen),
-            str(user_data.note),
-            speed,
-            files or 0,
-            last_seen
-        ], select_row=core.buddies.allow_saving_buddies)
+        self.list_view.add_row(
+            [
+                USER_STATUS_ICON_NAMES.get(status, ""),
+                get_flag_icon_name(country_code),
+                str(user),
+                h_speed,
+                h_files,
+                bool(user_data.is_trusted),
+                bool(user_data.notify_status),
+                bool(user_data.is_prioritized),
+                str(h_last_seen),
+                str(user_data.note),
+                speed,
+                files or 0,
+                last_seen,
+            ],
+            select_row=core.buddies.allow_saving_buddies,
+        )
 
         for combobox in (
             self.window.search.user_search_combobox,
             self.window.userbrowse.userbrowse_combobox,
-            self.window.userinfo.userinfo_combobox
+            self.window.userinfo.userinfo_combobox,
         ):
             combobox.freeze()
             combobox.append(str(user))
@@ -371,7 +387,7 @@ class Buddies:
         for combobox in (
             self.window.search.user_search_combobox,
             self.window.userbrowse.userbrowse_combobox,
-            self.window.userinfo.userinfo_combobox
+            self.window.userinfo.userinfo_combobox,
         ):
             combobox.freeze()
             combobox.remove_id(user)
@@ -502,13 +518,17 @@ class Buddies:
             action_button_label=_("_Add"),
             callback=self.on_add_note_response,
             callback_data=user,
-            default=note
+            default=note,
         ).present()
 
     def server_disconnect(self, *_args):
 
         for iterator in self.list_view.iterators.values():
-            self.list_view.set_row_value(iterator, "status", USER_STATUS_ICON_NAMES[UserStatus.OFFLINE])
+            self.list_view.set_row_value(
+                iterator,
+                "status",
+                USER_STATUS_ICON_NAMES[UserStatus.OFFLINE],
+            )
             self.list_view.set_row_value(iterator, "speed", "")
             self.list_view.set_row_value(iterator, "files", "")
             self.list_view.set_row_value(iterator, "speed_data", 0)

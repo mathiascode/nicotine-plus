@@ -1,25 +1,23 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2018 Mutnick <mutnick@techie.com>
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2008-2011 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2016-2018
+# Mutnick <mutnick@techie.com> COPYRIGHT (C) 2016-2017 Michael Labouebe
+# <gfarmerfr@free.fr> COPYRIGHT (C) 2008-2011 quinox <quinox@users.sf.net>
+# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com> COPYRIGHT (C)
+# 2003-2004 Hyriand <hyriand@thegraveyard.org>
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 from itertools import islice
 from operator import itemgetter
@@ -37,10 +35,28 @@ from pynicotine.utils import TRANSLATE_PUNCTUATION
 
 class SearchRequest:
 
-    __slots__ = ("token", "term", "included_words", "excluded_words", "mode", "room", "users", "is_ignored")
+    __slots__ = (
+        "token",
+        "term",
+        "included_words",
+        "excluded_words",
+        "mode",
+        "room",
+        "users",
+        "is_ignored",
+    )
 
-    def __init__(self, token=None, term=None, included_words=None, excluded_words=None, mode="global",
-                 room=None, users=None, is_ignored=False):
+    def __init__(
+        self,
+        token=None,
+        term=None,
+        included_words=None,
+        excluded_words=None,
+        mode="global",
+        room=None,
+        users=None,
+        is_ignored=False,
+    ):
 
         self.token = token
         self.term = term
@@ -57,38 +73,88 @@ class Search:
     SEARCH_HISTORY_LIMIT = 200
     RESULT_FILTER_HISTORY_LIMIT = 50
     REMOVED_SEARCH_CHARACTERS = [
-        "!", '"', "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", ":", ";",
-        "<", "=", ">", "?", "@", "[", "\\", "]", "^", "_", "`", "{", "|", "}", "~", "–", "—",
-        "‐", "’", "“", "”", "…"
+        "!",
+        '"',
+        "#",
+        "$",
+        "%",
+        "&",
+        "'",
+        "(",
+        ")",
+        "*",
+        "+",
+        ",",
+        "-",
+        ".",
+        "/",
+        ":",
+        ";",
+        "<",
+        "=",
+        ">",
+        "?",
+        "@",
+        "[",
+        "\\",
+        "]",
+        "^",
+        "_",
+        "`",
+        "{",
+        "|",
+        "}",
+        "~",
+        "–",
+        "—",
+        "‐",
+        "’",
+        "“",
+        "”",
+        "…",
     ]
-    TRANSLATE_REMOVED_SEARCH_CHARACTERS = str.maketrans(dict.fromkeys(REMOVED_SEARCH_CHARACTERS, " "))
+    TRANSLATE_REMOVED_SEARCH_CHARACTERS = str.maketrans(
+        dict.fromkeys(REMOVED_SEARCH_CHARACTERS, " ")
+    )
 
     def __init__(self):
 
         self.searches = {}
         self.excluded_phrases = []
-        self.token = int(random() * (2 ** 31 - 1))
+        self.token = int(random() * (2**31 - 1))
         self.wishlist_interval = 0
         self._wishlist_timer_id = None
 
         # Create wishlist searches
         for term in config.sections["server"]["autosearch"]:
             self.token = slskmessages.increment_token(self.token)
-            term, _term_no_quotes, included_words, excluded_words = self.sanitize_search_term(term)
+            term, _term_no_quotes, included_words, excluded_words = (
+                self.sanitize_search_term(term)
+            )
 
             self.searches[self.token] = SearchRequest(
-                token=self.token, term=term, included_words=included_words,
-                excluded_words=excluded_words, mode="wishlist", is_ignored=True
+                token=self.token,
+                term=term,
+                included_words=included_words,
+                excluded_words=excluded_words,
+                mode="wishlist",
+                is_ignored=True,
             )
 
         for event_name, callback in (
             ("excluded-search-phrases", self._excluded_search_phrases),
-            ("file-search-request-distributed", self._file_search_request_distributed),
-            ("file-search-request-server", self._file_search_request_server),
+            (
+                "file-search-request-distributed",
+                self._file_search_request_distributed,
+            ),
+            (
+                "file-search-request-server",
+                self._file_search_request_server,
+            ),
             ("file-search-response", self._file_search_response),
             ("quit", self._quit),
             ("server-disconnect", self._server_disconnect),
-            ("set-wishlist-interval", self._set_wishlist_interval)
+            ("set-wishlist-interval", self._set_wishlist_interval),
         ):
             events.connect(event_name, callback)
 
@@ -99,17 +165,34 @@ class Search:
         events.cancel_scheduled(self._wishlist_timer_id)
         self.wishlist_interval = 0
 
-    def request_folder_download(self, username, folder_path, visible_files, download_folder_path=None):
+    def request_folder_download(
+        self,
+        username,
+        folder_path,
+        visible_files,
+        download_folder_path=None,
+    ):
 
         # Ask for the rest of the files in the folder
-        core.downloads.enqueue_folder(username, folder_path, download_folder_path=download_folder_path)
+        core.downloads.enqueue_folder(
+            username,
+            folder_path,
+            download_folder_path=download_folder_path,
+        )
 
         # Queue the visible search results
-        destination_folder_path = core.downloads.get_folder_destination(username, folder_path)
+        destination_folder_path = core.downloads.get_folder_destination(
+            username, folder_path
+        )
 
         for file_path, size, file_attributes, *_unused in visible_files:
             core.downloads.enqueue_download(
-                username, file_path, folder_path=destination_folder_path, size=size, file_attributes=file_attributes)
+                username,
+                file_path,
+                folder_path=destination_folder_path,
+                size=size,
+                file_attributes=file_attributes,
+            )
 
     # Outgoing Search Requests #
 
@@ -123,12 +206,26 @@ class Search:
         """Disallow parsing search result messages for a search ID."""
         slskmessages.SEARCH_TOKENS_ALLOWED.discard(token)
 
-    def add_search(self, term, included_words, excluded_words, mode, room=None, users=None, is_ignored=False):
+    def add_search(
+        self,
+        term,
+        included_words,
+        excluded_words,
+        mode,
+        room=None,
+        users=None,
+        is_ignored=False,
+    ):
 
         self.searches[self.token] = search = SearchRequest(
-            token=self.token, term=term, included_words=included_words,
-            excluded_words=excluded_words, mode=mode, room=room, users=users,
-            is_ignored=is_ignored
+            token=self.token,
+            term=term,
+            included_words=included_words,
+            excluded_words=excluded_words,
+            mode=mode,
+            room=room,
+            users=users,
+            is_ignored=is_ignored,
         )
         self.add_allowed_token(self.token)
         return search
@@ -172,13 +269,14 @@ class Search:
         except ValueError:
             search_term_words = search_term.split()
 
-        # Remove certain special characters from search term
-        # SoulseekQt doesn't seem to send search results if such characters are included (July 7, 2020)
+        # Remove certain special characters from search term SoulseekQt doesn't
+        # seem to send search results if such characters are included (July 7,
+        # 2020\)
         search_term_words_no_quotes = []
 
         for index, word in enumerate(search_term_words):
             if word.startswith("*") and len(word) > 1:
-                # Partial word (*erm)
+                # Partial word (\*erm)
                 included_words.append(word[1:].lower())
 
             elif word.startswith("-") and len(word) > 1:
@@ -190,40 +288,64 @@ class Search:
                 word = word[1:-1]
                 included_words.append(word.lower())
 
-                # Remove problematic characters before appending to outgoing search term
-                for inner_word in word.translate(self.TRANSLATE_REMOVED_SEARCH_CHARACTERS).strip().split():
+                # Remove problematic characters before appending to outgoing
+                # search term
+                for inner_word in (
+                    word.translate(self.TRANSLATE_REMOVED_SEARCH_CHARACTERS)
+                    .strip()
+                    .split()
+                ):
                     search_term_words_no_quotes.append(inner_word)
 
                 continue
 
             else:
-                # Remove problematic characters before appending to outgoing search term
-                subwords = word.translate(self.TRANSLATE_REMOVED_SEARCH_CHARACTERS).strip().split()
-                word = search_term_words[index] = " ".join(x for x in subwords if x)
+                # Remove problematic characters before appending to outgoing
+                # search term
+                subwords = (
+                    word.translate(self.TRANSLATE_REMOVED_SEARCH_CHARACTERS)
+                    .strip()
+                    .split()
+                )
+                word = search_term_words[index] = " ".join(
+                    x for x in subwords if x
+                )
 
                 if not subwords:
                     continue
 
-                for subword in word.translate(TRANSLATE_PUNCTUATION).strip().split():
+                for subword in (
+                    word.translate(TRANSLATE_PUNCTUATION).strip().split()
+                ):
                     included_words.append(subword.lower())
 
             search_term_words_no_quotes.append(word)
 
-        sanitized_search_term_no_quotes = " ".join(x for x in search_term_words_no_quotes).strip()
+        sanitized_search_term_no_quotes = " ".join(
+            x for x in search_term_words_no_quotes
+        ).strip()
 
-        # Only modify search term if string also contains non-special characters
+        # Only modify search term if string also contains non-special
+        # characters
         if sanitized_search_term_no_quotes:
             search_term = " ".join(x for x in search_term_words if x).strip()
             search_term_no_quotes = sanitized_search_term_no_quotes
 
-        return search_term, search_term_no_quotes, included_words, excluded_words
+        return (
+            search_term,
+            search_term_no_quotes,
+            included_words,
+            excluded_words,
+        )
 
     def process_search_term(self, search_term, mode, room=None, users=None):
 
         search_term = search_term.strip()
 
         if mode == "global":
-            feedback = core.pluginhandler.outgoing_global_search_event(search_term)
+            feedback = core.pluginhandler.outgoing_global_search_event(
+                search_term
+            )
 
             if feedback is not None:
                 search_term = feedback[0]
@@ -232,13 +354,17 @@ class Search:
             if not room:
                 room = next(iter(config.defaults["server"]["autojoin"]), None)
 
-            feedback = core.pluginhandler.outgoing_room_search_event(room, search_term)
+            feedback = core.pluginhandler.outgoing_room_search_event(
+                room, search_term
+            )
 
             if feedback is not None:
                 room, search_term = feedback
 
         elif mode == "buddies":
-            feedback = core.pluginhandler.outgoing_buddy_search_event(search_term)
+            feedback = core.pluginhandler.outgoing_buddy_search_event(
+                search_term
+            )
 
             if feedback is not None:
                 search_term = feedback[0]
@@ -247,13 +373,17 @@ class Search:
             if not users:
                 users = [core.users.login_username]
 
-            feedback = core.pluginhandler.outgoing_user_search_event(users, search_term)
+            feedback = core.pluginhandler.outgoing_user_search_event(
+                users, search_term
+            )
 
             if feedback is not None:
                 users, search_term = feedback
 
         elif mode == "wishlist":
-            feedback = core.pluginhandler.outgoing_wishlist_search_event(search_term)
+            feedback = core.pluginhandler.outgoing_wishlist_search_event(
+                search_term
+            )
 
             if feedback is not None:
                 search_term = feedback[0]
@@ -263,11 +393,20 @@ class Search:
 
         return search_term, room, users
 
-    def do_search(self, search_term, mode, room=None, users=None, switch_page=True):
+    def do_search(
+        self, search_term, mode, room=None, users=None, switch_page=True
+    ):
 
         # Validate search term and run it through plugins
-        search_term, room, users = self.process_search_term(search_term, mode, room, users)
-        search_term, search_term_no_quotes, included_words, excluded_words = self.sanitize_search_term(search_term)
+        search_term, room, users = self.process_search_term(
+            search_term, mode, room, users
+        )
+        (
+            search_term,
+            search_term_no_quotes,
+            included_words,
+            excluded_words,
+        ) = self.sanitize_search_term(search_term)
 
         # Get a new search token
         self.token = slskmessages.increment_token(self.token)
@@ -281,7 +420,7 @@ class Search:
             items.insert(0, search_term)
 
             # Clear old items
-            del items[self.SEARCH_HISTORY_LIMIT:]
+            del items[self.SEARCH_HISTORY_LIMIT :]
             config.write_configuration()
 
         if mode == "global":
@@ -296,27 +435,40 @@ class Search:
         elif mode == "user":
             self.do_peer_search(search_term_no_quotes, users)
 
-        search = self.add_search(search_term, included_words, excluded_words, mode, room, users)
+        search = self.add_search(
+            search_term,
+            included_words,
+            excluded_words,
+            mode,
+            room,
+            users,
+        )
         events.emit("add-search", search.token, search, switch_page)
 
     def do_global_search(self, text):
         core.send_message_to_server(slskmessages.FileSearch(self.token, text))
 
-        # Request a list of related searches from the server.
-        # Seemingly non-functional since 2018 (always receiving empty lists).
+        # Request a list of related searches from the server. Seemingly
+        # non-functional since 2018 (always receiving empty lists).
 
         # core.send_message_to_server(slskmessages.RelatedSearch(text))
 
     def do_rooms_search(self, text, room):
-        core.send_message_to_server(slskmessages.RoomSearch(room, self.token, text))
+        core.send_message_to_server(
+            slskmessages.RoomSearch(room, self.token, text)
+        )
 
     def do_buddies_search(self, text):
         for username in core.buddies.users:
-            core.send_message_to_server(slskmessages.UserSearch(username, self.token, text))
+            core.send_message_to_server(
+                slskmessages.UserSearch(username, self.token, text)
+            )
 
     def do_peer_search(self, text, users):
         for username in users:
-            core.send_message_to_server(slskmessages.UserSearch(username, self.token, text))
+            core.send_message_to_server(
+                slskmessages.UserSearch(username, self.token, text)
+            )
 
     def do_wishlist_search(self, token, text):
 
@@ -341,7 +493,9 @@ class Search:
         term = searches.pop()
         searches.insert(0, term)
 
-        term, term_no_quotes, _included_words, _excluded_words = self.sanitize_search_term(term)
+        term, term_no_quotes, _included_words, _excluded_words = (
+            self.sanitize_search_term(term)
+        )
 
         for search in self.searches.values():
             if search.term == term and search.mode == "wishlist":
@@ -356,19 +510,35 @@ class Search:
 
         # Get a new search token
         self.token = slskmessages.increment_token(self.token)
-        wish_sanitized, _wish_no_quotes, included_words, excluded_words = self.sanitize_search_term(wish)
+        (
+            wish_sanitized,
+            _wish_no_quotes,
+            included_words,
+            excluded_words,
+        ) = self.sanitize_search_term(wish)
 
         if wish not in config.sections["server"]["autosearch"]:
             config.sections["server"]["autosearch"].append(wish)
             config.write_configuration()
 
-        self.add_search(wish_sanitized, included_words, excluded_words, mode="wishlist", is_ignored=True)
+        self.add_search(
+            wish_sanitized,
+            included_words,
+            excluded_words,
+            mode="wishlist",
+            is_ignored=True,
+        )
         events.emit("add-wish", wish)
 
     def remove_wish(self, wish):
 
         if wish in config.sections["server"]["autosearch"]:
-            wish_sanitized, _wish_no_quotes, _included_words, _excluded_words = self.sanitize_search_term(wish)
+            (
+                wish_sanitized,
+                _wish_no_quotes,
+                _included_words,
+                _excluded_words,
+            ) = self.sanitize_search_term(wish)
 
             config.sections["server"]["autosearch"].remove(wish)
             config.write_configuration()
@@ -389,23 +559,36 @@ class Search:
         self.wishlist_interval = msg.seconds
 
         if self.wishlist_interval > 0:
-            log.add_search(_("Wishlist wait period set to %s seconds"), self.wishlist_interval)
+            log.add_search(
+                _("Wishlist wait period set to %s seconds"),
+                self.wishlist_interval,
+            )
 
             events.cancel_scheduled(self._wishlist_timer_id)
             self._wishlist_timer_id = events.schedule(
-                delay=self.wishlist_interval, callback=self.do_wishlist_search_interval, repeat=True)
+                delay=self.wishlist_interval,
+                callback=self.do_wishlist_search_interval,
+                repeat=True,
+            )
 
     def _excluded_search_phrases(self, msg):
         """Server code 160."""
 
         if self.excluded_phrases and self.excluded_phrases != msg.phrases:
-            log.add_search("Previous list of excluded search phrases: %s", self.excluded_phrases)
+            log.add_search(
+                "Previous list of excluded search phrases: %s",
+                self.excluded_phrases,
+            )
 
         self.excluded_phrases = msg.phrases
-        log.add_search("Server provided %(num_phrases)s excluded search phrase(s): %(phrases)s", {
-            "num_phrases": len(msg.phrases),
-            "phrases": str(msg.phrases)
-        })
+        log.add_search(
+            "Server provided %(num_phrases)s excluded search phrase(s):"
+            " %(phrases)s",
+            {
+                "num_phrases": len(msg.phrases),
+                "phrases": str(msg.phrases),
+            },
+        )
 
     def _file_search_response(self, msg):
         """Peer code 9."""
@@ -433,14 +616,22 @@ class Search:
     def _file_search_request_server(self, msg):
         """Server code 26, 42 and 120."""
 
-        self._process_search_request(msg.searchterm, msg.search_username, msg.token, direct=True)
-        core.pluginhandler.search_request_notification(msg.searchterm, msg.search_username, msg.token)
+        self._process_search_request(
+            msg.searchterm, msg.search_username, msg.token, direct=True
+        )
+        core.pluginhandler.search_request_notification(
+            msg.searchterm, msg.search_username, msg.token
+        )
 
     def _file_search_request_distributed(self, msg):
         """Distrib code 3."""
 
-        self._process_search_request(msg.searchterm, msg.search_username, msg.token, direct=False)
-        core.pluginhandler.distrib_search_notification(msg.searchterm, msg.search_username, msg.token)
+        self._process_search_request(
+            msg.searchterm, msg.search_username, msg.token, direct=False
+        )
+        core.pluginhandler.distrib_search_notification(
+            msg.searchterm, msg.search_username, msg.token
+        )
 
     # Incoming Search Requests #
 
@@ -448,26 +639,38 @@ class Search:
 
         file_path, *_unused = fileinfo
         file_path_lower = file_path.lower()
-        excluded_phrase = next((phrase for phrase in self.excluded_phrases if phrase in file_path_lower), None)
+        excluded_phrase = next(
+            (
+                phrase
+                for phrase in self.excluded_phrases
+                if phrase in file_path_lower
+            ),
+            None,
+        )
 
         # Check if file path contains phrase excluded from the search network
         if excluded_phrase:
-            log.add_search(('Excluding file %(file)s from search response because server '
-                            'disallowed phrase "%(phrase)s"'), {
-                "file": file_path,
-                "phrase": excluded_phrase
-            })
+            log.add_search(
+                "Excluding file %(file)s from search response because"
+                ' server disallowed phrase "%(phrase)s"',
+                {"file": file_path, "phrase": excluded_phrase},
+            )
             return
 
         file_list.append(fileinfo)
 
     def _create_file_info_list(self, results, max_results, permission_level):
-        """Given a list of file indices, retrieve the file information for each index."""
+        """Given a list of file indices, retrieve the file information for
+        each index."""
 
-        reveal_buddy_shares = config.sections["transfers"]["reveal_buddy_shares"]
-        reveal_trusted_shares = config.sections["transfers"]["reveal_trusted_shares"]
-        is_buddy = (permission_level == PermissionLevel.BUDDY)
-        is_trusted = (permission_level == PermissionLevel.TRUSTED)
+        reveal_buddy_shares = config.sections["transfers"][
+            "reveal_buddy_shares"
+        ]
+        reveal_trusted_shares = config.sections["transfers"][
+            "reveal_trusted_shares"
+        ]
+        is_buddy = permission_level == PermissionLevel.BUDDY
+        is_trusted = permission_level == PermissionLevel.TRUSTED
 
         fileinfos = []
         private_fileinfos = []
@@ -544,7 +747,14 @@ class Search:
 
         return results
 
-    def _create_search_result_list(self, included_words, excluded_words, partial_words, max_results, word_index):
+    def _create_search_result_list(
+        self,
+        included_words,
+        excluded_words,
+        partial_words,
+        max_results,
+        word_index,
+    ):
         """Returns a list of common file indices for each word in a search
         term."""
 
@@ -552,16 +762,30 @@ class Search:
 
         try:
             # Start with the word with the least results to reduce memory usage
-            start_word = min(included_words, key=lambda x: len(word_index[x]), default=None)
+            start_word = min(
+                included_words,
+                key=lambda x: len(word_index[x]),
+                default=None,
+            )
 
         except KeyError:
             # No results
             return results
 
-        has_single_word = (sum(len(words) for words in (included_words, excluded_words, partial_words)) == 1)
+        has_single_word = (
+            sum(
+                len(words)
+                for words in (
+                    included_words,
+                    excluded_words,
+                    partial_words,
+                )
+            )
+            == 1
+        )
         included_words.discard(start_word)
 
-        # Partial search words (e.g. *ello)
+        # Partial search words (e.g. \*ello)
         for partial_word in partial_words:
             partial_results = set()
             num_partial_results = 0
@@ -571,8 +795,9 @@ class Search:
                     indices = word_index[complete_word]
 
                     if has_single_word:
-                        # Attempt to avoid large memory usage if someone searches for e.g. "*lac"
-                        indices = indices[:max_results - num_partial_results]
+                        # Attempt to avoid large memory usage if someone
+                        # searches for e.g. "\*lac"
+                        indices = indices[: max_results - num_partial_results]
 
                     partial_results.update(indices)
 
@@ -594,7 +819,8 @@ class Search:
             start_results = word_index[start_word]
 
             if has_single_word:
-                # Attempt to avoid large memory usage if someone searches for e.g. "flac"
+                # Attempt to avoid large memory usage if someone searches for
+                # e.g. "flac"
                 start_results = start_results[:max_results]
 
             results = self._update_search_results(results, start_results)
@@ -603,7 +829,9 @@ class Search:
                 if included_word not in word_index:
                     return None
 
-                results = self._update_search_results(results, word_index[included_word])
+                results = self._update_search_results(
+                    results, word_index[included_word]
+                )
 
         # Excluded search words (e.g. -hello)
         if results:
@@ -611,14 +839,18 @@ class Search:
                 if excluded_word not in word_index:
                     continue
 
-                results = self._update_search_results(results, word_index[excluded_word], excluded=True)
+                results = self._update_search_results(
+                    results, word_index[excluded_word], excluded=True
+                )
 
         if not results:
             return None
 
         return results
 
-    def _process_search_request(self, search_term, username, token, direct=False):
+    def _process_search_request(
+        self, search_term, username, token, direct=False
+    ):
         """This section is accessed every time a search request arrives,
         several times per second.
 
@@ -637,8 +869,8 @@ class Search:
             return
 
         if not direct and username == core.users.login_username:
-            # We shouldn't send a search response if we initiated the search request,
-            # unless we're specifically searching our own username
+            # We shouldn't send a search response if we initiated the search
+            # request, unless we're specifically searching our own username
             return
 
         max_results = config.sections["searches"]["maxresults"]
@@ -647,10 +879,13 @@ class Search:
             return
 
         if len(search_term) < config.sections["searches"]["min_search_chars"]:
-            # Don't send search response if search term contains too few characters
+            # Don't send search response if search term contains too few
+            # characters
             return
 
-        permission_level, _reject_reason = core.shares.check_user_permission(username)
+        permission_level, _reject_reason = core.shares.check_user_permission(
+            username
+        )
 
         if permission_level == PermissionLevel.BANNED:
             return
@@ -673,43 +908,64 @@ class Search:
                     continue
 
                 if word.startswith("-"):
-                    for subword in word.translate(TRANSLATE_PUNCTUATION).split():
+                    for subword in word.translate(
+                        TRANSLATE_PUNCTUATION
+                    ).split():
                         excluded_words.add(subword)
 
                 elif word.startswith("*"):
-                    for subword in word.translate(TRANSLATE_PUNCTUATION).split():
+                    for subword in word.translate(
+                        TRANSLATE_PUNCTUATION
+                    ).split():
                         partial_words.add(subword)
 
         # Strip punctuation
         search_term = search_term.translate(TRANSLATE_PUNCTUATION).strip()
-        included_words = (set(search_term.split()) - excluded_words - partial_words)
+        included_words = (
+            set(search_term.split()) - excluded_words - partial_words
+        )
 
         # Find common file matches for each word in search term
         results = self._create_search_result_list(
-            included_words, excluded_words, partial_words, max_results, word_index)
+            included_words,
+            excluded_words,
+            partial_words,
+            max_results,
+            word_index,
+        )
 
         if not results:
             return
 
         # Get file information for each file index in result list
-        num_results, fileinfos, private_fileinfos = self._create_file_info_list(
-            results, max_results, permission_level)
+        num_results, fileinfos, private_fileinfos = (
+            self._create_file_info_list(results, max_results, permission_level)
+        )
 
         if not num_results:
             return
 
-        core.send_message_to_peer(username, slskmessages.FileSearchResponse(
-            search_username=core.users.login_username,
-            token=token,
-            shares=fileinfos,
-            freeulslots=core.uploads.is_new_upload_accepted(),
-            ulspeed=core.uploads.upload_speed,
-            inqueue=core.uploads.get_upload_queue_size(username),
-            private_shares=private_fileinfos
-        ))
+        core.send_message_to_peer(
+            username,
+            slskmessages.FileSearchResponse(
+                search_username=core.users.login_username,
+                token=token,
+                shares=fileinfos,
+                freeulslots=core.uploads.is_new_upload_accepted(),
+                ulspeed=core.uploads.upload_speed,
+                inqueue=core.uploads.get_upload_queue_size(username),
+                private_shares=private_fileinfos,
+            ),
+        )
 
-        log.add_search(_('User %(user)s is searching for "%(query)s", found %(num)i results'), {
-            "user": username,
-            "query": original_search_term,
-            "num": num_results
-        })
+        log.add_search(
+            _(
+                'User %(user)s is searching for "%(query)s", found %(num)i'
+                " results"
+            ),
+            {
+                "user": username,
+                "query": original_search_term,
+                "num": num_results,
+            },
+        )

@@ -1,28 +1,25 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2016 Mutnick <muhing@yahoo.com>
-# COPYRIGHT (C) 2013 eLvErDe <gandalf@le-vert.net>
-# COPYRIGHT (C) 2008-2012 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2009 hedonist <ak@sensi.org>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
-# COPYRIGHT (C) 2001-2003 Alexander Kanavin
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2016-2017
+# Michael Labouebe <gfarmerfr@free.fr> COPYRIGHT (C) 2016 Mutnick
+# <muhing@yahoo.com> COPYRIGHT (C) 2013 eLvErDe <gandalf@le-vert.net> COPYRIGHT
+# (C) 2008-2012 quinox <quinox@users.sf.net> COPYRIGHT (C) 2009 hedonist
+# <ak@sensi.org> COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
+# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org> COPYRIGHT (C)
+# 2001-2003 Alexander Kanavin
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import json
 import os
@@ -60,14 +57,41 @@ class TransferStatus:
 class Transfer:
     """This class holds information about a single transfer."""
 
-    __slots__ = ("sock", "username", "virtual_path",
-                 "folder_path", "token", "size", "file_handle", "start_time", "last_update",
-                 "current_byte_offset", "last_byte_offset", "speed", "time_elapsed",
-                 "time_left", "modifier", "queue_position", "file_attributes",
-                 "iterator", "status", "legacy_attempt", "size_changed", "request_timer_id")
+    __slots__ = (
+        "sock",
+        "username",
+        "virtual_path",
+        "folder_path",
+        "token",
+        "size",
+        "file_handle",
+        "start_time",
+        "last_update",
+        "current_byte_offset",
+        "last_byte_offset",
+        "speed",
+        "time_elapsed",
+        "time_left",
+        "modifier",
+        "queue_position",
+        "file_attributes",
+        "iterator",
+        "status",
+        "legacy_attempt",
+        "size_changed",
+        "request_timer_id",
+    )
 
-    def __init__(self, username, virtual_path=None, folder_path=None, size=0, file_attributes=None,
-                 status=None, current_byte_offset=None):
+    def __init__(
+        self,
+        username,
+        virtual_path=None,
+        folder_path=None,
+        size=0,
+        file_attributes=None,
+        status=None,
+        current_byte_offset=None,
+    ):
         self.username = username
         self.virtual_path = virtual_path
         self.folder_path = folder_path
@@ -117,7 +141,7 @@ class Transfers:
             ("quit", self._quit),
             ("server-login", self._server_login),
             ("server-disconnect", self._server_disconnect),
-            ("start", self._start)
+            ("start", self._start),
         ):
             events.connect(event_name, callback)
 
@@ -152,10 +176,16 @@ class Transfers:
 
     def _server_disconnect(self, _msg):
 
-        for users in (self.queued_users, self.active_users, self.failed_users):
+        for users in (
+            self.queued_users,
+            self.active_users,
+            self.failed_users,
+        ):
             for transfers in users.copy().values():
                 for transfer in transfers.copy().values():
-                    self._abort_transfer(transfer, status=TransferStatus.USER_LOGGED_OFF)
+                    self._abort_transfer(
+                        transfer, status=TransferStatus.USER_LOGGED_OFF
+                    )
 
         self.queued_transfers.clear()
         self.queued_users.clear()
@@ -178,8 +208,12 @@ class Transfers:
             return None
 
         with open(transfers_file, encoding="utf-8") as handle:
-            # JSON stores file attribute types as strings, convert them back to integers with object_hook
-            return json.load(handle, object_hook=lambda d: {int(k): v for k, v in d.items()})
+            # JSON stores file attribute types as strings, convert them back to
+            # integers with object_hook
+            return json.load(
+                handle,
+                object_hook=lambda d: {int(k): v for k, v in d.items()},
+            )
 
     @staticmethod
     def _load_legacy_transfers_file(transfers_file):
@@ -192,6 +226,7 @@ class Transfers:
 
         with open(transfers_file, "rb") as handle:
             from pynicotine.shares import RestrictedUnpickler
+
             return RestrictedUnpickler(handle, encoding="utf-8").load()
 
     def _load_transfers(self):
@@ -208,23 +243,29 @@ class Transfers:
             return None
 
         if isinstance(loaded_file_attributes, dict):
-            # Found dictionary with file attributes (Nicotine+ >=3.3.0), nothing more to do
+            # Found dictionary with file attributes (Nicotine+ >=3.3.0),
+            # nothing more to do
             return loaded_file_attributes
 
         try:
             # Check if a dictionary is represented in string format
-            return {int(k): v for k, v in literal_eval(loaded_file_attributes).items()}
+            return {
+                int(k): v
+                for k, v in literal_eval(loaded_file_attributes).items()
+            }
 
         except (AttributeError, ValueError):
             pass
 
-        # Legacy bitrate/duration strings (Nicotine+ <3.3.0)
+        # Legacy bitrate/duration strings (Nicotine+ \<3.3.0)
         file_attributes = {}
         bitrate = str(loaded_file_attributes)
-        is_vbr = (" (vbr)" in bitrate)
+        is_vbr = " (vbr)" in bitrate
 
         try:
-            file_attributes[slskmessages.FileAttribute.BITRATE] = int(bitrate.replace(" (vbr)", ""))
+            file_attributes[slskmessages.FileAttribute.BITRATE] = int(
+                bitrate.replace(" (vbr)", "")
+            )
 
             if is_vbr:
                 file_attributes[slskmessages.FileAttribute.VBR] = int(is_vbr)
@@ -251,14 +292,20 @@ class Transfers:
 
         return file_attributes
 
-    def _get_stored_transfers(self, transfers_file_path, load_func, load_only_finished=False):
+    def _get_stored_transfers(
+        self, transfers_file_path, load_func, load_only_finished=False
+    ):
 
         transfer_rows = load_file(transfers_file_path, load_func)
 
         if not transfer_rows:
             return
 
-        allowed_statuses = {TransferStatus.PAUSED, TransferStatus.FILTERED, TransferStatus.FINISHED}
+        allowed_statuses = {
+            TransferStatus.PAUSED,
+            TransferStatus.FILTERED,
+            TransferStatus.FINISHED,
+        }
         normalized_paths = {}
 
         for transfer_row in transfer_rows:
@@ -316,16 +363,25 @@ class Transfers:
             if num_attributes >= 6:
                 loaded_byte_offset = transfer_row[5]
 
-                if loaded_byte_offset and isinstance(loaded_byte_offset, (int, float)):
+                if loaded_byte_offset and isinstance(
+                    loaded_byte_offset, (int, float)
+                ):
                     current_byte_offset = loaded_byte_offset // 1
 
             # File attributes
-            file_attributes = self._load_file_attributes(num_attributes, transfer_row)
+            file_attributes = self._load_file_attributes(
+                num_attributes, transfer_row
+            )
 
             yield (
                 Transfer(
-                    username, virtual_path, folder_path, size, file_attributes, status,
-                    current_byte_offset
+                    username,
+                    virtual_path,
+                    folder_path,
+                    size,
+                    file_attributes,
+                    status,
+                    current_byte_offset,
                 )
             )
 
@@ -344,10 +400,13 @@ class Transfers:
             file_handle.close()
 
         except Exception as error:
-            log.add_transfer("Failed to close file %(filename)s: %(error)s", {
-                "filename": file_handle.name.decode("utf-8", "replace"),
-                "error": error
-            })
+            log.add_transfer(
+                "Failed to close file %(filename)s: %(error)s",
+                {
+                    "filename": file_handle.name.decode("utf-8", "replace"),
+                    "error": error,
+                },
+            )
 
     # Limits #
 
@@ -364,7 +423,13 @@ class Transfers:
     def _append_transfer(self, transfer):
         raise NotImplementedError
 
-    def _abort_transfer(self, transfer, denied_message=None, status=None, update_parent=True):
+    def _abort_transfer(
+        self,
+        transfer,
+        denied_message=None,
+        status=None,
+        update_parent=True,
+    ):
         raise NotImplementedError
 
     def _update_transfer(self, transfer):
@@ -424,15 +489,19 @@ class Transfers:
         transfer.speed = 0
         transfer.queue_position = 0
 
-        # When our port is closed, certain clients can take up to ~30 seconds before they
-        # initiate a 'F' connection, since they only send an indirect connection request after
-        # attempting to connect to our port for a certain time period.
-        # Known clients: Nicotine+ 2.2.0 - 3.2.0, 2 s; Soulseek NS, ~20 s; soulseeX, ~30 s.
-        # To account for potential delays while initializing the connection, add 15 seconds
-        # to the timeout value.
+        # When our port is closed, certain clients can take up to ~30 seconds
+        # before they initiate a 'F' connection, since they only send an
+        # indirect connection request after attempting to connect to our port
+        # for a certain time period. Known clients: Nicotine+ 2.2.0 - 3.2.0, 2
+        # s; Soulseek NS, ~20 s; soulseeX, ~30 s. To account for potential
+        # delays while initializing the connection, add 15 seconds to the
+        # timeout value.
 
         transfer.request_timer_id = events.schedule(
-            delay=45, callback=self._transfer_timeout, callback_args=(transfer,))
+            delay=45,
+            callback=self._transfer_timeout,
+            callback_args=(transfer,),
+        )
 
         self.active_users[transfer.username][token] = transfer
 
@@ -450,7 +519,9 @@ class Transfers:
             del self.active_users[username]
 
         if transfer.speed:
-            self.total_bandwidth = max(0, self.total_bandwidth - transfer.speed)
+            self.total_bandwidth = max(
+                0, self.total_bandwidth - transfer.speed
+            )
 
         if transfer.request_timer_id is not None:
             events.cancel_scheduled(transfer.request_timer_id)
@@ -481,14 +552,22 @@ class Transfers:
         """Get a list of transfers to dump to file."""
         for transfer in self.transfers.values():
             yield [
-                transfer.username, transfer.virtual_path, transfer.folder_path, transfer.status, transfer.size,
-                transfer.current_byte_offset, transfer.file_attributes
+                transfer.username,
+                transfer.virtual_path,
+                transfer.folder_path,
+                transfer.status,
+                transfer.size,
+                transfer.current_byte_offset,
+                transfer.file_attributes,
             ]
 
     def _save_transfers_callback(self, file_handle):
 
-        # Dump every transfer to the file individually to avoid large memory usage
-        json_encoder = json.JSONEncoder(check_circular=False, ensure_ascii=False)
+        # Dump every transfer to the file individually to avoid large memory
+        # usage
+        json_encoder = json.JSONEncoder(
+            check_circular=False, ensure_ascii=False
+        )
         is_first_item = True
 
         file_handle.write("[")
@@ -511,7 +590,9 @@ class Transfers:
             return
 
         config.create_data_folder()
-        write_file_and_backup(self.transfers_file_path, self._save_transfers_callback)
+        write_file_and_backup(
+            self.transfers_file_path, self._save_transfers_callback
+        )
 
 
 class Statistics:
@@ -522,19 +603,23 @@ class Statistics:
 
         for event_name, callback in (
             ("quit", self._quit),
-            ("start", self._start)
+            ("start", self._start),
         ):
             events.connect(event_name, callback)
 
     def _start(self):
 
         # Only populate total since date on first run
-        if (not config.sections["statistics"]["since_timestamp"]
-                and config.sections["statistics"] == config.defaults["statistics"]):
+        if (
+            not config.sections["statistics"]["since_timestamp"]
+            and config.sections["statistics"] == config.defaults["statistics"]
+        ):
             config.sections["statistics"]["since_timestamp"] = int(time.time())
 
         for stat_id in config.defaults["statistics"]:
-            self.session_stats[stat_id] = 0 if stat_id != "since_timestamp" else int(time.time())
+            self.session_stats[stat_id] = (
+                0 if stat_id != "since_timestamp" else int(time.time())
+            )
 
     def _quit(self):
         self.session_stats.clear()
@@ -551,7 +636,9 @@ class Statistics:
         session_stat_value = self.session_stats[stat_id]
         total_stat_value = config.sections["statistics"][stat_id]
 
-        events.emit("update-stat", stat_id, session_stat_value, total_stat_value)
+        events.emit(
+            "update-stat", stat_id, session_stat_value, total_stat_value
+        )
 
     def update_stats(self):
         for stat_id in self.session_stats:
@@ -560,7 +647,11 @@ class Statistics:
     def reset_stats(self):
 
         for stat_id in config.defaults["statistics"]:
-            stat_value = 0 if stat_id != "since_timestamp" else int(time.time())
-            self.session_stats[stat_id] = config.sections["statistics"][stat_id] = stat_value
+            stat_value = (
+                0 if stat_id != "since_timestamp" else int(time.time())
+            )
+            self.session_stats[stat_id] = config.sections["statistics"][
+                stat_id
+            ] = stat_value
 
         self.update_stats()

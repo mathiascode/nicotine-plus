@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2022-2023 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 from pynicotine.config import config
 from pynicotine.gtkgui.application import GTK_API_VERSION
@@ -35,13 +34,13 @@ class TransferSpeeds(Popover):
             self.speed_spinner,
             self.use_alt_limit_radio,
             self.use_limit_radio,
-            self.use_unlimited_speed_radio
+            self.use_unlimited_speed_radio,
         ) = ui.load(scope=self, path=f"popovers/{transfer_type}speeds.ui")
 
         super().__init__(
             window=window,
             content_box=self.container,
-            show_callback=self.on_show
+            show_callback=self.on_show,
         )
 
     def set_menu_button(self, menu_button):
@@ -70,35 +69,54 @@ class TransferSpeeds(Popover):
         else:
             config.sections["transfers"][use_limit_config_key] = "unlimited"
 
-        if prev_active_limit != config.sections["transfers"][use_limit_config_key]:
+        if (
+            prev_active_limit
+            != config.sections["transfers"][use_limit_config_key]
+        ):
             self.update_transfer_limits()
 
     def on_limit_changed(self, *_args):
 
         speed_limit = self.speed_spinner.get_value_as_int()
 
-        if speed_limit == config.sections["transfers"][f"{self.transfer_type}limit"]:
+        if (
+            speed_limit
+            == config.sections["transfers"][f"{self.transfer_type}limit"]
+        ):
             return
 
-        config.sections["transfers"][f"{self.transfer_type}limit"] = speed_limit
+        config.sections["transfers"][
+            f"{self.transfer_type}limit"
+        ] = speed_limit
         self.update_transfer_limits()
 
     def on_alt_limit_changed(self, *_args):
 
         alt_speed_limit = self.alt_speed_spinner.get_value_as_int()
 
-        if alt_speed_limit == config.sections["transfers"][f"{self.transfer_type}limitalt"]:
+        if (
+            alt_speed_limit
+            == config.sections["transfers"][f"{self.transfer_type}limitalt"]
+        ):
             return
 
-        config.sections["transfers"][f"{self.transfer_type}limitalt"] = alt_speed_limit
+        config.sections["transfers"][
+            f"{self.transfer_type}limitalt"
+        ] = alt_speed_limit
         self.update_transfer_limits()
 
     def on_show(self, *_args):
 
-        self.alt_speed_spinner.set_value(config.sections["transfers"][f"{self.transfer_type}limitalt"])
-        self.speed_spinner.set_value(config.sections["transfers"][f"{self.transfer_type}limit"])
+        self.alt_speed_spinner.set_value(
+            config.sections["transfers"][f"{self.transfer_type}limitalt"]
+        )
+        self.speed_spinner.set_value(
+            config.sections["transfers"][f"{self.transfer_type}limit"]
+        )
 
-        use_speed_limit = config.sections["transfers"][f"use_{self.transfer_type}_speed_limit"]
+        use_speed_limit = config.sections["transfers"][
+            f"use_{self.transfer_type}_speed_limit"
+        ]
 
         if use_speed_limit == "primary":
             self.use_limit_radio.set_active(True)

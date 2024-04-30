@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pynicotine
 from pynicotine import slskmessages
@@ -68,7 +67,7 @@ class Users:
             ("server-login", self._server_login),
             ("user-stats", self._user_stats),
             ("user-status", self._user_status),
-            ("watch-user", self._watch_user)
+            ("watch-user", self._watch_user),
         ):
             events.connect(event_name, callback)
 
@@ -77,12 +76,19 @@ class Users:
         if save_state:
             config.sections["server"]["away"] = is_away
 
-        self.login_status = slskmessages.UserStatus.AWAY if is_away else slskmessages.UserStatus.ONLINE
+        self.login_status = (
+            slskmessages.UserStatus.AWAY
+            if is_away
+            else slskmessages.UserStatus.ONLINE
+        )
         self.request_set_status(self.login_status)
 
         # Fake a user status message, since server doesn't send updates when we
         # disable away mode
-        events.emit("user-status", slskmessages.GetUserStatus(self.login_username, self.login_status))
+        events.emit(
+            "user-status",
+            slskmessages.GetUserStatus(self.login_username, self.login_status),
+        )
 
     def open_privileges_url(self):
 
@@ -100,7 +106,9 @@ class Users:
 
     def request_give_privileges(self, username, days):
         if UINT32_LIMIT >= days > 0:
-            core.send_message_to_server(slskmessages.GivePrivileges(username, days))
+            core.send_message_to_server(
+                slskmessages.GivePrivileges(username, days)
+            )
 
     def request_ip_address(self, username, notify=False):
 
@@ -127,7 +135,9 @@ class Users:
             return
 
         core.send_message_to_server(slskmessages.WatchUser(username))
-        core.send_message_to_server(slskmessages.GetUserStatus(username))  # Get privilege status
+        core.send_message_to_server(
+            slskmessages.GetUserStatus(username)
+        )  # Get privilege status
 
         self.watched[username] = WatchedUser(username)
 
@@ -136,7 +146,9 @@ class Users:
         self.login_status = slskmessages.UserStatus.OFFLINE
 
         if core.pluginhandler:
-            core.pluginhandler.server_disconnect_notification(manual_disconnect)
+            core.pluginhandler.server_disconnect_notification(
+                manual_disconnect
+            )
 
         # Clean up connections
         self.addresses.clear()
@@ -168,7 +180,9 @@ class Users:
 
             if msg.ip_address is not None:
                 self.public_ip_address = msg.ip_address
-                self.countries[username] = country_code = core.network_filter.get_country_code(msg.ip_address)
+                self.countries[username] = country_code = (
+                    core.network_filter.get_country_code(msg.ip_address)
+                )
                 events.emit("user-country", username, country_code)
 
             if msg.banner:
@@ -181,7 +195,11 @@ class Users:
             events.emit("invalid-password")
             return
 
-        log.add(_("Unable to connect to the server. Reason: %s"), msg.reason, title=_("Cannot Connect"))
+        log.add(
+            _("Unable to connect to the server. Reason: %s"),
+            msg.reason,
+            title=_("Cannot Connect"),
+        )
 
     def _get_peer_address(self, msg):
         """Server code 3."""
@@ -189,7 +207,7 @@ class Users:
         username = msg.user
         notify = self._ip_requested.pop(username, None)
         ip_address = msg.ip_address
-        user_offline = (ip_address == "0.0.0.0")
+        user_offline = ip_address == "0.0.0.0"
         country_code = core.network_filter.get_country_code(ip_address)
 
         if user_offline:
@@ -197,10 +215,9 @@ class Users:
             self.countries.pop(username, None)
 
         elif username in self.watched or username in self.statuses:
-            # Only cache IP address of watched users, otherwise we won't know if
-            # a user reconnects and changes their IP address.
-            # Don't update our own IP address, since we already store a local IP
-            # address.
+            # Only cache IP address of watched users, otherwise we won't know
+            # if a user reconnects and changes their IP address. Don't update
+            # our own IP address, since we already store a local IP address.
 
             if username != self.login_username:
                 self.addresses[username] = (ip_address, msg.port)
@@ -209,41 +226,59 @@ class Users:
             events.emit("user-country", username, country_code)
 
         if not notify:
-            core.pluginhandler.user_resolve_notification(username, ip_address, msg.port)
+            core.pluginhandler.user_resolve_notification(
+                username, ip_address, msg.port
+            )
             return
 
-        core.pluginhandler.user_resolve_notification(username, ip_address, msg.port, country_code)
+        core.pluginhandler.user_resolve_notification(
+            username, ip_address, msg.port, country_code
+        )
 
         if user_offline:
-            log.add(_("Cannot retrieve the IP of user %s, since this user is offline"), username)
+            log.add(
+                _(
+                    "Cannot retrieve the IP of user %s, since this user is"
+                    " offline"
+                ),
+                username,
+            )
             return
 
         if country_code:
-            country_name = core.network_filter.COUNTRIES.get(country_code, _("Unknown"))
+            country_name = core.network_filter.COUNTRIES.get(
+                country_code, _("Unknown")
+            )
             country = f" ({country_code} / {country_name})"
         else:
             country = ""
 
-        log.add(_("IP address of user %(user)s: %(ip)s, port %(port)i%(country)s"), {
-            "user": username,
-            "ip": msg.ip_address,
-            "port": msg.port,
-            "country": country
-        }, title=_("IP Address"))
+        log.add(
+            _("IP address of user %(user)s: %(ip)s, port %(port)i%(country)s"),
+            {
+                "user": username,
+                "ip": msg.ip_address,
+                "port": msg.port,
+                "country": country,
+            },
+            title=_("IP Address"),
+        )
 
     def _watch_user(self, msg):
         """Server code 5."""
 
         if msg.userexists:
-            if msg.status is not None:  # Soulfind server support, sends userexists but no additional data
+            if msg.status is not None:
+                # Soulfind server support, sends userexists but no additional
+                # data
                 events.emit("user-stats", msg)
             return
 
-        # User does not exist. The server will not keep us informed if the user is created
-        # later, so we need to remove the user from our list.
-        # Due to a bug, the server will in rare cases tell us a user doesn't exist, while
-        # the user is actually online. Remove the user when we receive a UserStatus message
-        # telling us the user is offline.
+        # User does not exist. The server will not keep us informed if the user
+        # is created later, so we need to remove the user from our list. Due to
+        # a bug, the server will in rare cases tell us a user doesn't exist,
+        # while the user is actually online. Remove the user when we receive a
+        # UserStatus message telling us the user is offline.
         self._pending_watch_removals.add(msg.user)
 
     def _user_status(self, msg):
@@ -260,20 +295,25 @@ class Users:
             elif username in self.privileged:
                 self.privileged.remove(username)
 
-        if status not in {slskmessages.UserStatus.OFFLINE, slskmessages.UserStatus.ONLINE,
-                          slskmessages.UserStatus.AWAY}:
-            log.add_debug("Received an unknown status %(status)s for user %(user)s from the server", {
-                "status": status,
-                "user": username
-            })
+        if status not in {
+            slskmessages.UserStatus.OFFLINE,
+            slskmessages.UserStatus.ONLINE,
+            slskmessages.UserStatus.AWAY,
+        }:
+            log.add_debug(
+                "Received an unknown status %(status)s for user"
+                " %(user)s from the server",
+                {"status": status, "user": username},
+            )
 
-        # Ignore invalid status updates for our own username in case we've already
-        # changed our status again by the time they arrive from the server
+        # Ignore invalid status updates for our own username in case we've
+        # already changed our status again by the time they arrive from the
+        # server
         if username == self.login_username and status != self.login_status:
             msg.user = None
             return
 
-        is_watched = (username in self.watched)
+        is_watched = username in self.watched
 
         # User went offline, reset stored IP address and country
         if status == slskmessages.UserStatus.OFFLINE:
@@ -287,11 +327,13 @@ class Users:
         elif is_watched:
             user_status = self.statuses.get(username)
 
-            # Online user seen for the first time, request IP address and country
+            # Online user seen for the first time, request IP address and
+            # country
             if user_status is None:
                 self.request_ip_address(username)
 
-            # Previously watched user logged in again. Server will not send user stats, so request them.
+            # Previously watched user logged in again. Server will not send
+            # user stats, so request them.
             elif user_status == slskmessages.UserStatus.OFFLINE:
                 self.request_user_stats(username)
                 self.request_ip_address(username)
@@ -302,7 +344,9 @@ class Users:
         if is_watched or username in self.statuses:
             self.statuses[username] = status
 
-        core.pluginhandler.user_status_notification(username, status, msg.privileged)
+        core.pluginhandler.user_status_notification(
+            username, status, msg.privileged
+        )
 
     def _connect_to_peer(self, msg):
         """Server code 18."""
@@ -334,12 +378,15 @@ class Users:
             stats.files = files
             stats.folders = folders
 
-        core.pluginhandler.user_stats_notification(msg.user, stats={
-            "avgspeed": upload_speed,
-            "files": files,
-            "dirs": folders,
-            "source": "server"
-        })
+        core.pluginhandler.user_stats_notification(
+            msg.user,
+            stats={
+                "avgspeed": upload_speed,
+                "files": files,
+                "dirs": folders,
+                "source": "server",
+            },
+        )
 
     @staticmethod
     def _admin_message(msg):
@@ -363,19 +410,30 @@ class Users:
         days = hours // 24
 
         if msg.seconds <= 0:
-            log.add(_("You have no Soulseek privileges. While privileges are active, your downloads "
-                      "will be queued ahead of those of non-privileged users."))
+            log.add(
+                _(
+                    "You have no Soulseek privileges. While privileges"
+                    " are active, your downloads will be queued ahead"
+                    " of those of non-privileged users."
+                )
+            )
 
             if self._should_open_privileges_url:
                 self.open_privileges_url()
         else:
-            log.add(_("%(days)i days, %(hours)i hours, %(minutes)i minutes, %(seconds)i seconds of "
-                      "Soulseek privileges left"), {
-                "days": days,
-                "hours": hours % 24,
-                "minutes": mins % 60,
-                "seconds": msg.seconds % 60
-            })
+            log.add(
+                _(
+                    "%(days)i days, %(hours)i hours, %(minutes)i"
+                    " minutes, %(seconds)i seconds of Soulseek"
+                    " privileges left"
+                ),
+                {
+                    "days": days,
+                    "hours": hours % 24,
+                    "minutes": mins % 60,
+                    "seconds": msg.seconds % 60,
+                },
+            )
 
         self.privileges_left = msg.seconds
         self._should_open_privileges_url = False
@@ -387,4 +445,7 @@ class Users:
         config.sections["server"]["passw"] = msg.password
         config.write_configuration()
 
-        log.add(_("Your password has been changed"), title=_("Password Changed"))
+        log.add(
+            _("Your password has been changed"),
+            title=_("Password Changed"),
+        )

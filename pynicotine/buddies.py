@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2021-2024 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import time
 
@@ -26,11 +25,28 @@ from pynicotine.slskmessages import UserStatus
 
 
 class Buddy:
-    __slots__ = ("username", "note", "notify_status", "is_prioritized", "is_trusted", "last_seen",
-                 "country", "status")
+    __slots__ = (
+        "username",
+        "note",
+        "notify_status",
+        "is_prioritized",
+        "is_trusted",
+        "last_seen",
+        "country",
+        "status",
+    )
 
-    def __init__(self, username, note, notify_status, is_prioritized, is_trusted, last_seen,
-                 country, status):
+    def __init__(
+        self,
+        username,
+        note,
+        notify_status,
+        is_prioritized,
+        is_trusted,
+        last_seen,
+        country,
+        status,
+    ):
 
         self.username = username
         self.note = note
@@ -55,7 +71,7 @@ class Buddies:
             ("server-disconnect", self._server_disconnect),
             ("start", self._start),
             ("user-country", self._user_country),
-            ("user-status", self._user_status)
+            ("user-status", self._user_status),
         ):
             events.connect(event_name, callback)
 
@@ -99,7 +115,15 @@ class Buddies:
                 country = ""
                 row.append(country)
 
-            _username, note, notify_status, is_prioritized, is_trusted, last_seen, country = row
+            (
+                _username,
+                note,
+                notify_status,
+                is_prioritized,
+                is_trusted,
+                last_seen,
+                country,
+            ) = row
 
             self.users[username] = user_data = Buddy(
                 username=username,
@@ -109,7 +133,7 @@ class Buddies:
                 is_trusted=is_trusted,
                 last_seen=last_seen,
                 country=country,
-                status=UserStatus.OFFLINE
+                status=UserStatus.OFFLINE,
             )
             events.emit("add-buddy", username, user_data)
 
@@ -155,7 +179,7 @@ class Buddies:
             is_trusted=is_trusted,
             last_seen=last_seen,
             country=country,
-            status=status
+            status=status,
         )
 
         if config.sections["words"]["buddies"]:
@@ -263,7 +287,7 @@ class Buddies:
                 user_data.is_prioritized,
                 user_data.is_trusted,
                 user_data.last_seen,
-                user_data.country
+                user_data.country,
             ])
 
         config.sections["server"]["userlist"] = user_rows
@@ -299,4 +323,6 @@ class Buddies:
             status_text = _("%(user)s is offline")
 
         log.add(status_text, {"user": username})
-        core.notifications.show_notification(status_text % {"user": username}, title=_("Buddy Status"))
+        core.notifications.show_notification(
+            status_text % {"user": username}, title=_("Buddy Status")
+        )

@@ -1,24 +1,22 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2008-2010 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2016-2017
+# Michael Labouebe <gfarmerfr@free.fr> COPYRIGHT (C) 2008-2010 quinox
+# <quinox@users.sf.net> COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
 # COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import time
 
@@ -58,7 +56,7 @@ class UserInfos(IconNotebook):
         super().__init__(
             window,
             parent=window.userinfo_content,
-            parent_page=window.userinfo_page
+            parent_page=window.userinfo_page,
         )
 
         self.page = window.userinfo_page
@@ -69,8 +67,11 @@ class UserInfos(IconNotebook):
         self.toolbar_default_widget = window.userinfo_entry
 
         self.userinfo_combobox = ComboBox(
-            container=self.window.userinfo_title, has_entry=True, has_entry_completion=True,
-            entry=self.window.userinfo_entry, item_selected_callback=self.on_show_user_profile
+            container=self.window.userinfo_title,
+            has_entry=True,
+            has_entry_completion=True,
+            entry=self.window.userinfo_entry,
+            item_selected_callback=self.on_show_user_profile,
         )
 
         # Events
@@ -94,7 +95,7 @@ class UserInfos(IconNotebook):
             ("user-info-show-user", self.show_user),
             ("user-interests", self.user_interests),
             ("user-stats", self.user_stats),
-            ("user-status", self.user_status)
+            ("user-status", self.user_status),
         ):
             events.connect(event_name, callback)
 
@@ -123,7 +124,7 @@ class UserInfos(IconNotebook):
         core.userinfo.remove_all_users()
 
     def on_restore_removed_page(self, page_args):
-        username, = page_args
+        (username,) = page_args
         core.userinfo.show_user(username)
 
     def on_show_user_profile(self, *_args):
@@ -143,8 +144,13 @@ class UserInfos(IconNotebook):
         if page is None:
             self.pages[user] = page = UserInfo(self, user)
 
-            self.append_page(page.container, user, focus_callback=page.on_focus,
-                             close_callback=page.on_close, user=user)
+            self.append_page(
+                page.container,
+                user,
+                focus_callback=page.on_focus,
+                close_callback=page.on_close,
+                user=user,
+            )
             page.set_label(self.get_tab_label_inner(page.container))
 
         if switch_page:
@@ -276,34 +282,50 @@ class UserInfo:
             self.shared_folders_label,
             self.upload_slots_label,
             self.upload_speed_label,
-            self.user_label
+            self.user_label,
         ) = ui.load(scope=self, path="userinfo.ui")
 
         self.userinfos = userinfos
         self.window = userinfos.window
 
-        self.info_bar = InfoBar(parent=self.info_bar_container, button=self.retry_button)
-        self.description_view = TextView(self.description_view_container, editable=False, vertical_margin=5)
+        self.info_bar = InfoBar(
+            parent=self.info_bar_container, button=self.retry_button
+        )
+        self.description_view = TextView(
+            self.description_view_container,
+            editable=False,
+            vertical_margin=5,
+        )
         self.user_label.set_text(user)
 
         if GTK_API_VERSION >= 4:
             self.country_icon.set_pixel_size(21)
-            self.picture = Gtk.Picture(can_shrink=True, focusable=True, hexpand=True, vexpand=True)
-            self.picture_view.append(self.picture)  # pylint: disable=no-member
+            self.picture = Gtk.Picture(
+                can_shrink=True,
+                focusable=True,
+                hexpand=True,
+                vexpand=True,
+            )
 
             if (GTK_API_VERSION, GTK_MINOR_VERSION) >= (4, 8):
                 self.picture.set_content_fit(Gtk.ContentFit.CONTAIN)
             else:
                 self.picture.set_keep_aspect_ratio(True)
 
+            # pylint: disable=no-member
+            self.picture_view.append(self.picture)
+
         else:
             # Setting a pixel size of 21 results in a misaligned country flag
             self.country_icon.set_pixel_size(0)
 
-            self.picture = Gtk.EventBox(can_focus=True, hexpand=True, vexpand=True, visible=True)
+            self.picture = Gtk.EventBox(
+                can_focus=True, hexpand=True, vexpand=True, visible=True
+            )
             self.picture.connect("draw", self.on_draw_picture)
 
-            self.picture_view.add(self.picture)    # pylint: disable=no-member
+            # pylint: disable=no-member
+            self.picture_view.add(self.picture)
 
         self.user = user
         self.picture_data = None
@@ -312,61 +334,97 @@ class UserInfo:
 
         # Set up likes list
         self.likes_list_view = TreeView(
-            self.window, parent=self.likes_list_container,
+            self.window,
+            parent=self.likes_list_container,
             columns={
                 "likes": {
                     "column_type": "text",
                     "title": _("Likes"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
                 }
-            }
+            },
         )
 
         # Set up dislikes list
         self.dislikes_list_view = TreeView(
-            self.window, parent=self.dislikes_list_container,
+            self.window,
+            parent=self.dislikes_list_container,
             columns={
                 "dislikes": {
                     "column_type": "text",
                     "title": _("Dislikes"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
                 }
-            }
+            },
         )
 
         # Popup menus
         self.user_popup_menu = UserPopupMenu(
-            self.window.application, callback=self.on_tab_popup, username=user, tab_name="userinfo"
+            self.window.application,
+            callback=self.on_tab_popup,
+            username=user,
+            tab_name="userinfo",
         )
         self.user_popup_menu.add_items(
             ("", None),
             ("#" + _("Close All Tabs…"), self.on_close_all_tabs),
-            ("#" + _("_Close Tab"), self.on_close)
+            ("#" + _("_Close Tab"), self.on_close),
         )
 
         def get_interest_items(list_view, column_id):
-            return (("$" + _("I _Like This"), self.window.interests.on_like_recommendation, list_view, column_id),
-                    ("$" + _("I _Dislike This"), self.window.interests.on_dislike_recommendation, list_view, column_id),
-                    ("", None),
-                    ("#" + _("_Search for Item"), self.window.interests.on_recommend_search, list_view, column_id))
+            return (
+                (
+                    "$" + _("I _Like This"),
+                    self.window.interests.on_like_recommendation,
+                    list_view,
+                    column_id,
+                ),
+                (
+                    "$" + _("I _Dislike This"),
+                    self.window.interests.on_dislike_recommendation,
+                    list_view,
+                    column_id,
+                ),
+                ("", None),
+                (
+                    "#" + _("_Search for Item"),
+                    self.window.interests.on_recommend_search,
+                    list_view,
+                    column_id,
+                ),
+            )
 
-        self.likes_popup_menu = PopupMenu(self.window.application, self.likes_list_view.widget,
-                                          self.on_popup_likes_menu)
-        self.likes_popup_menu.add_items(*get_interest_items(self.likes_list_view, "likes"))
+        self.likes_popup_menu = PopupMenu(
+            self.window.application,
+            self.likes_list_view.widget,
+            self.on_popup_likes_menu,
+        )
+        self.likes_popup_menu.add_items(
+            *get_interest_items(self.likes_list_view, "likes")
+        )
 
-        self.dislikes_popup_menu = PopupMenu(self.window.application, self.dislikes_list_view.widget,
-                                             self.on_popup_dislikes_menu)
-        self.dislikes_popup_menu.add_items(*get_interest_items(self.dislikes_list_view, "dislikes"))
+        self.dislikes_popup_menu = PopupMenu(
+            self.window.application,
+            self.dislikes_list_view.widget,
+            self.on_popup_dislikes_menu,
+        )
+        self.dislikes_popup_menu.add_items(
+            *get_interest_items(self.dislikes_list_view, "dislikes")
+        )
 
-        self.picture_popup_menu = PopupMenu(self.window.application, self.picture)
+        self.picture_popup_menu = PopupMenu(
+            self.window.application, self.picture
+        )
         self.picture_popup_menu.add_items(
             ("#" + _("Copy Picture"), self.on_copy_picture),
-            ("#" + _("Save Picture"), self.on_save_picture)
+            ("#" + _("Save Picture"), self.on_save_picture),
         )
 
         self.popup_menus = (
-            self.user_popup_menu, self.likes_popup_menu, self.dislikes_popup_menu,
-            self.picture_popup_menu
+            self.user_popup_menu,
+            self.likes_popup_menu,
+            self.dislikes_popup_menu,
+            self.picture_popup_menu,
         )
 
         self.remove_picture()
@@ -427,7 +485,9 @@ class UserInfo:
 
         if GTK_API_VERSION >= 4:
             # Empty paintable to prevent container width from shrinking
-            self.picture.set_paintable(Gdk.Paintable.new_empty(intrinsic_width=1, intrinsic_height=1))
+            self.picture.set_paintable(
+                Gdk.Paintable.new_empty(intrinsic_width=1, intrinsic_height=1)
+            )
 
         self.picture_data = None
         self.picture_surface = None
@@ -442,18 +502,26 @@ class UserInfo:
 
         try:
             if GTK_API_VERSION >= 4:
-                self.picture_data = Gdk.Texture.new_from_bytes(GLib.Bytes(data))
+                self.picture_data = Gdk.Texture.new_from_bytes(
+                    GLib.Bytes(data)
+                )
                 self.picture.set_paintable(self.picture_data)
             else:
-                data_stream = Gio.MemoryInputStream.new_from_bytes(GLib.Bytes(data))
-                self.picture_data = GdkPixbuf.Pixbuf.new_from_stream(data_stream, cancellable=None)
-                self.picture_surface = Gdk.cairo_surface_create_from_pixbuf(self.picture_data, scale=1, for_window=None)
+                data_stream = Gio.MemoryInputStream.new_from_bytes(
+                    GLib.Bytes(data)
+                )
+                self.picture_data = GdkPixbuf.Pixbuf.new_from_stream(
+                    data_stream, cancellable=None
+                )
+                self.picture_surface = Gdk.cairo_surface_create_from_pixbuf(
+                    self.picture_data, scale=1, for_window=None
+                )
 
         except Exception as error:
-            log.add(_("Failed to load picture for user %(user)s: %(error)s"), {
-                "user": self.user,
-                "error": error
-            })
+            log.add(
+                _("Failed to load picture for user %(user)s: %(error)s"),
+                {"user": self.user, "error": error},
+            )
             self.remove_picture()
             return
 
@@ -465,8 +533,11 @@ class UserInfo:
             return
 
         self.info_bar.show_error_message(
-            _("Unable to request information from user. Either you both have a closed listening "
-              "port, the user is offline, or there's a temporary connectivity issue.")
+            _(
+                "Unable to request information from user. Either you"
+                " both have a closed listening port, the user is"
+                " offline, or there's a temporary connectivity issue."
+            )
         )
         self.set_finished()
 
@@ -517,28 +588,50 @@ class UserInfo:
 
     def update_local_buttons_state(self):
 
-        local_username = core.users.login_username or config.sections["server"]["login"]
+        local_username = (
+            core.users.login_username or config.sections["server"]["login"]
+        )
 
-        for widget in (self.edit_interests_button, self.edit_profile_button):
+        for widget in (
+            self.edit_interests_button,
+            self.edit_profile_button,
+        ):
             widget.set_visible(self.user == local_username)
 
-        for widget in (self.ban_unban_user_button, self.ignore_unignore_user_button):
+        for widget in (
+            self.ban_unban_user_button,
+            self.ignore_unignore_user_button,
+        ):
             widget.set_visible(self.user != local_username)
 
     def update_buddy_button_state(self):
-        label = _("Remove _Buddy") if self.user in core.buddies.users else _("Add _Buddy")
+        label = (
+            _("Remove _Buddy")
+            if self.user in core.buddies.users
+            else _("Add _Buddy")
+        )
         self.add_remove_buddy_label.set_text_with_mnemonic(label)
 
     def update_ban_button_state(self):
-        label = _("Unban User") if core.network_filter.is_user_banned(self.user) else _("Ban User")
+        label = (
+            _("Unban User")
+            if core.network_filter.is_user_banned(self.user)
+            else _("Ban User")
+        )
         self.ban_unban_user_label.set_text(label)
 
     def update_ignore_button_state(self):
-        label = _("Unignore User") if core.network_filter.is_user_ignored(self.user) else _("Ignore User")
+        label = (
+            _("Unignore User")
+            if core.network_filter.is_user_ignored(self.user)
+            else _("Ignore User")
+        )
         self.ignore_unignore_user_label.set_text(label)
 
     def update_privileges_button_state(self):
-        self.gift_privileges_button.set_sensitive(bool(core.users.privileges_left))
+        self.gift_privileges_button.set_sensitive(
+            bool(core.users.privileges_left)
+        )
 
     def update_button_states(self):
 
@@ -561,7 +654,9 @@ class UserInfo:
 
         self.upload_slots_label.set_text(humanize(msg.totalupl))
         self.queued_uploads_label.set_text(humanize(msg.queuesize))
-        self.free_upload_slots_label.set_text(_("Yes") if msg.slotsavail else _("No"))
+        self.free_upload_slots_label.set_text(
+            _("Yes") if msg.slotsavail else _("No")
+        )
 
         self.picture_data = None
         self.load_picture(msg.pic)
@@ -582,13 +677,20 @@ class UserInfo:
         if not country_code:
             return
 
-        country_name = core.network_filter.COUNTRIES.get(country_code, _("Unknown"))
+        country_name = core.network_filter.COUNTRIES.get(
+            country_code, _("Unknown")
+        )
         country_text = f"{country_name} ({country_code})"
 
         self.country_label.set_text(country_text)
 
         icon_name = get_flag_icon_name(country_code)
-        icon_args = (Gtk.IconSize.BUTTON,) if GTK_API_VERSION == 3 else ()  # pylint: disable=no-member
+        icon_args = (
+            # pylint: disable=no-member
+            (Gtk.IconSize.BUTTON,)
+            if GTK_API_VERSION == 3
+            else ()
+        )
 
         self.country_icon.set_from_icon_name(icon_name, *icon_args)
         self.country_icon.set_visible(bool(icon_name))
@@ -609,11 +711,15 @@ class UserInfo:
     def on_show_progress_bar(self, progress_bar):
         """Enables indeterminate progress bar mode when tab is active."""
 
-        if not self.indeterminate_progress and progress_bar.get_fraction() <= 0.0:
+        if (
+            not self.indeterminate_progress
+            and progress_bar.get_fraction() <= 0.0
+        ):
             self.set_in_progress()
 
     def on_hide_progress_bar(self, progress_bar):
-        """Disables indeterminate progress bar mode when switching to another tab."""
+        """Disables indeterminate progress bar mode when switching to another
+        tab."""
 
         if self.indeterminate_progress:
             self.indeterminate_progress = False
@@ -627,7 +733,9 @@ class UserInfo:
         picture_width = self.picture_surface.get_width()
         picture_height = self.picture_surface.get_height()
 
-        scale_factor = min(area_width / picture_width, area_height / picture_height)
+        scale_factor = min(
+            area_width / picture_width, area_height / picture_height
+        )
         translate_x = (area_width - (picture_width * scale_factor)) / 2
         translate_y = (area_height - (picture_height * scale_factor)) / 2
 
@@ -640,10 +748,14 @@ class UserInfo:
         self.user_popup_menu.toggle_user_items()
 
     def on_popup_likes_menu(self, menu, *_args):
-        self.window.interests.toggle_menu_items(menu, self.likes_list_view, column_id="likes")
+        self.window.interests.toggle_menu_items(
+            menu, self.likes_list_view, column_id="likes"
+        )
 
     def on_popup_dislikes_menu(self, menu, *_args):
-        self.window.interests.toggle_menu_items(menu, self.dislikes_list_view, column_id="dislikes")
+        self.window.interests.toggle_menu_items(
+            menu, self.dislikes_list_view, column_id="dislikes"
+        )
 
     def on_edit_profile(self, *_args):
         self.window.application.on_preferences(page_id="user-profile")
@@ -709,8 +821,13 @@ class UserInfo:
         else:
             days = core.users.privileges_left // 60 // 60 // 24
 
-        message = (_("Gift days of your Soulseek privileges to user %(user)s (%(days_left)s):") %
-                   {"user": self.user, "days_left": _("%(days)s days left") % {"days": days}})
+        message = _(
+            "Gift days of your Soulseek privileges to user %(user)s"
+            " (%(days_left)s):"
+        ) % {
+            "user": self.user,
+            "days_left": _("%(days)s days left") % {"days": days},
+        }
 
         if error:
             message += "\n\n" + error
@@ -720,7 +837,7 @@ class UserInfo:
             title=_("Gift Privileges"),
             message=message,
             action_button_label=_("_Give Privileges"),
-            callback=self.on_give_privileges_response
+            callback=self.on_give_privileges_response,
         ).present()
 
     def on_copy_picture(self, *_args):
@@ -736,7 +853,8 @@ class UserInfo:
             picture_bytes = self.picture_data.save_to_png_bytes().get_data()
         else:
             _success, picture_bytes = self.picture_data.save_to_bufferv(
-                type="png", option_keys=[], option_values=[])
+                type="png", option_keys=[], option_values=[]
+            )
 
         core.userinfo.save_user_picture(file_path, picture_bytes)
 
@@ -751,7 +869,7 @@ class UserInfo:
             parent=self.window,
             callback=self.on_save_picture_response,
             initial_folder=core.downloads.get_default_download_folder(),
-            initial_file=f"{self.user}_{current_date_time}.png"
+            initial_file=f"{self.user}_{current_date_time}.png",
         ).present()
 
     def on_refresh(self, *_args):

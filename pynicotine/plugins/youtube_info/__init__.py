@@ -36,33 +36,32 @@ class Plugin(BasePlugin):
             "color": "Local",
             "format": [
                 "* Title: %title%",
-                "* Duration: %duration% - Views: %views%"]
+                "* Duration: %duration% - Views: %views%",
+            ],
         }
         self.metasettings = {
             "api_key": {
                 "description": "YouTube Data v3 API key:",
-                "type": "string"
+                "type": "string",
             },
             "color": {
                 "description": "Message color:",
                 "type": "dropdown",
-                "options": ("Remote", "Local", "Action", "Hilite")
+                "options": ("Remote", "Local", "Action", "Hilite"),
             },
             "format": {
                 "description": "Message format",
-                "type": "list string"
-            }
+                "type": "list string",
+            },
         }
 
-        self.last_video_id = {
-            "private": {},
-            "public": {}
-        }
+        self.last_video_id = {"private": {}, "public": {}}
 
     def incoming_public_chat_notification(self, room, user, line):
 
-        if (self.core.network_filter.is_user_ignored(user)
-                or self.core.network_filter.is_user_ip_ignored(user)):
+        if self.core.network_filter.is_user_ignored(
+            user
+        ) or self.core.network_filter.is_user_ip_ignored(user):
             return
 
         video_id = self.get_video_id("public", room, line)
@@ -74,12 +73,17 @@ class Plugin(BasePlugin):
             return
 
         for msg in self.settings["format"]:
-            self.echo_public(room, self.str_replace(msg, parsed), self.settings["color"].lower())
+            self.echo_public(
+                room,
+                self.str_replace(msg, parsed),
+                self.settings["color"].lower(),
+            )
 
     def incoming_private_chat_notification(self, user, line):
 
-        if (self.core.network_filter.is_user_ignored(user)
-                or self.core.network_filter.is_user_ip_ignored(user)):
+        if self.core.network_filter.is_user_ignored(
+            user
+        ) or self.core.network_filter.is_user_ip_ignored(user):
             return
 
         video_id = self.get_video_id("private", user, line)
@@ -91,17 +95,27 @@ class Plugin(BasePlugin):
             return
 
         for msg in self.settings["format"]:
-            self.echo_private(user, self.str_replace(msg, parsed), self.settings["color"].lower())
+            self.echo_private(
+                user,
+                self.str_replace(msg, parsed),
+                self.settings["color"].lower(),
+            )
 
     def get_video_id(self, mode, source, line):
 
-        match = re.search(r"(https?://((m|music)\.)?|www\.)youtu(\.be/|be\.com/(shorts/|watch\S+v=))"
-                          r"(?P<video_id>[-\w]{11})", line)
+        match = re.search(
+            r"(https?://((m|music)\.)?|www\.)youtu(\.be/|be\.com/(shorts/|"
+            r"watch\S+v=))(?P<video_id>[-\w]{11})",
+            line,
+        )
         if not match:
             return None
 
         video_id = match.group("video_id")
-        if source in self.last_video_id[mode] and self.last_video_id[mode][source] == video_id:
+        if (
+            source in self.last_video_id[mode]
+            and self.last_video_id[mode][source] == video_id
+        ):
             return None
 
         self.last_video_id[mode][source] = video_id
@@ -118,8 +132,13 @@ class Plugin(BasePlugin):
 
         try:
             from urllib.request import urlopen
-            with urlopen((f"https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails"
-                          f"&id={video_id}&key={api_key}"), timeout=10) as response:
+
+            with urlopen(
+                "https://www.googleapis.com/youtube/v3/videos?part=snippet,"
+                "statistics,contentDetails"
+                f"&id={video_id}&key={api_key}",
+                timeout=10,
+            ) as response:
                 response_body = response.read().decode("utf-8")
 
         except Exception as error:
@@ -130,7 +149,10 @@ class Plugin(BasePlugin):
             data = json.loads(response_body)
 
         except Exception as error:
-            self.log("Failed to parse response from www.googleapis.com: %s", str(error))
+            self.log(
+                "Failed to parse response from www.googleapis.com: %s",
+                str(error),
+            )
             return None
 
         if "error" in data:
@@ -184,8 +206,13 @@ class Plugin(BasePlugin):
             duration = self.get_duration(duration)
 
         return {
-            "%title%": title, "%description%": description, "%duration%": duration, "%quality%": quality,
-            "%channel%": channel, "%views%": views, "%likes%": likes
+            "%title%": title,
+            "%description%": description,
+            "%duration%": duration,
+            "%quality%": quality,
+            "%channel%": channel,
+            "%views%": views,
+            "%likes%": likes,
         }
 
     @staticmethod

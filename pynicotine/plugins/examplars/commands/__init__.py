@@ -33,7 +33,7 @@ class Plugin(BasePlugin):
                 "callback": self.sample_command,
                 "callback_private_chat": self.sample_command,
                 "parameters": ["<choice1|choice2>", "<something..>"],
-                "parameters_chatroom": ["<choice55|choice2>"]
+                "parameters_chatroom": ["<choice55|choice2>"],
             }
         }
 

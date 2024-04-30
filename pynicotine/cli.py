@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2022-2023 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
@@ -36,7 +35,7 @@ class CLIInputProcessor(Thread):
 
         try:
             # Enable line editing and history
-            import readline  # noqa: F401  # pylint:disable=unused-import
+            import readline  # noqa: F401 # pylint:disable=unused-import
 
         except ImportError:
             # Readline is not available on this OS
@@ -57,7 +56,9 @@ class CLIInputProcessor(Thread):
                 self._handle_prompt()
 
             except Exception as error:
-                log.add_debug("CLI input prompt is no longer available: %s", error)
+                log.add_debug(
+                    "CLI input prompt is no longer available: %s", error
+                )
                 return
 
     def _handle_prompt_callback(self, user_input, callback):
@@ -88,7 +89,7 @@ class CLIInputProcessor(Thread):
 
         callback = self.prompt_callback
         input_func = getpass if self.prompt_silent else input
-        self.has_custom_prompt = (callback is not None)
+        self.has_custom_prompt = callback is not None
 
         user_input = input_func(self.prompt_message)
 
@@ -121,6 +122,7 @@ class CLI:
 
         try:
             import termios  # pylint: disable=import-error
+
             self._tty_attributes = termios.tcgetattr(sys.stdin)
 
         except Exception:
@@ -133,7 +135,7 @@ class CLI:
 
         for event_name, callback in (
             ("cli-prompt-finished", self._cli_prompt_finished),
-            ("log-message", self._log_message)
+            ("log-message", self._log_message),
         ):
             events.connect(event_name, callback)
 
@@ -149,8 +151,9 @@ class CLI:
             print(log_message, flush=True)
 
         except OSError:
+            # pylint: disable=consider-using-with
             # stdout is gone, prevent future errors
-            sys.stdout = open(os.devnull, "w", encoding="utf-8")  # pylint: disable=consider-using-with
+            sys.stdout = open(os.devnull, "w", encoding="utf-8")
 
     def _cli_prompt_finished(self):
         while self._log_message_queue:
@@ -178,6 +181,7 @@ class CLI:
             return
 
         import termios  # pylint: disable=import-error
+
         termios.tcsetattr(sys.stdin, termios.TCSANOW, self._tty_attributes)
 
         self._tty_attributes = None

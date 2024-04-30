@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2020-2023 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
@@ -60,7 +59,7 @@ class Logger:
         LogLevel.CONNECTION: "Conn",
         LogLevel.MESSAGE: "Msg",
         LogLevel.TRANSFER: "Transfer",
-        LogLevel.MISCELLANEOUS: "Misc"
+        LogLevel.MISCELLANEOUS: "Misc",
     }
 
     EXCLUDED_MSGS = {
@@ -69,7 +68,7 @@ class Logger:
         slskmessages.DistribSearch,
         slskmessages.EmbeddedMessage,
         slskmessages.SharedFileListResponse,
-        slskmessages.UnknownPeerMessage
+        slskmessages.UnknownPeerMessage,
     }
 
     def __init__(self):
@@ -88,7 +87,11 @@ class Logger:
         self._log_files = {}
 
         events.connect("quit", self._close_log_files)
-        events.schedule(delay=10, callback=self._close_inactive_log_files, repeat=True)
+        events.schedule(
+            delay=10,
+            callback=self._close_inactive_log_files,
+            repeat=True,
+        )
 
     # Log Levels #
 
@@ -143,7 +146,10 @@ class Logger:
             os.makedirs(folder_path_encoded)
 
         log_file = LogFile(
-            path=file_path, handle=open(file_path_encoded, "ab+"))  # pylint: disable=consider-using-with
+            # pylint: disable=consider-using-with
+            path=file_path,
+            handle=open(file_path_encoded, "ab+"),
+        )
 
         # Disable file access for outsiders
         os.chmod(file_path_encoded, 0o600)
@@ -159,7 +165,9 @@ class Logger:
             timestamp_format = config.sections["logging"]["log_timestamp"]
 
             if timestamp_format:
-                timestamp = time.strftime(timestamp_format, time.localtime(timestamp))
+                timestamp = time.strftime(
+                    timestamp_format, time.localtime(timestamp)
+                )
                 text = f"{timestamp} {text}\n"
             else:
                 text += "\n"
@@ -169,12 +177,18 @@ class Logger:
 
         except Exception as error:
             # Avoid infinite recursion
-            should_log_file = (folder_path != self.debug_folder_path)
+            should_log_file = folder_path != self.debug_folder_path
 
-            self._add(_('Couldn\'t write to log file "%(filename)s": %(error)s'), {
-                "filename": os.path.join(folder_path, clean_file(f"{basename}.log")),
-                "error": error
-            }, should_log_file=should_log_file)
+            self._add(
+                _('Couldn\'t write to log file "%(filename)s": %(error)s'),
+                {
+                    "filename": os.path.join(
+                        folder_path, clean_file(f"{basename}.log")
+                    ),
+                    "error": error,
+                },
+                should_log_file=should_log_file,
+            )
 
     def _close_log_file(self, log_file):
 
@@ -182,10 +196,10 @@ class Logger:
             log_file.handle.close()
 
         except OSError as error:
-            self.add_debug('Failed to close log file "%(filename)s": %(error)s', {
-                "filename": log_file.path,
-                "error": error
-            })
+            self.add_debug(
+                'Failed to close log file "%(filename)s": %(error)s',
+                {"filename": log_file.path, "error": error},
+            )
 
         del self._log_files[log_file.path]
 
@@ -206,10 +220,18 @@ class Logger:
 
     def update_folder_paths(self):
 
-        self.debug_folder_path = self._normalize_folder_path(config.sections["logging"]["debuglogsdir"])
-        self.transfer_folder_path = self._normalize_folder_path(config.sections["logging"]["transferslogsdir"])
-        self.room_folder_path = self._normalize_folder_path(config.sections["logging"]["roomlogsdir"])
-        self.private_chat_folder_path = self._normalize_folder_path(config.sections["logging"]["privatelogsdir"])
+        self.debug_folder_path = self._normalize_folder_path(
+            config.sections["logging"]["debuglogsdir"]
+        )
+        self.transfer_folder_path = self._normalize_folder_path(
+            config.sections["logging"]["transferslogsdir"]
+        )
+        self.room_folder_path = self._normalize_folder_path(
+            config.sections["logging"]["roomlogsdir"]
+        )
+        self.private_chat_folder_path = self._normalize_folder_path(
+            config.sections["logging"]["privatelogsdir"]
+        )
 
     def open_log(self, folder_path, basename):
         self._handle_log(folder_path, basename, self.open_log_callback)
@@ -220,23 +242,31 @@ class Logger:
         log_file = None
 
         try:
-            log_file = self._get_log_file(folder_path, basename, should_create_file=False)
+            log_file = self._get_log_file(
+                folder_path, basename, should_create_file=False
+            )
 
             if log_file is not None:
-                # Read the number of lines specified from the beginning of the file,
-                # then go back to the end of the file to append new lines
+                # Read the number of lines specified from the beginning of the
+                # file, then go back to the end of the file to append new lines
                 log_file.handle.seek(0)
                 lines = deque(log_file.handle, num_lines)
                 log_file.handle.seek(0, os.SEEK_END)
 
         except Exception as error:
-            self._add(_("Cannot access log file %(path)s: %(error)s"), {
-                "path": os.path.join(folder_path, clean_file(f"{basename}.log")),
-                "error": error
-            })
+            self._add(
+                _("Cannot access log file %(path)s: %(error)s"),
+                {
+                    "path": os.path.join(
+                        folder_path, clean_file(f"{basename}.log")
+                    ),
+                    "error": error,
+                },
+            )
 
             if log_file is not None:
-                # In case seek() failed, close log file to prevent future write attempts
+                # In case seek() failed, close log file to prevent future write
+                # attempts
                 self._close_log_file(log_file)
 
         return lines
@@ -256,7 +286,10 @@ class Logger:
             callback(file_path)
 
         except Exception as error:
-            self._add(_("Cannot access log file %(path)s: %(error)s"), {"path": file_path, "error": error})
+            self._add(
+                _("Cannot access log file %(path)s: %(error)s"),
+                {"path": file_path, "error": error},
+            )
 
     def open_log_callback(self, file_path):
         open_file_path(file_path, create_file=True)
@@ -272,7 +305,11 @@ class Logger:
         if msg_args:
             msg %= msg_args
 
-        self.write_log_file(folder_path=self.transfer_folder_path, basename=basename, text=msg)
+        self.write_log_file(
+            folder_path=self.transfer_folder_path,
+            basename=basename,
+            text=msg,
+        )
 
     # Log Messages #
 
@@ -288,26 +325,44 @@ class Logger:
 
         return msg
 
-    def _add(self, msg, msg_args=None, title=None, level=LogLevel.DEFAULT, should_log_file=True):
+    def _add(
+        self,
+        msg,
+        msg_args=None,
+        title=None,
+        level=LogLevel.DEFAULT,
+        should_log_file=True,
+    ):
 
         msg = self._format_log_message(level, msg, msg_args)
 
-        if should_log_file and config.sections["logging"].get("debug_file_output", False):
+        if should_log_file and config.sections["logging"].get(
+            "debug_file_output", False
+        ):
             events.invoke_main_thread(
-                self.write_log_file, folder_path=self.debug_folder_path,
-                basename=self.debug_file_name, text=msg)
+                self.write_log_file,
+                folder_path=self.debug_folder_path,
+                basename=self.debug_file_name,
+                text=msg,
+            )
 
         try:
-            timestamp_format = config.sections["logging"].get("log_timestamp", "%x %X")
+            timestamp_format = config.sections["logging"].get(
+                "log_timestamp", "%x %X"
+            )
             events.emit("log-message", timestamp_format, msg, title, level)
 
         except Exception as error:
             try:
-                print(f"Log callback failed: {level} {msg}\n{error}", flush=True)
+                print(
+                    f"Log callback failed: {level} {msg}\n{error}",
+                    flush=True,
+                )
 
             except OSError:
+                # pylint: disable=consider-using-with
                 # stdout is gone, prevent future errors
-                sys.stdout = open(os.devnull, "w", encoding="utf-8")  # pylint: disable=consider-using-with
+                sys.stdout = open(os.devnull, "w", encoding="utf-8")
 
     def add(self, msg, msg_args=None, title=None):
         self._add(msg, msg_args, title)

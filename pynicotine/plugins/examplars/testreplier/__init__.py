@@ -27,13 +27,11 @@ class Plugin(BasePlugin):
 
         super().__init__(*args, **kwargs)
 
-        self.settings = {
-            "replies": ["Test failed."]
-        }
+        self.settings = {"replies": ["Test failed."]}
         self.metasettings = {
             "replies": {
                 "description": "Replies:",
-                "type": "list string"
+                "type": "list string",
             }
         }
 
@@ -46,4 +44,6 @@ class Plugin(BasePlugin):
 
         if self.throttle.ok_to_respond(room, user, line):
             self.throttle.responded()
-            self.send_public(room, choice(self.settings["replies"]).lstrip("!"))
+            self.send_public(
+                room, choice(self.settings["replies"]).lstrip("!")
+            )

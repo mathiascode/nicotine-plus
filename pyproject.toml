@@ -1,3 +1,15 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 79
+target-version = ['py36']
+extend-exclude = 'pynicotine/external/'
+preview = true
+enable-unstable-feature = [
+    'string_processing',
+    'multiline_string_handling',
+    'wrap_long_dict_values_in_parens',
+    'hug_parens_with_braces_and_square_brackets',
+]

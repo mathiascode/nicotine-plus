@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import json
 import os
@@ -55,8 +54,14 @@ class UserBrowse:
         for event_name, callback in (
             ("quit", self._quit),
             ("server-login", self._server_login),
-            ("shared-file-list-progress", self._shared_file_list_progress),
-            ("shared-file-list-response", self._shared_file_list_response)
+            (
+                "shared-file-list-progress",
+                self._shared_file_list_progress,
+            ),
+            (
+                "shared-file-list-response",
+                self._shared_file_list_response,
+            ),
         ):
             events.connect(event_name, callback)
 
@@ -75,14 +80,21 @@ class UserBrowse:
         """Send notification to user when attempting to initiate upload from
         our end."""
 
-        core.send_message_to_peer(username, slskmessages.UploadQueueNotification())
+        core.send_message_to_peer(
+            username, slskmessages.UploadQueueNotification()
+        )
 
     def _show_user(self, username, path=None, switch_page=True):
 
         if username not in self.users:
             self.users[username] = BrowsedUser(username)
 
-        events.emit("user-browse-show-user", user=username, path=path, switch_page=switch_page)
+        events.emit(
+            "user-browse-show-user",
+            user=username,
+            path=path,
+            switch_page=switch_page,
+        )
 
     def remove_user(self, username):
         del self.users[username]
@@ -101,10 +113,18 @@ class UserBrowse:
 
         events.emit_main_thread("shared-file-list-response", msg)
 
-    def browse_local_shares(self, path=None, permission_level=None, new_request=False, switch_page=True):
+    def browse_local_shares(
+        self,
+        path=None,
+        permission_level=None,
+        new_request=False,
+        switch_page=True,
+    ):
         """Browse your own shares."""
 
-        username = core.users.login_username or config.sections["server"]["login"]
+        username = (
+            core.users.login_username or config.sections["server"]["login"]
+        )
 
         if not username:
             core.setup()
@@ -112,35 +132,49 @@ class UserBrowse:
 
         if username not in self.users or new_request:
             if not permission_level:
-                # Check our own permission level, and show relevant shares for it
-                current_permission_level, _reason = core.shares.check_user_permission(username)
+                # Check our own permission level, and show relevant shares for
+                # it
+                current_permission_level, _reason = (
+                    core.shares.check_user_permission(username)
+                )
             else:
                 current_permission_level = permission_level
 
             msg = core.shares.compressed_shares.get(current_permission_level)
             Thread(
-                target=self._parse_local_shares, args=(username, msg), name="LocalShareParser", daemon=True
+                target=self._parse_local_shares,
+                args=(username, msg),
+                name="LocalShareParser",
+                daemon=True,
             ).start()
 
         self._show_user(username, path=path, switch_page=switch_page)
 
     def request_user_shares(self, username):
-        core.send_message_to_peer(username, slskmessages.SharedFileListRequest())
+        core.send_message_to_peer(
+            username, slskmessages.SharedFileListRequest()
+        )
 
-    def browse_user(self, username, path=None, new_request=False, switch_page=True):
+    def browse_user(
+        self, username, path=None, new_request=False, switch_page=True
+    ):
         """Browse a user's shares."""
 
         if not username:
             return
 
         browsed_user = self.users.get(username)
-        local_username = core.users.login_username or config.sections["server"]["login"]
+        local_username = (
+            core.users.login_username or config.sections["server"]["login"]
+        )
 
         if browsed_user is not None and new_request:
             browsed_user.clear()
 
         if username == local_username:
-            self.browse_local_shares(path, new_request, switch_page=switch_page)
+            self.browse_local_shares(
+                path, new_request, switch_page=switch_page
+            )
             return
 
         self._show_user(username, path=path, switch_page=switch_page)
@@ -164,18 +198,30 @@ class UserBrowse:
                 os.makedirs(shares_folder_encoded)
 
         except Exception as error:
-            log.add(_("Can't create directory '%(folder)s', reported error: %(error)s"),
-                    {"folder": shares_folder, "error": error})
+            log.add(
+                _(
+                    "Can't create directory '%(folder)s', reported error:"
+                    " %(error)s"
+                ),
+                {"folder": shares_folder, "error": error},
+            )
             return None
 
         return shares_folder
 
-    def iter_matching_folders(self, requested_folder_path, browsed_user, recurse=False):
+    def iter_matching_folders(
+        self, requested_folder_path, browsed_user, recurse=False
+    ):
 
-        for folders in (browsed_user.public_folders, browsed_user.private_folders):
+        for folders in (
+            browsed_user.public_folders,
+            browsed_user.private_folders,
+        ):
             for folder_path, files in folders.items():
-                if (requested_folder_path != folder_path
-                        and not (recurse and folder_path.startswith(f"{requested_folder_path}\\"))):
+                if requested_folder_path != folder_path and not (
+                    recurse
+                    and folder_path.startswith(f"{requested_folder_path}\\")
+                ):
                     continue
 
                 yield folder_path, files
@@ -194,28 +240,53 @@ class UserBrowse:
 
                 with bz2.BZ2File(file_path_encoded) as file_handle:
                     from pynicotine.shares import RestrictedUnpickler
-                    shares_list = RestrictedUnpickler(file_handle, encoding="utf-8").load()
+
+                    shares_list = RestrictedUnpickler(
+                        file_handle, encoding="utf-8"
+                    ).load()
 
             except Exception:
                 # Try new format
 
                 with open(file_path_encoded, encoding="utf-8") as file_handle:
-                    # JSON stores file attribute types as strings, convert them back to integers with object_hook
-                    shares_list = json.load(file_handle, object_hook=lambda d: {int(k): v for k, v in d.items()})
+                    # JSON stores file attribute types as strings, convert them
+                    # back to integers with object_hook
+                    shares_list = json.load(
+                        file_handle,
+                        object_hook=lambda d: {
+                            int(k): v for k, v in d.items()
+                        },
+                    )
 
             code = 1
             ext = ""
 
             for _folder_path, files in shares_list:
                 # Sanitization
-                for index, (_code, basename, size, _ext, attrs, *_unused) in enumerate(files):
+                for index, (
+                    _code,
+                    basename,
+                    size,
+                    _ext,
+                    attrs,
+                    *_unused,
+                ) in enumerate(files):
                     if not isinstance(attrs, dict):
                         attrs = list(attrs)
 
-                    files[index] = [code, str(basename), int(size), ext, attrs]
+                    files[index] = [
+                        code,
+                        str(basename),
+                        int(size),
+                        ext,
+                        attrs,
+                    ]
 
         except Exception as error:
-            log.add(_("Loading Shares from disk failed: %(error)s"), {"error": error})
+            log.add(
+                _("Loading Shares from disk failed: %(error)s"),
+                {"error": error},
+            )
             return
 
         username = os.path.basename(file_path)
@@ -243,14 +314,22 @@ class UserBrowse:
             file_path = os.path.join(folder_path, clean_file(username))
             browsed_user = self.users[username]
 
-            with open(encode_path(file_path), "w", encoding="utf-8") as file_handle:
-                # Dump every folder to the file individually to avoid large memory usage
-                json_encoder = json.JSONEncoder(check_circular=False, ensure_ascii=False)
+            with open(
+                encode_path(file_path), "w", encoding="utf-8"
+            ) as file_handle:
+                # Dump every folder to the file individually to avoid large
+                # memory usage
+                json_encoder = json.JSONEncoder(
+                    check_circular=False, ensure_ascii=False
+                )
                 is_first_item = True
 
                 file_handle.write("[")
 
-                for folders in (browsed_user.public_folders, browsed_user.private_folders):
+                for folders in (
+                    browsed_user.public_folders,
+                    browsed_user.private_folders,
+                ):
                     for item in folders.items():
                         if is_first_item:
                             is_first_item = False
@@ -261,22 +340,44 @@ class UserBrowse:
 
                 file_handle.write("]")
 
-            log.add(_("Saved list of shared files for user '%(user)s' to %(dir)s"),
-                    {"user": username, "dir": folder_path})
+            log.add(
+                _("Saved list of shared files for user '%(user)s' to %(dir)s"),
+                {"user": username, "dir": folder_path},
+            )
 
         except Exception as error:
-            log.add(_("Can't save shares, '%(user)s', reported error: %(error)s"), {"user": username, "error": error})
+            log.add(
+                _("Can't save shares, '%(user)s', reported error: %(error)s"),
+                {"user": username, "error": error},
+            )
 
-    def download_file(self, username, folder_path, file_data, download_folder_path=None):
+    def download_file(
+        self,
+        username,
+        folder_path,
+        file_data,
+        download_folder_path=None,
+    ):
 
         _code, basename, file_size, _ext, file_attributes, *_unused = file_data
         file_path = "\\".join([folder_path, basename])
 
         core.downloads.enqueue_download(
-            username, file_path, folder_path=download_folder_path, size=file_size, file_attributes=file_attributes)
+            username,
+            file_path,
+            folder_path=download_folder_path,
+            size=file_size,
+            file_attributes=file_attributes,
+        )
 
-    def download_folder(self, username, requested_folder_path, download_folder_path=None, recurse=False,
-                        check_num_files=True):
+    def download_folder(
+        self,
+        username,
+        requested_folder_path,
+        download_folder_path=None,
+        recurse=False,
+        check_num_files=True,
+    ):
 
         if requested_folder_path is None:
             return
@@ -284,7 +385,9 @@ class UserBrowse:
         num_files = 0
 
         for folder_path, files in self.iter_matching_folders(
-            requested_folder_path, browsed_user=self.users[username], recurse=recurse
+            requested_folder_path,
+            browsed_user=self.users[username],
+            recurse=recurse,
         ):
             num_files += len(files)
 
@@ -292,28 +395,52 @@ class UserBrowse:
             # Large folder, ask user for confirmation before downloading
             check_num_files = False
             events.emit(
-                "download-large-folder", username, requested_folder_path, num_files,
-                self.download_folder, (
-                    username, requested_folder_path, download_folder_path, recurse, check_num_files
-                )
+                "download-large-folder",
+                username,
+                requested_folder_path,
+                num_files,
+                self.download_folder,
+                (
+                    username,
+                    requested_folder_path,
+                    download_folder_path,
+                    recurse,
+                    check_num_files,
+                ),
             )
             return
 
         for folder_path, files in self.iter_matching_folders(
-            requested_folder_path, browsed_user=self.users[username], recurse=recurse
+            requested_folder_path,
+            browsed_user=self.users[username],
+            recurse=recurse,
         ):
             # Get final download destination
             destination_folder_path = core.downloads.get_folder_destination(
-                username, folder_path, root_folder_path=requested_folder_path,
-                download_folder_path=download_folder_path)
+                username,
+                folder_path,
+                root_folder_path=requested_folder_path,
+                download_folder_path=download_folder_path,
+            )
 
             if files:
-                for _code, basename, file_size, _ext, file_attributes, *_unused in files:
+                for (
+                    _code,
+                    basename,
+                    file_size,
+                    _ext,
+                    file_attributes,
+                    *_unused,
+                ) in files:
                     file_path = "\\".join([folder_path, basename])
 
                     core.downloads.enqueue_download(
-                        username, file_path, folder_path=destination_folder_path, size=file_size,
-                        file_attributes=file_attributes)
+                        username,
+                        file_path,
+                        folder_path=destination_folder_path,
+                        size=file_size,
+                        file_attributes=file_attributes,
+                    )
 
     def upload_file(self, username, folder_path, file_data):
 
@@ -322,13 +449,21 @@ class UserBrowse:
 
         core.uploads.enqueue_upload(username, file_path)
 
-    def upload_folder(self, username, requested_folder_path, local_browsed_user, recurse=False):
+    def upload_folder(
+        self,
+        username,
+        requested_folder_path,
+        local_browsed_user,
+        recurse=False,
+    ):
 
         if not requested_folder_path or not username:
             return
 
         for folder_path, files in self.iter_matching_folders(
-            requested_folder_path, browsed_user=local_browsed_user, recurse=recurse
+            requested_folder_path,
+            browsed_user=local_browsed_user,
+            recurse=recurse,
         ):
             for _code, basename, *_unused in files:
                 file_path = "\\".join([folder_path, basename])
@@ -338,6 +473,7 @@ class UserBrowse:
     def get_soulseek_url(username, path):
 
         import urllib.parse
+
         path = path.replace("\\", "/")
         return "slsk://" + urllib.parse.quote(f"{username}/{path}")
 
@@ -351,27 +487,37 @@ class UserBrowse:
 
         self.browse_user(username, path=file_path)
 
-    def _shared_file_list_progress(self, username, sock, _buffer_len, _msg_size_total):
+    def _shared_file_list_progress(
+        self, username, sock, _buffer_len, _msg_size_total
+    ):
 
         if username not in self.users:
-            # We've removed the user. Close the connection to stop the user from
-            # sending their response and wasting bandwidth.
-            core.send_message_to_network_thread(slskmessages.CloseConnection(sock))
+            # We've removed the user. Close the connection to stop the user
+            # from sending their response and wasting bandwidth.
+            core.send_message_to_network_thread(
+                slskmessages.CloseConnection(sock)
+            )
 
     def _shared_file_list_response(self, msg):
 
         username = msg.username
         browsed_user = self.users.get(username)
         num_folders = len(msg.list) + len(msg.privatelist)
-        num_files = sum(len(files) for folder_path, files in chain(msg.list, msg.privatelist))
+        num_files = sum(
+            len(files)
+            for folder_path, files in chain(msg.list, msg.privatelist)
+        )
 
         if browsed_user is not None:
             browsed_user.public_folders = dict(msg.list)
             browsed_user.private_folders = dict(msg.privatelist)
 
-        core.pluginhandler.user_stats_notification(username, stats={
-            "avgspeed": None,
-            "files": num_files,
-            "dirs": num_folders,
-            "source": "peer"
-        })
+        core.pluginhandler.user_stats_notification(
+            username,
+            stats={
+                "avgspeed": None,
+                "files": num_files,
+                "dirs": num_folders,
+                "source": "peer",
+            },
+        )

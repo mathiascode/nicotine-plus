@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 from pynicotine.config import config
 from pynicotine.core import core
@@ -33,11 +32,9 @@ class WishList(Dialog):
 
     def __init__(self, application):
 
-        (
-            self.container,
-            self.list_container,
-            self.wish_entry
-        ) = ui.load(scope=self, path="dialogs/wishlist.ui")
+        (self.container, self.list_container, self.wish_entry) = ui.load(
+            scope=self, path="dialogs/wishlist.ui"
+        )
 
         super().__init__(
             parent=application.window,
@@ -46,41 +43,50 @@ class WishList(Dialog):
             show_callback=self.on_show,
             title=_("Wishlist"),
             width=600,
-            height=600
+            height=600,
         )
         application.add_window(self.widget)
 
         self.application = application
         self.list_view = TreeView(
-            application.window, parent=self.list_container, multi_select=True, activate_row_callback=self.on_edit_wish,
+            application.window,
+            parent=self.list_container,
+            multi_select=True,
+            activate_row_callback=self.on_edit_wish,
             delete_accelerator_callback=self.on_remove_wish,
             columns={
                 "wish": {
                     "column_type": "text",
                     "title": _("Wish"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
                 }
-            }
+            },
         )
 
         for wish in config.sections["server"]["autosearch"]:
             wish = str(wish)
             self.list_view.add_row([wish], select_row=False)
 
-        self.completion_entry = CompletionEntry(self.wish_entry, self.list_view.model)
-        Accelerator("<Shift>Tab", self.list_view.widget, self.on_list_focus_entry_accelerator)  # skip column header
+        self.completion_entry = CompletionEntry(
+            self.wish_entry, self.list_view.model
+        )
+        Accelerator(
+            "<Shift>Tab",
+            self.list_view.widget,
+            self.on_list_focus_entry_accelerator,
+        )  # skip column header
 
         self.popup_menu = PopupMenu(application, self.list_view.widget)
         self.popup_menu.add_items(
             ("#" + _("_Search for Item"), self.on_search_wish),
             ("#" + _("Edit…"), self.on_edit_wish),
             ("", None),
-            ("#" + _("Remove"), self.on_remove_wish)
+            ("#" + _("Remove"), self.on_remove_wish),
         )
 
         for event_name, callback in (
             ("add-wish", self.add_wish),
-            ("remove-wish", self.remove_wish)
+            ("remove-wish", self.remove_wish),
         ):
             events.connect(event_name, callback)
 
@@ -103,7 +109,7 @@ class WishList(Dialog):
         if not wish:
             return
 
-        wish_exists = (wish in self.list_view.iterators)
+        wish_exists = wish in self.list_view.iterators
         self.wish_entry.set_text("")
 
         core.search.add_wish(wish)
@@ -136,7 +142,7 @@ class WishList(Dialog):
                 default=old_wish,
                 action_button_label=_("_Edit"),
                 callback=self.on_edit_wish_response,
-                callback_data=old_wish
+                callback_data=old_wish,
             ).present()
             return
 
@@ -174,7 +180,7 @@ class WishList(Dialog):
             title=_("Clear Wishlist?"),
             message=_("Do you really want to clear your wishlist?"),
             destructive_response_id="ok",
-            callback=self.clear_wishlist_response
+            callback=self.clear_wishlist_response,
         ).present()
 
     def add_wish(self, wish):

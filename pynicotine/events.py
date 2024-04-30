@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2022-2024 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import time
 
@@ -37,7 +36,6 @@ EVENT_NAMES = {
     "setup",
     "start",
     "thread-callback",
-
     # Users
     "admin-message",
     "change-password",
@@ -53,14 +51,12 @@ EVENT_NAMES = {
     "user-stats",
     "user-status",
     "watch-user",
-
     # Notification messages
     "show-notification",
     "show-chatroom-notification",
     "show-download-notification",
     "show-private-chat-notification",
     "show-search-notification",
-
     # Buddy list
     "add-buddy",
     "buddy-note",
@@ -69,7 +65,6 @@ EVENT_NAMES = {
     "buddy-prioritized",
     "buddy-trusted",
     "remove-buddy",
-
     # Chatrooms
     "clear-room-messages",
     "echo-room-message",
@@ -97,7 +92,6 @@ EVENT_NAMES = {
     "ticker-state",
     "user-joined-room",
     "user-left-room",
-
     # Interests
     "add-dislike",
     "add-interest",
@@ -108,13 +102,11 @@ EVENT_NAMES = {
     "remove-dislike",
     "remove-interest",
     "similar-users",
-
     # Network filter
     "ban-user",
     "ignore-user",
     "unban-user",
     "unignore-user",
-
     # Private chat
     "clear-private-messages",
     "echo-private-message",
@@ -122,7 +114,6 @@ EVENT_NAMES = {
     "private-chat-completions",
     "private-chat-remove-user",
     "private-chat-show-user",
-
     # Search
     "add-search",
     "add-wish",
@@ -134,10 +125,8 @@ EVENT_NAMES = {
     "remove-wish",
     "set-wishlist-interval",
     "show-search",
-
     # Statistics
     "update-stat",
-
     # Shares
     "folder-contents-request",
     "shared-file-list-progress",
@@ -149,7 +138,6 @@ EVENT_NAMES = {
     "shares-unavailable",
     "user-browse-remove-user",
     "user-browse-show-user",
-
     # Transfers
     "abort-download",
     "abort-downloads",
@@ -182,7 +170,6 @@ EVENT_NAMES = {
     "upload-denied",
     "upload-failed",
     "upload-file-error",
-
     # User info
     "user-info-progress",
     "user-info-remove-user",
@@ -215,11 +202,15 @@ class Events:
 
         for event_name, callback in (
             ("quit", self._quit),
-            ("thread-callback", self._thread_callback)
+            ("thread-callback", self._thread_callback),
         ):
             self.connect(event_name, callback)
 
-        Thread(target=self._run_scheduler, name="SchedulerThread", daemon=True).start()
+        Thread(
+            target=self._run_scheduler,
+            name="SchedulerThread",
+            daemon=True,
+        ).start()
 
     def connect(self, event_name, function):
 
@@ -242,7 +233,8 @@ class Events:
         callbacks = self._callbacks[event_name]
 
         if event_name == "quit":
-            # Event and log modules register callbacks first, but need to quit last
+            # Event and log modules register callbacks first, but need to quit
+            # last
             callbacks.reverse()
 
         for function in callbacks:
@@ -257,13 +249,15 @@ class Events:
     def schedule(self, delay, callback, callback_args=None, repeat=False):
 
         self._scheduler_event_id += 1
-        next_time = (time.monotonic() + delay)
+        next_time = time.monotonic() + delay
 
         if callback_args is None:
             callback_args = ()
 
-        self._pending_scheduler_events.append(
-            (self._scheduler_event_id, (next_time, delay, repeat, callback, callback_args)))
+        self._pending_scheduler_events.append((
+            self._scheduler_event_id,
+            (next_time, delay, repeat, callback, callback_args),
+        ))
 
         return self._scheduler_event_id
 
@@ -312,16 +306,24 @@ class Events:
                 continue
 
             # Retrieve upcoming event
-            event_id, event_data = min(self._scheduler_events.items(), key=lambda x: x[1][0])  # Compare timestamps
+            event_id, event_data = min(
+                self._scheduler_events.items(), key=lambda x: x[1][0]
+            )  # Compare timestamps
             event_time, delay, repeat, callback, callback_args = event_data
             current_time = time.monotonic()
-            sleep_time = (event_time - current_time)
+            sleep_time = event_time - current_time
 
             if sleep_time <= 0:
                 self.invoke_main_thread(callback, *callback_args)
 
                 if repeat:
-                    self._scheduler_events[event_id] = ((event_time + delay), delay, repeat, callback, callback_args)
+                    self._scheduler_events[event_id] = (
+                        (event_time + delay),
+                        delay,
+                        repeat,
+                        callback,
+                        callback_args,
+                    )
                 else:
                     self._scheduler_events.pop(event_id, None)
 

@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2020-2023 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import gettext
 import locale
@@ -41,7 +40,7 @@ LANGUAGES = (
     ("ru", "Русский"),
     ("tr", "Türkçe"),
     ("uk", "Українська"),
-    ("zh_CN", "汉语")
+    ("zh_CN", "汉语"),
 )
 
 
@@ -53,18 +52,29 @@ def _set_system_language(language=None):
     if not language and "LANGUAGE" not in os.environ:
         if sys.platform == "win32":
             import ctypes
+
             windll = ctypes.windll.kernel32
-            language = locale.windows_locale.get(windll.GetUserDefaultUILanguage())
+            language = locale.windows_locale.get(
+                windll.GetUserDefaultUILanguage()
+            )
 
         elif sys.platform == "darwin":
             try:
                 import subprocess
-                language_output = subprocess.check_output(("defaults", "read", "-g", "AppleLanguages"))
-                languages = language_output.decode("utf-8").strip('()\n" ').split(",")
+
+                language_output = subprocess.check_output(
+                    ("defaults", "read", "-g", "AppleLanguages")
+                )
+                languages = (
+                    language_output.decode("utf-8").strip('()\n" ').split(",")
+                )
                 language = next(iter(languages), None)
 
             except Exception as error:
-                print("Cannot load translations for default system language: %s", error)
+                print(
+                    "Cannot load translations for default system language: %s",
+                    error,
+                )
 
     if language:
         os.environ["LANGUAGE"] = language

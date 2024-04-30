@@ -26,13 +26,11 @@ class Plugin(BasePlugin):
 
         super().__init__(*args, **kwargs)
 
-        self.settings = {
-            "rooms": ["testroom"]
-        }
+        self.settings = {"rooms": ["testroom"]}
         self.metasettings = {
             "rooms": {
                 "description": "Rooms to broadcast in",
-                "type": "list string"
+                "type": "list string",
             }
         }
 
@@ -58,7 +56,7 @@ class Plugin(BasePlugin):
             object_path="/org/mpris/MediaPlayer2",
             arg0=None,
             flags=Gio.DBusSignalFlags.NONE,
-            callback=self.song_change
+            callback=self.song_change,
         )
 
     def remove_mpris_signal_receiver(self):
@@ -78,13 +76,13 @@ class Plugin(BasePlugin):
                 info=None,
                 name="org.freedesktop.DBus",
                 object_path="/org/freedesktop/DBus",
-                interface_name="org.freedesktop.DBus"
+                interface_name="org.freedesktop.DBus",
             )
             names = dbus_proxy.ListNames()
 
             for name in names:
                 if name.startswith(self.dbus_mpris_service):
-                    player = name[len(self.dbus_mpris_service):]
+                    player = name[len(self.dbus_mpris_service) :]
                     break
 
         return player
@@ -98,9 +96,11 @@ class Plugin(BasePlugin):
             info=None,
             name=self.dbus_mpris_service + player,
             object_path="/org/mpris/MediaPlayer2",
-            interface_name="org.freedesktop.DBus.Properties"
+            interface_name="org.freedesktop.DBus.Properties",
         )
-        metadata = dbus_proxy.Get("(ss)", "org.mpris.MediaPlayer2.Player", "Metadata")
+        metadata = dbus_proxy.Get(
+            "(ss)", "org.mpris.MediaPlayer2.Player", "Metadata"
+        )
         song_url = metadata.get("xesam:url")
 
         return song_url
@@ -114,7 +114,15 @@ class Plugin(BasePlugin):
             if playing:
                 self.send_public(room, playing)
 
-    def song_change(self, _connection, _sender_name, _object_path, _interface_name, _signal_name, parameters):
+    def song_change(
+        self,
+        _connection,
+        _sender_name,
+        _object_path,
+        _interface_name,
+        _signal_name,
+        parameters,
+    ):
 
         if self.config.sections["players"]["npplayer"] != "mpris":
             # MPRIS is not active, exit
@@ -142,11 +150,15 @@ class Plugin(BasePlugin):
 
         except Exception as error:
             # Selected player is invalid
-            self.log("Cannot retrieve currently playing song. Error: %s", error)
+            self.log(
+                "Cannot retrieve currently playing song. Error: %s",
+                error,
+            )
             return
 
         if selected_client_song_url != changed_song_url:
-            # Song change was from another MPRIS client than the selected one, exit
+            # Song change was from another MPRIS client than the selected
+            # one, exit
             return
 
         # Keep track of which song is playing

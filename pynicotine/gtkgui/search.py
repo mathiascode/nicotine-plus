@@ -1,25 +1,23 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2018 Mutnick <mutnick@techie.com>
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2008-2011 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2016-2018
+# Mutnick <mutnick@techie.com> COPYRIGHT (C) 2016-2017 Michael Labouebe
+# <gfarmerfr@free.fr> COPYRIGHT (C) 2008-2011 quinox <quinox@users.sf.net>
+# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com> COPYRIGHT (C)
+# 2003-2004 Hyriand <hyriand@thegraveyard.org>
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import operator
 import re
@@ -67,7 +65,7 @@ class Searches(IconNotebook):
             window,
             parent=window.search_content,
             parent_page=window.search_page,
-            switch_page_callback=self.on_switch_search_page
+            switch_page_callback=self.on_switch_search_page,
         )
 
         self.page = window.search_page
@@ -81,7 +79,7 @@ class Searches(IconNotebook):
             "global": _("_Global"),
             "buddies": _("_Buddies"),
             "rooms": _("_Rooms"),
-            "user": _("_User")
+            "user": _("_User"),
         }
 
         mode_menu = PopupMenu(window.application)
@@ -89,7 +87,7 @@ class Searches(IconNotebook):
             ("O" + self.modes["global"], "win.search-mode", "global"),
             ("O" + self.modes["buddies"], "win.search-mode", "buddies"),
             ("O" + self.modes["rooms"], "win.search-mode", "rooms"),
-            ("O" + self.modes["user"], "win.search-mode", "user")
+            ("O" + self.modes["user"], "win.search-mode", "user"),
         )
         mode_menu.update_model()
         window.search_mode_button.set_menu_model(mode_menu.model)
@@ -100,18 +98,26 @@ class Searches(IconNotebook):
             add_css_class(inner_button, "arrow-button")
 
         self.room_search_combobox = ComboBox(
-            container=self.window.search_title, has_entry=True, has_entry_completion=True,
-            entry=self.window.room_search_entry, visible=False
+            container=self.window.search_title,
+            has_entry=True,
+            has_entry_completion=True,
+            entry=self.window.room_search_entry,
+            visible=False,
         )
 
         self.user_search_combobox = ComboBox(
-            container=self.window.search_title, has_entry=True, has_entry_completion=True,
-            entry=self.window.user_search_entry, visible=False
+            container=self.window.search_title,
+            has_entry=True,
+            has_entry_completion=True,
+            entry=self.window.user_search_entry,
+            visible=False,
         )
 
         self.search_combobox = ComboBox(
-            container=self.window.search_title, has_entry=True, has_entry_completion=True,
-            entry=self.window.search_entry
+            container=self.window.search_title,
+            has_entry=True,
+            has_entry_completion=True,
+            entry=self.window.search_entry,
         )
 
         self.file_properties = None
@@ -124,7 +130,7 @@ class Searches(IconNotebook):
             ("remove-search", self.remove_search),
             ("remove-wish", self.update_wish_button),
             ("server-login", self.on_focus),
-            ("show-search", self.show_search)
+            ("show-search", self.show_search),
         ):
             events.connect(event_name, callback)
 
@@ -194,7 +200,9 @@ class Searches(IconNotebook):
         if not text:
             return
 
-        mode = self.window.lookup_action("search-mode").get_state().get_string()
+        mode = (
+            self.window.lookup_action("search-mode").get_state().get_string()
+        )
         room = self.room_search_combobox.get_text()
         user = self.user_search_combobox.get_text()
         users = [user] if user else []
@@ -209,7 +217,10 @@ class Searches(IconNotebook):
         if not config.sections["searches"]["enable_history"]:
             self.search_combobox.clear()
         else:
-            for term in islice(config.sections["searches"]["history"], core.search.SEARCH_HISTORY_LIMIT):
+            for term in islice(
+                config.sections["searches"]["history"],
+                core.search.SEARCH_HISTORY_LIMIT,
+            ):
                 self.search_combobox.append(str(term))
 
         self.search_combobox.unfreeze()
@@ -224,20 +235,38 @@ class Searches(IconNotebook):
         self.search_combobox.remove_id(term)
         self.search_combobox.prepend(term)
 
-        while self.search_combobox.get_num_items() > core.search.SEARCH_HISTORY_LIMIT:
+        while (
+            self.search_combobox.get_num_items()
+            > core.search.SEARCH_HISTORY_LIMIT
+        ):
             self.search_combobox.remove_pos(-1)
 
         self.search_combobox.unfreeze()
 
-    def create_page(self, token, text, mode=None, mode_label=None, room=None, users=None,
-                    show_page=True):
+    def create_page(
+        self,
+        token,
+        text,
+        mode=None,
+        mode_label=None,
+        room=None,
+        users=None,
+        show_page=True,
+    ):
 
         page = self.pages.get(token)
 
         if page is None:
             self.pages[token] = page = Search(
-                self, text=text, token=token, mode=mode, mode_label=mode_label,
-                room=room, users=users, show_page=show_page)
+                self,
+                text=text,
+                token=token,
+                mode=mode,
+                mode_label=mode_label,
+                room=room,
+                users=users,
+                show_page=show_page,
+            )
         else:
             mode_label = page.mode_label
 
@@ -252,8 +281,13 @@ class Searches(IconNotebook):
             length = 20
 
         label = full_text[:length]
-        self.append_page(page.container, label, focus_callback=page.on_focus,
-                         close_callback=page.on_close, full_text=full_text)
+        self.append_page(
+            page.container,
+            label,
+            focus_callback=page.on_focus,
+            close_callback=page.on_close,
+            full_text=full_text,
+        )
         page.set_label(self.get_tab_label_inner(page.container))
 
         return page
@@ -274,7 +308,9 @@ class Searches(IconNotebook):
         elif mode == "buddies":
             mode_label = _("Buddies")
 
-        self.create_page(token, search.term, mode, mode_label, room=room, users=users)
+        self.create_page(
+            token, search.term, mode, mode_label, room=room, users=users
+        )
 
         if switch_page:
             self.show_search(token)
@@ -304,10 +340,19 @@ class Searches(IconNotebook):
             mode = page.mode
 
             if mode == "wishlist":
-                # For simplicity's sake, turn wishlist tabs into regular ones when restored
+                # For simplicity's sake, turn wishlist tabs into regular ones
+                # when restored
                 mode = "global"
 
-            self.remove_page(page.container, page_args=(page.text, mode, page.room, page.searched_users))
+            self.remove_page(
+                page.container,
+                page_args=(
+                    page.text,
+                    mode,
+                    page.room,
+                    page.searched_users,
+                ),
+            )
 
         del self.pages[token]
         page.destroy()
@@ -330,7 +375,15 @@ class Searches(IconNotebook):
     def clear_filter_history(self):
 
         # Clear filter history in config
-        for filter_id in ("filterin", "filterout", "filtertype", "filtersize", "filterbr", "filterlength", "filtercc"):
+        for filter_id in (
+            "filterin",
+            "filterout",
+            "filtertype",
+            "filtersize",
+            "filterbr",
+            "filterlength",
+            "filtercc",
+        ):
             config.sections["searches"][filter_id] = []
 
         config.write_configuration()
@@ -353,7 +406,13 @@ class Searches(IconNotebook):
             search_term = search_item.term
             mode = "wishlist"
             mode_label = _("Wish")
-            page = self.create_page(msg.token, search_term, mode, mode_label, show_page=False)
+            page = self.create_page(
+                msg.token,
+                search_term,
+                mode,
+                mode_label,
+                show_page=False,
+            )
 
         # No more things to add because we've reached the result limit
         if page.num_results_found >= page.max_limit:
@@ -380,16 +439,41 @@ class Search:
         ("video", FileTypes.VIDEO),
         ("document", FileTypes.DOCUMENT),
         ("text", FileTypes.TEXT),
-        ("archive", FileTypes.ARCHIVE)
+        ("archive", FileTypes.ARCHIVE),
     )
     FILTER_PRESETS = {
         "filterbr": ("!0", "128 <=192", ">192 <320", "=320", ">320"),
-        "filtersize": (">50MiB", ">20MiB <=50MiB", ">10MiB <=20MiB", ">5MiB <=10MiB", "<=5MiB"),
-        "filtertype": ("audio", "image", "video", "document", "text", "archive", "!executable", "audio image text"),
-        "filterlength": (">15:00", ">8:00 <=15:00", ">5:00 <=8:00", ">2:00 <=5:00", "<=2:00")
+        "filtersize": (
+            ">50MiB",
+            ">20MiB <=50MiB",
+            ">10MiB <=20MiB",
+            ">5MiB <=10MiB",
+            "<=5MiB",
+        ),
+        "filtertype": (
+            "audio",
+            "image",
+            "video",
+            "document",
+            "text",
+            "archive",
+            "!executable",
+            "audio image text",
+        ),
+        "filterlength": (
+            ">15:00",
+            ">8:00 <=15:00",
+            ">5:00 <=8:00",
+            ">2:00 <=5:00",
+            "<=2:00",
+        ),
     }
-    FILTER_SPLIT_DIGIT_PATTERN = re.compile(r"(?:[|&\s])+(?<![<>!=]\s)")  # [pipe, ampersand, space]
-    FILTER_SPLIT_TEXT_PATTERN = re.compile(r"(?:[|&,;\s])+(?<!!\s)")      # [pipe, ampersand, comma, semicolon, space]
+    FILTER_SPLIT_DIGIT_PATTERN = re.compile(
+        r"(?:[|&\s])+(?<![<>!=]\s)"
+    )  # \[pipe, ampersand, space\]
+    FILTER_SPLIT_TEXT_PATTERN = re.compile(
+        r"(?:[|&,;\s])+(?<!!\s)"
+    )  # \[pipe, ampersand, comma, semicolon, space\]
     FILTERS_EMPTY = {
         "filterin": (None, ""),
         "filterout": (None, ""),
@@ -398,10 +482,20 @@ class Search:
         "filterslot": (False, False),
         "filtercc": (None, ""),
         "filtertype": (None, ""),
-        "filterlength": (None, "")
+        "filterlength": (None, ""),
     }
 
-    def __init__(self, searches, text, token, mode, mode_label, room, users, show_page):
+    def __init__(
+        self,
+        searches,
+        text,
+        token,
+        mode,
+        mode_label,
+        room,
+        users,
+        show_page,
+    ):
 
         (
             self.add_wish_button,
@@ -433,7 +527,7 @@ class Search:
             self.grouping_button,
             self.results_button,
             self.results_label,
-            self.tree_container
+            self.tree_container,
         ) = ui.load(scope=self, path="search.ui")
 
         self.searches = searches
@@ -467,63 +561,96 @@ class Search:
 
         # Combo boxes
         self.filter_include_combobox = ComboBox(
-            container=self.filter_include_container, has_entry=True, enable_arrow_keys=False,
-            entry=self.filter_include_entry, item_selected_callback=self.on_refilter)
+            container=self.filter_include_container,
+            has_entry=True,
+            enable_arrow_keys=False,
+            entry=self.filter_include_entry,
+            item_selected_callback=self.on_refilter,
+        )
 
         self.filter_exclude_combobox = ComboBox(
-            container=self.filter_exclude_container, has_entry=True, enable_arrow_keys=False,
-            entry=self.filter_exclude_entry, item_selected_callback=self.on_refilter)
+            container=self.filter_exclude_container,
+            has_entry=True,
+            enable_arrow_keys=False,
+            entry=self.filter_exclude_entry,
+            item_selected_callback=self.on_refilter,
+        )
 
         self.filter_file_type_combobox = ComboBox(
-            container=self.filter_file_type_container, has_entry=True, enable_arrow_keys=False,
-            entry=self.filter_file_type_entry, item_selected_callback=self.on_refilter)
+            container=self.filter_file_type_container,
+            has_entry=True,
+            enable_arrow_keys=False,
+            entry=self.filter_file_type_entry,
+            item_selected_callback=self.on_refilter,
+        )
 
         self.filter_file_size_combobox = ComboBox(
-            container=self.filter_file_size_container, has_entry=True, enable_arrow_keys=False,
-            entry=self.filter_file_size_entry, item_selected_callback=self.on_refilter)
+            container=self.filter_file_size_container,
+            has_entry=True,
+            enable_arrow_keys=False,
+            entry=self.filter_file_size_entry,
+            item_selected_callback=self.on_refilter,
+        )
 
         self.filter_bitrate_combobox = ComboBox(
-            container=self.filter_bitrate_container, has_entry=True, enable_arrow_keys=False,
-            entry=self.filter_bitrate_entry, item_selected_callback=self.on_refilter)
+            container=self.filter_bitrate_container,
+            has_entry=True,
+            enable_arrow_keys=False,
+            entry=self.filter_bitrate_entry,
+            item_selected_callback=self.on_refilter,
+        )
 
         self.filter_length_combobox = ComboBox(
-            container=self.filter_length_container, has_entry=True, enable_arrow_keys=False,
-            entry=self.filter_length_entry, item_selected_callback=self.on_refilter)
+            container=self.filter_length_container,
+            has_entry=True,
+            enable_arrow_keys=False,
+            entry=self.filter_length_entry,
+            item_selected_callback=self.on_refilter,
+        )
 
         self.filter_country_combobox = ComboBox(
-            container=self.filter_country_container, has_entry=True, enable_arrow_keys=False,
-            entry=self.filter_country_entry, item_selected_callback=self.on_refilter)
+            container=self.filter_country_container,
+            has_entry=True,
+            enable_arrow_keys=False,
+            entry=self.filter_country_entry,
+            item_selected_callback=self.on_refilter,
+        )
 
         self.tree_view = TreeView(
-            self.window, parent=self.tree_container, name="file_search", persistent_sort=True,
-            multi_select=True, activate_row_callback=self.on_row_activated, focus_in_callback=self.on_refilter,
+            self.window,
+            parent=self.tree_container,
+            name="file_search",
+            persistent_sort=True,
+            multi_select=True,
+            activate_row_callback=self.on_row_activated,
+            focus_in_callback=self.on_refilter,
             columns={
                 # Visible columns
                 "user": {
                     "column_type": "text",
                     "title": _("User"),
                     "width": 200,
-                    "sensitive_column": "free_slot_data"
+                    "sensitive_column": "free_slot_data",
                 },
                 "country": {
                     "column_type": "icon",
                     "title": _("Country"),
                     "width": 30,
-                    "hide_header": True
+                    "hide_header": True,
                 },
                 "speed": {
                     "column_type": "number",
                     "title": _("Speed"),
                     "width": 120,
                     "sort_column": "speed_data",
-                    "sensitive_column": "free_slot_data"
+                    "sensitive_column": "free_slot_data",
                 },
                 "in_queue": {
                     "column_type": "number",
                     "title": _("In Queue"),
                     "width": 110,
                     "sort_column": "in_queue_data",
-                    "sensitive_column": "free_slot_data"
+                    "sensitive_column": "free_slot_data",
                 },
                 "folder": {
                     "column_type": "text",
@@ -531,14 +658,14 @@ class Search:
                     "width": 200,
                     "expand_column": True,
                     "sensitive_column": "free_slot_data",
-                    "tooltip_callback": self.on_file_path_tooltip
+                    "tooltip_callback": self.on_file_path_tooltip,
                 },
                 "file_type": {
                     "column_type": "icon",
                     "title": _("File Type"),
                     "width": 40,
                     "hide_header": True,
-                    "sensitive_column": "free_slot_data"
+                    "sensitive_column": "free_slot_data",
                 },
                 "filename": {
                     "column_type": "text",
@@ -546,30 +673,29 @@ class Search:
                     "width": 200,
                     "expand_column": True,
                     "sensitive_column": "free_slot_data",
-                    "tooltip_callback": self.on_file_path_tooltip
+                    "tooltip_callback": self.on_file_path_tooltip,
                 },
                 "size": {
                     "column_type": "number",
                     "title": _("Size"),
                     "width": 180,
                     "sort_column": "size_data",
-                    "sensitive_column": "free_slot_data"
+                    "sensitive_column": "free_slot_data",
                 },
                 "quality": {
                     "column_type": "number",
                     "title": _("Quality"),
                     "width": 150,
                     "sort_column": "bitrate_data",
-                    "sensitive_column": "free_slot_data"
+                    "sensitive_column": "free_slot_data",
                 },
                 "length": {
                     "column_type": "number",
                     "title": _("Duration"),
                     "width": 100,
                     "sort_column": "length_data",
-                    "sensitive_column": "free_slot_data"
+                    "sensitive_column": "free_slot_data",
                 },
-
                 # Hidden data columns
                 "speed_data": {"data_type": GObject.TYPE_UINT},
                 "in_queue_data": {"data_type": GObject.TYPE_UINT},
@@ -582,37 +708,47 @@ class Search:
                 "id_data": {
                     "data_type": GObject.TYPE_UINT64,
                     "default_sort_type": "ascending",
-                    "iterator_key": True
-                }
-            }
+                    "iterator_key": True,
+                },
+            },
         )
 
         # Popup menus
-        self.popup_menu_users = UserPopupMenu(self.window.application, tab_name="search")
+        self.popup_menu_users = UserPopupMenu(
+            self.window.application, tab_name="search"
+        )
 
         self.popup_menu_copy = PopupMenu(self.window.application)
         self.popup_menu_copy.add_items(
             ("#" + _("Copy _File Path"), self.on_copy_file_path),
             ("#" + _("Copy _URL"), self.on_copy_url),
-            ("#" + _("Copy Folder U_RL"), self.on_copy_folder_url)
+            ("#" + _("Copy Folder U_RL"), self.on_copy_folder_url),
         )
 
         self.popup_menu = FilePopupMenu(
-            self.window.application, parent=self.tree_view.widget, callback=self.on_popup_menu
+            self.window.application,
+            parent=self.tree_view.widget,
+            callback=self.on_popup_menu,
         )
         self.popup_menu.add_items(
             ("#" + _("_Download File(s)"), self.on_download_files),
-            ("#" + _("Download File(s) _To…"), self.on_download_files_to),
+            (
+                "#" + _("Download File(s) _To…"),
+                self.on_download_files_to,
+            ),
             ("", None),
             ("#" + _("Download _Folder(s)"), self.on_download_folders),
-            ("#" + _("Download F_older(s) To…"), self.on_download_folders_to),
+            (
+                "#" + _("Download F_older(s) To…"),
+                self.on_download_folders_to,
+            ),
             ("", None),
             ("#" + _("View User _Profile"), self.on_user_profile),
             ("#" + _("_Browse Folder"), self.on_browse_folder),
             ("#" + _("F_ile Properties"), self.on_file_properties),
             ("", None),
             (">" + _("Copy"), self.popup_menu_copy),
-            (">" + _("User Actions"), self.popup_menu_users)
+            (">" + _("User Actions"), self.popup_menu_users),
         )
 
         self.tab_menu = PopupMenu(self.window.application)
@@ -622,30 +758,49 @@ class Search:
             ("", None),
             ("#" + _("Clear All Results"), self.on_clear),
             ("#" + _("Close All Tabs…"), self.on_close_all_tabs),
-            ("#" + _("_Close Tab"), self.on_close)
+            ("#" + _("_Close Tab"), self.on_close),
         )
 
         self.popup_menus = (
-            self.popup_menu, self.popup_menu_users, self.popup_menu_copy, self.tab_menu
+            self.popup_menu,
+            self.popup_menu_users,
+            self.popup_menu_copy,
+            self.tab_menu,
         )
 
         # Key bindings
         for widget in (self.container, self.tree_view.widget):
-            Accelerator("<Primary>f", widget, self.on_show_filter_bar_accelerator)
+            Accelerator(
+                "<Primary>f",
+                widget,
+                self.on_show_filter_bar_accelerator,
+            )
 
-        Accelerator("Escape", self.filters_container, self.on_close_filter_bar_accelerator)
-        Accelerator("<Alt>Return", self.tree_view.widget, self.on_file_properties_accelerator)
+        Accelerator(
+            "Escape",
+            self.filters_container,
+            self.on_close_filter_bar_accelerator,
+        )
+        Accelerator(
+            "<Alt>Return",
+            self.tree_view.widget,
+            self.on_file_properties_accelerator,
+        )
 
         # Grouping
-        menu = create_grouping_menu(self.window, config.sections["searches"]["group_searches"], self.on_group)
+        menu = create_grouping_menu(
+            self.window,
+            config.sections["searches"]["group_searches"],
+            self.on_group,
+        )
         self.grouping_button.set_menu_model(menu)
 
-        self.expand_button.set_active(config.sections["searches"]["expand_searches"])
+        self.expand_button.set_active(
+            config.sections["searches"]["expand_searches"]
+        )
 
         # Filter button widgets
-        self.filter_buttons = {
-            "filterslot": self.filter_free_slot_button
-        }
+        self.filter_buttons = {"filterslot": self.filter_free_slot_button}
 
         # Filter combobox widgets
         self.filter_comboboxes = {
@@ -655,7 +810,7 @@ class Search:
             "filterbr": self.filter_bitrate_combobox,
             "filtercc": self.filter_country_combobox,
             "filtertype": self.filter_file_type_combobox,
-            "filterlength": self.filter_length_combobox
+            "filterlength": self.filter_length_combobox,
         }
 
         # Filter text entry widgets
@@ -663,9 +818,13 @@ class Search:
             combobox.entry.filter_id = filter_id
 
             buffer = combobox.entry.get_buffer()
-            buffer.connect_after("deleted-text", self.on_filter_entry_deleted_text)
+            buffer.connect_after(
+                "deleted-text", self.on_filter_entry_deleted_text
+            )
 
-        self.filters_button.set_active(config.sections["searches"]["filters_visible"])
+        self.filters_button.set_active(
+            config.sections["searches"]["filters_visible"]
+        )
         self.populate_filter_history()
         self.populate_default_filters()
 
@@ -708,7 +867,12 @@ class Search:
         if self.clear_undo_filters_icon.get_icon_name() == icon_name:
             return
 
-        icon_args = (Gtk.IconSize.BUTTON,) if GTK_API_VERSION == 3 else ()  # pylint: disable=no-member
+        icon_args = (
+            # pylint: disable=no-member
+            (Gtk.IconSize.BUTTON,)
+            if GTK_API_VERSION == 3
+            else ()
+        )
         self.clear_undo_filters_button.set_tooltip_text(tooltip_text)
         self.clear_undo_filters_icon.set_from_icon_name(icon_name, *icon_args)
 
@@ -730,7 +894,9 @@ class Search:
                 if filter_history:
                     widget.append("")  # Separator
 
-            for value in islice(filter_history, core.search.RESULT_FILTER_HISTORY_LIMIT):
+            for value in islice(
+                filter_history, core.search.RESULT_FILTER_HISTORY_LIMIT
+            ):
                 widget.append(value)
 
             if presets:
@@ -777,8 +943,18 @@ class Search:
 
         self.on_refilter()
 
-    def add_result_list(self, result_list, user, country_code, inqueue, ulspeed, h_speed,
-                        h_queue, has_free_slots, private=False):
+    def add_result_list(
+        self,
+        result_list,
+        user,
+        country_code,
+        inqueue,
+        ulspeed,
+        h_speed,
+        h_queue,
+        has_free_slots,
+        private=False,
+    ):
         """Adds a list of search results to the treeview.
 
         Lists can either contain publicly or privately shared files.
@@ -788,7 +964,14 @@ class Search:
         search = core.search.searches[self.token]
         row_id = 0
 
-        for _code, file_path, size, _ext, file_attributes, *_unused in result_list:
+        for (
+            _code,
+            file_path,
+            size,
+            _ext,
+            file_attributes,
+            *_unused,
+        ) in result_list:
             if self.num_results_found >= self.max_limit:
                 self.max_limited = True
                 break
@@ -797,15 +980,20 @@ class Search:
 
             if any(word in file_path_lower for word in search.excluded_words):
                 # Filter out results with filtered words (e.g. nicotine -music)
-                log.add_debug(("Filtered out excluded search result %(filepath)s from user %(user)s for "
-                               'search term "%(query)s"'), {
-                    "filepath": file_path,
-                    "user": user,
-                    "query": self.text
-                })
+                log.add_debug(
+                    "Filtered out excluded search result %(filepath)s"
+                    ' from user %(user)s for search term "%(query)s"',
+                    {
+                        "filepath": file_path,
+                        "user": user,
+                        "query": self.text,
+                    },
+                )
                 continue
 
-            if not all(word in file_path_lower for word in search.included_words):
+            if not all(
+                word in file_path_lower for word in search.included_words
+            ):
                 # Certain users may send us wrong results, filter out such ones
                 continue
 
@@ -813,47 +1001,50 @@ class Search:
             file_path_split = file_path.split("\\")
 
             if config.sections["ui"]["reverse_file_paths"]:
-                # Reverse file path, file name is the first item. next() retrieves the name and removes
-                # it from the iterator.
+                # Reverse file path, file name is the first item. next()
+                # retrieves the name and removes it from the iterator.
                 file_path_split = reversed(file_path_split)
                 name = next(file_path_split)
 
             else:
-                # Regular file path, file name is the last item. Retrieve it and remove it from the list.
+                # Regular file path, file name is the last item. Retrieve it
+                # and remove it from the list.
                 name = file_path_split.pop()
 
             # Join the resulting items into a folder path
             folder_path = "\\".join(file_path_split)
 
             h_size = human_size(size, config.sections["ui"]["file_size_unit"])
-            h_quality, bitrate, h_length, length = FileListMessage.parse_audio_quality_length(size, file_attributes)
+            h_quality, bitrate, h_length, length = (
+                FileListMessage.parse_audio_quality_length(
+                    size, file_attributes
+                )
+            )
 
             if private:
                 name = _("[PRIVATE]  %s") % name
 
-            is_result_visible = self.append(
-                [
-                    user,
-                    get_flag_icon_name(country_code),
-                    h_speed,
-                    h_queue,
-                    folder_path,
-                    get_file_type_icon_name(name),
-                    name,
-                    h_size,
-                    h_quality,
-                    h_length,
-                    ulspeed,
-                    inqueue,
-                    size,
-                    bitrate,
-                    length,
-                    file_path,
-                    has_free_slots,
-                    file_attributes,
-                    row_id
-                ]
-            )
+            is_result_visible = self.append([
+                user,
+                get_flag_icon_name(country_code),
+                h_speed,
+                h_queue,
+                folder_path,
+                get_file_type_icon_name(name),
+                name,
+                h_size,
+                h_quality,
+                h_length,
+                ulspeed,
+                inqueue,
+                size,
+                bitrate,
+                length,
+                file_path,
+                has_free_slots,
+                file_attributes,
+                row_id,
+            ])
 
             if is_result_visible:
                 update_ui = True
@@ -884,35 +1075,57 @@ class Search:
         if ulspeed > 0:
             h_speed = human_speed(ulspeed)
 
-        update_ui = self.add_result_list(msg.list, user, country_code, inqueue, ulspeed, h_speed,
-                                         h_queue, has_free_slots)
+        update_ui = self.add_result_list(
+            msg.list,
+            user,
+            country_code,
+            inqueue,
+            ulspeed,
+            h_speed,
+            h_queue,
+            has_free_slots,
+        )
 
-        if msg.privatelist and config.sections["searches"]["private_search_results"]:
+        if (
+            msg.privatelist
+            and config.sections["searches"]["private_search_results"]
+        ):
             update_ui_private = self.add_result_list(
-                msg.privatelist, user, country_code, inqueue, ulspeed, h_speed, h_queue,
-                has_free_slots, private=True
+                msg.privatelist,
+                user,
+                country_code,
+                inqueue,
+                ulspeed,
+                h_speed,
+                h_queue,
+                has_free_slots,
+                private=True,
             )
 
             if not update_ui and update_ui_private:
                 update_ui = True
 
         if update_ui:
-            # If this search wasn't initiated by us (e.g. wishlist), and the results aren't spoofed, show tab
-            is_wish = (self.mode == "wishlist")
+            # If this search wasn't initiated by us (e.g. wishlist), and the
+            # results aren't spoofed, show tab
+            is_wish = self.mode == "wishlist"
 
             if not self.show_page:
                 self.searches.create_page(self.token, self.text)
                 self.show_page = True
 
-            tab_changed = self.searches.request_tab_changed(self.container, is_important=is_wish)
+            tab_changed = self.searches.request_tab_changed(
+                self.container, is_important=is_wish
+            )
 
             if tab_changed and is_wish:
                 self.window.update_title()
 
                 if config.sections["notifications"]["notification_popup_wish"]:
                     core.notifications.show_search_notification(
-                        str(self.token), self.text,
-                        title=_("Wishlist Results Found")
+                        str(self.token),
+                        self.text,
+                        title=_("Wishlist Results Found"),
                     )
 
         # Update number of results, even if they are all filtered
@@ -929,9 +1142,27 @@ class Search:
         return True
 
     def add_row_to_model(self, row):
-        (user, flag, h_speed, h_queue, folder_path, _unused, _unused, _unused, _unused,
-            _unused, speed, queue, _unused, _unused, _unused, file_path, has_free_slots,
-            _unused, _unused) = row
+        (
+            user,
+            flag,
+            h_speed,
+            h_queue,
+            folder_path,
+            _unused,
+            _unused,
+            _unused,
+            _unused,
+            _unused,
+            speed,
+            queue,
+            _unused,
+            _unused,
+            _unused,
+            file_path,
+            has_free_slots,
+            _unused,
+            _unused,
+        ) = row
 
         expand_user = False
         expand_folder = False
@@ -965,8 +1196,9 @@ class Search:
                         empty_str,
                         has_free_slots,
                         empty_dict,
-                        self.row_id
-                    ], select_row=False
+                        self.row_id,
+                    ],
+                    select_row=False,
                 )
 
                 if self.grouping_mode == "folder_grouping":
@@ -1005,8 +1237,10 @@ class Search:
                             file_path.rpartition("\\")[0],
                             has_free_slots,
                             empty_dict,
-                            self.row_id
-                        ], select_row=False, parent_iterator=user_iterator
+                            self.row_id,
+                        ],
+                        select_row=False,
+                        parent_iterator=user_iterator,
                     )
                     user_child_iterators.append(iterator)
                     expand_folder = self.expand_button.get_active()
@@ -1014,9 +1248,13 @@ class Search:
                     self.folders[user_folder_path] = (iterator, [])
 
                 row = row[:]
-                row[4] = ""  # Folder not visible for file row if "group by folder" is enabled
+                # Folder not visible for file row if "group by folder" is
+                # enabled
+                row[4] = ""
 
-                user_folder_iterator, user_folder_child_iterators = self.folders[user_folder_path]
+                user_folder_iterator, user_folder_child_iterators = (
+                    self.folders[user_folder_path]
+                )
                 parent_iterator = user_folder_iterator
 
             else:
@@ -1029,7 +1267,9 @@ class Search:
             user_iterator, user_child_iterators = self.users[user]
 
         row[18] = self.row_id
-        iterator = self.tree_view.add_row(row, select_row=False, parent_iterator=parent_iterator)
+        iterator = self.tree_view.add_row(
+            row, select_row=False, parent_iterator=parent_iterator
+        )
         self.row_id += 1
 
         if self.grouping_mode == "folder_grouping":
@@ -1096,9 +1336,10 @@ class Search:
         history.insert(0, value)
         config.write_configuration()
 
-        # If called after selecting a filter history item from the dropdown, GTK 4 crashes
-        # when resetting the dropdown model (in freeze() and unfreeze()). Add a slight delay
-        # to allow the selected item signal to complete before we add an item.
+        # If called after selecting a filter history item from the dropdown,
+        # GTK 4 crashes when resetting the dropdown model (in freeze() and
+        # unfreeze()). Add a slight delay to allow the selected item signal to
+        # complete before we add an item.
 
         GLib.idle_add(self.searches.add_filter_history_item, filter_id, value)
 
@@ -1112,7 +1353,7 @@ class Search:
             "==": operator.eq,
             "!=": operator.ne,
             ">=": operator.ge,
-            ">": operator.gt
+            ">": operator.gt,
         }
 
         if condition.startswith((">=", "<=", "==", "!=")):
@@ -1141,8 +1382,13 @@ class Search:
                     # Invalid Size unit
                     continue
 
-                # Exact match unlikely, approximate to within +/- 0.1 MiB (or 1 MiB if over 100 MiB)
-                adjust = factor / 8 if factor > 1024 and digit < 104857600 else factor  # TODO: GiB
+                # Exact match unlikely, approximate to within +/- 0.1 MiB (or 1
+                # MiB if over 100 MiB)
+                adjust = (
+                    factor / 8
+                    if factor > 1024 and digit < 104857600
+                    else factor
+                )  # TODO: GiB
 
             else:
                 adjust = 0
@@ -1156,8 +1402,15 @@ class Search:
                         continue
 
                     try:
-                        # Duration: Convert string from HH:MM:SS or MM:SS into Seconds as integer
-                        digit = sum(x * int(t) for x, t in zip([1, 60, 3600], reversed(digit.split(":"))))
+                        # Duration: Convert string from HH:MM:SS or MM:SS into
+                        # Seconds as integer
+                        digit = sum(
+                            x * int(t)
+                            for x, t in zip(
+                                [1, 60, 3600],
+                                reversed(digit.split(":")),
+                            )
+                        )
                     except ValueError:
                         # Invalid Duration unit
                         continue
@@ -1231,32 +1484,51 @@ class Search:
         if self.active_filter_count <= 0:
             return True
 
-        for filter_id, (filter_value, _h_filter_value) in self.filters.items():
+        for filter_id, (
+            filter_value,
+            _h_filter_value,
+        ) in self.filters.items():
             if not filter_value:
                 continue
 
-            if filter_id == "filtertype" and not self.check_file_type(filter_value, row[15].lower()):
+            if filter_id == "filtertype" and not self.check_file_type(
+                filter_value, row[15].lower()
+            ):
                 return False
 
-            if filter_id == "filtercc" and not self.check_country(filter_value, row[1][-2:].upper()):
+            if filter_id == "filtercc" and not self.check_country(
+                filter_value, row[1][-2:].upper()
+            ):
                 return False
 
-            if filter_id == "filterin" and not filter_value.search(row[15]) and not filter_value.fullmatch(row[0]):
+            if (
+                filter_id == "filterin"
+                and not filter_value.search(row[15])
+                and not filter_value.fullmatch(row[0])
+            ):
                 return False
 
-            if filter_id == "filterout" and (filter_value.search(row[15]) or filter_value.fullmatch(row[0])):
+            if filter_id == "filterout" and (
+                filter_value.search(row[15]) or filter_value.fullmatch(row[0])
+            ):
                 return False
 
             if filter_id == "filterslot" and row[11] > 0:
                 return False
 
-            if filter_id == "filtersize" and not self.check_digit(filter_value, row[12], file_size=True):
+            if filter_id == "filtersize" and not self.check_digit(
+                filter_value, row[12], file_size=True
+            ):
                 return False
 
-            if filter_id == "filterbr" and not self.check_digit(filter_value, row[13]):
+            if filter_id == "filterbr" and not self.check_digit(
+                filter_value, row[13]
+            ):
                 return False
 
-            if filter_id == "filterlength" and not self.check_digit(filter_value, row[14]):
+            if filter_id == "filterlength" and not self.check_digit(
+                filter_value, row[14]
+            ):
                 return False
 
         return True
@@ -1276,7 +1548,9 @@ class Search:
             self.all_data.clear()
             self.num_results_found = 0
             self.max_limited = False
-            self.max_limit = config.sections["searches"]["max_displayed_results"]
+            self.max_limit = config.sections["searches"][
+                "max_displayed_results"
+            ]
 
         self.users.clear()
         self.folders.clear()
@@ -1321,7 +1595,12 @@ class Search:
             icon_name = "list-remove-symbolic"
             label = _("Remove Wi_sh")
 
-        icon_args = (Gtk.IconSize.BUTTON,) if GTK_API_VERSION == 3 else ()  # pylint: disable=no-member
+        icon_args = (
+            # pylint: disable=no-member
+            (Gtk.IconSize.BUTTON,)
+            if GTK_API_VERSION == 3
+            else ()
+        )
         self.add_wish_icon.set_from_icon_name(icon_name, *icon_args)
         self.add_wish_label.set_label(label)
 
@@ -1336,7 +1615,11 @@ class Search:
 
         popup.add_items(
             ("", None),
-            ("#" + _("Select User's Results"), self.on_select_user_results, user)
+            (
+                "#" + _("Select User's Results"),
+                self.on_select_user_results,
+                user,
+            ),
         )
         popup.update_model()
         popup.toggle_user_items()
@@ -1351,7 +1634,11 @@ class Search:
         # Multiple users, create submenus for some of them
         if len(self.selected_users) > 1:
             for user in islice(self.selected_users, 20):
-                popup = UserPopupMenu(self.window.application, username=user, tab_name="search")
+                popup = UserPopupMenu(
+                    self.window.application,
+                    username=user,
+                    tab_name="search",
+                )
                 self.add_popup_menu_user(popup, user)
                 self.popup_menu_users.add_items((">" + user, popup))
                 self.popup_menu_users.update_model()
@@ -1396,7 +1683,9 @@ class Search:
                 self.tree_view.select_row(iterator, should_scroll=False)
                 continue
 
-            user_folder_path = selected_user + self.tree_view.get_row_value(iterator, "folder")
+            user_folder_path = selected_user + self.tree_view.get_row_value(
+                iterator, "folder"
+            )
             user_folder_data = self.folders.get(user_folder_path)
 
             if not user_folder_data:
@@ -1449,11 +1738,16 @@ class Search:
 
     def update_result_counter(self):
 
-        if self.max_limited or self.num_results_found > self.num_results_visible:
-            # Append plus symbol "+" if Results are Filtered and/or reached 'Maximum per search'
+        if (
+            self.max_limited
+            or self.num_results_found > self.num_results_visible
+        ):
+            # Append plus symbol "+" if Results are Filtered and/or reached
+            # 'Maximum per search'
             str_plus = "+"
 
-            # Display total results on the tooltip, but only if we know the exact number of results
+            # Display total results on the tooltip, but only if we know the
+            # exact number of results
             if self.max_limited:
                 total = f"> {self.max_limit}+"
             else:
@@ -1467,7 +1761,9 @@ class Search:
             if self.results_button.get_tooltip_text() != tooltip_text:
                 self.results_button.set_tooltip_text(tooltip_text)
 
-        self.results_label.set_text(humanize(self.num_results_visible) + str_plus)
+        self.results_label.set_text(
+            humanize(self.num_results_visible) + str_plus
+        )
 
     def on_file_path_tooltip(self, treeview, iterator):
         return treeview.get_row_value(iterator, "file_path_data")
@@ -1525,12 +1821,20 @@ class Search:
         selected_length = 0
 
         for iterator in self.selected_results.values():
-            file_path = self.tree_view.get_row_value(iterator, "file_path_data")
+            file_path = self.tree_view.get_row_value(
+                iterator, "file_path_data"
+            )
             file_size = self.tree_view.get_row_value(iterator, "size_data")
             selected_size += file_size
-            selected_length += self.tree_view.get_row_value(iterator, "length_data")
-            country_code = self.tree_view.get_row_value(iterator, "country")[-2:].upper()
-            country_name = core.network_filter.COUNTRIES.get(country_code, _("Unknown"))
+            selected_length += self.tree_view.get_row_value(
+                iterator, "length_data"
+            )
+            country_code = self.tree_view.get_row_value(iterator, "country")[
+                -2:
+            ].upper()
+            country_name = core.network_filter.COUNTRIES.get(
+                country_code, _("Unknown")
+            )
             country = f"{country_name} ({country_code})"
             folder_path, _separator, basename = file_path.rpartition("\\")
 
@@ -1541,28 +1845,45 @@ class Search:
                 "virtual_folder_path": folder_path,
                 "size": file_size,
                 "speed": self.tree_view.get_row_value(iterator, "speed_data"),
-                "queue_position": self.tree_view.get_row_value(iterator, "in_queue_data"),
-                "file_attributes": self.tree_view.get_row_value(iterator, "file_attributes_data"),
-                "country": country
+                "queue_position": self.tree_view.get_row_value(
+                    iterator, "in_queue_data"
+                ),
+                "file_attributes": self.tree_view.get_row_value(
+                    iterator, "file_attributes_data"
+                ),
+                "country": country,
             })
 
         if data:
             if self.searches.file_properties is None:
-                self.searches.file_properties = FileProperties(self.window.application)
+                self.searches.file_properties = FileProperties(
+                    self.window.application
+                )
 
-            self.searches.file_properties.update_properties(data, selected_size, selected_length)
+            self.searches.file_properties.update_properties(
+                data, selected_size, selected_length
+            )
             self.searches.file_properties.present()
 
     def on_download_files(self, *_args, download_folder_path=None):
 
         for iterator in self.selected_results.values():
             user = self.tree_view.get_row_value(iterator, "user")
-            file_path = self.tree_view.get_row_value(iterator, "file_path_data")
+            file_path = self.tree_view.get_row_value(
+                iterator, "file_path_data"
+            )
             size = self.tree_view.get_row_value(iterator, "size_data")
-            file_attributes = self.tree_view.get_row_value(iterator, "file_attributes_data")
+            file_attributes = self.tree_view.get_row_value(
+                iterator, "file_attributes_data"
+            )
 
             core.downloads.enqueue_download(
-                user, file_path, folder_path=download_folder_path, size=size, file_attributes=file_attributes)
+                user,
+                file_path,
+                folder_path=download_folder_path,
+                size=size,
+                file_attributes=file_attributes,
+            )
 
     def on_download_files_to_selected(self, selected_folder_path, _data):
         self.on_download_files(download_folder_path=selected_folder_path)
@@ -1573,7 +1894,7 @@ class Search:
             parent=self.window,
             title=_("Select Destination Folder for File(s)"),
             callback=self.on_download_files_to_selected,
-            initial_folder=core.downloads.get_default_download_folder()
+            initial_folder=core.downloads.get_default_download_folder(),
         ).present()
 
     def on_download_folders(self, *_args, download_folder_path=None):
@@ -1582,12 +1903,15 @@ class Search:
 
         for iterator in self.selected_results.values():
             user = self.tree_view.get_row_value(iterator, "user")
-            folder_path = self.tree_view.get_row_value(iterator, "file_path_data").rpartition("\\")[0]
+            folder_path = self.tree_view.get_row_value(
+                iterator, "file_path_data"
+            ).rpartition("\\")[0]
             user_folder_key = user + folder_path
 
             if user_folder_key in requested_folders:
-                # Ensure we don't send folder content requests for a folder more than once,
-                # e.g. when several selected results belong to the same folder
+                # Ensure we don't send folder content requests for a folder
+                # more than once, e.g. when several selected results belong to
+                # the same folder
                 continue
 
             visible_files = []
@@ -1596,14 +1920,35 @@ class Search:
                 if folder_path != row[15].rpartition("\\")[0]:
                     continue
 
-                (_unused, _unused, _unused, _unused, _unused, _unused, _unused, _unused, _unused,
-                    _unused, _unused, _unused, size, _unused, _unused, file_path, _unused,
-                    file_attributes, _unused) = row
+                (
+                    _unused,
+                    _unused,
+                    _unused,
+                    _unused,
+                    _unused,
+                    _unused,
+                    _unused,
+                    _unused,
+                    _unused,
+                    _unused,
+                    _unused,
+                    _unused,
+                    size,
+                    _unused,
+                    _unused,
+                    file_path,
+                    _unused,
+                    file_attributes,
+                    _unused,
+                ) = row
 
                 visible_files.append((file_path, size, file_attributes))
 
             core.search.request_folder_download(
-                user, folder_path, visible_files, download_folder_path=download_folder_path
+                user,
+                folder_path,
+                visible_files,
+                download_folder_path=download_folder_path,
             )
             requested_folders.add(user_folder_key)
 
@@ -1616,7 +1961,7 @@ class Search:
             parent=self.window,
             title=_("Select Destination Folder"),
             callback=self.on_download_folders_to_selected,
-            initial_folder=core.downloads.get_default_download_folder()
+            initial_folder=core.downloads.get_default_download_folder(),
         ).present()
 
     def on_copy_file_path(self, *_args):
@@ -1660,7 +2005,9 @@ class Search:
         if self.num_results_found > self.num_results_visible:
             self.on_clear_undo_filters()
         else:
-            self.window.application.lookup_action("configure-searches").activate()
+            self.window.application.lookup_action(
+                "configure-searches"
+            ).activate()
 
     def on_group(self, action, state):
 
@@ -1698,7 +2045,12 @@ class Search:
             if self.grouping_mode == "folder_grouping":
                 self.tree_view.expand_root_rows()
 
-        icon_args = (Gtk.IconSize.BUTTON,) if GTK_API_VERSION == 3 else ()  # pylint: disable=no-member
+        icon_args = (
+            # pylint: disable=no-member
+            (Gtk.IconSize.BUTTON,)
+            if GTK_API_VERSION == 3
+            else ()
+        )
         self.expand_icon.set_from_icon_name(icon_name, *icon_args)
 
         config.sections["searches"]["expand_searches"] = active
@@ -1724,7 +2076,9 @@ class Search:
             self.window.application.lookup_action("wishlist").activate()
             return
 
-        self.window.lookup_action("search-mode").change_state(GLib.Variant("s", self.mode))
+        self.window.lookup_action("search-mode").change_state(
+            GLib.Variant("s", self.mode)
+        )
 
         if self.mode == "room":
             self.window.room_search_entry.set_text(self.room)
@@ -1743,13 +2097,17 @@ class Search:
 
         self.refiltering = True
 
-        filter_in = filter_out = filter_size = filter_bitrate = filter_country = filter_file_type = filter_length = None
+        filter_in = filter_out = filter_size = filter_bitrate = (
+            filter_country
+        ) = filter_file_type = filter_length = None
         filter_in_str = self.filter_include_combobox.get_text().strip()
         filter_out_str = self.filter_exclude_combobox.get_text().strip()
         filter_size_str = self.filter_file_size_combobox.get_text().strip()
         filter_bitrate_str = self.filter_bitrate_combobox.get_text().strip()
         filter_country_str = self.filter_country_combobox.get_text().strip()
-        filter_file_type_str = self.filter_file_type_combobox.get_text().strip()
+        filter_file_type_str = (
+            self.filter_file_type_combobox.get_text().strip()
+        )
         filter_length_str = self.filter_length_combobox.get_text().strip()
         filter_free_slot = self.filter_free_slot_button.get_active()
 
@@ -1768,12 +2126,18 @@ class Search:
             except re.error:
                 error_entries.add(self.filter_exclude_entry)
 
-        for entry in (self.filter_include_entry, self.filter_exclude_entry):
+        for entry in (
+            self.filter_include_entry,
+            self.filter_exclude_entry,
+        ):
             # Set red background if invalid regex pattern is detected
-            css_class_function = add_css_class if entry in error_entries else remove_css_class
+            css_class_function = (
+                add_css_class if entry in error_entries else remove_css_class
+            )
             css_class_function(entry, "error")
 
-        # Split at | pipes ampersands & space(s) but don't split <>=! math operators spaced before digit condition
+        # Split at | pipes ampersands & space(s) but don't split \<>=! math
+        # operators spaced before digit condition
         seperator_pattern = self.FILTER_SPLIT_DIGIT_PATTERN
 
         if filter_size_str:
@@ -1785,17 +2149,25 @@ class Search:
         if filter_length_str:
             filter_length = seperator_pattern.split(filter_length_str)
 
-        # Split at commas, in addition to | pipes ampersands & space(s) but don't split ! not operator before condition
+        # Split at commas, in addition to | pipes ampersands & space(s) but
+        # don't split ! not operator before condition
         seperator_pattern = self.FILTER_SPLIT_TEXT_PATTERN
 
         if filter_country_str:
-            filter_country = seperator_pattern.split(filter_country_str.upper())
+            filter_country = seperator_pattern.split(
+                filter_country_str.upper()
+            )
 
         if filter_file_type_str:
-            filter_file_type = seperator_pattern.split(filter_file_type_str.lower())
+            filter_file_type = seperator_pattern.split(
+                filter_file_type_str.lower()
+            )
 
             # Replace generic file type filters with real file extensions
-            for filter_name, file_extensions in self.FILTER_GENERIC_FILE_TYPES:
+            for (
+                filter_name,
+                file_extensions,
+            ) in self.FILTER_GENERIC_FILE_TYPES:
                 excluded_filter_name = f"!{filter_name}"
 
                 if filter_name in filter_file_type:

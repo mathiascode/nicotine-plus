@@ -27,11 +27,12 @@ jobs:
           sudo apt install gettext gir1.2-gtk-3.0 libgirepository1.0-dev libgtk-3-bin
           python -m pip install build .[tests]
 
-      - name: PEP 8 style checks
-        run: python -m pycodestyle
-
       - name: Linting
         run: python -m pylint --recursive=y .
+
+      - name: PEP 8 style checks
+        if: matrix.python != '3.6' && matrix.python != 'pypy-3.6' && matrix.python != '3.7' && matrix.python != 'pypy-3.7'
+        run: python -m black --check --diff .
 
       - name: Integration and unit tests
         run: python -m unittest -v
@@ -70,13 +71,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: dnf -y install gettext gtk${{ matrix.gtk }} pylint python3 python3-build python3-gobject python3-pycodestyle util-linux
-
-      - name: PEP 8 style checks
-        run: python3 -m pycodestyle
+        run: dnf -y install gettext gtk${{ matrix.gtk }} pylint python3 python3-black python3-build python3-gobject
 
       - name: Linting
         run: python3 -m pylint --recursive=y .
+
+      - name: PEP 8 style checks
+        run: python3 -m black --check --diff .
 
       - name: Integration and unit tests
         run: python3 -m unittest -v
@@ -110,20 +111,20 @@ jobs:
             mingw-w64-${{ matrix.arch }}-gettext-tools
             mingw-w64-${{ matrix.arch }}-gtk${{ env.NICOTINE_GTK_VERSION }}
             mingw-w64-${{ matrix.arch }}-libadwaita
+            mingw-w64-${{ matrix.arch }}-python-black
             mingw-w64-${{ matrix.arch }}-python-build
             mingw-w64-${{ matrix.arch }}-python-cx-freeze
-            mingw-w64-${{ matrix.arch }}-python-pycodestyle
             mingw-w64-${{ matrix.arch }}-python-pylint
             mingw-w64-${{ matrix.arch }}-python-gobject
 
       - name: Install additional dependencies
         run: python3 packaging/windows/dependencies.py
 
-      - name: PEP 8 style checks
-        run: python3 -m pycodestyle
-
       - name: Linting
         run: python3 -m pylint --recursive=y .
+
+      - name: PEP 8 style checks
+        run: python3 -m black --check --diff .
 
       - name: Integration and unit tests
         run: python3 -m unittest -v
@@ -159,11 +160,11 @@ jobs:
       - name: Install dependencies
         run: venv/bin/python3 packaging/macos/dependencies.py
 
-      - name: PEP 8 style checks
-        run: venv/bin/python3 -m pycodestyle
-
       - name: Linting
         run: venv/bin/python3 -m pylint --recursive=y .
+
+      - name: PEP 8 style checks
+        run: venv/bin/python3 -m black --check --diff .
 
       - name: Integration and unit tests
         run: venv/bin/python3 -m unittest -v

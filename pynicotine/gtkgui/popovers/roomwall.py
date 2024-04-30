@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk
 
@@ -39,12 +38,17 @@ class RoomWall(Popover):
             content_box=self.container,
             show_callback=self._on_show,
             width=600,
-            height=500
+            height=500,
         )
 
         self.room = None
-        self.message_view = TextView(self.message_view_container, editable=False, vertical_margin=4,
-                                     pixels_above_lines=3, pixels_below_lines=3)
+        self.message_view = TextView(
+            self.message_view_container,
+            editable=False,
+            vertical_margin=4,
+            pixels_above_lines=3,
+            pixels_below_lines=3,
+        )
 
     def destroy(self):
         self.message_view.destroy()
@@ -54,7 +58,10 @@ class RoomWall(Popover):
 
         tickers = core.chatrooms.joined_rooms[self.room].tickers
         newline = "\n"
-        messages = [f"> [{user}] {msg.replace(newline, ' ')}" for user, msg in reversed(list(tickers.items()))]
+        messages = [
+            f"> [{user}] {msg.replace(newline, ' ')}"
+            for user, msg in reversed(list(tickers.items()))
+        ]
 
         self.message_view.append_line("\n".join(messages))
         self.message_view.place_cursor_at_line(0)
@@ -64,7 +71,9 @@ class RoomWall(Popover):
         entry_text = self.message_entry.get_text()
         self.message_entry.set_text("")
 
-        core.chatrooms.joined_rooms[self.room].tickers.pop(core.users.login_username, None)
+        core.chatrooms.joined_rooms[self.room].tickers.pop(
+            core.users.login_username, None
+        )
         self.message_view.clear()
 
         if update_list:
@@ -98,7 +107,9 @@ class RoomWall(Popover):
         self._update_message_list()
 
         login_username = core.users.login_username
-        message = core.chatrooms.joined_rooms[self.room].tickers.get(login_username)
+        message = core.chatrooms.joined_rooms[self.room].tickers.get(
+            login_username
+        )
 
         if message:
             self.message_entry.set_text(message)

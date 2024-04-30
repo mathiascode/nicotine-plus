@@ -38,7 +38,15 @@ class I18nTest(TestCase):
 
                 po_file_found = True
                 error_output = subprocess.check_output(
-                    ["msgfmt", "--check", entry.path, "-o", "/dev/null"], stderr=subprocess.STDOUT)
+                    [
+                        "msgfmt",
+                        "--check",
+                        entry.path,
+                        "-o",
+                        "/dev/null",
+                    ],
+                    stderr=subprocess.STDOUT,
+                )
 
                 self.assertFalse(error_output)
 

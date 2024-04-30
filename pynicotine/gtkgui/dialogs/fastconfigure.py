@@ -1,22 +1,21 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2009-2011 quinox <quinox@users.sf.net>
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2016-2017
+# Michael Labouebe <gfarmerfr@free.fr> COPYRIGHT (C) 2009-2011 quinox
+# <quinox@users.sf.net>
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk
 
@@ -55,10 +54,16 @@ class FastConfigure(Dialog):
             self.stack,
             self.summary_page,
             self.username_entry,
-            self.welcome_page
+            self.welcome_page,
         ) = ui.load(scope=self, path="dialogs/fastconfigure.ui")
 
-        self.pages = [self.welcome_page, self.account_page, self.port_page, self.share_page, self.summary_page]
+        self.pages = [
+            self.welcome_page,
+            self.account_page,
+            self.port_page,
+            self.share_page,
+            self.summary_page,
+        ]
 
         super().__init__(
             parent=application.window,
@@ -71,22 +76,31 @@ class FastConfigure(Dialog):
             title=_("Setup Assistant"),
             width=720,
             height=450,
-            show_title=False
+            show_title=False,
         )
 
         icon_name = pynicotine.__application_id__
-        icon_args = (Gtk.IconSize.BUTTON,) if GTK_API_VERSION == 3 else ()  # pylint: disable=no-member
+        icon_args = (
+            # pylint: disable=no-member
+            (Gtk.IconSize.BUTTON,)
+            if GTK_API_VERSION == 3
+            else ()
+        )
 
         self.main_icon.set_from_icon_name(icon_name, *icon_args)
 
         # Page specific, share_page
         self.download_folder_button = FileChooserButton(
-            self.download_folder_container, window=self, chooser_type="folder",
-            selected_function=self.on_download_folder_selected
+            self.download_folder_container,
+            window=self,
+            chooser_type="folder",
+            selected_function=self.on_download_folder_selected,
         )
 
         self.shares_list_view = TreeView(
-            application.window, parent=self.shares_list_container, multi_select=True,
+            application.window,
+            parent=self.shares_list_container,
+            multi_select=True,
             activate_row_callback=self.on_edit_shared_folder,
             delete_accelerator_callback=self.on_remove_shared_folder,
             columns={
@@ -94,15 +108,15 @@ class FastConfigure(Dialog):
                     "column_type": "text",
                     "title": _("Virtual Folder"),
                     "width": 1,
-                    "expand_column": True
+                    "expand_column": True,
                 },
                 "folder": {
                     "column_type": "text",
                     "title": _("Folder"),
                     "width": 125,
-                    "expand_column": True
-                }
-            }
+                    "expand_column": True,
+                },
+            },
         )
 
         self.reset_completeness()
@@ -119,11 +133,25 @@ class FastConfigure(Dialog):
 
         page = self.stack.get_visible_child()
         page_complete = (
-            (page in (self.welcome_page, self.port_page, self.summary_page))
-            or (page == self.account_page and self.username_entry.get_text() and self.password_entry.get_text())
-            or (page == self.share_page and self.download_folder_button.get_path())
+            (
+                page
+                in (
+                    self.welcome_page,
+                    self.port_page,
+                    self.summary_page,
+                )
+            )
+            or (
+                page == self.account_page
+                and self.username_entry.get_text()
+                and self.password_entry.get_text()
+            )
+            or (
+                page == self.share_page
+                and self.download_folder_button.get_path()
+            )
         )
-        self.finished = (page == self.summary_page)
+        self.finished = page == self.summary_page
         next_label = _("_Finish") if page == self.summary_page else _("_Next")
 
         if self.next_button.get_label() != next_label:
@@ -150,7 +178,9 @@ class FastConfigure(Dialog):
         self.on_next()
 
     def on_download_folder_selected(self):
-        config.sections["transfers"]["downloaddir"] = self.download_folder_button.get_path()
+        config.sections["transfers"][
+            "downloaddir"
+        ] = self.download_folder_button.get_path()
 
     def on_add_shared_folder_selected(self, selected, _data):
 
@@ -167,13 +197,15 @@ class FastConfigure(Dialog):
             parent=self,
             title=_("Add a Shared Folder"),
             callback=self.on_add_shared_folder_selected,
-            select_multiple=True
+            select_multiple=True,
         ).present()
 
     def on_edit_shared_folder_response(self, dialog, _response_id, iterator):
 
         new_virtual_name = dialog.get_entry_value()
-        old_virtual_name = self.shares_list_view.get_row_value(iterator, "virtual_name")
+        old_virtual_name = self.shares_list_view.get_row_value(
+            iterator, "virtual_name"
+        )
 
         if new_virtual_name == old_virtual_name:
             return
@@ -183,32 +215,43 @@ class FastConfigure(Dialog):
 
         core.shares.remove_share(old_virtual_name)
         new_virtual_name = core.shares.add_share(
-            folder_path, virtual_name=new_virtual_name, validate_path=False
+            folder_path,
+            virtual_name=new_virtual_name,
+            validate_path=False,
         )
 
-        self.shares_list_view.set_row_value(iterator, "virtual_name", new_virtual_name)
+        self.shares_list_view.set_row_value(
+            iterator, "virtual_name", new_virtual_name
+        )
 
     def on_edit_shared_folder(self, *_args):
 
         for iterator in self.shares_list_view.get_selected_rows():
-            virtual_name = self.shares_list_view.get_row_value(iterator, "virtual_name")
-            folder_path = self.shares_list_view.get_row_value(iterator, "folder")
+            virtual_name = self.shares_list_view.get_row_value(
+                iterator, "virtual_name"
+            )
+            folder_path = self.shares_list_view.get_row_value(
+                iterator, "folder"
+            )
 
             EntryDialog(
                 parent=self,
                 title=_("Edit Shared Folder"),
-                message=_("Enter new virtual name for '%(dir)s':") % {"dir": folder_path},
+                message=_("Enter new virtual name for '%(dir)s':")
+                % {"dir": folder_path},
                 default=virtual_name,
                 action_button_label=_("_Edit"),
                 callback=self.on_edit_shared_folder_response,
-                callback_data=iterator
+                callback_data=iterator,
             ).present()
             return
 
     def on_remove_shared_folder(self, *_args):
 
         for iterator in reversed(self.shares_list_view.get_selected_rows()):
-            virtual_name = self.shares_list_view.get_row_value(iterator, "virtual_name")
+            virtual_name = self.shares_list_view.get_row_value(
+                iterator, "virtual_name"
+            )
 
             core.shares.remove_share(virtual_name)
             self.shares_list_view.remove_row(iterator)
@@ -261,7 +304,10 @@ class FastConfigure(Dialog):
 
         # port_page
         listen_port = self.listen_port_entry.get_value_as_int()
-        config.sections["server"]["portrange"] = (listen_port, listen_port)
+        config.sections["server"]["portrange"] = (
+            listen_port,
+            listen_port,
+        )
 
         # account_page
         if config.need_config():
@@ -292,9 +338,15 @@ class FastConfigure(Dialog):
         self.listen_port_entry.set_value(listen_port)
 
         # share_page
-        self.download_folder_button.set_path(core.downloads.get_default_download_folder())
+        self.download_folder_button.set_path(
+            core.downloads.get_default_download_folder()
+        )
 
         self.shares_list_view.clear()
 
-        for virtual_name, folder_path, *_unused in config.sections["transfers"]["shared"]:
-            self.shares_list_view.add_row([virtual_name, folder_path], select_row=False)
+        for virtual_name, folder_path, *_unused in config.sections[
+            "transfers"
+        ]["shared"]:
+            self.shares_list_view.add_row(
+                [virtual_name, folder_path], select_row=False
+            )

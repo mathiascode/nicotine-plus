@@ -1,24 +1,22 @@
-# COPYRIGHT (C) 2020-2023 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2008-2011 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2008 gallows <g4ll0ws@gmail.com>
+# COPYRIGHT (C) 2020-2023 Nicotine+ Contributors COPYRIGHT (C) 2016-2017
+# Michael Labouebe <gfarmerfr@free.fr> COPYRIGHT (C) 2008-2011 quinox
+# <quinox@users.sf.net> COPYRIGHT (C) 2008 gallows <g4ll0ws@gmail.com>
 # COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import json
 import os
@@ -48,21 +46,37 @@ class NowPlaying:
             "length": "",
             "nowplaying": "",
             "bitrate": "",
-            "filename": ""
+            "filename": "",
         }
 
-    def display_now_playing(self, _obj=None, callback=None, get_player=None, get_command=None, get_format=None):
+    def display_now_playing(
+        self,
+        _obj=None,
+        callback=None,
+        get_player=None,
+        get_command=None,
+        get_format=None,
+    ):
 
         self.get_np(callback, get_player, get_command, get_format)
 
-    def get_np(self, callback=None, get_player=None, get_command=None, get_format=None):
+    def get_np(
+        self,
+        callback=None,
+        get_player=None,
+        get_command=None,
+        get_format=None,
+    ):
 
         self.title_clear()
 
         if get_player is None:
             player = config.sections["players"]["npplayer"]
 
-            if player == "mpris" and (sys.platform in {"win32", "darwin"} or "SNAP_NAME" in os.environ):
+            if player == "mpris" and (
+                sys.platform in {"win32", "darwin"}
+                or "SNAP_NAME" in os.environ
+            ):
                 player = "lastfm"
         else:
             player = get_player()
@@ -125,18 +139,32 @@ class NowPlaying:
             username, apikey = username.split(";")
 
         except ValueError:
-            log.add(_("Last.fm: Please provide both your Last.fm username and API key"), title=_("Now Playing Error"))
+            log.add(
+                _(
+                    "Last.fm: Please provide both your Last.fm username and"
+                    " API key"
+                ),
+                title=_("Now Playing Error"),
+            )
             return None
 
         try:
             from urllib.request import urlopen
-            with urlopen((f"https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user={username}"
-                          f"&api_key={apikey}&limit=1&format=json"), timeout=10) as response:
+
+            with urlopen(
+                "https://ws.audioscrobbler.com/2.0/?method="
+                f"user.getrecenttracks&user={username}&api_key={apikey}"
+                "&limit=1&format=json",
+                timeout=10,
+            ) as response:
                 response_body = response.read().decode("utf-8")
 
         except Exception as error:
-            log.add(_("Last.fm: Could not connect to Audioscrobbler: %(error)s"), {"error": error},
-                    title=_("Now Playing Error"))
+            log.add(
+                _("Last.fm: Could not connect to Audioscrobbler: %(error)s"),
+                {"error": error},
+                title=_("Now Playing Error"),
+            )
             return None
 
         try:
@@ -144,11 +172,13 @@ class NowPlaying:
             lastplayed = json_api["recenttracks"]["track"]
 
             try:
-                # In most cases, a list containing a single track dictionary is sent
+                # In most cases, a list containing a single track dictionary is
+                # sent
                 lastplayed = lastplayed[0]
 
             except KeyError:
-                # On rare occasions, the track dictionary is not wrapped in a list
+                # On rare occasions, the track dictionary is not wrapped in a
+                # list
                 pass
 
             self.title["artist"] = artist = lastplayed["artist"]["#text"]
@@ -157,8 +187,14 @@ class NowPlaying:
             self.title["nowplaying"] = f"{artist} - {title}"
 
         except Exception as error:
-            log.add(_("Last.fm: Could not get recent track from Audioscrobbler: %(error)s"),
-                    {"error": error}, title=_("Now Playing Error"))
+            log.add(
+                _(
+                    "Last.fm: Could not get recent track from Audioscrobbler:"
+                    " %(error)s"
+                ),
+                {"error": error},
+                title=_("Now Playing Error"),
+            )
             return None
 
         return True
@@ -180,23 +216,31 @@ class NowPlaying:
                 info=None,
                 name="org.freedesktop.DBus",
                 object_path="/org/freedesktop/DBus",
-                interface_name="org.freedesktop.DBus"
+                interface_name="org.freedesktop.DBus",
             )
             names = dbus_proxy.ListNames()
             players = []
 
             for name in names:
                 if name.startswith(dbus_mpris_service):
-                    players.append(name[len(dbus_mpris_service):])
+                    players.append(name[len(dbus_mpris_service) :])
 
             if not players:
-                log.add(_("MPRIS: Could not find a suitable MPRIS player"), title=_("Now Playing Error"))
+                log.add(
+                    _("MPRIS: Could not find a suitable MPRIS player"),
+                    title=_("Now Playing Error"),
+                )
                 return None
 
             player = players[0]
             if len(players) > 1:
-                log.add(_("Found multiple MPRIS players: %(players)s. Using: %(player)s"),
-                        {"players": players, "player": player})
+                log.add(
+                    _(
+                        "Found multiple MPRIS players: %(players)s. Using:"
+                        " %(player)s"
+                    ),
+                    {"players": players, "player": player},
+                )
             else:
                 log.add(_("Auto-detected MPRIS player: %s"), player)
 
@@ -207,13 +251,21 @@ class NowPlaying:
                 info=None,
                 name=dbus_mpris_service + player,
                 object_path="/org/mpris/MediaPlayer2",
-                interface_name="org.freedesktop.DBus.Properties"
+                interface_name="org.freedesktop.DBus.Properties",
             )
-            metadata = dbus_proxy.Get("(ss)", "org.mpris.MediaPlayer2.Player", "Metadata")
+            metadata = dbus_proxy.Get(
+                "(ss)", "org.mpris.MediaPlayer2.Player", "Metadata"
+            )
 
         except Exception as error:
-            log.add(_("MPRIS: Something went wrong while querying %(player)s: %(exception)s"),
-                    {"player": player, "exception": error}, title=_("Now Playing Error"))
+            log.add(
+                _(
+                    "MPRIS: Something went wrong while querying"
+                    " %(player)s: %(exception)s"
+                ),
+                {"player": player, "exception": error},
+                title=_("Now Playing Error"),
+            )
             return None
 
         self.title["program"] = player
@@ -232,7 +284,7 @@ class NowPlaying:
             ("xesam:comment", "comment"),
             ("xesam:audioBitrate", "bitrate"),
             ("xesam:url", "filename"),
-            ("xesak:trackNumber", "track")
+            ("xesak:trackNumber", "track"),
         ]
 
         for source, dest in mapping:
@@ -241,9 +293,12 @@ class NowPlaying:
             except KeyError:
                 self.title[dest] = "?"
 
-        # The length is in microseconds, and be represented as a signed 64-bit integer.
+        # The length is in microseconds, and be represented as a signed 64-bit
+        # integer.
         try:
-            self.title["length"] = human_length(metadata["mpris:length"] // 1000000)
+            self.title["length"] = human_length(
+                metadata["mpris:length"] // 1000000
+            )
         except KeyError:
             self.title["length"] = "?"
 
@@ -259,25 +314,43 @@ class NowPlaying:
         """Function to get the currently playing song via ListenBrainz API."""
 
         if not username:
-            log.add(_("ListenBrainz: Please provide your ListenBrainz username"), title=_("Now Playing Error"))
+            log.add(
+                _("ListenBrainz: Please provide your ListenBrainz username"),
+                title=_("Now Playing Error"),
+            )
             return None
 
         try:
             from urllib.request import urlopen
-            with urlopen(f"https://api.listenbrainz.org/1/user/{username}/playing-now", timeout=10) as response:
+
+            with urlopen(
+                f"https://api.listenbrainz.org/1/user/{username}/playing-now",
+                timeout=10,
+            ) as response:
                 response_body = response.read().decode("utf-8")
 
         except Exception as error:
-            log.add(_("ListenBrainz: Could not connect to ListenBrainz: %(error)s"), {"error": error},
-                    title=_("Now Playing Error"))
+            log.add(
+                _(
+                    "ListenBrainz: Could not connect to ListenBrainz:"
+                    " %(error)s"
+                ),
+                {"error": error},
+                title=_("Now Playing Error"),
+            )
             return None
 
         try:
             json_api = json.loads(response_body)["payload"]
 
             if not json_api["playing_now"]:
-                log.add(_("ListenBrainz: You don't seem to be listening to anything right now"),
-                        title=_("Now Playing Error"))
+                log.add(
+                    _(
+                        "ListenBrainz: You don't seem to be listening"
+                        " to anything right now"
+                    ),
+                    title=_("Now Playing Error"),
+                )
                 return None
 
             track = json_api["listens"][0]["track_metadata"]
@@ -290,8 +363,14 @@ class NowPlaying:
             return True
 
         except Exception as error:
-            log.add(_("ListenBrainz: Could not get current track from ListenBrainz: %(error)s"),
-                    {"error": error}, title=_("Now Playing Error"))
+            log.add(
+                _(
+                    "ListenBrainz: Could not get current track from"
+                    " ListenBrainz: %(error)s"
+                ),
+                {"error": error},
+                title=_("Now Playing Error"),
+            )
         return None
 
     def other(self, command):
@@ -305,6 +384,9 @@ class NowPlaying:
             return True
 
         except Exception as error:
-            log.add(_("Executing '%(command)s' failed: %(error)s"),
-                    {"command": command, "error": error}, title=_("Now Playing Error"))
+            log.add(
+                _("Executing '%(command)s' failed: %(error)s"),
+                {"command": command, "error": error},
+                title=_("Now Playing Error"),
+            )
             return None

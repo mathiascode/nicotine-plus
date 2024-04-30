@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
@@ -82,12 +81,18 @@ class BaseImplementation:
 
     def create_menu(self):
 
-        self.show_hide_item = self.create_item("default", self.application.on_window_hide_unhide)
+        self.show_hide_item = self.create_item(
+            "default", self.application.on_window_hide_unhide
+        )
 
         self.create_item()
 
-        self.downloads_item = self.create_item(_("Downloads"), self.application.on_downloads)
-        self.uploads_item = self.create_item(_("Uploads"), self.application.on_uploads)
+        self.downloads_item = self.create_item(
+            _("Downloads"), self.application.on_downloads
+        )
+        self.uploads_item = self.create_item(
+            _("Uploads"), self.application.on_uploads
+        )
 
         self.create_item()
 
@@ -97,8 +102,12 @@ class BaseImplementation:
 
         self.create_item()
 
-        self.connect_disconnect_item = self.create_item("default", self.application.on_connect_disconnect)
-        self.away_item = self.create_item(_("Away"), self.application.on_away, check=True)
+        self.connect_disconnect_item = self.create_item(
+            "default", self.application.on_connect_disconnect
+        )
+        self.away_item = self.create_item(
+            _("Away"), self.application.on_away, check=True
+        )
 
         self.create_item()
 
@@ -126,17 +135,22 @@ class BaseImplementation:
         self.set_item_sensitive(self.away_item, sensitive)
 
         self.set_item_text(self.connect_disconnect_item, label)
-        self.set_item_toggled(self.away_item, core.users.login_status == slskmessages.UserStatus.AWAY)
+        self.set_item_toggled(
+            self.away_item,
+            core.users.login_status == slskmessages.UserStatus.AWAY,
+        )
 
         self.update_icon()
         self.update_menu()
 
     def update_icon(self):
 
-        # Check for highlights, and display highlight icon if there is a highlighted room or private chat
-        if (self.application.window
-                and (self.application.window.chatrooms.highlighted_rooms
-                     or self.application.window.privatechat.highlighted_users)):
+        # Check for highlights, and display highlight icon if there is a
+        # highlighted room or private chat
+        if self.application.window and (
+            self.application.window.chatrooms.highlighted_rooms
+            or self.application.window.privatechat.highlighted_users
+        ):
             icon_name = "msg"
 
         elif core.users.login_status == slskmessages.UserStatus.ONLINE:
@@ -220,18 +234,27 @@ class StatusNotifierImplementation(BaseImplementation):
 
         def register(self):
 
-            xml_output = f"<node name='/'><interface name='{self._interface_name}'>"
+            xml_output = (
+                f"<node name='/'><interface name='{self._interface_name}'>"
+            )
 
             for property_name, prop in self.properties.items():
-                xml_output += f"<property name='{property_name}' type='{prop.signature}' access='read'/>"
+                xml_output += (
+                    f"<property name='{property_name}'"
+                    f" type='{prop.signature}' access='read'/>"
+                )
 
             for method_name, method in self.methods.items():
                 xml_output += f"<method name='{method_name}'>"
 
                 for in_signature in method.in_args:
-                    xml_output += f"<arg type='{in_signature}' direction='in'/>"
+                    xml_output += (
+                        f"<arg type='{in_signature}' direction='in'/>"
+                    )
                 for out_signature in method.out_args:
-                    xml_output += f"<arg type='{out_signature}' direction='out'/>"
+                    xml_output += (
+                        f"<arg type='{out_signature}' direction='out'/>"
+                    )
 
                 xml_output += "</method>"
 
@@ -247,13 +270,17 @@ class StatusNotifierImplementation(BaseImplementation):
 
             registration_id = self._bus.register_object(
                 object_path=self._object_path,
-                interface_info=Gio.DBusNodeInfo.new_for_xml(xml_output).interfaces[0],
+                interface_info=Gio.DBusNodeInfo.new_for_xml(
+                    xml_output
+                ).interfaces[0],
                 method_call_closure=self.on_method_call,
-                get_property_closure=self.on_get_property
+                get_property_closure=self.on_get_property,
             )
 
             if not registration_id:
-                raise GLib.Error(f"Failed to register object with path {self._object_path}")
+                raise GLib.Error(
+                    f"Failed to register object with path {self._object_path}"
+                )
 
             self._registration_id = registration_id
 
@@ -266,13 +293,19 @@ class StatusNotifierImplementation(BaseImplementation):
             self._registration_id = None
 
         def add_property(self, name, signature, value):
-            self.properties[name] = StatusNotifierImplementation.DBusProperty(name, signature, value)
+            self.properties[name] = StatusNotifierImplementation.DBusProperty(
+                name, signature, value
+            )
 
         def add_signal(self, name, args):
-            self.signals[name] = StatusNotifierImplementation.DBusSignal(name, args)
+            self.signals[name] = StatusNotifierImplementation.DBusSignal(
+                name, args
+            )
 
         def add_method(self, name, in_args, out_args, callback):
-            self.methods[name] = StatusNotifierImplementation.DBusMethod(name, in_args, out_args, callback)
+            self.methods[name] = StatusNotifierImplementation.DBusMethod(
+                name, in_args, out_args, callback
+            )
 
         def emit_signal(self, name, *args):
 
@@ -283,10 +316,19 @@ class StatusNotifierImplementation(BaseImplementation):
                 object_path=self._object_path,
                 interface_name=self._interface_name,
                 signal_name=name,
-                parameters=GLib.Variant(f"({arg_types})", args)
+                parameters=GLib.Variant(f"({arg_types})", args),
             )
 
-        def on_method_call(self, _connection, _sender, _path, _interface_name, method_name, parameters, invocation):
+        def on_method_call(
+            self,
+            _connection,
+            _sender,
+            _path,
+            _interface_name,
+            method_name,
+            parameters,
+            invocation,
+        ):
 
             method = self.methods[method_name]
             result = method.callback(*parameters.unpack())
@@ -298,7 +340,14 @@ class StatusNotifierImplementation(BaseImplementation):
 
             invocation.return_value(return_value)
 
-        def on_get_property(self, _connection, _sender, _path, _interface_name, property_name):
+        def on_get_property(
+            self,
+            _connection,
+            _sender,
+            _path,
+            _interface_name,
+            property_name,
+        ):
             prop = self.properties[property_name]
             return GLib.Variant(prop.signature, prop.value)
 
@@ -309,22 +358,30 @@ class StatusNotifierImplementation(BaseImplementation):
             super().__init__(
                 interface_name="com.canonical.dbusmenu",
                 object_path="/StatusNotifierItem/menu",
-                bus_type=Gio.BusType.SESSION
+                bus_type=Gio.BusType.SESSION,
             )
 
             self._items = {}
             self._revision = 0
 
             for method_name, in_args, out_args, callback in (
-                ("GetGroupProperties", ("ai", "as"), ("a(ia{sv})",), self.on_get_group_properties),
-                ("GetLayout", ("i", "i", "as"), ("u", "(ia{sv}av)"), self.on_get_layout),
+                (
+                    "GetGroupProperties",
+                    ("ai", "as"),
+                    ("a(ia{sv})",),
+                    self.on_get_group_properties,
+                ),
+                (
+                    "GetLayout",
+                    ("i", "i", "as"),
+                    ("u", "(ia{sv}av)"),
+                    self.on_get_layout,
+                ),
                 ("Event", ("i", "s", "v", "u"), (), self.on_event),
             ):
                 self.add_method(method_name, in_args, out_args, callback)
 
-            for signal_name, value in (
-                ("LayoutUpdated", ("u", "i")),
-            ):
+            for signal_name, value in (("LayoutUpdated", ("u", "i")),):
                 self.add_signal(signal_name, value)
 
         def set_items(self, items):
@@ -340,12 +397,14 @@ class StatusNotifierImplementation(BaseImplementation):
             if "text" in item:
                 props = {
                     "label": GLib.Variant("s", item["text"]),
-                    "enabled": GLib.Variant("b", item["sensitive"])
+                    "enabled": GLib.Variant("b", item["sensitive"]),
                 }
 
                 if item.get("toggled") is not None:
                     props["toggle-type"] = GLib.Variant("s", "checkmark")
-                    props["toggle-state"] = GLib.Variant("i", int(item["toggled"]))
+                    props["toggle-state"] = GLib.Variant(
+                        "i", int(item["toggled"])
+                    )
 
                 return props
 
@@ -366,7 +425,9 @@ class StatusNotifierImplementation(BaseImplementation):
             serialized_items = []
 
             for idx, item in self._items.items():
-                serialized_item = GLib.Variant("(ia{sv}av)", (idx, self._serialize_item(item), []))
+                serialized_item = GLib.Variant(
+                    "(ia{sv}av)", (idx, self._serialize_item(item), [])
+                )
                 serialized_items.append(serialized_item)
 
             return self._revision, (0, {}, serialized_items)
@@ -382,7 +443,7 @@ class StatusNotifierImplementation(BaseImplementation):
             super().__init__(
                 interface_name="org.kde.StatusNotifierItem",
                 object_path="/StatusNotifierItem",
-                bus_type=Gio.BusType.SESSION
+                bus_type=Gio.BusType.SESSION,
             )
 
             self.menu = StatusNotifierImplementation.DBusMenuService()
@@ -391,25 +452,34 @@ class StatusNotifierImplementation(BaseImplementation):
                 ("Category", "s", "Communications"),
                 ("Id", "s", pynicotine.__application_id__),
                 ("Title", "s", pynicotine.__application_name__),
-                ("ToolTip", "(sa(iiay)ss)", ("", [], pynicotine.__application_name__, "")),
+                (
+                    "ToolTip",
+                    "(sa(iiay)ss)",
+                    ("", [], pynicotine.__application_name__, ""),
+                ),
                 ("Menu", "o", "/StatusNotifierItem/menu"),
                 ("ItemIsMenu", "b", False),
                 ("IconName", "s", ""),
                 ("IconThemePath", "s", ""),
-                ("Status", "s", "Active")
+                ("Status", "s", "Active"),
             ):
                 self.add_property(property_name, signature, value)
 
             for method_name, in_args, out_args, callback in (
                 ("Activate", ("i", "i"), (), activate_callback),
-                ("ProvideXdgActivationToken", ("s",), (), self.on_provide_activation_token)
+                (
+                    "ProvideXdgActivationToken",
+                    ("s",),
+                    (),
+                    self.on_provide_activation_token,
+                ),
             ):
                 self.add_method(method_name, in_args, out_args, callback)
 
             for signal_name, value in (
                 ("NewIcon", ()),
                 ("NewIconThemePath", ("s",)),
-                ("NewStatus", ("s",))
+                ("NewStatus", ("s",)),
             ):
                 self.add_signal(signal_name, value)
 
@@ -433,7 +503,9 @@ class StatusNotifierImplementation(BaseImplementation):
 
         try:
             self.bus = Gio.bus_get_sync(bus_type=Gio.BusType.SESSION)
-            self.tray_icon = self.StatusNotifierItemService(activate_callback=self.activate_callback)
+            self.tray_icon = self.StatusNotifierItemService(
+                activate_callback=self.activate_callback
+            )
             self.tray_icon.register()
 
             self.bus.call_sync(
@@ -444,12 +516,14 @@ class StatusNotifierImplementation(BaseImplementation):
                 parameters=GLib.Variant("(s)", (self.bus.get_unique_name(),)),
                 reply_type=None,
                 flags=Gio.DBusCallFlags.NONE,
-                timeout_msec=-1
+                timeout_msec=-1,
             )
 
         except GLib.Error as error:
             self.unload()
-            raise ImplementationUnavailable(f"StatusNotifier implementation not available: {error}") from error
+            raise ImplementationUnavailable(
+                f"StatusNotifier implementation not available: {error}"
+            ) from error
 
         self.update_menu()
 
@@ -469,8 +543,10 @@ class StatusNotifierImplementation(BaseImplementation):
                         return True
 
         except OSError as error:
-            log.add_debug("Error accessing tray icon path %(path)s: %(error)s" %
-                          {"path": icon_path, "error": error})
+            log.add_debug(
+                "Error accessing tray icon path %(path)s: %(error)s"
+                % {"path": icon_path, "error": error}
+            )
 
         return False
 
@@ -479,14 +555,29 @@ class StatusNotifierImplementation(BaseImplementation):
         system-wide icons."""
 
         self.custom_icons = False
-        custom_icon_path = os.path.join(config.data_folder_path, ".nicotine-icon-theme")
+        custom_icon_path = os.path.join(
+            config.data_folder_path, ".nicotine-icon-theme"
+        )
 
         if hasattr(sys, "real_prefix") or sys.base_prefix != sys.prefix:
             # Virtual environment
-            local_icon_path = os.path.join(sys.prefix, "share", "icons", "hicolor", "scalable", "apps")
+            local_icon_path = os.path.join(
+                sys.prefix,
+                "share",
+                "icons",
+                "hicolor",
+                "scalable",
+                "apps",
+            )
         else:
             # Git folder
-            local_icon_path = os.path.join(GTK_GUI_FOLDER_PATH, "icons", "hicolor", "scalable", "apps")
+            local_icon_path = os.path.join(
+                GTK_GUI_FOLDER_PATH,
+                "icons",
+                "hicolor",
+                "scalable",
+                "apps",
+            )
 
         for icon_name in ("away", "connect", "disconnect", "msg"):
             # Check if custom icons exist
@@ -503,8 +594,11 @@ class StatusNotifierImplementation(BaseImplementation):
     def set_icon_name(self, icon_name):
 
         if self.custom_icons:
-            # Use alternative icon names to enforce custom icons, since system-wide icons take precedence
-            icon_name = icon_name.replace(pynicotine.__application_id__, "nplus-tray")
+            # Use alternative icon names to enforce custom icons, since
+            # system-wide icons take precedence
+            icon_name = icon_name.replace(
+                pynicotine.__application_id__, "nplus-tray"
+            )
 
         self.tray_icon.properties["IconName"].value = icon_name
         self.tray_icon.emit_signal("NewIcon")
@@ -520,7 +614,8 @@ class StatusNotifierImplementation(BaseImplementation):
 
     def update_icon_theme(self):
 
-        # If custom icon path was found, use it, otherwise we fall back to system icons
+        # If custom icon path was found, use it, otherwise we fall back to
+        # system icons
         icon_path = self.get_icon_path()
         self.tray_icon.properties["IconThemePath"].value = icon_path
         self.tray_icon.emit_signal("NewIconThemePath", icon_path)
@@ -582,10 +677,10 @@ class Win32Implementation(BaseImplementation):
     WM_LBUTTONUP = 514
     WM_RBUTTONUP = 517
     WM_USER = 1024
-    WM_TRAYICON = (WM_USER + 1)
-    NIN_BALLOONHIDE = (WM_USER + 3)
-    NIN_BALLOONTIMEOUT = (WM_USER + 4)
-    NIN_BALLOONUSERCLICK = (WM_USER + 5)
+    WM_TRAYICON = WM_USER + 1
+    NIN_BALLOONHIDE = WM_USER + 3
+    NIN_BALLOONTIMEOUT = WM_USER + 4
+    NIN_BALLOONUSERCLICK = WM_USER + 5
 
     CS_VREDRAW = 1
     CS_HREDRAW = 2
@@ -611,7 +706,7 @@ class Win32Implementation(BaseImplementation):
                 wintypes.HWND,
                 wintypes.UINT,
                 wintypes.WPARAM,
-                wintypes.LPARAM
+                wintypes.LPARAM,
             )
             _fields_ = [
                 ("style", wintypes.UINT),
@@ -623,7 +718,7 @@ class Win32Implementation(BaseImplementation):
                 ("h_cursor", wintypes.HANDLE),
                 ("hbr_background", wintypes.HBRUSH),
                 ("lpsz_menu_name", wintypes.LPCWSTR),
-                ("lpsz_class_name", wintypes.LPCWSTR)
+                ("lpsz_class_name", wintypes.LPCWSTR),
             ]
 
         class MENUITEMINFOW(Structure):
@@ -641,7 +736,7 @@ class Win32Implementation(BaseImplementation):
                 ("dw_item_data", wintypes.LPVOID),
                 ("dw_type_data", wintypes.LPWSTR),
                 ("cch", wintypes.UINT),
-                ("hbmp_item", wintypes.HBITMAP)
+                ("hbmp_item", wintypes.HBITMAP),
             ]
 
         class NOTIFYICONDATAW(Structure):
@@ -662,7 +757,7 @@ class Win32Implementation(BaseImplementation):
                 ("sz_info_title", wintypes.WCHAR * 64),
                 ("dw_info_flags", wintypes.DWORD),
                 ("guid_item", wintypes.CHAR * 16),
-                ("h_balloon_icon", wintypes.HICON)
+                ("h_balloon_icon", wintypes.HICON),
             ]
 
     def __init__(self, application):
@@ -676,7 +771,9 @@ class Win32Implementation(BaseImplementation):
         self._notify_id = None
         self._h_icon = None
         self._menu = None
-        self._wm_taskbarcreated = windll.user32.RegisterWindowMessageW("TaskbarCreated")
+        self._wm_taskbarcreated = windll.user32.RegisterWindowMessageW(
+            "TaskbarCreated"
+        )
 
         self._register_class()
         self._create_window()
@@ -688,10 +785,12 @@ class Win32Implementation(BaseImplementation):
 
         self._window_class = self.WNDCLASSW(
             style=(self.CS_VREDRAW | self.CS_HREDRAW),
-            lpfn_wnd_proc=self.WNDCLASSW.LPFN_WND_PROC(self.on_process_window_message),
+            lpfn_wnd_proc=self.WNDCLASSW.LPFN_WND_PROC(
+                self.on_process_window_message
+            ),
             h_cursor=windll.user32.LoadCursorW(0, self.IDC_ARROW),
             hbr_background=self.COLOR_WINDOW,
-            lpsz_class_name=self.WINDOW_CLASS_NAME
+            lpsz_class_name=self.WINDOW_CLASS_NAME,
         )
 
         windll.user32.RegisterClassW(byref(self._window_class))
@@ -703,7 +802,9 @@ class Win32Implementation(BaseImplementation):
 
         from ctypes import windll
 
-        windll.user32.UnregisterClassW(self.WINDOW_CLASS_NAME, self._window_class.h_instance)
+        windll.user32.UnregisterClassW(
+            self.WINDOW_CLASS_NAME, self._window_class.h_instance
+        )
         self._window_class = None
 
     def _create_window(self):
@@ -723,7 +824,7 @@ class Win32Implementation(BaseImplementation):
             0,
             0,
             0,
-            None
+            None,
         )
 
         windll.user32.UpdateWindow(self._h_wnd)
@@ -743,13 +844,22 @@ class Win32Implementation(BaseImplementation):
         ico_buffer = b""
 
         if GTK_API_VERSION >= 4:
-            icon = ICON_THEME.lookup_icon(icon_name, fallbacks=None, size=icon_size, scale=1, direction=0, flags=0)
+            icon = ICON_THEME.lookup_icon(
+                icon_name,
+                fallbacks=None,
+                size=icon_size,
+                scale=1,
+                direction=0,
+                flags=0,
+            )
             icon_path = icon.get_file().get_path()
 
             if not icon_path:
                 return ico_buffer
 
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_path, icon_size, icon_size)
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(
+                icon_path, icon_size, icon_size
+            )
         else:
             icon = ICON_THEME.lookup_icon(icon_name, size=icon_size, flags=0)
 
@@ -768,7 +878,11 @@ class Win32Implementation(BaseImplementation):
         # Attempt to load custom icons first
         icon_size = windll.user32.GetSystemMetrics(self.SM_CXSMICON)
         ico_buffer = self._load_ico_buffer(
-            icon_name.replace(f"{pynicotine.__application_id__}-", "nplus-tray-"), icon_size)
+            icon_name.replace(
+                f"{pynicotine.__application_id__}-", "nplus-tray-"
+            ),
+            icon_size,
+        )
 
         if not ico_buffer:
             # No custom icons present, fall back to default icons
@@ -776,6 +890,7 @@ class Win32Implementation(BaseImplementation):
 
         try:
             import tempfile
+
             file_handle = tempfile.NamedTemporaryFile(delete=False)
 
             with file_handle:
@@ -787,7 +902,7 @@ class Win32Implementation(BaseImplementation):
                 self.IMAGE_ICON,
                 icon_size,
                 icon_size,
-                self.LR_LOADFROMFILE
+                self.LR_LOADFROMFILE,
             )
 
         finally:
@@ -812,7 +927,8 @@ class Win32Implementation(BaseImplementation):
             self._h_icon = self._load_h_icon(icon_name)
 
         if not self.is_visible and not (title or message):
-            # When disabled by user, temporarily show tray icon when displaying a notification
+            # When disabled by user, temporarily show tray icon when displaying
+            # a notification
             return
 
         from ctypes import byref, sizeof, windll
@@ -824,9 +940,16 @@ class Win32Implementation(BaseImplementation):
                 cb_size=sizeof(self.NOTIFYICONDATAW),
                 h_wnd=self._h_wnd,
                 u_id=0,
-                u_flags=(self.NIF_ICON | self.NIF_MESSAGE | self.NIF_TIP | self.NIF_INFO),
+                u_flags=(
+                    self.NIF_ICON
+                    | self.NIF_MESSAGE
+                    | self.NIF_TIP
+                    | self.NIF_INFO
+                ),
                 u_callback_message=self.WM_TRAYICON,
-                sz_tip=truncate_string_byte(pynicotine.__application_name__, byte_limit=127)
+                sz_tip=truncate_string_byte(
+                    pynicotine.__application_name__, byte_limit=127
+                ),
             )
             action = self.NIM_ADD
 
@@ -836,8 +959,12 @@ class Win32Implementation(BaseImplementation):
             self._notify_id.dw_info_flags |= self.NIIF_NOSOUND
 
         self._notify_id.h_icon = self._h_icon
-        self._notify_id.sz_info_title = truncate_string_byte(title, byte_limit=63, ellipsize=True)
-        self._notify_id.sz_info = truncate_string_byte(message, byte_limit=255, ellipsize=True)
+        self._notify_id.sz_info_title = truncate_string_byte(
+            title, byte_limit=63, ellipsize=True
+        )
+        self._notify_id.sz_info = truncate_string_byte(
+            message, byte_limit=255, ellipsize=True
+        )
 
         windll.shell32.Shell_NotifyIconW(action, byref(self._notify_id))
 
@@ -846,7 +973,9 @@ class Win32Implementation(BaseImplementation):
         from ctypes import byref, windll
 
         if self._notify_id:
-            windll.shell32.Shell_NotifyIconW(self.NIM_DELETE, byref(self._notify_id))
+            windll.shell32.Shell_NotifyIconW(
+                self.NIM_DELETE, byref(self._notify_id)
+            )
             self._notify_id = None
 
         if self._menu:
@@ -875,11 +1004,15 @@ class Win32Implementation(BaseImplementation):
 
         if is_checked is not None:
             item_info.f_mask |= self.MIIM_STATE
-            item_info.f_state |= self.MFS_CHECKED if is_checked else self.MFS_UNCHECKED
+            item_info.f_state |= (
+                self.MFS_CHECKED if is_checked else self.MFS_UNCHECKED
+            )
 
         if is_sensitive is not None:
             item_info.f_mask |= self.MIIM_STATE
-            item_info.f_state |= self.MFS_ENABLED if is_sensitive else self.MFS_DISABLED
+            item_info.f_state |= (
+                self.MFS_ENABLED if is_sensitive else self.MFS_DISABLED
+            )
 
         return item_info
 
@@ -898,13 +1031,7 @@ class Win32Implementation(BaseImplementation):
 
         windll.user32.SetForegroundWindow(self._h_wnd)
         windll.user32.TrackPopupMenu(
-            self._menu,
-            0,
-            pos.x,
-            pos.y,
-            0,
-            self._h_wnd,
-            None
+            self._menu, 0, pos.x, pos.y, 0, self._h_wnd, None
         )
         windll.user32.PostMessageW(self._h_wnd, self.WM_NULL, 0, 0)
 
@@ -919,8 +1046,12 @@ class Win32Implementation(BaseImplementation):
             item_id = item["id"]
             item_info = self._serialize_menu_item(item)
 
-            if not windll.user32.SetMenuItemInfoW(self._menu, item_id, False, byref(item_info)):
-                windll.user32.InsertMenuItemW(self._menu, item_id, False, byref(item_info))
+            if not windll.user32.SetMenuItemInfoW(
+                self._menu, item_id, False, byref(item_info)
+            ):
+                windll.user32.InsertMenuItemW(
+                    self._menu, item_id, False, byref(item_info)
+                )
 
     def set_icon_name(self, icon_name):
         self._update_notify_icon(icon_name=icon_name)
@@ -941,7 +1072,11 @@ class Win32Implementation(BaseImplementation):
                 # Icon pressed
                 self.activate_callback()
 
-            elif l_param in (self.NIN_BALLOONHIDE, self.NIN_BALLOONTIMEOUT, self.NIN_BALLOONUSERCLICK):
+            elif l_param in (
+                self.NIN_BALLOONHIDE,
+                self.NIN_BALLOONTIMEOUT,
+                self.NIN_BALLOONUSERCLICK,
+            ):
                 if not config.sections["ui"]["trayicon"]:
                     # Notification dismissed, but user has disabled tray icon
                     self._remove_notify_icon()
@@ -961,7 +1096,7 @@ class Win32Implementation(BaseImplementation):
             wintypes.HWND(h_wnd),
             msg,
             wintypes.WPARAM(w_param),
-            wintypes.LPARAM(l_param)
+            wintypes.LPARAM(l_param),
         )
 
     def unload(self, is_shutdown=True):
@@ -985,9 +1120,13 @@ class StatusIconImplementation(BaseImplementation):
 
         if not hasattr(Gtk, "StatusIcon") or os.environ.get("WAYLAND_DISPLAY"):
             # GtkStatusIcon does not work on Wayland
-            raise ImplementationUnavailable("StatusIcon implementation not available")
+            raise ImplementationUnavailable(
+                "StatusIcon implementation not available"
+            )
 
-        self.tray_icon = Gtk.StatusIcon(tooltip_text=pynicotine.__application_name__)
+        self.tray_icon = Gtk.StatusIcon(
+            tooltip_text=pynicotine.__application_name__
+        )
         self.tray_icon.connect("activate", self.activate_callback)
         self.tray_icon.connect("popup-menu", self.on_status_icon_popup)
 
@@ -1024,13 +1163,19 @@ class StatusIconImplementation(BaseImplementation):
             text = item.get("text")
 
             if text is None:
-                item["gtk_menu_item"] = gtk_menu_item = Gtk.SeparatorMenuItem(visible=True)
+                item["gtk_menu_item"] = gtk_menu_item = Gtk.SeparatorMenuItem(
+                    visible=True
+                )
             else:
-                gtk_menu_item_class = Gtk.CheckMenuItem if "toggled" in item else Gtk.MenuItem
+                gtk_menu_item_class = (
+                    Gtk.CheckMenuItem if "toggled" in item else Gtk.MenuItem
+                )
                 item["gtk_menu_item"] = gtk_menu_item = gtk_menu_item_class(
                     label=text, use_underline=True, visible=True
                 )
-                item["gtk_handler"] = gtk_menu_item.connect("activate", item["callback"])
+                item["gtk_handler"] = gtk_menu_item.connect(
+                    "activate", item["callback"]
+                )
 
             gtk_menu.append(gtk_menu_item)
 
@@ -1073,7 +1218,7 @@ class TrayIcon:
             name="org.kde.StatusNotifierWatcher",
             flags=Gio.BusNameWatcherFlags.NONE,
             name_appeared_closure=self.load,
-            name_vanished_closure=self.unload
+            name_vanished_closure=self.unload,
         )
 
     def unwatch_availability(self):
@@ -1103,11 +1248,15 @@ class TrayIcon:
 
             else:
                 try:
-                    self.implementation = StatusNotifierImplementation(self.application)
+                    self.implementation = StatusNotifierImplementation(
+                        self.application
+                    )
 
                 except ImplementationUnavailable:
                     try:
-                        self.implementation = StatusIconImplementation(self.application)
+                        self.implementation = StatusIconImplementation(
+                            self.application
+                        )
                         self.unwatch_availability()
 
                     except ImplementationUnavailable:

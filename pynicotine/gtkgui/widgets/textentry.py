@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 from locale import strxfrm
 
@@ -34,7 +33,16 @@ from pynicotine.slskmessages import UserStatus
 class ChatEntry:
     """Custom text entry with support for chat commands and completions."""
 
-    def __init__(self, application, widget, chat_view, completion, entity, send_message, is_chatroom=False):
+    def __init__(
+        self,
+        application,
+        widget,
+        chat_view,
+        completion,
+        entity,
+        send_message,
+        is_chatroom=False,
+    ):
 
         self.application = application
         self.widget = widget
@@ -45,7 +53,9 @@ class ChatEntry:
         self.is_chatroom = is_chatroom
 
         widget.connect("activate", self.on_enter)
-        Accelerator("<Shift>Tab", widget, self.on_tab_complete_accelerator, True)
+        Accelerator(
+            "<Shift>Tab", widget, self.on_tab_complete_accelerator, True
+        )
         Accelerator("Tab", widget, self.on_tab_complete_accelerator)
         Accelerator("Down", widget, self.on_page_down_accelerator)
         Accelerator("Page_Down", widget, self.on_page_down_accelerator)
@@ -98,7 +108,7 @@ class ChatEntry:
             return
 
         is_double_slash_cmd = text.startswith("//")
-        is_single_slash_cmd = (text.startswith("/") and not is_double_slash_cmd)
+        is_single_slash_cmd = text.startswith("/") and not is_double_slash_cmd
 
         if not is_single_slash_cmd:
             # Regular chat message
@@ -106,7 +116,8 @@ class ChatEntry:
             self.widget.set_text("")
 
             if is_double_slash_cmd:
-                # Remove first slash and send the rest of the command as plain text
+                # Remove first slash and send the rest of the command as plain
+                # text
                 text = text[1:]
 
             self.send_message(self.entity, text)
@@ -115,10 +126,14 @@ class ChatEntry:
         cmd, _separator, args = text.partition(" ")
 
         if self.is_chatroom:
-            if not core.pluginhandler.trigger_chatroom_command_event(self.entity, cmd[1:], args):
+            if not core.pluginhandler.trigger_chatroom_command_event(
+                self.entity, cmd[1:], args
+            ):
                 return
 
-        elif not core.pluginhandler.trigger_private_chat_command_event(self.entity, cmd[1:], args):
+        elif not core.pluginhandler.trigger_private_chat_command_event(
+            self.entity, cmd[1:], args
+        ):
             return
 
         # Clear chat entry
@@ -126,11 +141,13 @@ class ChatEntry:
 
     def on_tab_complete_accelerator(self, widget, state, backwards=False):
         """Tab and Shift+Tab - tab complete chat."""
-        return self.completion.on_tab_complete_accelerator(widget, state, backwards)
+        return self.completion.on_tab_complete_accelerator(
+            widget, state, backwards
+        )
 
     def on_page_down_accelerator(self, *_args):
-        """Page_Down, Down - Scroll chat view to bottom, and keep input focus in
-        entry widget."""
+        """Page_Down, Down - Scroll chat view to bottom, and keep input
+        focus in entry widget."""
 
         if self.completion and self.completion.selecting_completion:
             return False
@@ -155,8 +172,12 @@ class ChatCompletion:
         self.completions = {}
         self.current_completions = []
         self.completion_index = 0
-        self.midway_completion = False  # True if the user just used tab completion
-        self.selecting_completion = False  # True if the list box is open with suggestions
+        self.midway_completion = (
+            False  # True if the user just used tab completion
+        )
+        self.selecting_completion = (
+            False  # True if the list box is open with suggestions
+        )
         self.is_inserting_completion = False
 
         self.entry = None
@@ -171,10 +192,14 @@ class ChatCompletion:
 
     def create_entry_completion(self):
 
-        self.entry_completion = Gtk.EntryCompletion(model=self.model, popup_single_match=False)
+        self.entry_completion = Gtk.EntryCompletion(
+            model=self.model, popup_single_match=False
+        )
         self.entry_completion.set_text_column(0)
         self.entry_completion.set_match_func(self.entry_completion_find_match)
-        self.entry_completion.connect("match-selected", self.entry_completion_found_match)
+        self.entry_completion.connect(
+            "match-selected", self.entry_completion_found_match
+        )
 
     def set_entry(self, entry):
 
@@ -187,14 +212,20 @@ class ChatCompletion:
         if entry is None:
             return
 
-        # Reusing an existing GtkEntryCompletion object after unsetting it doesn't work well
+        # Reusing an existing GtkEntryCompletion object after unsetting it
+        # doesn't work well
         self.create_entry_completion()
         entry.widget.set_completion(self.entry_completion)
 
-        self.entry_changed_handler = entry.widget.connect("changed", self.on_entry_changed)
+        self.entry_changed_handler = entry.widget.connect(
+            "changed", self.on_entry_changed
+        )
 
     def is_completion_enabled(self):
-        return config.sections["words"]["tab"] or config.sections["words"]["dropdown"]
+        return (
+            config.sections["words"]["tab"]
+            or config.sections["words"]["dropdown"]
+        )
 
     def add_completion(self, item):
 
@@ -205,7 +236,9 @@ class ChatCompletion:
             return
 
         if config.sections["words"]["dropdown"]:
-            iterator = self.model.insert_with_valuesv(-1, self.column_numbers, [item])
+            iterator = self.model.insert_with_valuesv(
+                -1, self.column_numbers, [item]
+            )
         else:
             iterator = None
 
@@ -229,7 +262,9 @@ class ChatCompletion:
         config_words = config.sections["words"]
 
         self.entry_completion.set_popup_completion(config_words["dropdown"])
-        self.entry_completion.set_minimum_key_length(config_words["characters"])
+        self.entry_completion.set_minimum_key_length(
+            config_words["characters"]
+        )
 
         self.model.clear()
         self.completions.clear()
@@ -241,7 +276,9 @@ class ChatCompletion:
             word = str(word)
 
             if config_words["dropdown"]:
-                iterator = self.model.insert_with_valuesv(-1, self.column_numbers, [word])
+                iterator = self.model.insert_with_valuesv(
+                    -1, self.column_numbers, [word]
+                )
             else:
                 iterator = None
 
@@ -259,7 +296,10 @@ class ChatCompletion:
         else:
             split_key = entry_text
 
-        if not split_key or len(split_key) < config.sections["words"]["characters"]:
+        if (
+            not split_key
+            or len(split_key) < config.sections["words"]["characters"]
+        ):
             return False
 
         # Case-insensitive matching
@@ -276,9 +316,9 @@ class ChatCompletion:
         current_text = self.entry.get_text()
         completion_value = model.get_value(iterator, 0)
 
-        # if more than a word has been typed, we throw away the
-        # one to the left of our current position because we want
-        # to replace it with the matching word
+        # if more than a word has been typed, we throw away the one to the left
+        # of our current position because we want to replace it with the
+        # matching word
 
         if " " in current_text:
             i = self.entry.get_position()
@@ -300,7 +340,8 @@ class ChatCompletion:
 
     def on_entry_changed(self, *_args):
 
-        # If the entry was modified, and we don't block entry_changed_handler, we're no longer completing
+        # If the entry was modified, and we don't block entry_changed_handler,
+        # we're no longer completing
         if not self.is_inserting_completion:
             self.midway_completion = self.selecting_completion = False
 
@@ -315,14 +356,10 @@ class ChatCompletion:
         if not text:
             return False
 
-        # "Hello there Miss<tab> how are you doing"
-        # "0  3  6  9  12 15      18 21 24 27 30 33
-        #   1  4  7  10 13      16 19 22 25 28 31
-        #    2  5  8  11 14      17 20 23 26 29 32
+        # "Hello there Miss<tab> how are you doing" "0 3 6 9 12 15 18 21 24 27
+        # 30 33 1 4 7 10 13 16 19 22 25 28 31 2 5 8 11 14 17 20 23 26 29 32
         #
-        # i = 16
-        # last_word = Miss
-        # preix = 12
+        # i = 16 last_word = Miss preix = 12
 
         i = self.entry.get_position()
         last_word = text[:i].split(" ")[-1]
@@ -335,7 +372,10 @@ class ChatCompletion:
 
             last_word_lower = last_word.lower()
             self.current_completions = [
-                x for x in self.completions if x.lower().startswith(last_word_lower) and len(x) >= last_word_len
+                x
+                for x in self.completions
+                if x.lower().startswith(last_word_lower)
+                and len(x) >= last_word_len
             ]
 
             if self.current_completions:
@@ -346,12 +386,15 @@ class ChatCompletion:
             current_word = self.current_completions[self.completion_index]
 
         if self.midway_completion:
-            # We're still completing, block entry_changed_handler to avoid modifying midway_completion value
+            # We're still completing, block entry_changed_handler to avoid
+            # modifying midway_completion value
             self.is_inserting_completion = True
             self.entry.delete_text(i - len(current_word), i)
 
             direction = -1 if backwards else 1
-            self.completion_index = ((self.completion_index + direction) % len(self.current_completions))
+            self.completion_index = (self.completion_index + direction) % len(
+                self.current_completions
+            )
 
             new_word = self.current_completions[self.completion_index]
             self.entry.insert_text(new_word, preix)
@@ -373,8 +416,12 @@ class CompletionEntry:
             self.model = model = Gtk.ListStore(str)
             self.column_numbers = list(range(self.model.get_n_columns()))
 
-        completion = Gtk.EntryCompletion(inline_completion=True, inline_selection=True,
-                                         popup_single_match=False, model=model)
+        completion = Gtk.EntryCompletion(
+            inline_completion=True,
+            inline_selection=True,
+            popup_single_match=False,
+            model=model,
+        )
         completion.set_text_column(column)
         completion.set_match_func(self.entry_completion_find_match)
         widget.set_completion(completion)
@@ -384,7 +431,9 @@ class CompletionEntry:
 
     def add_completion(self, item):
         if item not in self.completions:
-            self.completions[item] = self.model.insert_with_valuesv(-1, self.column_numbers, [item])
+            self.completions[item] = self.model.insert_with_valuesv(
+                -1, self.column_numbers, [item]
+            )
 
     def remove_completion(self, item):
 
@@ -414,9 +463,18 @@ class CompletionEntry:
 
 class ComboBox:
 
-    def __init__(self, container, label=None, has_entry=False, has_entry_completion=False,
-                 enable_arrow_keys=True, entry=None, visible=True, items=None,
-                 item_selected_callback=None):
+    def __init__(
+        self,
+        container,
+        label=None,
+        has_entry=False,
+        has_entry_completion=False,
+        enable_arrow_keys=True,
+        entry=None,
+        visible=True,
+        items=None,
+        item_selected_callback=None,
+    ):
 
         self.widget = None
         self.dropdown = None
@@ -432,7 +490,9 @@ class ComboBox:
         self._is_modifying = False
         self._is_select_callback_enabled = False
 
-        self._create_combobox(container, label, has_entry, has_entry_completion)
+        self._create_combobox(
+            container, label, has_entry, has_entry_completion
+        )
 
         if items:
             self.freeze()
@@ -507,9 +567,13 @@ class ComboBox:
         add_css_class(self.widget, "linked")
         container.append(self.widget)
 
-    def _create_combobox_gtk3(self, container, label, has_entry, has_entry_completion):
+    def _create_combobox_gtk3(
+        self, container, label, has_entry, has_entry_completion
+    ):
 
-        self.dropdown = self.widget = Gtk.ComboBoxText(has_entry=has_entry, valign=Gtk.Align.CENTER, visible=True)
+        self.dropdown = self.widget = Gtk.ComboBoxText(
+            has_entry=has_entry, valign=Gtk.Align.CENTER, visible=True
+        )
         self._model = self.dropdown.get_model()
 
         self.dropdown.connect("scroll-event", self._on_button_scroll_event)
@@ -539,16 +603,25 @@ class ComboBox:
         self._button = list(self.entry.get_parent())[-1]
         container.add(self.widget)
 
-    def _create_combobox(self, container, label, has_entry, has_entry_completion):
+    def _create_combobox(
+        self, container, label, has_entry, has_entry_completion
+    ):
 
         if GTK_API_VERSION >= 4:
             self._create_combobox_gtk4(container, label, has_entry)
         else:
-            self._create_combobox_gtk3(container, label, has_entry, has_entry_completion)
+            self._create_combobox_gtk3(
+                container, label, has_entry, has_entry_completion
+            )
 
         if has_entry:
             Accelerator("Up", self.entry, self._on_arrow_key_accelerator, "up")
-            Accelerator("Down", self.entry, self._on_arrow_key_accelerator, "down")
+            Accelerator(
+                "Down",
+                self.entry,
+                self._on_arrow_key_accelerator,
+                "down",
+            )
 
         if has_entry_completion:
             self._entry_completion = CompletionEntry(self.entry)
@@ -595,13 +668,15 @@ class ComboBox:
     # General #
 
     def freeze(self):
-        """Called before inserting/deleting items, to avoid redundant UI updates."""
+        """Called before inserting/deleting items, to avoid redundant UI
+        updates."""
 
         if GTK_API_VERSION >= 4:
             self.dropdown.set_model(None)
 
     def unfreeze(self):
-        """Called after items have been inserted/deleted, to enable UI updates."""
+        """Called after items have been inserted/deleted, to enable UI
+        updates."""
 
         if GTK_API_VERSION == 3:
             return
@@ -632,8 +707,11 @@ class ComboBox:
             if last_position == position:
                 self._model.append(item)
             else:
-                num_removals = (last_position - position)
-                inserted_items = [item] + [self._model.get_string(i) for i in range(position, last_position)]
+                num_removals = last_position - position
+                inserted_items = [item] + [
+                    self._model.get_string(i)
+                    for i in range(position, last_position)
+                ]
                 self._model.splice(position, num_removals, inserted_items)
 
             self._is_modifying = False
@@ -704,7 +782,7 @@ class ComboBox:
     def remove_pos(self, position):
 
         if position == -1:
-            position = (self.get_num_items() - 1)
+            position = self.get_num_items() - 1
 
         item_id = self._ids.pop(position, None)
 
@@ -739,7 +817,9 @@ class ComboBox:
 
         if GTK_API_VERSION >= 4:
             self._is_modifying = True
-            self._model.splice(position=0, n_removals=self._model.get_n_items())
+            self._model.splice(
+                position=0, n_removals=self._model.get_n_items()
+            )
             self._is_modifying = False
         else:
             self.dropdown.remove_all()
@@ -768,7 +848,12 @@ class ComboBox:
 
     def _on_factory_setup(self, _factory, list_item):
         list_item.set_child(
-            Gtk.Label(ellipsize=Pango.EllipsizeMode.END, mnemonic_widget=self.widget, xalign=0))
+            Gtk.Label(
+                ellipsize=Pango.EllipsizeMode.END,
+                mnemonic_widget=self.widget,
+                xalign=0,
+            )
+        )
 
     def _on_arrow_key_accelerator(self, _widget, _unused, direction):
 
@@ -810,7 +895,8 @@ class ComboBox:
 
         visible = widget.get_property(param.name)
 
-        # Only enable item selection callback when an item is selected from the UI
+        # Only enable item selection callback when an item is selected from the
+        # UI
         GLib.idle_add(self._on_select_callback_status, visible)
 
         if self.entry is None:
@@ -831,7 +917,9 @@ class ComboBox:
         container_width = self.entry.get_parent().get_width()
         button_width = self._button.get_width()
 
-        popover.set_offset(x_offset=-container_width + button_width, y_offset=0)
+        popover.set_offset(
+            x_offset=-container_width + button_width, y_offset=0
+        )
         scrolled_window.set_size_request(container_width, height=-1)
 
     def _on_item_selected(self, *_args):
@@ -851,7 +939,10 @@ class ComboBox:
             # Cursor is normally placed at the beginning, move to the end
             self.entry.set_position(-1)
 
-        if self._is_select_callback_enabled and self.item_selected_callback is not None:
+        if (
+            self._is_select_callback_enabled
+            and self.item_selected_callback is not None
+        ):
             self.item_selected_callback(self, selected_id)
 
 
@@ -878,6 +969,7 @@ class SpellChecker:
         try:
             gi.require_version("Gspell", "1")
             from gi.repository import Gspell
+
             SpellChecker.module = Gspell
 
         except (ImportError, ValueError):
@@ -921,7 +1013,11 @@ class SpellChecker:
         if SpellChecker.checker is None:
             SpellChecker.checker = SpellChecker.module.Checker()
 
-        self.buffer = SpellChecker.module.EntryBuffer.get_from_gtk_entry_buffer(entry.get_buffer())
+        self.buffer = (
+            SpellChecker.module.EntryBuffer.get_from_gtk_entry_buffer(
+                entry.get_buffer()
+            )
+        )
         self.buffer.set_spell_checker(SpellChecker.checker)
 
         self.entry = SpellChecker.module.Entry.get_from_gtk_entry(entry.widget)
@@ -930,7 +1026,14 @@ class SpellChecker:
 
 class TextSearchBar:
 
-    def __init__(self, textview, search_bar, entry, controller_widget=None, focus_widget=None):
+    def __init__(
+        self,
+        textview,
+        search_bar,
+        entry,
+        controller_widget=None,
+        focus_widget=None,
+    ):
 
         self.textview = textview
         self.search_bar = search_bar
@@ -949,10 +1052,20 @@ class TextSearchBar:
         if not controller_widget:
             controller_widget = textview
 
-        Accelerator("<Primary>f", controller_widget, self.on_show_search_accelerator)
-        Accelerator("Escape", controller_widget, self.on_hide_search_accelerator)
+        Accelerator(
+            "<Primary>f",
+            controller_widget,
+            self.on_show_search_accelerator,
+        )
+        Accelerator(
+            "Escape", controller_widget, self.on_hide_search_accelerator
+        )
         Accelerator("<Primary>g", controller_widget, self.on_search_next_match)
-        Accelerator("<Shift><Primary>g", controller_widget, self.on_search_previous_match)
+        Accelerator(
+            "<Shift><Primary>g",
+            controller_widget,
+            self.on_search_previous_match,
+        )
 
     def destroy(self):
         self.__dict__.clear()
@@ -976,10 +1089,18 @@ class TextSearchBar:
 
         if search_type == "previous":
             match = iterator.backward_search(
-                query, Gtk.TextSearchFlags.TEXT_ONLY | Gtk.TextSearchFlags.CASE_INSENSITIVE, limit=None)
+                query,
+                Gtk.TextSearchFlags.TEXT_ONLY
+                | Gtk.TextSearchFlags.CASE_INSENSITIVE,
+                limit=None,
+            )
         else:
             match = iterator.forward_search(
-                query, Gtk.TextSearchFlags.TEXT_ONLY | Gtk.TextSearchFlags.CASE_INSENSITIVE, limit=None)
+                query,
+                Gtk.TextSearchFlags.TEXT_ONLY
+                | Gtk.TextSearchFlags.CASE_INSENSITIVE,
+                limit=None,
+            )
 
         if match is not None and len(match) == 2:
             match_start, match_end = match

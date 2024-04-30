@@ -1,26 +1,24 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2018 Mutnick <mutnick@techie.com>
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2009-2011 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2009 hedonist <ak@sensi.org>
-# COPYRIGHT (C) 2006-2008 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2016-2018
+# Mutnick <mutnick@techie.com> COPYRIGHT (C) 2016-2017 Michael Labouebe
+# <gfarmerfr@free.fr> COPYRIGHT (C) 2009-2011 quinox <quinox@users.sf.net>
+# COPYRIGHT (C) 2009 hedonist <ak@sensi.org> COPYRIGHT (C) 2006-2008 daelstorm
+# <daelstorm@gmail.com> COPYRIGHT (C) 2003-2004 Hyriand
+# <hyriand@thegraveyard.org>
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 
@@ -67,8 +65,14 @@ class Uploads(Transfers):
             window.uploads_content.add(self.container)
 
         self.popup_menu_clear.add_items(
-            ("#" + _("Finished / Cancelled / Failed"), self.on_clear_finished_failed),
-            ("#" + _("Finished / Cancelled"), self.on_clear_finished_cancelled),
+            (
+                "#" + _("Finished / Cancelled / Failed"),
+                self.on_clear_finished_failed,
+            ),
+            (
+                "#" + _("Finished / Cancelled"),
+                self.on_clear_finished_cancelled,
+            ),
             ("", None),
             ("#" + _("Finished"), self.on_clear_finished),
             ("#" + _("Cancelled"), self.on_clear_cancelled),
@@ -86,7 +90,7 @@ class Uploads(Transfers):
             ("clear-upload", self.clear_transfer),
             ("clear-uploads", self.clear_transfers),
             ("start", self.start),
-            ("update-upload", self.update_model)
+            ("update-upload", self.update_model),
         ):
             events.connect(event_name, callback)
 
@@ -113,7 +117,9 @@ class Uploads(Transfers):
         core.uploads.retry_uploads(self.selected_transfers)
 
     def abort_selected_transfers(self):
-        core.uploads.abort_uploads(self.selected_transfers, denied_message="Cancelled")
+        core.uploads.abort_uploads(
+            self.selected_transfers, denied_message="Cancelled"
+        )
 
     def remove_selected_transfers(self):
         core.uploads.clear_uploads(uploads=self.selected_transfers)
@@ -125,7 +131,7 @@ class Uploads(Transfers):
             title=_("Clear Queued Uploads"),
             message=_("Do you really want to clear all queued uploads?"),
             destructive_response_id="ok",
-            callback=self.on_clear_queued
+            callback=self.on_clear_queued,
         ).present()
 
     def on_clear_all_response(self, *_args):
@@ -138,7 +144,7 @@ class Uploads(Transfers):
             title=_("Clear All Uploads"),
             message=_("Do you really want to clear all uploads?"),
             destructive_response_id="ok",
-            callback=self.on_clear_all_response
+            callback=self.on_clear_all_response,
         ).present()
 
     def on_copy_url(self, *_args):
@@ -156,8 +162,12 @@ class Uploads(Transfers):
 
         if transfer:
             user = config.sections["server"]["login"]
-            folder_path, separator, _basename = transfer.virtual_path.rpartition("\\")
-            url = core.userbrowse.get_soulseek_url(user, folder_path + separator)
+            folder_path, separator, _basename = (
+                transfer.virtual_path.rpartition("\\")
+            )
+            url = core.userbrowse.get_soulseek_url(
+                user, folder_path + separator
+            )
 
             clipboard.copy_text(url)
 
@@ -192,7 +202,10 @@ class Uploads(Transfers):
         self.select_transfers()
 
         for transfer in self.transfer_list:
-            if transfer.username in self.selected_users and transfer not in self.selected_transfers:
+            if (
+                transfer.username in self.selected_users
+                and transfer not in self.selected_transfers
+            ):
                 self.selected_transfers[transfer] = None
 
         self.abort_selected_transfers()
@@ -211,15 +224,27 @@ class Uploads(Transfers):
         core.uploads.clear_uploads(statuses={TransferStatus.CANCELLED})
 
     def on_clear_failed(self, *_args):
-        core.uploads.clear_uploads(statuses={TransferStatus.CONNECTION_TIMEOUT, TransferStatus.LOCAL_FILE_ERROR})
+        core.uploads.clear_uploads(
+            statuses={
+                TransferStatus.CONNECTION_TIMEOUT,
+                TransferStatus.LOCAL_FILE_ERROR,
+            }
+        )
 
     def on_clear_logged_off(self, *_args):
         core.uploads.clear_uploads(statuses={TransferStatus.USER_LOGGED_OFF})
 
     def on_clear_finished_cancelled(self, *_args):
-        core.uploads.clear_uploads(statuses={TransferStatus.CANCELLED, TransferStatus.FINISHED})
+        core.uploads.clear_uploads(
+            statuses={TransferStatus.CANCELLED, TransferStatus.FINISHED}
+        )
 
     def on_clear_finished_failed(self, *_args):
         core.uploads.clear_uploads(
-            statuses={TransferStatus.CANCELLED, TransferStatus.FINISHED, TransferStatus.CONNECTION_TIMEOUT,
-                      TransferStatus.LOCAL_FILE_ERROR})
+            statuses={
+                TransferStatus.CANCELLED,
+                TransferStatus.FINISHED,
+                TransferStatus.CONNECTION_TIMEOUT,
+                TransferStatus.LOCAL_FILE_ERROR,
+            }
+        )

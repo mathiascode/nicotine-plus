@@ -1,20 +1,19 @@
 # COPYRIGHT (C) 2022-2023 Nicotine+ Contributors
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import time
@@ -43,50 +42,51 @@ class ChatHistory(Popover):
 
     def __init__(self, window):
 
-        (
-            self.container,
-            self.list_container,
-            self.search_entry
-        ) = ui.load(scope=self, path="popovers/chathistory.ui")
+        (self.container, self.list_container, self.search_entry) = ui.load(
+            scope=self, path="popovers/chathistory.ui"
+        )
 
         super().__init__(
             window=window,
             content_box=self.container,
             width=1000,
-            height=700
+            height=700,
         )
 
         self.list_view = TreeView(
-            window, parent=self.list_container, activate_row_callback=self.on_show_user,
+            window,
+            parent=self.list_container,
+            activate_row_callback=self.on_show_user,
             search_entry=self.search_entry,
             columns={
                 "status": {
                     "column_type": "icon",
                     "title": _("Status"),
                     "width": 25,
-                    "hide_header": True
+                    "hide_header": True,
                 },
                 "user": {
                     "column_type": "text",
                     "title": _("User"),
                     "width": 175,
-                    "iterator_key": True
+                    "iterator_key": True,
                 },
                 "latest_message": {
                     "column_type": "text",
-                    "title": _("Latest Message")
+                    "title": _("Latest Message"),
                 },
-
                 # Hidden data columns
                 "timestamp_data": {
                     "data_type": GObject.TYPE_UINT64,
-                    "default_sort_type": "descending"
-                }
-            }
+                    "default_sort_type": "descending",
+                },
+            },
         )
 
         Accelerator("<Primary>f", self.widget, self.on_search_accelerator)
-        self.completion_entry = CompletionEntry(window.private_entry, self.list_view.model, column=1)
+        self.completion_entry = CompletionEntry(
+            window.private_entry, self.list_view.model, column=1
+        )
 
         if GTK_API_VERSION >= 4:
             inner_button = next(iter(window.private_history_button))
@@ -98,7 +98,7 @@ class ChatHistory(Popover):
         for event_name, callback in (
             ("server-login", self.server_login),
             ("server-disconnect", self.server_disconnect),
-            ("user-status", self.user_status)
+            ("user-status", self.user_status),
         ):
             events.connect(event_name, callback)
 
@@ -120,7 +120,11 @@ class ChatHistory(Popover):
 
     def server_disconnect(self, *_args):
         for iterator in self.list_view.iterators.values():
-            self.list_view.set_row_value(iterator, "status", USER_STATUS_ICON_NAMES[UserStatus.OFFLINE])
+            self.list_view.set_row_value(
+                iterator,
+                "status",
+                USER_STATUS_ICON_NAMES[UserStatus.OFFLINE],
+            )
 
     def load_user(self, file_path):
         """Reads the username and latest message from a given log file path.
@@ -132,7 +136,7 @@ class ChatHistory(Popover):
         """
 
         username = os.path.basename(file_path[:-4]).decode("utf-8", "replace")
-        is_safe_username = ("_" not in username)
+        is_safe_username = "_" not in username
         login_username = config.sections["server"]["login"]
         timestamp = os.path.getmtime(file_path)
 
@@ -165,7 +169,7 @@ class ChatHistory(Popover):
 
                 start = line.find(" [") + 2
                 end = line.find("] ", start)
-                line_username_len = (end - start)
+                line_username_len = end - start
 
                 if len(username) != line_username_len:
                     continue
@@ -185,19 +189,25 @@ class ChatHistory(Popover):
     def load_users(self):
 
         try:
-            with os.scandir(encode_path(log.private_chat_folder_path)) as entries:
+            with os.scandir(
+                encode_path(log.private_chat_folder_path)
+            ) as entries:
                 for entry in entries:
                     if not entry.is_file() or not entry.name.endswith(b".log"):
                         continue
 
                     try:
-                        username, latest_message, timestamp = self.load_user(entry.path)
+                        username, latest_message, timestamp = self.load_user(
+                            entry.path
+                        )
 
                     except OSError:
                         continue
 
                     if latest_message is not None:
-                        self.update_user(username, latest_message.strip(), timestamp)
+                        self.update_user(
+                            username, latest_message.strip(), timestamp
+                        )
 
         except OSError:
             pass
@@ -222,12 +232,16 @@ class ChatHistory(Popover):
 
         status = core.users.statuses.get(username, UserStatus.OFFLINE)
 
-        self.list_view.add_row([
-            USER_STATUS_ICON_NAMES[status],
-            username,
-            message,
-            int(timestamp)
-        ], select_row=False, prepend=True)
+        self.list_view.add_row(
+            [
+                USER_STATUS_ICON_NAMES[status],
+                username,
+                message,
+                int(timestamp),
+            ],
+            select_row=False,
+            prepend=True,
+        )
 
     def user_status(self, msg):
 
@@ -238,7 +252,11 @@ class ChatHistory(Popover):
 
         status_icon_name = USER_STATUS_ICON_NAMES.get(msg.status)
 
-        if status_icon_name and status_icon_name != self.list_view.get_row_value(iterator, "status"):
+        if (
+            status_icon_name
+            and status_icon_name
+            != self.list_view.get_row_value(iterator, "status")
+        ):
             self.list_view.set_row_value(iterator, "status", status_icon_name)
 
     def on_show_user(self, *_args):

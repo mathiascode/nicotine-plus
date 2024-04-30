@@ -32,32 +32,46 @@ class Plugin(BasePlugin):
             "minlength": 200,
             "maxlength": 400,
             "maxdiffcharacters": 10,
-            "badprivatephrases": []
+            "badprivatephrases": [],
         }
         self.metasettings = {
             "minlength": {
-                "description": "The minimum length of a line before it's considered as ASCII spam",
-                "type": "integer"
+                "description": (
+                    "The minimum length of a line before it's considered as"
+                    " ASCII spam"
+                ),
+                "type": "integer",
             },
             "maxdiffcharacters": {
-                "description": "The maximum number of different characters that is still considered ASCII spam",
-                "type": "integer"
+                "description": (
+                    "The maximum number of different characters that is"
+                    " still considered ASCII spam"
+                ),
+                "type": "integer",
             },
             "maxlength": {
-                "description": "The maximum length of a line before it's considered as spam.",
-                "type": "integer"
+                "description": (
+                    "The maximum length of a line before it's considered as"
+                    " spam."
+                ),
+                "type": "integer",
             },
             "badprivatephrases": {
                 "description": "Filter chat messages containing phrase:",
-                "type": "list string"
-            }
+                "type": "list string",
+            },
         }
 
     def loaded_notification(self):
 
-        self.log("A line should be at least %s long with a maximum of %s different characters "
-                 "before it's considered ASCII spam.",
-                 (self.settings["minlength"], self.settings["maxdiffcharacters"]))
+        self.log(
+            "A line should be at least %s long with a maximum of %s"
+            " different characters before it's considered ASCII spam.",
+            (
+                self.settings["minlength"],
+                self.settings["maxdiffcharacters"],
+            ),
+        )
 
     def check_phrases(self, user, line):
 
@@ -70,12 +84,22 @@ class Plugin(BasePlugin):
 
     def incoming_public_chat_event(self, room, user, line):
 
-        if len(line) >= self.settings["minlength"] and len(set(line)) < self.settings["maxdiffcharacters"]:
-            self.log('Filtered ASCII spam from "%s" in room "%s"', (user, room))
+        if (
+            len(line) >= self.settings["minlength"]
+            and len(set(line)) < self.settings["maxdiffcharacters"]
+        ):
+            self.log(
+                'Filtered ASCII spam from "%s" in room "%s"',
+                (user, room),
+            )
             return returncode["zap"]
 
         if len(line) > self.settings["maxlength"]:
-            self.log('Filtered really long line (%s characters) from "%s" in room "%s"', (len(line), user, room))
+            self.log(
+                'Filtered really long line (%s characters) from "%s" in room'
+                ' "%s"',
+                (len(line), user, room),
+            )
             return returncode["zap"]
 
         return self.check_phrases(user, line)

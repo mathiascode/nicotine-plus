@@ -1,24 +1,22 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2016 Mutnick <muhing@yahoo.com>
-# COPYRIGHT (C) 2009-2011 quinox <quinox@users.sf.net>
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2016-2017
+# Michael Labouebe <gfarmerfr@free.fr> COPYRIGHT (C) 2016 Mutnick
+# <muhing@yahoo.com> COPYRIGHT (C) 2009-2011 quinox <quinox@users.sf.net>
 # COPYRIGHT (C) 2009 daelstorm <daelstorm@gmail.com>
 #
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
+# GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import gc
 import mmap
@@ -52,32 +50,176 @@ from pynicotine.utils import encode_path
 
 class FileTypes:
     ARCHIVE = {
-        "7z", "br", "bz2", "gz", "iso", "lz", "lzma", "rar", "tar", "tbz", "tbz2", "tgz", "xz", "zip", "zst"
+        "7z",
+        "br",
+        "bz2",
+        "gz",
+        "iso",
+        "lz",
+        "lzma",
+        "rar",
+        "tar",
+        "tbz",
+        "tbz2",
+        "tgz",
+        "xz",
+        "zip",
+        "zst",
     }
     AUDIO = {
-        "aac", "ac3", "afc", "aifc", "aif", "aiff", "ape", "au", "bwav", "bwf", "dff", "dsd", "dsf", "dts", "flac",
-        "gbs", "gym", "it", "m4a", "m4b", "mid", "midi", "mka", "mod", "mp1", "mp2", "mp3", "mp+", "mpc", "nsf", "nsfe",
-        "ofr", "ofs", "oga", "ogg", "opus", "psf", "psf1", "psf2", "s3m", "sid", "spc", "spx", "ssf", "tak", "tta",
-        "wav", "vgm", "vgz", "wma", "vqf", "wv", "xm"
+        "aac",
+        "ac3",
+        "afc",
+        "aifc",
+        "aif",
+        "aiff",
+        "ape",
+        "au",
+        "bwav",
+        "bwf",
+        "dff",
+        "dsd",
+        "dsf",
+        "dts",
+        "flac",
+        "gbs",
+        "gym",
+        "it",
+        "m4a",
+        "m4b",
+        "mid",
+        "midi",
+        "mka",
+        "mod",
+        "mp1",
+        "mp2",
+        "mp3",
+        "mp+",
+        "mpc",
+        "nsf",
+        "nsfe",
+        "ofr",
+        "ofs",
+        "oga",
+        "ogg",
+        "opus",
+        "psf",
+        "psf1",
+        "psf2",
+        "s3m",
+        "sid",
+        "spc",
+        "spx",
+        "ssf",
+        "tak",
+        "tta",
+        "wav",
+        "vgm",
+        "vgz",
+        "wma",
+        "vqf",
+        "wv",
+        "xm",
     }
     EXECUTABLE = {
-        "apk", "appimage", "bat", "deb", "dmg", "flatpak", "exe", "jar", "msi", "pkg", "rpm", "sh"
+        "apk",
+        "appimage",
+        "bat",
+        "deb",
+        "dmg",
+        "flatpak",
+        "exe",
+        "jar",
+        "msi",
+        "pkg",
+        "rpm",
+        "sh",
     }
     IMAGE = {
-        "apng", "avif", "bmp", "gif", "heic", "heif", "ico", "jfif", "jp2", "jpg", "jpe", "jpeg", "jxl", "png", "psd",
-        "raw", "svg", "svgz", "tif", "tiff", "webp"
+        "apng",
+        "avif",
+        "bmp",
+        "gif",
+        "heic",
+        "heif",
+        "ico",
+        "jfif",
+        "jp2",
+        "jpg",
+        "jpe",
+        "jpeg",
+        "jxl",
+        "png",
+        "psd",
+        "raw",
+        "svg",
+        "svgz",
+        "tif",
+        "tiff",
+        "webp",
     }
     DOCUMENT = {
-        "doc", "docx", "epub", "mobi", "odp", "ods", "odt", "opf", "oxps", "pdf", "ppt", "pptx", "rtf", "xls", "xlsx",
-        "xps"
+        "doc",
+        "docx",
+        "epub",
+        "mobi",
+        "odp",
+        "ods",
+        "odt",
+        "opf",
+        "oxps",
+        "pdf",
+        "ppt",
+        "pptx",
+        "rtf",
+        "xls",
+        "xlsx",
+        "xps",
     }
     TEXT = {
-        "cue", "csv", "htm", "html", "m3u", "m3u8", "md5", "log", "lrc", "md", "mks", "nfo", "ps", "rst", "sfv",
-        "sha1", "sha256", "srt", "txt"
+        "cue",
+        "csv",
+        "htm",
+        "html",
+        "m3u",
+        "m3u8",
+        "md5",
+        "log",
+        "lrc",
+        "md",
+        "mks",
+        "nfo",
+        "ps",
+        "rst",
+        "sfv",
+        "sha1",
+        "sha256",
+        "srt",
+        "txt",
     }
     VIDEO = {
-        "3gp", "amv", "asf", "avi", "f4v", "flv", "m2ts", "m2v", "m4p", "m4v", "mov", "mp4", "mpe", "mpeg", "mpg",
-        "mkv", "mts", "ogv", "ts", "vob", "webm", "wmv"
+        "3gp",
+        "amv",
+        "asf",
+        "avi",
+        "f4v",
+        "flv",
+        "m2ts",
+        "m2v",
+        "m4p",
+        "m4v",
+        "mov",
+        "mp4",
+        "mpe",
+        "mpeg",
+        "mpg",
+        "mkv",
+        "mts",
+        "ogv",
+        "ts",
+        "vob",
+        "webm",
+        "wmv",
     }
 
 
@@ -123,10 +265,15 @@ class Database:
         self._value_offsets = self._load_value_offsets(file_path, mode)
 
         if overwrite:
-            self._file_handle = open(file_path, mode)  # pylint: disable=consider-using-with
+            # pylint: disable=consider-using-with
+            self._file_handle = open(file_path, mode)
         else:
             with open(file_path, mode) as file_handle:
-                self._file_handle = mmap.mmap(file_handle.fileno(), length=0, access=mmap.ACCESS_READ)
+                self._file_handle = mmap.mmap(
+                    file_handle.fileno(),
+                    length=0,
+                    access=mmap.ACCESS_READ,
+                )
 
         self._file_offset = self._file_handle.seek(0, SEEK_END)
         self._overwrite = overwrite
@@ -135,7 +282,8 @@ class Database:
 
         value_offsets = {}
 
-        with open(file_path, mode) as file_handle:  # pylint: disable=unspecified-encoding
+        # pylint: disable=unspecified-encoding
+        with open(file_path, mode) as file_handle:
             file_size = os.fstat(file_handle.fileno()).st_size
 
             if not file_size:
@@ -145,28 +293,43 @@ class Database:
 
             file_handle.seek(0)
 
-            with mmap.mmap(file_handle.fileno(), length=0, access=mmap.ACCESS_READ) as contents:
+            with mmap.mmap(
+                file_handle.fileno(), length=0, access=mmap.ACCESS_READ
+            ) as contents:
                 contents_view = memoryview(contents)
 
                 try:
                     file_signature_length = len(self.FILE_SIGNATURE)
 
-                    if contents_view[:file_signature_length] != self.FILE_SIGNATURE:
+                    if (
+                        contents_view[:file_signature_length]
+                        != self.FILE_SIGNATURE
+                    ):
                         raise DatabaseError("Not a database file")
 
-                    if contents_view[file_signature_length:file_signature_length + 1][0] != self.VERSION:
+                    if (
+                        contents_view[
+                            file_signature_length : file_signature_length + 1
+                        ][0]
+                        != self.VERSION
+                    ):
                         raise DatabaseError("Incompatible version")
 
-                    current_offset = (file_signature_length + 1)
+                    current_offset = file_signature_length + 1
 
                     while current_offset < file_size:
-                        key_offset = (current_offset + self.LENGTH_DATA_SIZE)
-                        key_length, value_length = self.UNPACK_LENGTHS(contents_view[current_offset:key_offset])
-                        value_offset = (key_offset + key_length)
-                        key = str(contents_view[key_offset:value_offset], encoding="utf-8")
+                        key_offset = current_offset + self.LENGTH_DATA_SIZE
+                        key_length, value_length = self.UNPACK_LENGTHS(
+                            contents_view[current_offset:key_offset]
+                        )
+                        value_offset = key_offset + key_length
+                        key = str(
+                            contents_view[key_offset:value_offset],
+                            encoding="utf-8",
+                        )
 
                         value_offsets[key] = value_offset
-                        current_offset = (value_offset + value_length)
+                        current_offset = value_offset + value_length
                 finally:
                     contents_view.release()
 
@@ -195,11 +358,13 @@ class Database:
 
         key_length = len(encoded_key)
         length_data = self.PACK_LENGTHS(key_length, len(pickled_value))
-        item_data = (length_data + encoded_key + pickled_value)
+        item_data = length_data + encoded_key + pickled_value
 
         self._file_handle.write(item_data)
 
-        self._value_offsets[key] = self._file_offset + self.LENGTH_DATA_SIZE + key_length
+        self._value_offsets[key] = (
+            self._file_offset + self.LENGTH_DATA_SIZE + key_length
+        )
         self._file_offset += len(item_data)
 
     def get(self, key, default=None):
@@ -230,8 +395,18 @@ class Scanner:
 
     HIDDEN_FOLDER_NAMES = {"@eaDir", "#recycle", "#snapshot"}
 
-    def __init__(self, config_obj, queue, share_groups, share_db_paths, init=False, rescan=True,
-                 rebuild=False, reveal_buddy_shares=False, reveal_trusted_shares=False):
+    def __init__(
+        self,
+        config_obj,
+        queue,
+        share_groups,
+        share_db_paths,
+        init=False,
+        rescan=True,
+        rebuild=False,
+        reveal_buddy_shares=False,
+        reveal_trusted_shares=False,
+    ):
 
         self.config = config_obj
         self.queue = queue
@@ -269,9 +444,17 @@ class Scanner:
 
             if self.rescan:
                 self.queue.put("rescanning")
-                self.queue.put((_("Rebuilding shares…") if self.rebuild else _("Rescanning shares…"), None))
+                self.queue.put((
+                    (
+                        _("Rebuilding shares…")
+                        if self.rebuild
+                        else _("Rescanning shares…")
+                    ),
+                    None,
+                ))
 
-                # Clear previous word index to prevent inconsistent state if the scanner fails
+                # Clear previous word index to prevent inconsistent state if
+                # the scanner fails
                 self.set_shares(word_index={})
 
                 # Scan shares
@@ -285,21 +468,32 @@ class Scanner:
                 self.create_compressed_shares()
                 self.create_file_path_index()
 
-                self.queue.put(
-                    (_("Rescan complete: %(num)s folders found"),
-                     {"num": num_public_folders + num_buddy_folders + num_trusted_folders})
-                )
+                self.queue.put((
+                    _("Rescan complete: %(num)s folders found"),
+                    {
+                        "num": (
+                            num_public_folders
+                            + num_buddy_folders
+                            + num_trusted_folders
+                        )
+                    },
+                ))
 
         except Exception:
             from traceback import format_exc
 
             self.queue.put((
-                _("Serious error occurred while rescanning shares. If this problem persists, "
-                  "delete %(dir)s/*.dbn and try again. If that doesn't help, please file a bug "
-                  "report with this stack trace included: %(trace)s"), {
+                _(
+                    "Serious error occurred while rescanning shares. If"
+                    " this problem persists, delete %(dir)s/*.dbn and"
+                    " try again. If that doesn't help, please file a"
+                    " bug report with this stack trace included:"
+                    " %(trace)s"
+                ),
+                {
                     "dir": self.config.data_folder_path,
-                    "trace": "\n" + format_exc()
-                }
+                    "trace": "\n" + format_exc(),
+                },
             ))
             self.queue.put(Exception("Scanning failed"))
 
@@ -314,28 +508,48 @@ class Scanner:
         buddy_streams = self.share_dbs["buddy_streams"]
         trusted_streams = self.share_dbs["trusted_streams"]
 
-        if permission_level == PermissionLevel.PUBLIC and not self.reveal_buddy_shares:
+        if (
+            permission_level == PermissionLevel.PUBLIC
+            and not self.reveal_buddy_shares
+        ):
             buddy_streams = None
 
-        if permission_level in {PermissionLevel.PUBLIC, PermissionLevel.BUDDY} and not self.reveal_trusted_shares:
+        if (
+            permission_level in {PermissionLevel.PUBLIC, PermissionLevel.BUDDY}
+            and not self.reveal_trusted_shares
+        ):
             trusted_streams = None
 
         compressed_shares = slskmessages.SharedFileListResponse(
-            public_shares=public_streams, buddy_shares=buddy_streams, trusted_shares=trusted_streams,
-            permission_level=permission_level
+            public_shares=public_streams,
+            buddy_shares=buddy_streams,
+            trusted_shares=trusted_streams,
+            permission_level=permission_level,
         )
         compressed_shares.make_network_message()
-        compressed_shares.public_shares = compressed_shares.buddy_shares = compressed_shares.trusted_shares = None
+        compressed_shares.public_shares = compressed_shares.buddy_shares = (
+            compressed_shares.trusted_shares
+        ) = None
 
         self.queue.put(compressed_shares)
 
     def create_compressed_shares(self):
 
         Shares.load_shares(
-            self.share_dbs, self.share_db_paths, destinations={"public_streams", "buddy_streams", "trusted_streams"}
+            self.share_dbs,
+            self.share_db_paths,
+            destinations={
+                "public_streams",
+                "buddy_streams",
+                "trusted_streams",
+            },
         )
 
-        for permission_level in (PermissionLevel.PUBLIC, PermissionLevel.BUDDY, PermissionLevel.TRUSTED):
+        for permission_level in (
+            PermissionLevel.PUBLIC,
+            PermissionLevel.BUDDY,
+            PermissionLevel.TRUSTED,
+        ):
             self.create_compressed_shares_message(permission_level)
 
         Shares.close_shares(self.share_dbs)
@@ -343,7 +557,13 @@ class Scanner:
     def create_file_path_index(self):
 
         Shares.load_shares(
-            self.share_dbs, self.share_db_paths, destinations={"public_files", "buddy_files", "trusted_files"}
+            self.share_dbs,
+            self.share_db_paths,
+            destinations={
+                "public_files",
+                "buddy_files",
+                "trusted_files",
+            },
         )
 
         file_path_index = (
@@ -362,7 +582,7 @@ class Scanner:
         for shares in (
             self.config.sections["transfers"]["shared"],
             self.config.sections["transfers"]["buddyshared"],
-            self.config.sections["transfers"]["trustedshared"]
+            self.config.sections["transfers"]["trustedshared"],
         ):
             for virtual, real, *_unused in shares:
                 real = real.replace("/", "\\")
@@ -374,13 +594,20 @@ class Scanner:
                 real = real.rstrip("\\") + "\\"
 
                 if path.startswith(real):
-                    path_no_prefix = path[len(real):]
+                    path_no_prefix = path[len(real) :]
                     virtualpath = f"{virtual}\\{path_no_prefix}"
                     return virtualpath
 
         return "__INVALID_SHARE__" + path
 
-    def set_shares(self, permission_level=None, files=None, streams=None, mtimes=None, word_index=None):
+    def set_shares(
+        self,
+        permission_level=None,
+        files=None,
+        streams=None,
+        mtimes=None,
+        word_index=None,
+    ):
 
         self.config.create_data_folder()
 
@@ -388,7 +615,7 @@ class Scanner:
             (files, "files"),
             (streams, "streams"),
             (mtimes, "mtimes"),
-            (word_index, "words")
+            (word_index, "words"),
         ]
 
         for source, destination in storable_objects:
@@ -401,7 +628,9 @@ class Scanner:
             share_db = None
 
             try:
-                share_db = Shares.create_db_file(self.config.data_folder_path, destination)
+                share_db = Shares.create_db_file(
+                    self.config.data_folder_path, destination
+                )
                 share_db.update(source)
 
             finally:
@@ -410,7 +639,11 @@ class Scanner:
 
     def rescan_dirs(self, permission_level):
 
-        shared_public_folders, shared_buddy_folders, shared_trusted_folders = self.share_groups
+        (
+            shared_public_folders,
+            shared_buddy_folders,
+            shared_trusted_folders,
+        ) = self.share_groups
 
         if permission_level == PermissionLevel.TRUSTED:
             shared_folder_paths = sorted(shared_trusted_folders)
@@ -423,8 +656,13 @@ class Scanner:
 
         try:
             Shares.load_shares(
-                self.share_dbs, self.share_db_paths,
-                destinations={f"{permission_level}_files", f"{permission_level}_mtimes"})
+                self.share_dbs,
+                self.share_db_paths,
+                destinations={
+                    f"{permission_level}_files",
+                    f"{permission_level}_mtimes",
+                },
+            )
 
         except Exception:
             # No previous share databases, rebuild
@@ -451,7 +689,12 @@ class Scanner:
         num_folders = len(self.streams)
 
         Shares.close_shares(self.share_dbs)
-        self.set_shares(permission_level, files=self.files, streams=self.streams, mtimes=self.mtimes)
+        self.set_shares(
+            permission_level,
+            files=self.files,
+            streams=self.streams,
+            mtimes=self.mtimes,
+        )
 
         for dictionary in (self.files, self.streams, self.mtimes):
             dictionary.clear()
@@ -466,7 +709,10 @@ class Scanner:
         if filename is None:
             last_folder = os.path.basename(folder)
 
-            if last_folder.startswith(".") or last_folder in cls.HIDDEN_FOLDER_NAMES:
+            if (
+                last_folder.startswith(".")
+                or last_folder in cls.HIDDEN_FOLDER_NAMES
+            ):
                 return True
 
         # If we're asked to check a file, we exclude it if it starts with a dot
@@ -481,7 +727,9 @@ class Scanner:
 
             if entry is None:
                 if filename is not None:
-                    entry_stat = os.stat(encode_path(os.path.join(folder, filename)))
+                    entry_stat = os.stat(
+                        encode_path(os.path.join(folder, filename))
+                    )
                 else:
                     entry_stat = os.stat(encode_path(folder))
             else:
@@ -492,7 +740,8 @@ class Scanner:
         return False
 
     def scan_shared_folder(self, shared_folder_path, old_mtimes, old_files):
-        """Scan a shared folder for all subfolders, files and their metadata."""
+        """Scan a shared folder for all subfolders, files and their
+        metadata."""
 
         folder_paths = deque([shared_folder_path])
 
@@ -507,7 +756,9 @@ class Scanner:
             file_list = []
 
             try:
-                with os.scandir(encode_path(folder_path, prefix=False)) as entries:
+                with os.scandir(
+                    encode_path(folder_path, prefix=False)
+                ) as entries:
                     for entry in entries:
                         basename = entry.name.decode("utf-8", "replace")
                         path = os.path.join(folder_path, basename)
@@ -526,37 +777,62 @@ class Scanner:
                             file_stat = entry.stat()
                             file_index = self.current_file_index
                             self.mtimes[path] = file_mtime = file_stat.st_mtime
-                            virtual_file_path = f"{virtual_folder_path}\\{basename}"
+                            virtual_file_path = (
+                                f"{virtual_folder_path}\\{basename}"
+                            )
 
-                            if not self.rebuild and file_mtime == old_mtimes.get(path) and path in old_files:
+                            if (
+                                not self.rebuild
+                                and file_mtime == old_mtimes.get(path)
+                                and path in old_files
+                            ):
                                 full_path_file_data = old_files[path]
-                                full_path_file_data[0] = virtual_file_path  # Virtual name might have changed
+                                # Virtual name might have changed
+                                full_path_file_data[0] = virtual_file_path
                             else:
-                                full_path_file_data = self.get_file_info(virtual_file_path, path, file_stat)
+                                full_path_file_data = self.get_file_info(
+                                    virtual_file_path,
+                                    path,
+                                    file_stat,
+                                )
 
                             basename_file_data = full_path_file_data[:]
                             basename_file_data[0] = basename
                             file_list.append(basename_file_data)
 
-                            for k in set(virtual_file_path.lower().translate(TRANSLATE_PUNCTUATION).split()):
+                            for k in set(
+                                virtual_file_path.lower()
+                                .translate(TRANSLATE_PUNCTUATION)
+                                .split()
+                            ):
                                 self.word_index[k].append(file_index)
 
                             self.files[path] = full_path_file_data
                             self.current_file_index += 1
 
                         except OSError as error:
-                            self.queue.put((_("Error while scanning file %(path)s: %(error)s"),
-                                           {"path": path, "error": error}))
+                            self.queue.put((
+                                _(
+                                    "Error while scanning file %(path)s:"
+                                    " %(error)s"
+                                ),
+                                {"path": path, "error": error},
+                            ))
 
             except OSError as error:
-                self.queue.put((_("Error while scanning folder %(path)s: %(error)s"),
-                               {"path": folder_path, "error": error}))
+                self.queue.put((
+                    _("Error while scanning folder %(path)s: %(error)s"),
+                    {"path": folder_path, "error": error},
+                ))
 
-            self.streams[virtual_folder_path] = self.get_folder_stream(file_list)
+            self.streams[virtual_folder_path] = self.get_folder_stream(
+                file_list
+            )
 
     def get_audio_tag(self, encoded_file_path, size):
 
-        parser_class = TinyTag._get_parser_for_filename(encoded_file_path)  # pylint: disable=protected-access
+        # pylint: disable=protected-access
+        parser_class = TinyTag._get_parser_for_filename(encoded_file_path)
 
         if parser_class is None:
             return None
@@ -582,8 +858,13 @@ class Scanner:
                 tag = self.get_audio_tag(encoded_file_path, size)
 
             except Exception as error:
-                self.queue.put((_("Error while scanning metadata for file %(path)s: %(error)s"),
-                               {"path": file_path, "error": error}))
+                self.queue.put((
+                    _(
+                        "Error while scanning metadata for file %(path)s:"
+                        " %(error)s"
+                    ),
+                    {"path": file_path, "error": error},
+                ))
 
         if tag is not None:
             bitrate = tag.bitrate
@@ -592,7 +873,9 @@ class Scanner:
             duration = tag.duration
 
             if bitrate is not None:
-                bitrate = int(bitrate + 0.5)  # Round the value with minimal performance loss
+                bitrate = int(
+                    bitrate + 0.5
+                )  # Round the value with minimal performance loss
 
                 if not UINT32_LIMIT > bitrate > 0:
                     bitrate = None
@@ -627,7 +910,9 @@ class Scanner:
         stream.extend(slskmessages.FileListMessage.pack_uint32(len(file_list)))
 
         for fileinfo in file_list:
-            stream.extend(slskmessages.FileListMessage.pack_file_info(fileinfo))
+            stream.extend(
+                slskmessages.FileListMessage.pack_file_info(fileinfo)
+            )
 
         return bytes(stream)
 
@@ -641,26 +926,64 @@ class Shares:
         self.initialized = False
         self.rescanning = False
         self.compressed_shares = {
-            PermissionLevel.PUBLIC: slskmessages.SharedFileListResponse(permission_level=PermissionLevel.PUBLIC),
-            PermissionLevel.BUDDY: slskmessages.SharedFileListResponse(permission_level=PermissionLevel.BUDDY),
-            PermissionLevel.TRUSTED: slskmessages.SharedFileListResponse(permission_level=PermissionLevel.TRUSTED),
-            PermissionLevel.BANNED: slskmessages.SharedFileListResponse(permission_level=PermissionLevel.BANNED)
+            PermissionLevel.PUBLIC: slskmessages.SharedFileListResponse(
+                permission_level=PermissionLevel.PUBLIC
+            ),
+            PermissionLevel.BUDDY: slskmessages.SharedFileListResponse(
+                permission_level=PermissionLevel.BUDDY
+            ),
+            PermissionLevel.TRUSTED: slskmessages.SharedFileListResponse(
+                permission_level=PermissionLevel.TRUSTED
+            ),
+            PermissionLevel.BANNED: slskmessages.SharedFileListResponse(
+                permission_level=PermissionLevel.BANNED
+            ),
         }
         self.file_path_index = ()
         self._scanner_process = None
 
         self.convert_shares()
         self.share_db_paths = [
-            ("words", os.path.join(config.data_folder_path, "words.dbn")),
-            ("public_files", os.path.join(config.data_folder_path, "publicfiles.dbn")),
-            ("public_mtimes", os.path.join(config.data_folder_path, "publicmtimes.dbn")),
-            ("public_streams", os.path.join(config.data_folder_path, "publicstreams.dbn")),
-            ("buddy_files", os.path.join(config.data_folder_path, "buddyfiles.dbn")),
-            ("buddy_mtimes", os.path.join(config.data_folder_path, "buddymtimes.dbn")),
-            ("buddy_streams", os.path.join(config.data_folder_path, "buddystreams.dbn")),
-            ("trusted_files", os.path.join(config.data_folder_path, "trustedfiles.dbn")),
-            ("trusted_mtimes", os.path.join(config.data_folder_path, "trustedmtimes.dbn")),
-            ("trusted_streams", os.path.join(config.data_folder_path, "trustedstreams.dbn"))
+            (
+                "words",
+                os.path.join(config.data_folder_path, "words.dbn"),
+            ),
+            (
+                "public_files",
+                os.path.join(config.data_folder_path, "publicfiles.dbn"),
+            ),
+            (
+                "public_mtimes",
+                os.path.join(config.data_folder_path, "publicmtimes.dbn"),
+            ),
+            (
+                "public_streams",
+                os.path.join(config.data_folder_path, "publicstreams.dbn"),
+            ),
+            (
+                "buddy_files",
+                os.path.join(config.data_folder_path, "buddyfiles.dbn"),
+            ),
+            (
+                "buddy_mtimes",
+                os.path.join(config.data_folder_path, "buddymtimes.dbn"),
+            ),
+            (
+                "buddy_streams",
+                os.path.join(config.data_folder_path, "buddystreams.dbn"),
+            ),
+            (
+                "trusted_files",
+                os.path.join(config.data_folder_path, "trustedfiles.dbn"),
+            ),
+            (
+                "trusted_mtimes",
+                os.path.join(config.data_folder_path, "trustedmtimes.dbn"),
+            ),
+            (
+                "trusted_streams",
+                os.path.join(config.data_folder_path, "trustedstreams.dbn"),
+            ),
         ]
 
         for event_name, callback in (
@@ -668,16 +991,21 @@ class Shares:
             ("quit", self._quit),
             ("server-disconnect", self._server_disconnect),
             ("server-login", self._server_login),
-            ("shared-file-list-request", self._shared_file_list_request),
+            (
+                "shared-file-list-request",
+                self._shared_file_list_request,
+            ),
             ("shares-ready", self._shares_ready),
-            ("start", self._start)
+            ("start", self._start),
         ):
             events.connect(event_name, callback)
 
     def _start(self):
 
-        rescan_startup = (config.sections["transfers"]["rescanonstartup"]
-                          and not config.need_config())
+        rescan_startup = (
+            config.sections["transfers"]["rescanonstartup"]
+            and not config.need_config()
+        )
 
         self.rescan_shares(init=True, rescan=rescan_startup)
 
@@ -716,6 +1044,7 @@ class Shares:
 
         elif os.path.isdir(db_path_encoded):
             import shutil
+
             shutil.rmtree(db_path_encoded)
 
     def virtual2real(self, path):
@@ -723,14 +1052,16 @@ class Shares:
         for shares in (
             config.sections["transfers"]["shared"],
             config.sections["transfers"]["buddyshared"],
-            config.sections["transfers"]["trustedshared"]
+            config.sections["transfers"]["trustedshared"],
         ):
             for virtual, real, *_unused in shares:
                 if path == virtual:
                     return real
 
                 if path.startswith(virtual + "\\"):
-                    realpath = real.rstrip(os.sep) + path[len(virtual):].replace("\\", os.sep)
+                    realpath = real.rstrip(os.sep) + path[
+                        len(virtual) :
+                    ].replace("\\", os.sep)
                     return realpath
 
         return "__INVALID_SHARE__" + path
@@ -744,9 +1075,17 @@ class Shares:
                 shared_folder = str(shared_folder)
             else:
                 # Convert fs-based shared to virtual shared (pre-1.4.0)
-                virtual = str(shared_folder).replace("/", "_").replace("\\", "_").strip("_")
-                log.add("Renaming shared folder '%s' to '%s'. A rescan of your share is required.",
-                        (shared_folder, virtual))
+                virtual = (
+                    str(shared_folder)
+                    .replace("/", "_")
+                    .replace("\\", "_")
+                    .strip("_")
+                )
+                log.add(
+                    "Renaming shared folder '%s' to '%s'. A rescan of"
+                    " your share is required.",
+                    (shared_folder, virtual),
+                )
 
             # Remove slashes from share name to avoid path conflicts
             virtual = virtual.replace("/", "_").replace("\\", "_")
@@ -756,23 +1095,39 @@ class Shares:
 
             return virtual, shared_folder
 
-        config.sections["transfers"]["shared"] = [_convert_share(x)
-                                                  for x in config.sections["transfers"]["shared"]]
-        config.sections["transfers"]["buddyshared"] = [_convert_share(x)
-                                                       for x in config.sections["transfers"]["buddyshared"]]
+        config.sections["transfers"]["shared"] = [
+            _convert_share(x) for x in config.sections["transfers"]["shared"]
+        ]
+        config.sections["transfers"]["buddyshared"] = [
+            _convert_share(x)
+            for x in config.sections["transfers"]["buddyshared"]
+        ]
 
         # Remove old share databases (pre-3.3.0)
         for destination in (
-            "wordindex", "fileindex", "files", "mtimes", "streams",
-            "buddywordindex", "buddyfileindex", "buddyfiles", "buddymtimes", "buddystreams"
+            "wordindex",
+            "fileindex",
+            "files",
+            "mtimes",
+            "streams",
+            "buddywordindex",
+            "buddyfileindex",
+            "buddyfiles",
+            "buddymtimes",
+            "buddystreams",
         ):
-            file_path = os.path.join(config.data_folder_path, f"{destination}.db")
+            file_path = os.path.join(
+                config.data_folder_path, f"{destination}.db"
+            )
 
             try:
                 self.remove_db_file(file_path)
 
             except OSError as error:
-                log.add_debug("Failed to remove old share database %s: %s", (file_path, error))
+                log.add_debug(
+                    "Failed to remove old share database %s: %s",
+                    (file_path, error),
+                )
 
     @classmethod
     def load_shares(cls, share_dbs, share_db_paths, destinations=None):
@@ -784,7 +1139,9 @@ class Shares:
                 continue
 
             try:
-                share_dbs[destination] = Database(encode_path(db_path), overwrite=False)
+                share_dbs[destination] = Database(
+                    encode_path(db_path), overwrite=False
+                )
 
             except Exception as error:
                 exception = error
@@ -796,10 +1153,11 @@ class Shares:
 
     def file_is_shared(self, username, virtualfilename, realfilename):
 
-        log.add_transfer("Checking if file is shared: %(virtual_name)s with real path %(path)s", {
-            "virtual_name": virtualfilename,
-            "path": realfilename
-        })
+        log.add_transfer(
+            "Checking if file is shared: %(virtual_name)s with real path"
+            " %(path)s",
+            {"virtual_name": virtualfilename, "path": realfilename},
+        )
 
         public_shared_files = self.share_dbs.get("public_files")
         buddy_shared_files = self.share_dbs.get("buddy_files")
@@ -808,28 +1166,41 @@ class Shares:
         size = None
 
         if not realfilename.startswith("__INVALID_SHARE__"):
-            if public_shared_files is not None and realfilename in public_shared_files:
+            if (
+                public_shared_files is not None
+                and realfilename in public_shared_files
+            ):
                 file_is_shared = True
                 _file_name, size, *_unused = public_shared_files[realfilename]
 
-            elif (buddy_shared_files is not None and username in core.buddies.users
-                    and realfilename in buddy_shared_files):
+            elif (
+                buddy_shared_files is not None
+                and username in core.buddies.users
+                and realfilename in buddy_shared_files
+            ):
                 file_is_shared = True
                 _file_name, size, *_unused = buddy_shared_files[realfilename]
 
             elif trusted_shared_files is not None:
                 user_data = core.buddies.users.get(username)
 
-                if user_data and user_data.is_trusted and realfilename in trusted_shared_files:
+                if (
+                    user_data
+                    and user_data.is_trusted
+                    and realfilename in trusted_shared_files
+                ):
                     file_is_shared = True
-                    _file_name, size, *_unused = trusted_shared_files[realfilename]
+                    _file_name, size, *_unused = trusted_shared_files[
+                        realfilename
+                    ]
 
         if not file_is_shared:
-            log.add_transfer(("File is not present in the database of shared files, not sharing: "
-                              "%(virtual_name)s with real path %(path)s"), {
-                "virtual_name": virtualfilename,
-                "path": realfilename
-            })
+            log.add_transfer(
+                "File is not present in the database of shared files,"
+                " not sharing: %(virtual_name)s with real path"
+                " %(path)s",
+                {"virtual_name": virtualfilename, "path": realfilename},
+            )
             return False, size
 
         return True, size
@@ -838,7 +1209,9 @@ class Shares:
         """Check if this user is banned, geoip-blocked, and which shares it is
         allowed to access based on transfer and shares settings."""
 
-        if core.network_filter.is_user_banned(username) or core.network_filter.is_user_ip_banned(username, ip_address):
+        if core.network_filter.is_user_banned(
+            username
+        ) or core.network_filter.is_user_ip_banned(username, ip_address):
             if config.sections["transfers"]["usecustomban"]:
                 ban_message = config.sections["transfers"]["customban"]
                 return PermissionLevel.BANNED, ban_message
@@ -858,10 +1231,17 @@ class Shares:
 
         country_code = core.network_filter.get_country_code(ip_address)
 
-        # Please note that all country codes are stored in the same string at the first index
-        # of an array, separated by commas (no idea why this decision was made...)
+        # Please note that all country codes are stored in the same string at
+        # the first index of an array, separated by commas (no idea why this
+        # decision was made...)
 
-        if country_code and config.sections["transfers"]["geoblockcc"][0].find(country_code) >= 0:
+        if (
+            country_code
+            and config.sections["transfers"]["geoblockcc"][0].find(
+                country_code
+            )
+            >= 0
+        ):
             if config.sections["transfers"]["usecustomgeoblock"]:
                 ban_message = config.sections["transfers"]["customgeoblock"]
                 return PermissionLevel.BANNED, ban_message
@@ -876,20 +1256,28 @@ class Shares:
         shared_buddy_folders = config.sections["transfers"]["buddyshared"]
         shared_trusted_folders = config.sections["transfers"]["trustedshared"]
 
-        return shared_public_folders, shared_buddy_folders, shared_trusted_folders
+        return (
+            shared_public_folders,
+            shared_buddy_folders,
+            shared_trusted_folders,
+        )
 
     def get_normalized_virtual_name(self, virtual_name, shared_folders=None):
 
         if shared_folders is None:
-            public_shares, buddy_shares, trusted_shares = self.get_shared_folders()
-            shared_folders = (public_shares + buddy_shares + trusted_shares)
+            public_shares, buddy_shares, trusted_shares = (
+                self.get_shared_folders()
+            )
+            shared_folders = public_shares + buddy_shares + trusted_shares
 
         # Provide a default name for root folders
         if not virtual_name:
             virtual_name = "Shared"
 
         # Remove slashes from share name to avoid path conflicts
-        virtual_name = virtual_name.replace("/", "_").replace("\\", "_").strip(' "')
+        virtual_name = (
+            virtual_name.replace("/", "_").replace("\\", "_").strip(' "')
+        )
         new_virtual_name = str(virtual_name)
 
         # Check if virtual share name is already in use
@@ -900,8 +1288,14 @@ class Shares:
 
         return new_virtual_name
 
-    def add_share(self, folder_path, permission_level=PermissionLevel.PUBLIC, virtual_name=None,
-                  share_groups=None, validate_path=True):
+    def add_share(
+        self,
+        folder_path,
+        permission_level=PermissionLevel.PUBLIC,
+        virtual_name=None,
+        share_groups=None,
+        validate_path=True,
+    ):
 
         if validate_path and not os.access(encode_path(folder_path), os.R_OK):
             return None
@@ -915,12 +1309,12 @@ class Shares:
         public_shares, buddy_shares, trusted_shares = share_groups
         virtual_name = core.shares.get_normalized_virtual_name(
             virtual_name or os.path.basename(folder_path),
-            shared_folders=(public_shares + buddy_shares + trusted_shares)
+            shared_folders=(public_shares + buddy_shares + trusted_shares),
         )
         permission_level_shares = {
             PermissionLevel.PUBLIC: public_shares,
             PermissionLevel.BUDDY: buddy_shares,
-            PermissionLevel.TRUSTED: trusted_shares
+            PermissionLevel.TRUSTED: trusted_shares,
         }
         shares = permission_level_shares.get(permission_level)
 
@@ -936,8 +1330,10 @@ class Shares:
 
         for shares in share_groups:
             for virtual_name, folder_path in shares:
-                if (virtual_name_or_folder_path in (virtual_name, folder_path)
-                        or folder_path == normalized_folder_path):
+                if (
+                    virtual_name_or_folder_path in (virtual_name, folder_path)
+                    or folder_path == normalized_folder_path
+                ):
                     shares.remove((virtual_name, folder_path))
                     return True
 
@@ -966,14 +1362,22 @@ class Shares:
             num_shared_files += len(self.share_dbs.get("buddy_files", {}))
 
         if config.sections["transfers"]["reveal_trusted_shares"]:
-            num_shared_folders += len(self.share_dbs.get("trusted_streams", {}))
+            num_shared_folders += len(
+                self.share_dbs.get("trusted_streams", {})
+            )
             num_shared_files += len(self.share_dbs.get("trusted_files", {}))
 
-        core.send_message_to_server(slskmessages.SharedFoldersFiles(num_shared_folders, num_shared_files))
+        core.send_message_to_server(
+            slskmessages.SharedFoldersFiles(
+                num_shared_folders, num_shared_files
+            )
+        )
 
     # Scanning #
 
-    def build_scanner_process(self, share_groups=None, init=False, rescan=True, rebuild=False):
+    def build_scanner_process(
+        self, share_groups=None, init=False, rescan=True, rebuild=False
+    ):
 
         import multiprocessing
 
@@ -987,8 +1391,12 @@ class Shares:
             init,
             rescan,
             rebuild,
-            reveal_buddy_shares=config.sections["transfers"]["reveal_buddy_shares"],
-            reveal_trusted_shares=config.sections["transfers"]["reveal_trusted_shares"]
+            reveal_buddy_shares=config.sections["transfers"][
+                "reveal_buddy_shares"
+            ],
+            reveal_trusted_shares=config.sections["transfers"][
+                "reveal_trusted_shares"
+            ],
         )
         scanner = context.Process(target=scanner_obj.run, daemon=True)
         return scanner, scanner_queue
@@ -1039,7 +1447,14 @@ class Shares:
 
         return unavailable_shares
 
-    def rescan_shares(self, init=False, rescan=True, rebuild=False, use_thread=True, force=False):
+    def rescan_shares(
+        self,
+        init=False,
+        rescan=True,
+        rebuild=False,
+        use_thread=True,
+        force=False,
+    ):
 
         if self.rescanning:
             return None
@@ -1049,7 +1464,10 @@ class Shares:
             unavailable_shares = self.check_shares_available()
 
             if unavailable_shares:
-                log.add(_("Rescan aborted due to unavailable shares: %s"), unavailable_shares)
+                log.add(
+                    _("Rescan aborted due to unavailable shares: %s"),
+                    unavailable_shares,
+                )
                 rescan = False
 
                 events.emit("shares-unavailable", unavailable_shares)
@@ -1065,13 +1483,17 @@ class Shares:
         events.emit("shares-preparing")
 
         share_groups = self.get_shared_folders()
-        self._scanner_process, scanner_queue = self.build_scanner_process(share_groups, init, rescan, rebuild)
+        self._scanner_process, scanner_queue = self.build_scanner_process(
+            share_groups, init, rescan, rebuild
+        )
         self._scanner_process.start()
 
         if use_thread:
             Thread(
-                target=self._process_scanner, args=(scanner_queue, events.emit_main_thread),
-                name="ProcessShareScanner", daemon=True
+                target=self._process_scanner,
+                args=(scanner_queue, events.emit_main_thread),
+                name="ProcessShareScanner",
+                daemon=True,
             ).start()
             return None
 
@@ -1091,10 +1513,18 @@ class Shares:
         if successful:
             try:
                 self.load_shares(
-                    self.share_dbs, self.share_db_paths, destinations={
-                        "words", "public_files", "public_streams", "buddy_files", "buddy_streams",
-                        "trusted_files", "trusted_streams"
-                    })
+                    self.share_dbs,
+                    self.share_db_paths,
+                    destinations={
+                        "words",
+                        "public_files",
+                        "public_streams",
+                        "buddy_files",
+                        "buddy_streams",
+                        "trusted_files",
+                        "trusted_streams",
+                    },
+                )
 
             except Exception:
                 successful = False
@@ -1115,19 +1545,29 @@ class Shares:
         username = msg.username
         request_time = time.monotonic()
 
-        if username in self.requested_share_times and request_time < self.requested_share_times[username] + 0.4:
+        if (
+            username in self.requested_share_times
+            and request_time < self.requested_share_times[username] + 0.4
+        ):
             # Ignoring request, because it's less than half a second since the
             # last one by this user
             return
 
         self.requested_share_times[username] = request_time
 
-        log.add(_("User %(user)s is browsing your list of shared files"), {"user": username})
+        log.add(
+            _("User %(user)s is browsing your list of shared files"),
+            {"user": username},
+        )
 
         ip_address, _port = msg.addr
-        permission_level, _reject_reason = self.check_user_permission(username, ip_address)
+        permission_level, _reject_reason = self.check_user_permission(
+            username, ip_address
+        )
         shares_list = self.compressed_shares.get(permission_level)
-        shares_list.username = shares_list.sock = None  # Reset previous connection
+        shares_list.username = shares_list.sock = (
+            None  # Reset previous connection
+        )
 
         core.send_message_to_peer(username, shares_list)
 
@@ -1136,31 +1576,49 @@ class Shares:
 
         ip_address, _port = msg.addr
         username = msg.username
-        permission_level, _reject_reason = self.check_user_permission(username, ip_address)
+        permission_level, _reject_reason = self.check_user_permission(
+            username, ip_address
+        )
 
         if permission_level == PermissionLevel.BANNED:
             return
 
-        reveal_buddy_shares = config.sections["transfers"]["reveal_buddy_shares"]
-        reveal_trusted_shares = config.sections["transfers"]["reveal_trusted_shares"]
+        reveal_buddy_shares = config.sections["transfers"][
+            "reveal_buddy_shares"
+        ]
+        reveal_trusted_shares = config.sections["transfers"][
+            "reveal_trusted_shares"
+        ]
         public_shares = self.share_dbs.get("public_streams")
         buddy_shares = self.share_dbs.get("buddy_streams")
         trusted_shares = self.share_dbs.get("trusted_streams")
         folder_data = None
 
         try:
-            if (reveal_trusted_shares or permission_level == PermissionLevel.TRUSTED) and msg.dir in trusted_shares:
+            if (
+                reveal_trusted_shares
+                or permission_level == PermissionLevel.TRUSTED
+            ) and msg.dir in trusted_shares:
                 folder_data = trusted_shares[msg.dir]
 
-            elif (reveal_buddy_shares or permission_level == PermissionLevel.BUDDY) and msg.dir in buddy_shares:
+            elif (
+                reveal_buddy_shares
+                or permission_level == PermissionLevel.BUDDY
+            ) and msg.dir in buddy_shares:
                 folder_data = buddy_shares[msg.dir]
 
             elif msg.dir in public_shares:
                 folder_data = public_shares[msg.dir]
 
         except Exception as error:
-            log.add(_("Failed to fetch the shared folder %(folder)s: %(error)s"),
-                    {"folder": msg.dir, "error": error})
+            log.add(
+                _("Failed to fetch the shared folder %(folder)s: %(error)s"),
+                {"folder": msg.dir, "error": error},
+            )
 
         core.send_message_to_peer(
-            username, slskmessages.FolderContentsResponse(directory=msg.dir, token=msg.token, shares=folder_data))
+            username,
+            slskmessages.FolderContentsResponse(
+                directory=msg.dir, token=msg.token, shares=folder_data
+            ),
+        )

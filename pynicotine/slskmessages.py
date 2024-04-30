@@ -1,21 +1,20 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-# COPYRIGHT (C) 2009-2011 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2007-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
-# COPYRIGHT (C) 2001-2003 Alexander Kanavin
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors COPYRIGHT (C) 2009-2011 quinox
+# <quinox@users.sf.net> COPYRIGHT (C) 2007-2009 daelstorm <daelstorm@gmail.com>
+# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org> COPYRIGHT (C)
+# 2001-2003 Alexander Kanavin
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import zlib
 
@@ -33,9 +32,9 @@ from struct import Struct
 from pynicotine.utils import UINT32_LIMIT
 from pynicotine.utils import human_length
 
-# This module contains message classes, that networking and UI thread
-# exchange. Basically there are three types of messages: internal messages,
-# server messages and p2p messages (between clients).
+# This module contains message classes, that networking and UI thread exchange.
+# Basically there are three types of messages: internal messages, server
+# messages and p2p messages (between clients).
 
 
 INT32_UNPACK = Struct("<i").unpack_from
@@ -132,7 +131,11 @@ class InternalMessage:
     msg_type = MessageType.INTERNAL
 
     def __str__(self):
-        attrs = {s: self.__getattribute__(s) for s in self.__slots__ if s not in self.__excluded_attrs__}
+        attrs = {
+            s: self.__getattribute__(s)
+            for s in self.__slots__
+            if s not in self.__excluded_attrs__
+        }
         return f"<{self.msg_type} - {self.__class__.__name__}> {attrs}"
 
 
@@ -157,12 +160,25 @@ class ServerConnect(InternalMessage):
     """Core sends this to make networking thread establish a server
     connection."""
 
-    __slots__ = ("addr", "login", "interface_name", "interface_address", "listen_port",
-                 "portmapper")
+    __slots__ = (
+        "addr",
+        "login",
+        "interface_name",
+        "interface_address",
+        "listen_port",
+        "portmapper",
+    )
     __excluded_attrs__ = {"login"}
 
-    def __init__(self, addr=None, login=None, interface_name=None, interface_address=None,
-                 listen_port=None, portmapper=None):
+    def __init__(
+        self,
+        addr=None,
+        login=None,
+        interface_name=None,
+        interface_address=None,
+        listen_port=None,
+        portmapper=None,
+    ):
         self.addr = addr
         self.login = login
         self.interface_name = interface_name
@@ -210,7 +226,15 @@ class DownloadFile(InternalMessage):
 class UploadFile(InternalMessage):
     __slots__ = ("sock", "token", "file", "size", "sentbytes", "offset")
 
-    def __init__(self, sock=None, token=None, file=None, size=None, sentbytes=0, offset=None):
+    def __init__(
+        self,
+        sock=None,
+        token=None,
+        file=None,
+        size=None,
+        sentbytes=0,
+        offset=None,
+    ):
         self.sock = sock
         self.token = token
         self.file = file
@@ -293,7 +317,7 @@ class SlskMessage:
     @staticmethod
     def unpack_bytes(message, start=0):
 
-        length, = UINT32_UNPACK(message, start)
+        (length,) = UINT32_UNPACK(message, start)
         start += 4
         end = start + length
         content = message[start:end]
@@ -303,7 +327,7 @@ class SlskMessage:
     @staticmethod
     def unpack_string(message, start=0):
 
-        length, = UINT32_UNPACK(message, start)
+        (length,) = UINT32_UNPACK(message, start)
         start += 4
         end = start + length
         content = message[start:end].tobytes()
@@ -332,26 +356,30 @@ class SlskMessage:
 
     @staticmethod
     def unpack_uint16(message, start=0):
-        result, = UINT16_UNPACK(message, start)
+        (result,) = UINT16_UNPACK(message, start)
         return start + 4, result
 
     @staticmethod
     def unpack_int32(message, start=0):
-        result, = INT32_UNPACK(message, start)
+        (result,) = INT32_UNPACK(message, start)
         return start + 4, result
 
     @staticmethod
     def unpack_uint32(message, start=0):
-        result, = UINT32_UNPACK(message, start)
+        (result,) = UINT32_UNPACK(message, start)
         return start + 4, result
 
     @staticmethod
     def unpack_uint64(message, start=0):
-        result, = UINT64_UNPACK(message, start)
+        (result,) = UINT64_UNPACK(message, start)
         return start + 8, result
 
     def __str__(self):
-        attrs = {s: self.__getattribute__(s) for s in self.__slots__ if s not in self.__excluded_attrs__}
+        attrs = {
+            s: self.__getattribute__(s)
+            for s in self.__slots__
+            if s not in self.__excluded_attrs__
+        }
         return f"<{self.msg_type} - {self.__class__.__name__}> {attrs}"
 
 
@@ -363,7 +391,7 @@ class FileListMessage(SlskMessage):
         FileAttribute.DURATION,
         FileAttribute.VBR,
         FileAttribute.SAMPLE_RATE,
-        FileAttribute.BIT_DEPTH
+        FileAttribute.BIT_DEPTH,
     }
 
     @classmethod
@@ -428,10 +456,11 @@ class FileListMessage(SlskMessage):
     def parse_file_size(cls, message, pos):
 
         if message[pos + 7] == 255:
-            # Soulseek NS bug: >2 GiB files show up as ~16 EiB when unpacking the size
-            # as uint64 (8 bytes), due to the first 4 bytes containing the size, and the
-            # last 4 bytes containing garbage (a value of 4294967295 bytes, integer limit).
-            # Only unpack the first 4 bytes to work around this issue.
+            # Soulseek NS bug: >2 GiB files show up as ~16 EiB when unpacking
+            # the size as uint64 (8 bytes), due to the first 4 bytes containing
+            # the size, and the last 4 bytes containing garbage (a value of
+            # 4294967295 bytes, integer limit). Only unpack the first 4 bytes
+            # to work around this issue.
 
             pos, size = cls.unpack_uint32(message, pos)
             pos, _garbage = cls.unpack_uint32(message, pos)
@@ -472,7 +501,8 @@ class FileListMessage(SlskMessage):
             bit_depth = attributes.get(FileAttribute.BIT_DEPTH)
 
         except AttributeError:
-            # Legacy attribute list format used for shares lists saved in Nicotine+ 3.2.2 and earlier
+            # Legacy attribute list format used for shares lists saved in
+            # Nicotine+ 3.2.2 and earlier
             bitrate = length = vbr = sample_rate = bit_depth = None
 
             if len(attributes) == 3:
@@ -506,21 +536,26 @@ class FileListMessage(SlskMessage):
         return bitrate, length, vbr, sample_rate, bit_depth
 
     @classmethod
-    def parse_audio_quality_length(cls, filesize, attributes, always_show_bitrate=False):
+    def parse_audio_quality_length(
+        cls, filesize, attributes, always_show_bitrate=False
+    ):
 
-        bitrate, length, vbr, sample_rate, bit_depth = cls.parse_file_attributes(attributes)
+        bitrate, length, vbr, sample_rate, bit_depth = (
+            cls.parse_file_attributes(attributes)
+        )
 
         if bitrate is None:
             if sample_rate and bit_depth:
-                # Bitrate = sample rate (Hz) * word length (bits) * channel count
-                # Bitrate = 44100 * 16 * 2
+                # Bitrate = sample rate (Hz) * word length (bits) * channel
+                # count Bitrate = 44100 * 16 * 2
                 bitrate = (sample_rate * bit_depth * 2) // 1000
             else:
                 bitrate = -1
 
         if length is None:
             if bitrate > 0:
-                # Dividing the file size by the bitrate in Bytes should give us a good enough approximation
+                # Dividing the file size by the bitrate in Bytes should give us
+                # a good enough approximation
                 length = filesize // (bitrate * 125)
             else:
                 length = -1
@@ -554,7 +589,9 @@ class RecommendationsMessage(SlskMessage):
     __slots__ = ()
 
     @classmethod
-    def populate_recommendations(cls, recommendations, unrecommendations, message, pos=0):
+    def populate_recommendations(
+        cls, recommendations, unrecommendations, message, pos=0
+    ):
         pos, num = cls.unpack_uint32(message, pos)
 
         for _ in range(num):
@@ -574,10 +611,14 @@ class RecommendationsMessage(SlskMessage):
         recommendations = []
         unrecommendations = []
 
-        pos = cls.populate_recommendations(recommendations, unrecommendations, message, pos)
+        pos = cls.populate_recommendations(
+            recommendations, unrecommendations, message, pos
+        )
 
         if message[pos:]:
-            pos = cls.populate_recommendations(recommendations, unrecommendations, message, pos)
+            pos = cls.populate_recommendations(
+                recommendations, unrecommendations, message, pos
+            )
 
         return pos, recommendations, unrecommendations
 
@@ -586,10 +627,28 @@ class UserData:
     """When we join a room, the server sends us a bunch of these for each
     user."""
 
-    __slots__ = ("username", "status", "avgspeed", "uploadnum", "files", "dirs", "slotsfull", "country")
+    __slots__ = (
+        "username",
+        "status",
+        "avgspeed",
+        "uploadnum",
+        "files",
+        "dirs",
+        "slotsfull",
+        "country",
+    )
 
-    def __init__(self, username=None, status=None, avgspeed=None, uploadnum=None, files=None, dirs=None,
-                 slotsfull=None, country=None):
+    def __init__(
+        self,
+        username=None,
+        status=None,
+        avgspeed=None,
+        uploadnum=None,
+        files=None,
+        dirs=None,
+        slotsfull=None,
+        country=None,
+    ):
         self.username = username
         self.status = status
         self.avgspeed = avgspeed
@@ -650,11 +709,27 @@ class Login(ServerMessage):
     established. Server responds with the greeting message.
     """
 
-    __slots__ = ("username", "passwd", "version", "minorversion", "success", "reason",
-                 "banner", "ip_address", "local_address", "is_supporter")
+    __slots__ = (
+        "username",
+        "passwd",
+        "version",
+        "minorversion",
+        "success",
+        "reason",
+        "banner",
+        "ip_address",
+        "local_address",
+        "is_supporter",
+    )
     __excluded_attrs__ = {"passwd"}
 
-    def __init__(self, username=None, passwd=None, version=None, minorversion=None):
+    def __init__(
+        self,
+        username=None,
+        passwd=None,
+        version=None,
+        minorversion=None,
+    ):
         self.username = username
         self.passwd = passwd
         self.version = version
@@ -695,7 +770,9 @@ class Login(ServerMessage):
             # Soulfind server support
             return
 
-        pos, _checksum = self.unpack_string(message, pos)  # MD5 hexdigest of the password you sent
+        pos, _checksum = self.unpack_string(
+            message, pos
+        )  # MD5 hexdigest of the password you sent
 
         if not message[pos:]:
             # Soulfind server support
@@ -727,7 +804,13 @@ class GetPeerAddress(ServerMessage):
     and port), given the peer's username.
     """
 
-    __slots__ = ("user", "ip_address", "port", "unknown", "obfuscated_port")
+    __slots__ = (
+        "user",
+        "ip_address",
+        "port",
+        "unknown",
+        "obfuscated_port",
+    )
 
     def __init__(self, user=None):
         self.user = user
@@ -760,7 +843,16 @@ class WatchUser(ServerMessage):
     the new user stats.
     """
 
-    __slots__ = ("user", "userexists", "status", "avgspeed", "uploadnum", "files", "dirs", "country")
+    __slots__ = (
+        "user",
+        "userexists",
+        "status",
+        "avgspeed",
+        "uploadnum",
+        "files",
+        "dirs",
+        "country",
+    )
 
     def __init__(self, user=None):
         self.user = user
@@ -844,7 +936,13 @@ class SayChatroom(ServerMessage):
     did.
     """
 
-    __slots__ = ("room", "message", "user", "formatted_message", "message_type")
+    __slots__ = (
+        "room",
+        "message",
+        "user",
+        "formatted_message",
+        "message_type",
+    )
 
     def __init__(self, room=None, message=None, user=None):
         self.room = room
@@ -983,7 +1081,16 @@ class ConnectToPeer(ServerMessage):
     failed).
     """
 
-    __slots__ = ("token", "user", "conn_type", "ip_address", "port", "privileged", "unknown", "obfuscated_port")
+    __slots__ = (
+        "token",
+        "user",
+        "conn_type",
+        "ip_address",
+        "port",
+        "privileged",
+        "unknown",
+        "obfuscated_port",
+    )
 
     def __init__(self, token=None, user=None, conn_type=None):
         self.token = token
@@ -1030,8 +1137,15 @@ class MessageUser(ServerMessage):
     Chat phrase sent to someone or received by us in private.
     """
 
-    __slots__ = ("user", "message", "message_id", "timestamp", "is_new_message", "formatted_message",
-                 "message_type")
+    __slots__ = (
+        "user",
+        "message",
+        "message_id",
+        "timestamp",
+        "is_new_message",
+        "formatted_message",
+        "message_type",
+    )
 
     def __init__(self, user=None, message=None):
         self.user = user
@@ -1322,7 +1436,8 @@ class UserSearch(ServerMessage):
 
         return msg
 
-    # Soulfind server support, the official server sends a FileSearch message (code 26) instead
+    # Soulfind server support, the official server sends a FileSearch message
+    # (code 26) instead
     def parse_network_message(self, message):
         pos, self.search_username = self.unpack_string(message)
         pos, self.token = self.unpack_uint32(message, pos)
@@ -1383,7 +1498,9 @@ class Recommendations(ServerMessage):
         return b""
 
     def parse_network_message(self, message):
-        _pos, self.recommendations, self.unrecommendations = RecommendationsMessage.parse_recommendations(message)
+        _pos, self.recommendations, self.unrecommendations = (
+            RecommendationsMessage.parse_recommendations(message)
+        )
 
 
 class GlobalRecommendations(ServerMessage):
@@ -1405,7 +1522,9 @@ class GlobalRecommendations(ServerMessage):
         return b""
 
     def parse_network_message(self, message):
-        _pos, self.recommendations, self.unrecommendations = RecommendationsMessage.parse_recommendations(message)
+        _pos, self.recommendations, self.unrecommendations = (
+            RecommendationsMessage.parse_recommendations(message)
+        )
 
 
 class UserInterests(ServerMessage):
@@ -1604,9 +1723,25 @@ class ExactFileSearch(ServerMessage):
     OBSOLETE, no results even with official client
     """
 
-    __slots__ = ("token", "file", "folder", "size", "checksum", "user", "unknown")
+    __slots__ = (
+        "token",
+        "file",
+        "folder",
+        "size",
+        "checksum",
+        "user",
+        "unknown",
+    )
 
-    def __init__(self, token=None, file=None, folder=None, size=None, checksum=None, unknown=None):
+    def __init__(
+        self,
+        token=None,
+        file=None,
+        folder=None,
+        size=None,
+        checksum=None,
+        unknown=None,
+    ):
         self.token = token
         self.file = file
         self.folder = folder
@@ -2034,7 +2169,9 @@ class ItemRecommendations(ServerMessage):
 
     def parse_network_message(self, message):
         pos, self.thing = self.unpack_string(message)
-        pos, self.recommendations, self.unrecommendations = RecommendationsMessage.parse_recommendations(message, pos)
+        pos, self.recommendations, self.unrecommendations = (
+            RecommendationsMessage.parse_recommendations(message, pos)
+        )
 
 
 class ItemSimilarUsers(ServerMessage):
@@ -2218,7 +2355,8 @@ class RoomSearch(ServerMessage):
 
         return msg
 
-    # Soulfind server support, the official server sends a FileSearch message (code 26) instead
+    # Soulfind server support, the official server sends a FileSearch message
+    # (code 26) instead
     def parse_network_message(self, message):
         pos, self.search_username = self.unpack_string(message)
         pos, self.token = self.unpack_uint32(message, pos)
@@ -2560,7 +2698,8 @@ class PrivateRoomToggle(ServerMessage):
         return self.pack_bool(self.enabled)
 
     def parse_network_message(self, message):
-        # When this is received, we store it in the config, and disable the appropriate menu item
+        # When this is received, we store it in the config, and disable the
+        # appropriate menu item
         _pos, self.enabled = self.unpack_bool(message)
 
 
@@ -2755,7 +2894,13 @@ class GlobalRoomMessage(ServerMessage):
     DEPRECATED, used in Soulseek NS but not SoulseekQt
     """
 
-    __slots__ = ("room", "user", "message", "formatted_message", "message_type")
+    __slots__ = (
+        "room",
+        "user",
+        "message",
+        "formatted_message",
+        "message_type",
+    )
 
     def __init__(self):
         self.room = None
@@ -2907,11 +3052,29 @@ class PeerInit(PeerInitMessage):
     connections internally.
     """
 
-    __slots__ = ("sock", "init_user", "target_user", "conn_type", "indirect", "token", "outgoing_msgs")
+    __slots__ = (
+        "sock",
+        "init_user",
+        "target_user",
+        "conn_type",
+        "indirect",
+        "token",
+        "outgoing_msgs",
+    )
 
-    def __init__(self, sock=None, init_user=None, target_user=None, conn_type=None, indirect=False, token=None):
+    def __init__(
+        self,
+        sock=None,
+        init_user=None,
+        target_user=None,
+        conn_type=None,
+        indirect=False,
+        token=None,
+    ):
         self.sock = sock
-        self.init_user = init_user      # username of peer who initiated the message
+        self.init_user = (
+            init_user  # username of peer who initiated the message
+        )
         self.target_user = target_user  # username of peer we're connected to
         self.conn_type = conn_type
 
@@ -2932,7 +3095,8 @@ class PeerInit(PeerInitMessage):
         pos, self.conn_type = self.unpack_string(message, pos)
 
         if self.target_user is None:
-            # The user we're connecting to initiated the connection. Set them as target user.
+            # The user we're connecting to initiated the connection. Set them
+            # as target user.
             self.target_user = self.init_user
 
 
@@ -2973,11 +3137,24 @@ class SharedFileListResponse(PeerMessage):
     SharedFileListRequest.
     """
 
-    __slots__ = ("list", "unknown", "privatelist", "built", "permission_level",
-                 "public_shares", "buddy_shares", "trusted_shares")
+    __slots__ = (
+        "list",
+        "unknown",
+        "privatelist",
+        "built",
+        "permission_level",
+        "public_shares",
+        "buddy_shares",
+        "trusted_shares",
+    )
 
-    def __init__(self, public_shares=None, buddy_shares=None, trusted_shares=None,
-                 permission_level=None):
+    def __init__(
+        self,
+        public_shares=None,
+        buddy_shares=None,
+        trusted_shares=None,
+        permission_level=None,
+    ):
         PeerMessage.__init__(self)
         self.public_shares = public_shares
         self.buddy_shares = buddy_shares
@@ -3006,14 +3183,21 @@ class SharedFileListResponse(PeerMessage):
 
         except Exception as error:
             from pynicotine.logfacility import log
+
             msg_list = self.pack_uint32(0)
-            log.add(_("Unable to read shares database. Please rescan your shares. Error: %s"), error)
+            log.add(
+                _(
+                    "Unable to read shares database. Please rescan your"
+                    " shares. Error: %s"
+                ),
+                error,
+            )
 
         return msg_list
 
     def make_network_message(self):
-        # Elaborate hack to save CPU
-        # Store packed message contents in self.built, and use instead of repacking it
+        # Elaborate hack to save CPU Store packed message contents in
+        # self.built, and use instead of repacking it
         if self.built is not None:
             return self.built
 
@@ -3026,10 +3210,17 @@ class SharedFileListResponse(PeerMessage):
         if self.permission_level and self.public_shares:
             share_groups.append(self.public_shares)
 
-        if self.permission_level in {PermissionLevel.BUDDY, PermissionLevel.TRUSTED} and self.buddy_shares:
+        if (
+            self.permission_level
+            in {PermissionLevel.BUDDY, PermissionLevel.TRUSTED}
+            and self.buddy_shares
+        ):
             share_groups.append(self.buddy_shares)
 
-        if self.permission_level == PermissionLevel.TRUSTED and self.trusted_shares:
+        if (
+            self.permission_level == PermissionLevel.TRUSTED
+            and self.trusted_shares
+        ):
             share_groups.append(self.trusted_shares)
 
         msg.extend(self._make_shares_list(share_groups))
@@ -3042,7 +3233,9 @@ class SharedFileListResponse(PeerMessage):
                 private_share_groups.append(shares)
 
         if private_share_groups:
-            msg.extend(self._make_shares_list(share_groups=private_share_groups))
+            msg.extend(
+                self._make_shares_list(share_groups=private_share_groups)
+            )
 
         self.built = zlib.compress(msg)
         return self.built
@@ -3068,8 +3261,12 @@ class SharedFileListResponse(PeerMessage):
                 pos, code = self.unpack_uint8(message, pos)
                 pos, name = self.unpack_string(message, pos)
                 pos, size = FileListMessage.parse_file_size(message, pos)
-                pos, ext_len = self.unpack_uint32(message, pos)  # Obsolete, ignore
-                pos, attrs = FileListMessage.unpack_file_attributes(message, pos + ext_len)
+                pos, ext_len = self.unpack_uint32(
+                    message, pos
+                )  # Obsolete, ignore
+                pos, attrs = FileListMessage.unpack_file_attributes(
+                    message, pos + ext_len
+                )
 
                 files.append((code, name, size, ext, attrs))
 
@@ -3130,11 +3327,27 @@ class FileSearchResponse(PeerMessage):
     message.
     """
 
-    __slots__ = ("search_username", "token", "list", "privatelist", "freeulslots",
-                 "ulspeed", "inqueue", "unknown")
+    __slots__ = (
+        "search_username",
+        "token",
+        "list",
+        "privatelist",
+        "freeulslots",
+        "ulspeed",
+        "inqueue",
+        "unknown",
+    )
 
-    def __init__(self, search_username=None, token=None, shares=None, freeulslots=None,
-                 ulspeed=None, inqueue=None, private_shares=None):
+    def __init__(
+        self,
+        search_username=None,
+        token=None,
+        shares=None,
+        freeulslots=None,
+        ulspeed=None,
+        inqueue=None,
+        private_shares=None,
+    ):
         PeerMessage.__init__(self)
         self.search_username = search_username
         self.token = token
@@ -3169,17 +3382,26 @@ class FileSearchResponse(PeerMessage):
 
     def parse_network_message(self, message):
         decompressor = zlib.decompressobj()
-        pos, username_len = self.unpack_uint32(decompressor.decompress(message, 4))
+        pos, username_len = self.unpack_uint32(
+            decompressor.decompress(message, 4)
+        )
         pos, self.token = self.unpack_uint32(
-            decompressor.decompress(decompressor.unconsumed_tail, username_len + 4), username_len)
+            decompressor.decompress(
+                decompressor.unconsumed_tail, username_len + 4
+            ),
+            username_len,
+        )
 
         if self.token not in SEARCH_TOKENS_ALLOWED:
-            # Results are no longer accepted for this search token, stop parsing message
+            # Results are no longer accepted for this search token, stop
+            # parsing message
             self.list = []
             return
 
         # Optimization: only decompress the rest of the message when needed
-        message_mem = memoryview(decompressor.decompress(decompressor.unconsumed_tail))
+        message_mem = memoryview(
+            decompressor.decompress(decompressor.unconsumed_tail)
+        )
 
         pos, self.list = self._parse_result_list(message_mem)
         pos, self.freeulslots = self.unpack_bool(message_mem, pos)
@@ -3203,7 +3425,9 @@ class FileSearchResponse(PeerMessage):
             pos, name = self.unpack_string(message, pos)
             pos, size = FileListMessage.parse_file_size(message, pos)
             pos, ext_len = self.unpack_uint32(message, pos)  # Obsolete, ignore
-            pos, attrs = FileListMessage.unpack_file_attributes(message, pos + ext_len)
+            pos, attrs = FileListMessage.unpack_file_attributes(
+                message, pos + ext_len
+            )
 
             results.append((code, name.replace("/", "\\"), size, ext, attrs))
 
@@ -3236,10 +3460,25 @@ class UserInfoResponse(PeerMessage):
     A peer responds with this after we've sent a UserInfoRequest.
     """
 
-    __slots__ = ("descr", "pic", "totalupl", "queuesize", "slotsavail", "uploadallowed", "has_pic")
+    __slots__ = (
+        "descr",
+        "pic",
+        "totalupl",
+        "queuesize",
+        "slotsavail",
+        "uploadallowed",
+        "has_pic",
+    )
 
-    def __init__(self, descr=None, pic=None, totalupl=None, queuesize=None,
-                 slotsavail=None, uploadallowed=None):
+    def __init__(
+        self,
+        descr=None,
+        pic=None,
+        totalupl=None,
+        queuesize=None,
+        slotsavail=None,
+        uploadallowed=None,
+    ):
         PeerMessage.__init__(self)
         self.descr = descr
         self.pic = pic
@@ -3277,8 +3516,9 @@ class UserInfoResponse(PeerMessage):
         pos, self.queuesize = self.unpack_uint32(message, pos)
         pos, self.slotsavail = self.unpack_bool(message, pos)
 
-        # To prevent errors, ensure that >= 4 bytes are left. Museek+ incorrectly sends
-        # slotsavail as an integer, resulting in 3 bytes of garbage here.
+        # To prevent errors, ensure that >= 4 bytes are left. Museek+
+        # incorrectly sends slotsavail as an integer, resulting in 3 bytes of
+        # garbage here.
         if len(message[pos:]) >= 4:
             pos, self.uploadallowed = self.unpack_uint32(message, pos)
 
@@ -3381,8 +3621,12 @@ class FolderContentsResponse(PeerMessage):
                 pos, code = self.unpack_uint8(message, pos)
                 pos, name = self.unpack_string(message, pos)
                 pos, size = self.unpack_uint64(message, pos)
-                pos, ext_len = self.unpack_uint32(message, pos)  # Obsolete, ignore
-                pos, attrs = FileListMessage.unpack_file_attributes(message, pos + ext_len)
+                pos, ext_len = self.unpack_uint32(
+                    message, pos
+                )  # Obsolete, ignore
+                pos, attrs = FileListMessage.unpack_file_attributes(
+                    message, pos + ext_len
+                )
 
                 folders[directory].append((code, name, size, ext, attrs))
 
@@ -3400,7 +3644,8 @@ class FolderContentsResponse(PeerMessage):
         msg.extend(self.pack_string(self.dir))
 
         if self.list is not None:
-            # We already saved the folder contents as a bytearray when scanning our shares
+            # We already saved the folder contents as a bytearray when scanning
+            # our shares
             msg.extend(self.list)
         else:
             # No folder contents
@@ -3673,11 +3918,12 @@ class FileMessage(SlskMessage):
 
 class FileTransferInit(FileMessage):
     """We send this to a peer via a 'F' connection to tell them that we want to
-    start uploading a file. The token is the same as the one previously included in the
-    TransferRequest peer message.
+    start uploading a file. The token is the same as the one previously
+    included in the TransferRequest peer message.
 
-    Note that slskd and Nicotine+ <= 3.0.2 use legacy download requests, and send this
-    message when initializing our file upload connection from their end.
+    Note that slskd and Nicotine+ <= 3.0.2 use legacy download requests, and
+    send this message when initializing our file upload connection from their
+    end.
     """
 
     __slots__ = ("token", "is_outgoing")
@@ -3695,13 +3941,13 @@ class FileTransferInit(FileMessage):
 
 
 class FileOffset(FileMessage):
-    """We send this to the uploading peer at the beginning of a 'F' connection,
-    to tell them how many bytes of the file we've previously downloaded. If nothing
-    was downloaded, the offset is 0.
+    """We send this to the uploading peer at the beginning of a 'F'
+    connection, to tell them how many bytes of the file we've previously
+    downloaded. If nothing was downloaded, the offset is 0.
 
-    Note that Soulseek NS fails to read the size of an incomplete download if more
-    than 2 GB of the file has been downloaded, and the download is resumed. In
-    consequence, the client sends an invalid file offset of -1.
+    Note that Soulseek NS fails to read the size of an incomplete download if
+    more than 2 GB of the file has been downloaded, and the download is
+    resumed. In consequence, the client sends an invalid file offset of -1.
     """
 
     __slots__ = ("offset",)
@@ -3757,7 +4003,13 @@ class DistribSearch(DistribMessage):
 
     __slots__ = ("unknown", "search_username", "token", "searchterm")
 
-    def __init__(self, unknown=None, search_username=None, token=None, searchterm=None):
+    def __init__(
+        self,
+        unknown=None,
+        search_username=None,
+        token=None,
+        searchterm=None,
+    ):
         DistribMessage.__init__(self)
         self.unknown = unknown
         self.search_username = search_username
@@ -3939,7 +4191,7 @@ NETWORK_MESSAGE_EVENTS = {
     UserLeftRoom: "user-left-room",
     UserSearch: "file-search-request-server",
     WatchUser: "watch-user",
-    WishlistInterval: "set-wishlist-interval"
+    WishlistInterval: "set-wishlist-interval",
 }
 
 
@@ -3961,72 +4213,72 @@ SERVER_MESSAGE_CODES = {
     ConnectToPeer: 18,
     MessageUser: 22,
     MessageAcked: 23,
-    FileSearchRoom: 25,           # Obsolete
+    FileSearchRoom: 25,  # Obsolete
     FileSearch: 26,
     SetStatus: 28,
     ServerPing: 32,
-    SendConnectToken: 33,         # Obsolete
-    SendDownloadSpeed: 34,        # Obsolete
+    SendConnectToken: 33,  # Obsolete
+    SendDownloadSpeed: 34,  # Obsolete
     SharedFoldersFiles: 35,
     GetUserStats: 36,
-    QueuedDownloads: 40,          # Obsolete
+    QueuedDownloads: 40,  # Obsolete
     Relogged: 41,
     UserSearch: 42,
-    AddThingILike: 51,            # Deprecated
-    RemoveThingILike: 52,         # Deprecated
-    Recommendations: 54,          # Deprecated
-    GlobalRecommendations: 56,    # Deprecated
-    UserInterests: 57,            # Deprecated
-    AdminCommand: 58,             # Obsolete
-    PlaceInLineResponse: 60,      # Obsolete
-    RoomAdded: 62,                # Obsolete
-    RoomRemoved: 63,              # Obsolete
+    AddThingILike: 51,  # Deprecated
+    RemoveThingILike: 52,  # Deprecated
+    Recommendations: 54,  # Deprecated
+    GlobalRecommendations: 56,  # Deprecated
+    UserInterests: 57,  # Deprecated
+    AdminCommand: 58,  # Obsolete
+    PlaceInLineResponse: 60,  # Obsolete
+    RoomAdded: 62,  # Obsolete
+    RoomRemoved: 63,  # Obsolete
     RoomList: 64,
-    ExactFileSearch: 65,          # Obsolete
+    ExactFileSearch: 65,  # Obsolete
     AdminMessage: 66,
-    GlobalUserList: 67,           # Obsolete
-    TunneledMessage: 68,          # Obsolete
+    GlobalUserList: 67,  # Obsolete
+    TunneledMessage: 68,  # Obsolete
     PrivilegedUsers: 69,
     HaveNoParent: 71,
-    SearchParent: 73,             # Deprecated
+    SearchParent: 73,  # Deprecated
     ParentMinSpeed: 83,
     ParentSpeedRatio: 84,
     ParentInactivityTimeout: 86,  # Obsolete
     SearchInactivityTimeout: 87,  # Obsolete
-    MinParentsInCache: 88,        # Obsolete
-    DistribPingInterval: 90,      # Obsolete
-    AddToPrivileged: 91,          # Obsolete
+    MinParentsInCache: 88,  # Obsolete
+    DistribPingInterval: 90,  # Obsolete
+    AddToPrivileged: 91,  # Obsolete
     CheckPrivileges: 92,
     EmbeddedMessage: 93,
     AcceptChildren: 100,
     PossibleParents: 102,
     WishlistSearch: 103,
     WishlistInterval: 104,
-    SimilarUsers: 110,            # Deprecated
-    ItemRecommendations: 111,     # Deprecated
-    ItemSimilarUsers: 112,        # Deprecated
+    SimilarUsers: 110,  # Deprecated
+    ItemRecommendations: 111,  # Deprecated
+    ItemSimilarUsers: 112,  # Deprecated
     RoomTickerState: 113,
     RoomTickerAdd: 114,
     RoomTickerRemove: 115,
     RoomTickerSet: 116,
-    AddThingIHate: 117,           # Deprecated
-    RemoveThingIHate: 118,        # Deprecated
+    AddThingIHate: 117,  # Deprecated
+    RemoveThingIHate: 118,  # Deprecated
     RoomSearch: 120,
     SendUploadSpeed: 121,
-    UserPrivileged: 122,          # Deprecated
+    UserPrivileged: 122,  # Deprecated
     GivePrivileges: 123,
-    NotifyPrivileges: 124,        # Deprecated
-    AckNotifyPrivileges: 125,     # Deprecated
+    NotifyPrivileges: 124,  # Deprecated
+    AckNotifyPrivileges: 125,  # Deprecated
     BranchLevel: 126,
     BranchRoot: 127,
-    ChildDepth: 129,              # Deprecated
+    ChildDepth: 129,  # Deprecated
     ResetDistributed: 130,
     PrivateRoomUsers: 133,
     PrivateRoomAddUser: 134,
     PrivateRoomRemoveUser: 135,
     PrivateRoomDismember: 136,
     PrivateRoomDisown: 137,
-    PrivateRoomSomething: 138,    # Obsolete
+    PrivateRoomSomething: 138,  # Obsolete
     PrivateRoomAdded: 139,
     PrivateRoomRemoved: 140,
     PrivateRoomToggle: 141,
@@ -4037,52 +4289,51 @@ SERVER_MESSAGE_CODES = {
     PrivateRoomOperatorRemoved: 146,
     PrivateRoomOwned: 148,
     MessageUsers: 149,
-    JoinGlobalRoom: 150,          # Deprecated
-    LeaveGlobalRoom: 151,         # Deprecated
-    GlobalRoomMessage: 152,       # Deprecated
-    RelatedSearch: 153,           # Obsolete
+    JoinGlobalRoom: 150,  # Deprecated
+    LeaveGlobalRoom: 151,  # Deprecated
+    GlobalRoomMessage: 152,  # Deprecated
+    RelatedSearch: 153,  # Obsolete
     ExcludedSearchPhrases: 160,
     CantConnectToPeer: 1001,
-    CantCreateRoom: 1003
+    CantCreateRoom: 1003,
 }
 
-PEER_INIT_MESSAGE_CODES = {
-    PierceFireWall: 0,
-    PeerInit: 1
-}
+PEER_INIT_MESSAGE_CODES = {PierceFireWall: 0, PeerInit: 1}
 
 PEER_MESSAGE_CODES = {
     SharedFileListRequest: 4,
     SharedFileListResponse: 5,
-    FileSearchRequest: 8,         # Obsolete
+    FileSearchRequest: 8,  # Obsolete
     FileSearchResponse: 9,
     UserInfoRequest: 15,
     UserInfoResponse: 16,
-    PMessageUser: 22,             # Obsolete
+    PMessageUser: 22,  # Obsolete
     FolderContentsRequest: 36,
     FolderContentsResponse: 37,
     TransferRequest: 40,
     TransferResponse: 41,
-    PlaceholdUpload: 42,          # Obsolete
+    PlaceholdUpload: 42,  # Obsolete
     QueueUpload: 43,
     PlaceInQueueResponse: 44,
     UploadFailed: 46,
     UploadDenied: 50,
     PlaceInQueueRequest: 51,
     UploadQueueNotification: 52,  # Deprecated
-    UnknownPeerMessage: 12547
+    UnknownPeerMessage: 12547,
 }
 
 DISTRIBUTED_MESSAGE_CODES = {
-    DistribPing: 0,               # Deprecated
+    DistribPing: 0,  # Deprecated
     DistribSearch: 3,
     DistribBranchLevel: 4,
     DistribBranchRoot: 5,
-    DistribChildDepth: 7,         # Deprecated
-    DistribEmbeddedMessage: 93
+    DistribChildDepth: 7,  # Deprecated
+    DistribEmbeddedMessage: 93,
 }
 
 SERVER_MESSAGE_CLASSES = {v: k for k, v in SERVER_MESSAGE_CODES.items()}
 PEER_INIT_MESSAGE_CLASSES = {v: k for k, v in PEER_INIT_MESSAGE_CODES.items()}
 PEER_MESSAGE_CLASSES = {v: k for k, v in PEER_MESSAGE_CODES.items()}
-DISTRIBUTED_MESSAGE_CLASSES = {v: k for k, v in DISTRIBUTED_MESSAGE_CODES.items()}
+DISTRIBUTED_MESSAGE_CLASSES = {
+    v: k for k, v in DISTRIBUTED_MESSAGE_CODES.items()
+}

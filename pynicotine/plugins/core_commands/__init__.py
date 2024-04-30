@@ -42,7 +42,7 @@ class Plugin(BasePlugin):
                 "aliases": ["?"],
                 "callback": self.help_command,
                 "description": _("List available commands"),
-                "parameters": ["[query]"]
+                "parameters": ["[query]"],
             },
             "connect": {
                 "callback": self.connect_command,
@@ -60,13 +60,13 @@ class Plugin(BasePlugin):
             "plugin": {
                 "callback": self.plugin_handler_command,
                 "description": _("Manage plugins"),
-                "parameters": ["<toggle|info>", "<plugin_name>"]
+                "parameters": ["<toggle|info>", "<plugin_name>"],
             },
             "quit": {
                 "aliases": ["q", "exit"],
                 "callback": self.quit_command,
                 "description": _("Quit Nicotine+"),
-                "parameters": ["[-force]"]
+                "parameters": ["[-force]"],
             },
             "clear": {
                 "aliases": ["cl"],
@@ -80,13 +80,13 @@ class Plugin(BasePlugin):
                 "description": _("Say something in the third-person"),
                 "disable": ["cli"],
                 "group": _CommandGroup.CHAT,
-                "parameters": ["<something..>"]
+                "parameters": ["<something..>"],
             },
             "now": {
                 "callback": self.now_command,
                 "description": _("Announce the song currently playing"),
                 "disable": ["cli"],
-                "group": _CommandGroup.CHAT
+                "group": _CommandGroup.CHAT,
             },
             "join": {
                 "aliases": ["j"],
@@ -94,7 +94,7 @@ class Plugin(BasePlugin):
                 "description": _("Join chat room"),
                 "disable": ["cli"],
                 "group": _CommandGroup.CHAT_ROOMS,
-                "parameters": ["<room>"]
+                "parameters": ["<room>"],
             },
             "leave": {
                 "aliases": ["l"],
@@ -103,21 +103,21 @@ class Plugin(BasePlugin):
                 "disable": ["cli"],
                 "group": _CommandGroup.CHAT_ROOMS,
                 "parameters": ["<room>"],
-                "parameters_chatroom": ["[room]"]
+                "parameters_chatroom": ["[room]"],
             },
             "say": {
                 "callback": self.say_command,
                 "description": _("Say message in specified chat room"),
                 "disable": ["cli"],
                 "group": _CommandGroup.CHAT_ROOMS,
-                "parameters": ["<room>", "<message..>"]
+                "parameters": ["<room>", "<message..>"],
             },
             "pm": {
                 "callback": self.pm_command,
                 "description": _("Open private chat"),
                 "disable": ["cli"],
                 "group": _CommandGroup.PRIVATE_CHAT,
-                "parameters": ["<user>"]
+                "parameters": ["<user>"],
             },
             "close": {
                 "aliases": ["c"],
@@ -126,7 +126,7 @@ class Plugin(BasePlugin):
                 "disable": ["cli"],
                 "group": _CommandGroup.PRIVATE_CHAT,
                 "parameters_chatroom": ["<user>"],
-                "parameters_private_chat": ["[user]"]
+                "parameters_private_chat": ["[user]"],
             },
             "ctcpversion": {
                 "callback": self.ctcpversion_command,
@@ -134,7 +134,7 @@ class Plugin(BasePlugin):
                 "disable": ["cli"],
                 "group": _CommandGroup.PRIVATE_CHAT,
                 "parameters_chatroom": ["<user>"],
-                "parameters_private_chat": ["[user]"]
+                "parameters_private_chat": ["[user]"],
             },
             "msg": {
                 "aliases": ["m"],
@@ -142,7 +142,7 @@ class Plugin(BasePlugin):
                 "description": _("Send private message to user"),
                 "disable": ["cli"],
                 "group": _CommandGroup.PRIVATE_CHAT,
-                "parameters": ["<user>", "<message..>"]
+                "parameters": ["<user>", "<message..>"],
             },
             "add": {
                 "aliases": ["buddy"],
@@ -150,7 +150,7 @@ class Plugin(BasePlugin):
                 "description": _("Add user to buddy list"),
                 "group": _CommandGroup.USERS,
                 "parameters": ["<user>"],
-                "parameters_private_chat": ["[user]"]
+                "parameters_private_chat": ["[user]"],
             },
             "rem": {
                 "aliases": ["unbuddy"],
@@ -158,7 +158,7 @@ class Plugin(BasePlugin):
                 "description": _("Remove buddy from buddy list"),
                 "group": _CommandGroup.USERS,
                 "parameters": ["<buddy>"],
-                "parameters_private_chat": ["[buddy]"]
+                "parameters_private_chat": ["[buddy]"],
             },
             "browse": {
                 "aliases": ["b"],
@@ -167,7 +167,7 @@ class Plugin(BasePlugin):
                 "disable": ["cli"],
                 "group": _CommandGroup.USERS,
                 "parameters": ["<user>"],
-                "parameters_private_chat": ["[user]"]
+                "parameters_private_chat": ["[user]"],
             },
             "whois": {
                 "aliases": ["info", "w"],
@@ -176,28 +176,28 @@ class Plugin(BasePlugin):
                 "disable": ["cli"],
                 "group": _CommandGroup.USERS,
                 "parameters": ["<user>"],
-                "parameters_private_chat": ["[user]"]
+                "parameters_private_chat": ["[user]"],
             },
             "ip": {
                 "callback": self.ip_address_command,
                 "description": _("Show IP address or username"),
                 "group": _CommandGroup.NETWORK_FILTERS,
                 "parameters": ["<user or ip>"],
-                "parameters_private_chat": ["[user or ip]"]
+                "parameters_private_chat": ["[user or ip]"],
             },
             "ban": {
                 "callback": self.ban_command,
                 "description": _("Block connections from user or IP address"),
                 "group": _CommandGroup.NETWORK_FILTERS,
                 "parameters": ["<user or ip>"],
-                "parameters_private_chat": ["[user or ip]"]
+                "parameters_private_chat": ["[user or ip]"],
             },
             "unban": {
                 "callback": self.unban_command,
                 "description": _("Remove user or IP address from ban lists"),
                 "group": _CommandGroup.NETWORK_FILTERS,
                 "parameters": ["<user or ip>"],
-                "parameters_private_chat": ["[user or ip]"]
+                "parameters_private_chat": ["[user or ip]"],
             },
             "ignore": {
                 "callback": self.ignore_command,
@@ -205,40 +205,45 @@ class Plugin(BasePlugin):
                 "disable": ["cli"],
                 "group": _CommandGroup.NETWORK_FILTERS,
                 "parameters": ["<user or ip>"],
-                "parameters_private_chat": ["[user or ip]"]
+                "parameters_private_chat": ["[user or ip]"],
             },
             "unignore": {
                 "callback": self.unignore_command,
-                "description": _("Remove user or IP address from ignore lists"),
+                "description": _(
+                    "Remove user or IP address from ignore lists"
+                ),
                 "disable": ["cli"],
                 "group": _CommandGroup.NETWORK_FILTERS,
                 "parameters": ["<user or ip>"],
-                "parameters_private_chat": ["[user or ip]"]
+                "parameters_private_chat": ["[user or ip]"],
             },
             "share": {
                 "callback": self.share_command,
                 "description": _("Add share"),
                 "group": _CommandGroup.SHARES,
-                "parameters": ["<public|buddy|trusted>", "<folder path>"]
+                "parameters": [
+                    "<public|buddy|trusted>",
+                    "<folder path>",
+                ],
             },
             "unshare": {
                 "callback": self.unshare_command,
                 "description": _("Remove share"),
                 "group": _CommandGroup.SHARES,
-                "parameters": ["<virtual name or folder path>"]
+                "parameters": ["<virtual name or folder path>"],
             },
             "shares": {
                 "aliases": ["ls"],
                 "callback": self.list_shares_command,
                 "description": _("List shares"),
                 "group": _CommandGroup.SHARES,
-                "parameters": ["[public]", "[buddy]"]
+                "parameters": ["[public]", "[buddy]"],
             },
             "rescan": {
                 "callback": self.rescan_command,
                 "description": _("Rescan shares"),
                 "group": _CommandGroup.SHARES,
-                "parameters": ["[force|rebuild]"]
+                "parameters": ["[force|rebuild]"],
             },
             "search": {
                 "aliases": ["s"],
@@ -246,7 +251,7 @@ class Plugin(BasePlugin):
                 "description": _("Start global file search"),
                 "disable": ["cli"],
                 "group": _CommandGroup.SEARCH_FILES,
-                "parameters": ["<query>"]
+                "parameters": ["<query>"],
             },
             "rsearch": {
                 "aliases": ["rs"],
@@ -254,7 +259,7 @@ class Plugin(BasePlugin):
                 "description": _("Search files in joined rooms"),
                 "disable": ["cli"],
                 "group": _CommandGroup.SEARCH_FILES,
-                "parameters": ["<query>"]
+                "parameters": ["<query>"],
             },
             "bsearch": {
                 "aliases": ["bs"],
@@ -262,7 +267,7 @@ class Plugin(BasePlugin):
                 "description": _("Search files of all buddies"),
                 "disable": ["cli"],
                 "group": _CommandGroup.SEARCH_FILES,
-                "parameters": ["<query>"]
+                "parameters": ["<query>"],
             },
             "usearch": {
                 "aliases": ["us"],
@@ -270,8 +275,8 @@ class Plugin(BasePlugin):
                 "description": _("Search a user's shared files"),
                 "disable": ["cli"],
                 "group": _CommandGroup.SEARCH_FILES,
-                "parameters": ["<user>", "<query>"]
-            }
+                "parameters": ["<user>", "<query>"],
+            },
         }
 
     # Application Commands #
@@ -288,30 +293,46 @@ class Plugin(BasePlugin):
             command_interface = "cli"
 
         search_query = " ".join(args.lower().split(" ", maxsplit=1))
-        command_groups = self.parent.get_command_groups_data(command_interface, search_query=search_query)
+        command_groups = self.parent.get_command_groups_data(
+            command_interface, search_query=search_query
+        )
         num_commands = sum(len(command_groups[x]) for x in command_groups)
         output_text = ""
 
         if not search_query:
-            output_text += _("Listing %(num)i available commands:") % {"num": num_commands}
+            output_text += _("Listing %(num)i available commands:") % {
+                "num": num_commands
+            }
         else:
-            output_text += _('Listing %(num)i available commands matching "%(query)s":') % {
+            output_text += _(
+                'Listing %(num)i available commands matching "%(query)s":'
+            ) % {
                 "num": num_commands,
-                "query": search_query
+                "query": search_query,
             }
 
         for group_name, command_data in command_groups.items():
             output_text += f"\n\n{group_name}:"
 
-            for command, aliases, parameters, description in command_data:
-                command_message = f"/{', /'.join([command] + aliases)} {' '.join(parameters)}".strip()
+            for (
+                command,
+                aliases,
+                parameters,
+                description,
+            ) in command_data:
+                commands = ", /".join([command] + aliases)
+                command_message = f"/{commands} {' '.join(parameters)}".strip()
                 output_text += f"\n\t{command_message}  -  {description}"
 
         if not search_query:
-            output_text += "\n\n" + _("Type %(command)s to list similar commands") % {"command": "/help [query]"}
+            output_text += "\n\n" + _(
+                "Type %(command)s to list similar commands"
+            ) % {"command": "/help [query]"}
 
         elif not num_commands:
-            output_text += "\n" + _("Type %(command)s to list available commands") % {"command": "/help"}
+            output_text += "\n" + _(
+                "Type %(command)s to list available commands"
+            ) % {"command": "/help"}
 
         self.output(output_text)
 
@@ -326,19 +347,31 @@ class Plugin(BasePlugin):
     def away_command(self, _args, **_unused):
 
         if self.core.users.login_status == UserStatus.OFFLINE:
-            self.output(_("%(user)s is offline") % {"user": self.config.sections["server"]["login"]})
+            self.output(
+                _("%(user)s is offline")
+                % {"user": self.config.sections["server"]["login"]}
+            )
             return
 
-        self.core.users.set_away_mode(self.core.users.login_status != UserStatus.AWAY, save_state=True)
+        self.core.users.set_away_mode(
+            self.core.users.login_status != UserStatus.AWAY,
+            save_state=True,
+        )
 
         if self.core.users.login_status == UserStatus.ONLINE:
-            self.output(_("%(user)s is online") % {"user": self.core.users.login_username})
+            self.output(
+                _("%(user)s is online")
+                % {"user": self.core.users.login_username}
+            )
         else:
-            self.output(_("%(user)s is away") % {"user": self.core.users.login_username})
+            self.output(
+                _("%(user)s is away")
+                % {"user": self.core.users.login_username}
+            )
 
     def quit_command(self, args, **_unused):
 
-        force = (args.lstrip("- ") in {"force", "f"})
+        force = args.lstrip("- ") in {"force", "f"}
 
         if force:
             self.core.quit()
@@ -413,7 +446,9 @@ class Plugin(BasePlugin):
         if args:
             user = args
 
-        self.send_private(user, self.core.privatechat.CTCP_VERSION, show_ui=True)
+        self.send_private(
+            user, self.core.privatechat.CTCP_VERSION, show_ui=True
+        )
 
     def msg_command(self, args, **_unused):
 
@@ -468,7 +503,9 @@ class Plugin(BasePlugin):
     def ban_command(self, args, user=None, **_unused):
 
         if self.core.network_filter.is_ip_address(args):
-            banned_ip_address = self.core.network_filter.ban_user_ip(ip_address=args)
+            banned_ip_address = self.core.network_filter.ban_user_ip(
+                ip_address=args
+            )
         else:
             if args:
                 user = args
@@ -481,21 +518,31 @@ class Plugin(BasePlugin):
     def unban_command(self, args, user=None, **_unused):
 
         if self.core.network_filter.is_ip_address(args):
-            unbanned_ip_addresses = self.core.network_filter.unban_user_ip(ip_address=args)
-            self.core.network_filter.unban_user(self.core.network_filter.get_online_username(args))
+            unbanned_ip_addresses = self.core.network_filter.unban_user_ip(
+                ip_address=args
+            )
+            self.core.network_filter.unban_user(
+                self.core.network_filter.get_online_username(args)
+            )
         else:
             if args:
                 user = args
 
-            unbanned_ip_addresses = self.core.network_filter.unban_user_ip(user)
+            unbanned_ip_addresses = self.core.network_filter.unban_user_ip(
+                user
+            )
             self.core.network_filter.unban_user(user)
 
-        self.output(_("Unbanned %s") % (" & ".join(unbanned_ip_addresses) or user))
+        self.output(
+            _("Unbanned %s") % (" & ".join(unbanned_ip_addresses) or user)
+        )
 
     def ignore_command(self, args, user=None, **_unused):
 
         if self.core.network_filter.is_ip_address(args):
-            ignored_ip_address = self.core.network_filter.ignore_user_ip(ip_address=args)
+            ignored_ip_address = self.core.network_filter.ignore_user_ip(
+                ip_address=args
+            )
         else:
             if args:
                 user = args
@@ -508,22 +555,30 @@ class Plugin(BasePlugin):
     def unignore_command(self, args, user=None, **_unused):
 
         if self.core.network_filter.is_ip_address(args):
-            unignored_ip_addresses = self.core.network_filter.unignore_user_ip(ip_address=args)
-            self.core.network_filter.unignore_user(self.core.network_filter.get_online_username(args))
+            unignored_ip_addresses = self.core.network_filter.unignore_user_ip(
+                ip_address=args
+            )
+            self.core.network_filter.unignore_user(
+                self.core.network_filter.get_online_username(args)
+            )
         else:
             if args:
                 user = args
 
-            unignored_ip_addresses = self.core.network_filter.unignore_user_ip(user)
+            unignored_ip_addresses = self.core.network_filter.unignore_user_ip(
+                user
+            )
             self.core.network_filter.unignore_user(user)
 
-        self.output(_("Unignored %s") % (" & ".join(unignored_ip_addresses) or user))
+        self.output(
+            _("Unignored %s") % (" & ".join(unignored_ip_addresses) or user)
+        )
 
     # Configure Shares #
 
     def rescan_command(self, args, **_unused):
 
-        rebuild = (args == "rebuild")
+        rebuild = args == "rebuild"
         force = (args == "force") or rebuild
 
         self.core.shares.rescan_shares(rebuild=rebuild, force=force)
@@ -533,7 +588,7 @@ class Plugin(BasePlugin):
         permission_levels = {
             0: PermissionLevel.PUBLIC,
             1: PermissionLevel.BUDDY,
-            2: PermissionLevel.TRUSTED
+            2: PermissionLevel.TRUSTED,
         }
         share_groups = self.core.shares.get_shared_folders()
         num_total = num_listed = 0
@@ -553,25 +608,38 @@ class Plugin(BasePlugin):
 
             num_listed += num_shares
 
-        self.output("\n" + _("%(num_listed)s shares listed (%(num_total)s configured)") % {
-            "num_listed": num_listed,
-            "num_total": num_total
-        })
+        self.output(
+            "\n"
+            + _("%(num_listed)s shares listed (%(num_total)s configured)")
+            % {"num_listed": num_listed, "num_total": num_total}
+        )
 
     def share_command(self, args, **_unused):
 
         args_split = args.split(maxsplit=1)
-        permission_level, folder_path = args_split[0], args_split[1].strip(' "')
-        virtual_name = self.core.shares.add_share(folder_path, permission_level=permission_level)
+        permission_level, folder_path = args_split[0], args_split[1].strip(
+            ' "'
+        )
+        virtual_name = self.core.shares.add_share(
+            folder_path, permission_level=permission_level
+        )
 
         if not virtual_name:
-            self.output(_("Cannot share inaccessible folder \"%s\"") % folder_path)
+            self.output(
+                _('Cannot share inaccessible folder "%s"') % folder_path
+            )
             return False
 
-        self.output(_("Added %(group_name)s share \"%(virtual_name)s\" (rescan required)") % {
-            "group_name": permission_level,
-            "virtual_name": virtual_name
-        })
+        self.output(
+            _(
+                'Added %(group_name)s share "%(virtual_name)s" (rescan'
+                " required)"
+            )
+            % {
+                "group_name": permission_level,
+                "virtual_name": virtual_name,
+            }
+        )
         return True
 
     def unshare_command(self, args, **_unused):
@@ -579,10 +647,15 @@ class Plugin(BasePlugin):
         virtual_name_or_folder_path = args.strip(' "')
 
         if not self.core.shares.remove_share(virtual_name_or_folder_path):
-            self.output(_("No share with name \"%s\"") % virtual_name_or_folder_path)
+            self.output(
+                _('No share with name "%s"') % virtual_name_or_folder_path
+            )
             return False
 
-        self.output(_("Removed share \"%s\" (rescan required)") % virtual_name_or_folder_path)
+        self.output(
+            _('Removed share "%s" (rescan required)')
+            % virtual_name_or_folder_path
+        )
         return True
 
     # Search Files #
