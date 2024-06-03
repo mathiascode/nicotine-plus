@@ -33,7 +33,7 @@ from cx_Freeze import Executable, setup  # pylint: disable=import-error
 if sys.platform == "win32":
     GUI_BASE = "Win32GUI"
     SYS_BASE_PATH = sys.prefix
-    LIB_PATH = os.path.join(SYS_BASE_PATH, "bin")
+    LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
     LIB_EXTENSION = ".dll"
     UNAVAILABLE_MODULES = [
         "fcntl", "grp", "nis", "ossaudiodev", "posix", "pwd", "readline", "resource", "spwd", "syslog", "termios"
@@ -48,8 +48,13 @@ elif sys.platform == "darwin":
     UNAVAILABLE_MODULES = ["msilib", "msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]
     ICON_NAME = "icon.icns"
 
-else:
-    raise RuntimeError("Only Windows and macOS are supported")
+elif sys.platform == "linux":
+    GUI_BASE = None
+    SYS_BASE_PATH = sys.prefix
+    LIB_PATH = os.path.join(SYS_BASE_PATH, "lib", "x86_64-linux-gnu")
+    LIB_EXTENSION = ".so"
+    UNAVAILABLE_MODULES = ["msilib", "msvcrt", "nt", "nturl2path", "winreg", "winsound"]
+    ICON_NAME = "icon.svg"
 
 TEMP_PATH = tempfile.mkdtemp()
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -110,11 +115,11 @@ def add_files(folder_path, output_path, starts_with=None, ends_with=None, recurs
 
 def add_pixbuf_loaders():
 
-    loaders_file = "lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+    loaders_file = "gdk-pixbuf-2.0/2.10.0/loaders.cache"
     temp_loaders_file = os.path.join(TEMP_PATH, "loaders.cache")
 
     with open(temp_loaders_file, "w", encoding="utf-8") as temp_file_handle, \
-         open(os.path.join(SYS_BASE_PATH, loaders_file), "r", encoding="utf-8") as real_file_handle:
+         open(os.path.join(LIB_PATH, loaders_file), "r", encoding="utf-8") as real_file_handle:
         data = real_file_handle.read()
 
         if sys.platform == "win32":
@@ -122,13 +127,16 @@ def add_pixbuf_loaders():
 
         elif sys.platform == "darwin":
             data = data.replace(
-                os.path.join(SYS_BASE_PATH, "lib/gdk-pixbuf-2.0/2.10.0/loaders"), "@executable_path/lib")
+                os.path.join(LIB_PATH, "gdk-pixbuf-2.0/2.10.0/loaders"), "@executable_path/lib")
+
+        elif sys.platform == "linux":
+            data = data.replace(os.path.join(LIB_PATH, "gdk-pixbuf-2.0/2.10.0/loaders"), "lib")
 
         temp_file_handle.write(data)
 
     add_file(file_path=temp_loaders_file, output_path="lib/pixbuf-loaders.cache")
     add_files(
-        folder_path=os.path.join(SYS_BASE_PATH, "lib/gdk-pixbuf-2.0/2.10.0/loaders"), output_path="lib",
+        folder_path=os.path.join(LIB_PATH, "gdk-pixbuf-2.0/2.10.0/loaders"), output_path="lib",
         starts_with="libpixbufloader-", ends_with=LIB_EXTENSION
     )
 
@@ -181,7 +189,7 @@ def add_typelibs():
         required_typelibs.append("Adw-")
 
     required_typelibs = tuple(required_typelibs)
-    folder_path = os.path.join(SYS_BASE_PATH, "lib/girepository-1.0")
+    folder_path = os.path.join(LIB_PATH, "girepository-1.0")
 
     if sys.platform == "darwin":
         # Remove absolute paths added by Homebrew (macOS)
@@ -192,7 +200,7 @@ def add_typelibs():
         folder_path = TEMP_PATH
 
     add_files(
-        folder_path=folder_path, output_path="lib/typelibs",
+        folder_path=folder_path, output_path="lib/girepository-1.0",
         starts_with=required_typelibs, ends_with=".typelib"
     )
 
@@ -200,19 +208,22 @@ def add_typelibs():
 def add_gtk():
 
     if sys.platform == "win32":
+        lib_path = os.path.join(SYS_BASE_PATH, "bin")
         # gdbus required for single-instance application (Windows)
-        add_file(file_path=os.path.join(LIB_PATH, "gdbus.exe"), output_path="gdbus.exe")
+        add_file(file_path=os.path.join(lib_path, "gdbus.exe"), output_path="gdbus.exe")
+    else:
+        lib_path = LIB_PATH
 
     # This also includes all dlls required by GTK
     add_files(
-        folder_path=LIB_PATH, output_path="lib",
-        starts_with=f"libgtk-{GTK_VERSION}", ends_with=LIB_EXTENSION
+        folder_path=lib_path, output_path="lib",
+        starts_with=f"libgtk-{GTK_VERSION}",
     )
 
     if USE_LIBADWAITA:
         add_files(
-            folder_path=LIB_PATH, output_path="lib",
-            starts_with="libadwaita-", ends_with=LIB_EXTENSION
+            folder_path=lib_path, output_path="lib",
+            starts_with="libadwaita-",
         )
 
     # Schemas
@@ -223,8 +234,8 @@ def add_gtk():
 
     # Fontconfig
     add_files(
-        folder_path=os.path.join(SYS_BASE_PATH, "etc/fonts"), output_path="share/fonts",
-        ends_with=".conf", recursive=True
+        folder_path="/etc/fonts" if sys.platform == "linux" else os.path.join(SYS_BASE_PATH, "etc/fonts"),
+        output_path="share/fonts", ends_with=".conf", recursive=True
     )
 
     # Pixbuf loaders
@@ -260,7 +271,7 @@ def add_themes():
 
 def add_ssl_certs():
     ssl_paths = ssl.get_default_verify_paths()
-    add_file(file_path=ssl_paths.openssl_cafile, output_path="lib/cert.pem")
+    #add_file(file_path=ssl_paths.openssl_cafile, output_path="lib/cert.pem")
 
 
 def add_translations():
@@ -330,6 +341,9 @@ setup(
         },
         "bdist_dmg": {
             "applications_shortcut": True
+        },
+        "bdist_appimage": {
+            "dist_dir": BUILD_PATH
         }
     },
     data_files=[],
