@@ -77,6 +77,40 @@ jobs:
           name: snap-${{ matrix.arch }}-package
           path: ${{ steps.build-snap.outputs.snap }}
 
+  appimage:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        arch: [x86_64]
+    env:
+      NICOTINE_GTK_VERSION: 4
+      NICOTINE_LIBADWAITA: 1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: setup.py
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install gettext gir1.2-adw-1 gir1.2-gtk-4.0 libadwaita-1-0 libgirepository1.0-dev libgtk-4-1
+          python -m pip install build .[packaging]
+
+      - name: Freeze application
+        run: python packaging/appimage/setup.py bdist_appimage
+
+      - name: Archive installer artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: appimage-${{ matrix.arch }}-package
+          path: packaging/appimage/build/*.AppImage
+
   windows:
     runs-on: windows-latest
     timeout-minutes: 15
