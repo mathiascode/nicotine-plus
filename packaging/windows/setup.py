@@ -25,7 +25,10 @@ import subprocess
 import sys
 import tempfile
 
+import cx_Freeze
+
 from cx_Freeze import Executable, setup  # pylint: disable=import-error
+cx_Freeze.hooks.gi.load_gi = lambda *_args: pass
 
 # pylint: disable=duplicate-code
 
