@@ -25,10 +25,8 @@ import subprocess
 import sys
 import tempfile
 
-import cx_Freeze.hooks.gi
-
-from cx_Freeze import Executable, setup  # pylint: disable=import-error
-del cx_Freeze.hooks.gi.load_gi
+from cx_Freeze import Executable, hooks, setup  # pylint: disable=import-error
+del hooks.gi
 
 # pylint: disable=duplicate-code
 
