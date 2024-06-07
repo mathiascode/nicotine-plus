@@ -26,8 +26,6 @@
         <property name="placeholder-text" translatable="yes">Add Wish…</property>
         <property name="primary-icon-name">list-add-symbolic</property>
         <property name="visible">True</property>
-        <signal name="activate" handler="on_add_wish"/>
-        <signal name="icon-press" handler="on_add_wish"/>
       </object>
     </child>
     <child>
@@ -56,10 +54,9 @@
                 <property name="spacing">6</property>
                 <property name="visible">True</property>
                 <child>
-                  <object class="GtkButton" id="_edit_button">
+                  <object class="GtkButton" id="edit_button">
                     <property name="tooltip-text" translatable="yes">Edit…</property>
                     <property name="visible">True</property>
-                    <signal name="clicked" handler="on_edit_wish"/>
                     <child>
                       <object class="GtkBox">
                         <property name="spacing">6</property>
@@ -74,7 +71,7 @@
                           <object class="GtkLabel">
                             <property name="ellipsize">end</property>
                             <property name="label" translatable="yes">Edit…</property>
-                            <property name="mnemonic-widget">_edit_button</property>
+                            <property name="mnemonic-widget">edit_button</property>
                             <property name="visible">True</property>
                           </object>
                         </child>
@@ -86,10 +83,9 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkButton" id="_remove_button">
+                  <object class="GtkButton" id="remove_button">
                     <property name="tooltip-text" translatable="yes">Remove</property>
                     <property name="visible">True</property>
-                    <signal name="clicked" handler="on_remove_wish"/>
                     <child>
                       <object class="GtkBox">
                         <property name="spacing">6</property>
@@ -104,7 +100,7 @@
                           <object class="GtkLabel">
                             <property name="ellipsize">end</property>
                             <property name="label" translatable="yes">Remove</property>
-                            <property name="mnemonic-widget">_remove_button</property>
+                            <property name="mnemonic-widget">remove_button</property>
                             <property name="visible">True</property>
                           </object>
                         </child>
@@ -121,10 +117,9 @@
                     <property name="hexpand">True</property>
                     <property name="visible">True</property>
                     <child>
-                      <object class="GtkButton" id="_clear_all_button">
+                      <object class="GtkButton" id="clear_all_button">
                         <property name="tooltip-text" translatable="yes">Clear All…</property>
                         <property name="visible">True</property>
-                        <signal name="clicked" handler="on_clear_wishlist"/>
                         <child>
                           <object class="GtkBox">
                             <property name="spacing">6</property>
@@ -139,7 +134,7 @@
                               <object class="GtkLabel">
                                 <property name="ellipsize">end</property>
                                 <property name="label" translatable="yes">Clear All…</property>
-                                <property name="mnemonic-widget">_clear_all_button</property>
+                                <property name="mnemonic-widget">clear_all_button</property>
                                 <property name="visible">True</property>
                               </object>
                             </child>

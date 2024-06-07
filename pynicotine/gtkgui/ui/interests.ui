@@ -41,8 +41,6 @@
             <property name="primary-icon-name">non-starred-symbolic</property>
             <property name="visible">True</property>
             <property name="width-chars">15</property>
-            <signal name="activate" handler="on_add_thing_i_like"/>
-            <signal name="icon-press" handler="on_add_thing_i_like"/>
           </object>
         </child>
         <child>
@@ -81,8 +79,6 @@
             <property name="primary-icon-name">action-unavailable-symbolic</property>
             <property name="visible">True</property>
             <property name="width-chars">15</property>
-            <signal name="activate" handler="on_add_thing_i_dislike"/>
-            <signal name="icon-press" handler="on_add_thing_i_dislike"/>
           </object>
         </child>
         <child>
@@ -143,7 +139,6 @@
                         <property name="tooltip-text" translatable="yes">Refresh Recommendations</property>
                         <property name="valign">center</property>
                         <property name="visible">True</property>
-                        <signal name="clicked" handler="on_recommendations_clicked"/>
                         <child>
                           <object class="GtkImage">
                             <property name="icon-name">view-refresh-symbolic</property>

@@ -42,13 +42,16 @@ class FastConfigure(Dialog):
 
         (
             self.account_page,
+            self.add_shared_folder_button,
             self.download_folder_container,
+            self.edit_shared_folder_button,
             self.listen_port_entry,
             self.main_icon,
             self.next_button,
             self.password_entry,
             self.port_page,
             self.previous_button,
+            self.remove_shared_folder_button,
             self.set_up_button,
             self.share_page,
             self.shares_list_container,
@@ -57,6 +60,25 @@ class FastConfigure(Dialog):
             self.username_entry,
             self.welcome_page
         ) = ui.load(scope=self, path="dialogs/fastconfigure.ui")
+
+        # Signals
+        self._signal_handlers = []
+
+        for widget, signal_name, callback in (
+            (self.previous_button, "clicked", self.on_previous),
+            (self.next_button, "clicked", self.on_next),
+            (self.stack, "notify::visible-child", self.on_page_change),
+            (self.set_up_button, "clicked", self.on_next),
+            (self.username_entry, "activate", self.on_user_entry_activate),
+            (self.username_entry, "changed", self.on_entry_changed),
+            (self.password_entry, "activate", self.on_user_entry_activate),
+            (self.password_entry, "changed", self.on_entry_changed),
+            (self.add_shared_folder_button, "clicked", self.on_add_shared_folder),
+            (self.edit_shared_folder_button, "clicked", self.on_edit_shared_folder),
+            (self.remove_shared_folder_button, "clicked", self.on_remove_shared_folder)
+        ):
+            handler_id = widget.connect(signal_name, callback)
+            self._signal_handlers.append((widget, handler_id))
 
         self.pages = [self.welcome_page, self.account_page, self.port_page, self.share_page, self.summary_page]
 
@@ -111,6 +133,9 @@ class FastConfigure(Dialog):
 
         self.download_folder_button.destroy()
         self.shares_list_view.destroy()
+
+        for widget, handler_id in self._signal_handlers:
+            widget.disconnect(handler_id)
 
         super().destroy()
 

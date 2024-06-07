@@ -233,6 +233,28 @@ class UserBrowse:
             self.share_size_label
         ) = ui.load(scope=self, path="userbrowse.ui")
 
+        # Signals
+        self._signal_handlers = []
+
+        for widget, signal_name, callback in (
+            (self.retry_button, "clicked", self.on_refresh),
+            (self.expand_button, "toggled", self.on_expand),
+            (self.path_bar_container.get_hadjustment(), "changed", self.on_path_bar_scroll),
+            (self.search_button, "toggled", self.on_show_search),
+            (self.save_button, "clicked", self.on_save),
+            (self.refresh_button, "clicked", self.on_refresh),
+            (self.search_entry, "activate", self.on_search),
+            (self.search_entry, "next-match", self.on_search_next_accelerator),
+            (self.search_entry, "previous-match", self.on_search_previous_accelerator),
+            (self.search_entry, "search-changed", self.on_search_entry_changed),
+            (self.search_entry, "stop-search", self.on_search_escape_accelerator),
+            (self.progress_bar, "map", self.on_show_progress_bar),
+            (self.progress_bar, "unmap", self.on_hide_progress_bar)
+        ):
+            handler_id = widget.connect(signal_name, callback)
+            self._signal_handlers.append((widget, handler_id))
+        self.container.weak_ref(lambda *_args: print("GONEvvv"))
+
         self.userbrowses = userbrowses
         self.window = userbrowses.window
         self.user = user
@@ -248,7 +270,6 @@ class UserBrowse:
         self.search_position = 0
 
         self.info_bar = InfoBar(parent=self.info_bar_container, button=self.retry_button)
-        self.path_bar_container.get_hadjustment().connect("changed", self.on_path_bar_scroll)
 
         # Setup folder_tree_view
         self.folder_tree_view = TreeView(
@@ -389,45 +410,51 @@ class UserBrowse:
                 (">" + _("User Actions"), self.user_popup_menu)
             )
 
-        # Key Bindings (folder_tree_view)
-        Accelerator("Left", self.folder_tree_view.widget, self.on_folder_collapse_accelerator)
-        Accelerator("minus", self.folder_tree_view.widget, self.on_folder_collapse_accelerator)  # "-"
-        Accelerator("backslash", self.folder_tree_view.widget, self.on_folder_collapse_sub_accelerator)  # "\"
-        Accelerator("equal", self.folder_tree_view.widget, self.on_folder_expand_sub_accelerator)  # "=" (for US/UK)
-        Accelerator("Right", self.folder_tree_view.widget, self.on_folder_expand_accelerator)
+        # Accelerators
+        self._accelerators = []
 
-        Accelerator("<Shift>Return", self.folder_tree_view.widget, self.on_folder_focus_filetree_accelerator)
-        Accelerator("<Primary>Return", self.folder_tree_view.widget, self.on_folder_transfer_to_accelerator)
-        Accelerator("<Shift><Primary>Return", self.folder_tree_view.widget, self.on_folder_transfer_accelerator)
-        Accelerator("<Primary><Alt>Return", self.folder_tree_view.widget, self.on_folder_open_manager_accelerator)
-        Accelerator("<Alt>Return", self.folder_tree_view.widget, self.on_file_properties_accelerator, True)
+        for accel, widget, callback in (
+            # Key Bindings (folder_tree_view)
+            ("Left", self.folder_tree_view.widget, self.on_folder_collapse_accelerator),
+            ("minus", self.folder_tree_view.widget, self.on_folder_collapse_accelerator),  # "-"
+            ("backslash", self.folder_tree_view.widget, self.on_folder_collapse_sub_accelerator),  # "\"
+            ("equal", self.folder_tree_view.widget, self.on_folder_expand_sub_accelerator),  # "=" (for US/UK)
+            ("Right", self.folder_tree_view.widget, self.on_folder_expand_accelerator),
 
-        # Key Bindings (file_list_view)
-        for accelerator in ("<Shift>Tab", "BackSpace", "backslash"):  # Avoid header, navigate up, "\"
-            Accelerator(accelerator, self.file_list_view.widget, self.on_focus_folder_accelerator)
+            ("<Shift>Return", self.folder_tree_view.widget, self.on_folder_focus_filetree_accelerator),
+            ("<Primary>Return", self.folder_tree_view.widget, self.on_folder_transfer_to_accelerator),
+            ("<Shift><Primary>Return", self.folder_tree_view.widget, self.on_folder_transfer_accelerator),
+            ("<Primary><Alt>Return", self.folder_tree_view.widget, self.on_folder_open_manager_accelerator),
+            ("<Alt>Return", self.folder_tree_view.widget, self.on_file_properties_accelerator),
 
-        Accelerator("Left", self.file_list_view.widget, self.on_focus_folder_left_accelerator)
+            # Key Bindings (file_list_view)
+            ("<Shift>Tab", self.file_list_view.widget, self.on_focus_folder_accelerator),
+            ("BackSpace", self.file_list_view.widget, self.on_focus_folder_accelerator),
+            ("backslash", self.file_list_view.widget, self.on_focus_folder_accelerator),
+            ("Left", self.file_list_view.widget, self.on_focus_folder_left_accelerator),
 
-        Accelerator("<Shift>Return", self.file_list_view.widget, self.on_file_transfer_multi_accelerator)
-        Accelerator("<Primary>Return", self.file_list_view.widget, self.on_file_transfer_to_accelerator)
-        Accelerator("<Shift><Primary>Return", self.file_list_view.widget, self.on_file_transfer_accelerator)
-        Accelerator("<Primary><Alt>Return", self.file_list_view.widget, self.on_file_open_manager_accelerator)
-        Accelerator("<Alt>Return", self.file_list_view.widget, self.on_file_properties_accelerator)
+            ("<Shift>Return", self.file_list_view.widget, self.on_file_transfer_multi_accelerator),
+            ("<Primary>Return", self.file_list_view.widget, self.on_file_transfer_to_accelerator),
+            ("<Shift><Primary>Return", self.file_list_view.widget, self.on_file_transfer_accelerator),
+            ("<Primary><Alt>Return", self.file_list_view.widget, self.on_file_open_manager_accelerator),
+            ("<Alt>Return", self.file_list_view.widget, self.on_file_properties_accelerator),
 
-        # Key Bindings (General)
-        for widget in (self.container, self.folder_tree_view.widget, self.file_list_view.widget):
-            Accelerator("<Primary>f", widget, self.on_search_accelerator)  # Find focus
+            # Key Bindings (General)
+            ("<Primary>f", self.container, self.on_search_accelerator),  # Find focus
+            ("<Primary>f", self.folder_tree_view.widget, self.on_search_accelerator),  # Find focus
+            ("<Primary>f", self.file_list_view.widget, self.on_search_accelerator),  # Find focus
+            ("Escape", self.search_entry, self.on_search_escape_accelerator),
+            ("F3", self.container, self.on_search_next_accelerator),
+            ("<Shift>F3", self.container, self.on_search_previous_accelerator),
+            ("<Primary>g", self.container, self.on_search_next_accelerator),  # Next search match
+            ("<Shift><Primary>g", self.container, self.on_search_previous_accelerator),
 
-        Accelerator("Escape", self.search_entry, self.on_search_escape_accelerator)
-        Accelerator("F3", self.container, self.on_search_next_accelerator)
-        Accelerator("<Shift>F3", self.container, self.on_search_previous_accelerator)
-        Accelerator("<Primary>g", self.container, self.on_search_next_accelerator)  # Next search match
-        Accelerator("<Shift><Primary>g", self.container, self.on_search_previous_accelerator)
-
-        Accelerator("<Primary>backslash", self.container, self.on_expand_accelerator)  # expand / collapse all (button)
-        Accelerator("F5", self.container, self.on_refresh_accelerator)
-        Accelerator("<Primary>r", self.container, self.on_refresh_accelerator)  # Refresh
-        Accelerator("<Primary>s", self.container, self.on_save_accelerator)  # Save Shares List
+            ("<Primary>backslash", self.container, self.on_expand_accelerator),  # expand / collapse all (button)
+            ("F5", self.container, self.on_refresh_accelerator),
+            ("<Primary>r", self.container, self.on_refresh_accelerator),  # Refresh
+            ("<Primary>s", self.container, self.on_save_accelerator),  # Save Shares List
+        ):
+            self._accelerators.append(Accelerator(accel, widget, callback))
 
         self.popup_menus = (
             self.folder_popup_menu, self.file_popup_menu, self.user_popup_menu
@@ -443,10 +470,16 @@ class UserBrowse:
         for menu in self.popup_menus:
             menu.destroy()
 
+        self.populate_path_bar()
         self.info_bar.destroy()
         self.folder_tree_view.destroy()
         self.file_list_view.destroy()
-        self.__dict__.clear()
+
+        for widget, handler_id in self._signal_handlers:
+            widget.disconnect(handler_id)
+
+        for accelerator in self._accelerators:
+            accelerator.destroy()
 
         self.indeterminate_progress = False  # Stop progress bar timer
 
@@ -648,6 +681,14 @@ class UserBrowse:
         self.refresh_button.set_sensitive(True)
         self.save_button.set_sensitive(not self.folder_tree_view.is_empty())
 
+    def on_path_bar_clicked(self, _button, folder_path):
+
+        iterator = self.folder_tree_view.iterators.get(folder_path)
+
+        if iterator:
+            self.folder_tree_view.select_row(iterator)
+            self.folder_tree_view.grab_focus()
+
     def populate_path_bar(self, folder_path=""):
 
         for widget in list(self.path_bar):
@@ -655,6 +696,14 @@ class UserBrowse:
 
         if not folder_path:
             return
+
+        def on_path_bar_clicked(_button, folder_path):
+
+            iterator = self.folder_tree_view.iterators.get(folder_path)
+
+            if iterator:
+                self.folder_tree_view.select_row(iterator)
+                self.folder_tree_view.grab_focus()
 
         folder_path_split = folder_path.split("\\")
 
@@ -1364,14 +1413,6 @@ class UserBrowse:
         if self.indeterminate_progress:
             self.indeterminate_progress = False
             progress_bar.set_fraction(0.0)
-
-    def on_path_bar_clicked(self, _button, folder_path):
-
-        iterator = self.folder_tree_view.iterators.get(folder_path)
-
-        if iterator:
-            self.folder_tree_view.select_row(iterator)
-            self.folder_tree_view.grab_focus()
 
     def on_path_bar_scroll(self, adjustment, *_args):
 

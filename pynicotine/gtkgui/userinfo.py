@@ -249,9 +249,11 @@ class UserInfo:
     def __init__(self, userinfos, user):
 
         (
+            self.add_remove_buddy_button,
             self.add_remove_buddy_label,
             self.ban_unban_user_button,
             self.ban_unban_user_label,
+            self.browse_files_button,
             self.container,
             self.country_icon,
             self.country_label,
@@ -272,12 +274,36 @@ class UserInfo:
             self.queued_uploads_label,
             self.refresh_button,
             self.retry_button,
+            self.send_message_button,
             self.shared_files_label,
             self.shared_folders_label,
+            self.show_ip_address_button,
             self.upload_slots_label,
             self.upload_speed_label,
             self.user_label
         ) = ui.load(scope=self, path="userinfo.ui")
+
+        # Signals
+        self._signal_handlers = []
+
+        for widget, signal_name, callback in (
+            (self.retry_button, "clicked", self.on_refresh),
+            (self.edit_profile_button, "clicked", self.on_edit_profile),
+            (self.edit_interests_button, "clicked", self.on_edit_interests),
+            (self.send_message_button, "clicked", self.on_send_message),
+            (self.browse_files_button, "clicked", self.on_browse_user),
+            (self.add_remove_buddy_button, "clicked", self.on_add_remove_buddy),
+            (self.ban_unban_user_button, "clicked", self.on_ban_unban_user),
+            (self.ignore_unignore_user_button, "clicked", self.on_ignore_unignore_user),
+            (self.show_ip_address_button, "clicked", self.on_show_ip_address),
+            (self.gift_privileges_button, "clicked", self.on_give_privileges),
+            (self.refresh_button, "clicked", self.on_refresh),
+            (self.progress_bar, "map", self.on_show_progress_bar),
+            (self.progress_bar, "unmap", self.on_hide_progress_bar)
+        ):
+            handler_id = widget.connect(signal_name, callback)
+            self._signal_handlers.append((widget, handler_id))
+        self.container.weak_ref(lambda *_args: print("GONE"))
 
         self.userinfos = userinfos
         self.window = userinfos.window
@@ -389,7 +415,9 @@ class UserInfo:
         self.description_view.destroy()
         self.likes_list_view.destroy()
         self.dislikes_list_view.destroy()
-        self.__dict__.clear()
+
+        for widget, handler_id in self._signal_handlers:
+            widget.disconnect(handler_id)
 
         self.indeterminate_progress = False  # Stop progress bar timer
 

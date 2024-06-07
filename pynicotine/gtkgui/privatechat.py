@@ -322,6 +322,16 @@ class PrivateChat:
             self.speech_toggle
         ) = ui.load(scope=self, path="privatechat.ui")
 
+        # Signals
+        self._signal_handlers = []
+
+        for widget, signal_name, callback in (
+            (self.log_toggle, "toggled", self.on_log_toggled),
+        ):
+            handler_id = widget.connect(signal_name, callback)
+            self._signal_handlers.append((widget, handler_id))
+        self.container.weak_ref(lambda *_args: print("GONE2"))
+
         self.user = user
         self.chats = chats
         self.window = chats.window
@@ -425,7 +435,9 @@ class PrivateChat:
         self.chat_entry.destroy()
         self.chat_view.destroy()
         self.search_bar.destroy()
-        self.__dict__.clear()
+
+        for widget, handler_id in self._signal_handlers:
+            widget.disconnect(handler_id)
 
     def set_label(self, label):
         self.popup_menu_user_tab.set_parent(label)

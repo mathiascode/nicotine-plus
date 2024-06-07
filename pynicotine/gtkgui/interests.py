@@ -53,6 +53,20 @@ class Interests:
             self.similar_users_list_container
         ) = ui.load(scope=self, path="interests.ui")
 
+        # Signals
+        self._signal_handlers = []
+
+        for widget, signal_name, callback in (
+            (self.add_like_entry, "activate", self.on_add_thing_i_like),
+            (self.add_like_entry, "icon-press", self.on_add_thing_i_like),
+            (self.add_dislike_entry, "activate", self.on_add_thing_i_dislike),
+            (self.add_dislike_entry, "icon-press", self.on_add_thing_i_dislike),
+            (self.recommendations_button, "clicked", self.on_recommendations_clicked)
+        ):
+            handler_id = widget.connect(signal_name, callback)
+            self._signal_handlers.append((widget, handler_id))
+        self.container.weak_ref(lambda *_args: print("GONE"))
+
         if GTK_API_VERSION >= 4:
             window.interests_container.append(self.container)
         else:
@@ -235,6 +249,9 @@ class Interests:
         self.dislikes_list_view.destroy()
         self.recommendations_list_view.destroy()
         self.similar_users_list_view.destroy()
+
+        for widget, handler_id in self._signal_handlers:
+            widget.disconnect(handler_id)
 
         self.__dict__.clear()
 

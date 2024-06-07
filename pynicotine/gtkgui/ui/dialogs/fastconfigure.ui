@@ -5,12 +5,10 @@
     <property name="label" translatable="yes">_Previous</property>
     <property name="use-underline">True</property>
     <property name="visible">True</property>
-    <signal name="clicked" handler="on_previous"/>
   </object>
   <object class="GtkButton" id="next_button">
     <property name="use-underline">True</property>
     <property name="visible">True</property>
-    <signal name="clicked" handler="on_next"/>
     <style>
       <class name="suggested-action"/>
     </style>
@@ -25,7 +23,6 @@
     <property name="transition-type">slide-left-right</property>
     <property name="visible">True</property>
     <property name="width-request">360</property>
-    <signal name="notify::visible-child" handler="on_page_change"/>
     <child>
       <object class="GtkBox" id="welcome_page">
         <property name="halign">center</property>
@@ -83,7 +80,6 @@
             <property name="height-request">42</property>
             <property name="margin-top">6</property>
             <property name="visible">True</property>
-            <signal name="clicked" handler="on_next"/>
             <child>
               <object class="GtkLabel">
                 <property name="label" translatable="yes">_Set Up…</property>
@@ -180,8 +176,6 @@
                       <object class="GtkEntry" id="username_entry">
                         <property name="visible">True</property>
                         <property name="width-chars">20</property>
-                        <signal name="activate" handler="on_user_entry_activate"/>
-                        <signal name="changed" handler="on_entry_changed"/>
                       </object>
                     </child>
                   </object>
@@ -214,8 +208,6 @@
                         <property name="visibility">False</property>
                         <property name="visible">True</property>
                         <property name="width-chars">20</property>
-                        <signal name="activate" handler="on_user_entry_activate"/>
-                        <signal name="changed" handler="on_entry_changed"/>
                       </object>
                     </child>
                   </object>
@@ -381,10 +373,9 @@
                         <property name="spacing">6</property>
                         <property name="visible">True</property>
                         <child>
-                          <object class="GtkButton" id="_add_shared_folder_button">
+                          <object class="GtkButton" id="add_shared_folder_button">
                             <property name="tooltip-text" translatable="yes">Add…</property>
                             <property name="visible">True</property>
-                            <signal name="clicked" handler="on_add_shared_folder"/>
                             <child>
                               <object class="GtkBox">
                                 <property name="spacing">6</property>
@@ -399,7 +390,7 @@
                                   <object class="GtkLabel">
                                     <property name="ellipsize">end</property>
                                     <property name="label" translatable="yes">Add…</property>
-                                    <property name="mnemonic-widget">_add_shared_folder_button</property>
+                                    <property name="mnemonic-widget">add_shared_folder_button</property>
                                     <property name="use-underline">True</property>
                                     <property name="visible">True</property>
                                   </object>
@@ -412,10 +403,9 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkButton" id="_edit_shared_folder_button">
+                          <object class="GtkButton" id="edit_shared_folder_button">
                             <property name="tooltip-text" translatable="yes">Edit…</property>
                             <property name="visible">True</property>
-                            <signal name="clicked" handler="on_edit_shared_folder"/>
                             <child>
                               <object class="GtkBox">
                                 <property name="spacing">6</property>
@@ -430,7 +420,7 @@
                                   <object class="GtkLabel">
                                     <property name="ellipsize">end</property>
                                     <property name="label" translatable="yes">Edit…</property>
-                                    <property name="mnemonic-widget">_edit_shared_folder_button</property>
+                                    <property name="mnemonic-widget">edit_shared_folder_button</property>
                                     <property name="use-underline">True</property>
                                     <property name="visible">True</property>
                                   </object>
@@ -443,10 +433,9 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkButton" id="_remove_shared_folder_button">
+                          <object class="GtkButton" id="remove_shared_folder_button">
                             <property name="tooltip-text" translatable="yes">Remove</property>
                             <property name="visible">True</property>
-                            <signal name="clicked" handler="on_remove_shared_folder"/>
                             <child>
                               <object class="GtkBox">
                                 <property name="spacing">6</property>
@@ -461,7 +450,7 @@
                                   <object class="GtkLabel">
                                     <property name="ellipsize">end</property>
                                     <property name="label" translatable="yes">Remove</property>
-                                    <property name="mnemonic-widget">_remove_shared_folder_button</property>
+                                    <property name="mnemonic-widget">remove_shared_folder_button</property>
                                     <property name="use-underline">True</property>
                                     <property name="visible">True</property>
                                   </object>

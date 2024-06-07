@@ -56,6 +56,17 @@ class FileProperties(Dialog):
             self.username_value_label
         ) = ui.load(scope=self, path="dialogs/fileproperties.ui")
 
+        # Signals
+        self._signal_handlers = []
+
+        for widget, signal_name, callback in (
+            (self.previous_button, "clicked", self.on_previous),
+            (self.next_button, "clicked", self.on_next)
+        ):
+            handler_id = widget.connect(signal_name, callback)
+            self._signal_handlers.append((widget, handler_id))
+        self.container.weak_ref(lambda *_args: print("GONE"))
+
         super().__init__(
             parent=application.window,
             content_box=self.container,
@@ -64,6 +75,13 @@ class FileProperties(Dialog):
             title=_("File Properties"),
             width=600
         )
+
+    def destroy(self):
+
+        for widget, handler_id in self._signal_handlers:
+            widget.disconnect(handler_id)
+
+        super().destroy()
 
     def update_title(self):
 

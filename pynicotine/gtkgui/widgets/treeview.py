@@ -73,6 +73,9 @@ class TreeView:
         self._sort_type = None
         self._persistent_sort = persistent_sort
         self._columns_changed_handler = None
+        self._activate_row_handler = None
+        self._select_row_handler = None
+        self._delete_accelerator = None
         self._last_redraw_time = 0
         self._selection = self.widget.get_selection()
         self._h_adjustment = parent.get_hadjustment()
@@ -80,7 +83,9 @@ class TreeView:
         self._v_adjustment_upper = 0
         self._v_adjustment_value = 0
         self._is_scrolling_to_row = False
-        self.notify_value_handler = self._v_adjustment.connect("notify::value", self.on_v_adjustment_value)
+        self._notify_value_handler = self._v_adjustment.connect("notify::value", self.on_v_adjustment_value)
+        self._accelerators = []
+        self._renderer_signal_handlers = []
 
         if GTK_API_VERSION >= 4:
             parent.set_child(self.widget)  # pylint: disable=no-member
@@ -89,9 +94,9 @@ class TreeView:
 
         self._initialise_columns(columns)
 
-        Accelerator("<Primary>c", self.widget, self.on_copy_cell_data_accelerator)
-        Accelerator("<Primary>a", self.widget, self.on_select_all)
-        Accelerator("<Primary>f", self.widget, self.on_start_search)
+        self._accelerators.append(Accelerator("<Primary>c", self.widget, self.on_copy_cell_data_accelerator))
+        self._accelerators.append(Accelerator("<Primary>a", self.widget, self.on_select_all))
+        self._accelerators.append(Accelerator("<Primary>f", self.widget, self.on_start_search))
 
         self._column_menu = self.widget.column_menu = PopupMenu(
             self.window.application, self.widget, callback=self.on_column_header_menu, connect_events=False)
@@ -101,7 +106,8 @@ class TreeView:
             self._selection.set_mode(Gtk.SelectionMode.MULTIPLE)
 
         if activate_row_callback:
-            self.widget.connect("row-activated", self.on_activate_row, activate_row_callback)
+            self._activate_row_handler = self.widget.connect(
+                "row-activated", self.on_activate_row, activate_row_callback)
 
         if focus_in_callback:
             if GTK_API_VERSION >= 4:
@@ -112,10 +118,11 @@ class TreeView:
                 self.widget.connect("focus-in-event", self.on_focus_in, focus_in_callback)
 
         if select_row_callback:
-            self._selection.connect("changed", self.on_select_row, select_row_callback)
+            self._select_row_handler = self._selection.connect("changed", self.on_select_row, select_row_callback)
 
         if delete_accelerator_callback:
-            Accelerator("Delete", self.widget, self.on_delete_accelerator, delete_accelerator_callback)
+            self._accelerators.append(
+                Accelerator("Delete", self.widget, self.on_delete_accelerator, delete_accelerator_callback))
 
         if search_entry:
             self.widget.set_search_entry(search_entry)
@@ -137,7 +144,22 @@ class TreeView:
         # Prevent updates while destroying widget
         self.widget.disconnect(self._columns_changed_handler)
         self.widget.disconnect(self._query_tooltip_handler)
-        self._v_adjustment.disconnect(self.notify_value_handler)
+        self._v_adjustment.disconnect(self._notify_value_handler)
+
+        if self._activate_row_handler is not None:
+            self.widget.disconnect(self._activate_row_handler)
+
+        if self._select_row_handler is not None:
+            self._selection.disconnect(self._select_row_handler)
+
+        for accelerator in self._accelerators:
+            accelerator.destroy()
+
+        for renderer, handler_id in self._renderer_signal_handlers:
+            renderer.disconnect(handler_id)
+
+        for column in self.widget.get_columns():
+            column.tooltip_callback = None
 
         self._column_menu.destroy()
         self.__dict__.clear()
@@ -350,7 +372,8 @@ class TreeView:
             elif column_type == "toggle":
                 xalign = 0.5
                 renderer = Gtk.CellRendererToggle(mode=mode, xalign=xalign, xpad=13)
-                renderer.connect("toggled", self.on_toggle, column_data["toggle_callback"])
+                handler_id = renderer.connect("toggled", self.on_toggle, column_data["toggle_callback"])
+                self._renderer_signal_handlers.append((renderer, handler_id))
 
                 column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, active=column_index)
 

@@ -305,6 +305,8 @@ class Search:
         elif mode == "user":
             self.do_peer_search(search_term_no_quotes, users)
 
+        print(search_term)
+        print(excluded_words)
         search = self.add_search(search_term, included_words, excluded_words, mode, room, users)
         events.emit("add-search", search.token, search, switch_page)
 

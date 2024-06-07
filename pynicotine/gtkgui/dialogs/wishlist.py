@@ -34,10 +34,27 @@ class WishList(Dialog):
     def __init__(self, application):
 
         (
+            self.clear_all_button,
             self.container,
+            self.edit_button,
             self.list_container,
+            self.remove_button,
             self.wish_entry
         ) = ui.load(scope=self, path="dialogs/wishlist.ui")
+
+        # Signals
+        self._signal_handlers = []
+
+        for widget, signal_name, callback in (
+            (self.wish_entry, "activate", self.on_add_wish),
+            (self.wish_entry, "icon-press", self.on_add_wish),
+            (self.edit_button, "clicked", self.on_edit_wish),
+            (self.remove_button, "clicked", self.on_remove_wish),
+            (self.clear_all_button, "clicked", self.on_clear_wishlist)
+        ):
+            handler_id = widget.connect(signal_name, callback)
+            self._signal_handlers.append((widget, handler_id))
+        self.container.weak_ref(lambda *_args: print("GONE"))
 
         super().__init__(
             parent=application.window,
@@ -89,6 +106,9 @@ class WishList(Dialog):
         self.list_view.destroy()
         self.completion_entry.destroy()
         self.popup_menu.destroy()
+
+        for widget, handler_id in self._signal_handlers:
+            widget.disconnect(handler_id)
 
         super().destroy()
 

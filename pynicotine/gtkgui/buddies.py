@@ -46,10 +46,22 @@ class Buddies:
     def __init__(self, window):
 
         (
+            self.add_buddy_entry,
             self.container,
             self.list_container,
             self.side_toolbar
         ) = ui.load(scope=self, path="buddies.ui")
+
+        # Signals
+        self._signal_handlers = []
+
+        for widget, signal_name, callback in (
+            (self.add_buddy_entry, "activate", self.on_add_buddy),
+            (self.add_buddy_entry, "icon-press", self.on_add_buddy)
+        ):
+            handler_id = widget.connect(signal_name, callback)
+            self._signal_handlers.append((widget, handler_id))
+        self.container.weak_ref(lambda *_args: print("GONE3"))
 
         self.window = window
         self.page = window.userlist_page
@@ -168,7 +180,8 @@ class Buddies:
         self.list_view.destroy()
         self.popup_menu.destroy()
 
-        self.__dict__.clear()
+        for widget, handler_id in self._signal_handlers:
+            widget.disconnect(handler_id)
 
     def on_focus(self, *_args):
 

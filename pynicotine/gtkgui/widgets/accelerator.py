@@ -34,6 +34,10 @@ class Accelerator:
 
     def __init__(self, accelerator, widget, callback, user_data=None):
 
+        self.widget = widget
+        self.activate_accelerator_handler = None
+        self.shortcut = None
+
         if GTK_API_VERSION >= 4:
             if sys.platform == "darwin":
                 # Use Command key instead of Ctrl in accelerators on macOS
@@ -50,12 +54,11 @@ class Accelerator:
             if not shortcut_trigger:
                 self.shortcut_triggers[accelerator] = shortcut_trigger = Gtk.ShortcutTrigger.parse_string(accelerator)
 
-            widget.shortcut_controller.add_shortcut(
-                Gtk.Shortcut(
-                    trigger=shortcut_trigger,
-                    action=Gtk.CallbackAction.new(callback, user_data)
-                )
+            self.shortcut = Gtk.Shortcut(
+                trigger=shortcut_trigger,
+                action=Gtk.CallbackAction.new(callback, user_data)
             )
+            widget.shortcut_controller.add_shortcut(self.shortcut)
             return
 
         # GTK 3 replacement for Gtk.ShortcutController
@@ -63,7 +66,18 @@ class Accelerator:
         self.callback = callback
         self.user_data = user_data
 
-        widget.connect("key-press-event", self._activate_accelerator)
+        self.activate_accelerator_handler = widget.connect("key-press-event", self._activate_accelerator)
+
+    def destroy(self):
+
+        if self.activate_accelerator_handler is not None:
+            self.widget.disconnect(self.activate_accelerator_handler)
+
+        if hasattr(self.widget, "shortcut_controller"):
+            self.widget.shortcut_controller.remove_shortcut(self.shortcut)
+
+        self.callback = None
+        self.shortcut = None
 
     @classmethod
     def parse_accelerator(cls, accelerator):

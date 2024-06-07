@@ -427,6 +427,16 @@ class ChatRoom:
             self.users_list_container
         ) = ui.load(scope=self, path="chatrooms.ui")
 
+        # Signals
+        self._signal_handlers = []
+
+        for widget, signal_name, callback in (
+            (self.log_toggle, "toggled", self.on_log_toggled),
+        ):
+            handler_id = widget.connect(signal_name, callback)
+            self._signal_handlers.append((widget, handler_id))
+        self.container.weak_ref(lambda *_args: print("GONE"))
+
         self.chatrooms = chatrooms
         self.window = chatrooms.window
         self.room = room
@@ -588,9 +598,15 @@ class ChatRoom:
 
         self.activity_view.destroy()
         self.chat_view.destroy()
+        self.activity_search_bar.destroy()
+        self.chat_search_bar.destroy()
         self.chat_entry.destroy()
         self.users_list_view.destroy()
-        self.__dict__.clear()
+
+        for widget, handler_id in self._signal_handlers:
+            widget.disconnect(handler_id)
+
+        #self.__dict__.clear()
 
     def set_label(self, label):
         self.tab_menu.set_parent(label)
