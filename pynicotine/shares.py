@@ -978,6 +978,7 @@ class Shares:
         import multiprocessing
 
         context = multiprocessing.get_context(method="spawn")
+        context.freeze_support()
         scanner_queue = context.Queue()
         scanner_obj = Scanner(
             config,
