@@ -38,6 +38,9 @@ class Window:
 
         self.widget = widget
 
+        if GTK_API_VERSION >= 4 and sys.platform == "win32":
+            widget.connect("notify::visible", self._on_visible_win32)
+
         if LIBADWAITA_API_VERSION and sys.platform == "win32":
             # Use dark window controls on Windows when requested
             from gi.repository import Adw  # pylint: disable=no-name-in-module
@@ -53,6 +56,22 @@ class Window:
     def _menu_popup(self, controller, widget):
         if controller.is_active():
             widget.activate_action("menu.popup")
+
+    def _on_visible_win32(self, *_args):
+
+        if not self.get_visible():
+            return
+
+        from ctypes import windll
+
+        # Don't overlap taskbar when auto-hidden
+        h_wnd = self.get_surface().get_handle()
+        windll.user32.SetPropW(h_wnd, "NonRudeHWND", True)
+
+        # Set dark window controls
+        if LIBADWAITA_API_VERSION:
+            from gi.repository import Adw  # pylint: disable=no-name-in-module
+            self._on_dark_mode_win32(Adw.StyleManager.get_default())
 
     def _on_dark_mode_win32(self, style_manager, *_args):
 
@@ -128,6 +147,9 @@ class Window:
 
         return self.widget.get_position()
 
+    def get_visible(self):
+        return self.widget.get_visible()
+
     def is_active(self):
         return self.widget.is_active()
 
@@ -147,10 +169,6 @@ class Window:
             self.widget.set_startup_id(self.activation_token)
 
         self.widget.present()
-
-        if LIBADWAITA_API_VERSION and sys.platform == "win32":
-            from gi.repository import Adw  # pylint: disable=no-name-in-module
-            self._on_dark_mode_win32(Adw.StyleManager.get_default())
 
     def hide(self):
         self.widget.set_visible(False)
