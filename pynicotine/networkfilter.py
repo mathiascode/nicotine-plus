@@ -16,16 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 from bisect import bisect_left
 from socket import inet_aton
 from struct import Struct
+from sys import intern
 
 from pynicotine import slskmessages
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
-from pynicotine.external.data import country_codes
-from pynicotine.external.data import ip_ranges
+from pynicotine.logfacility import log
 
 UINT32_UNPACK = Struct(">I").unpack_from
 
@@ -291,11 +293,64 @@ class NetworkFilter:
         self.ip_ban_requested = {}
         self.ip_ignore_requested = {}
 
+        self._ip_range_countries = ()
+        self._ip_range_values = ()
+        self._loaded_ip_country_data = False
+
         for event_name, callback in (
             ("peer-address", self._get_peer_address),
             ("server-disconnect", self._server_disconnect)
         ):
             events.connect(event_name, callback)
+
+    def _populate_ip_country_data(self):
+
+        data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "external", "ip_country_data")
+        timestamp = None
+        is_invalid_data = False
+
+        for file_name, is_integer in (
+            ("ip_range_values", True),
+            ("ip_range_countries", False)
+        ):
+            new_timestamp = None
+
+            with open(os.path.join(data_path, f"{file_name}.txt"), "r", encoding="ascii") as file_handle:
+                for line in file_handle:
+                    if line.startswith("# Generated on"):
+                        new_timestamp = line
+                        continue
+
+                    if not new_timestamp:
+                        continue
+
+                    try:
+                        if is_integer:
+                            data = tuple(int(x) for x in line.split(","))
+                        else:
+                            # String interning to reduce memory usage of duplicate strings
+                            data = tuple(intern(x) for x in line.split(","))
+
+                    except ValueError:
+                        is_invalid_data = True
+                        break
+
+                    setattr(self, f"_{file_name}", data)
+                    break
+
+            if timestamp is None:
+                timestamp = new_timestamp
+
+            if new_timestamp is None or new_timestamp != timestamp:
+                is_invalid_data = True
+                break
+
+        if len(self._ip_range_countries) != len(self._ip_range_values):
+            is_invalid_data = True
+
+        if is_invalid_data:
+            self._ip_range_countries = self._ip_range_values = ()
+            log.add_debug("Invalid IP country data provided")
 
     def _server_disconnect(self, _msg):
         self.ip_ban_requested.clear()
@@ -411,9 +466,16 @@ class NetworkFilter:
 
     def get_country_code(self, ip_address):
 
+        if not self._loaded_ip_country_data:
+            self._populate_ip_country_data()
+            self._loaded_ip_country_data = True
+
+        if not self._ip_range_countries:
+            return ""
+
         ip_num, = UINT32_UNPACK(inet_aton(ip_address))
-        ip_index = bisect_left(ip_ranges.values, ip_num)
-        country_code = country_codes.values[ip_index]
+        ip_index = bisect_left(self._ip_range_values, ip_num)
+        country_code = self._ip_range_countries[ip_index]
 
         return country_code
 

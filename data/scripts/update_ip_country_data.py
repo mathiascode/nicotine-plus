@@ -32,6 +32,7 @@ EXPECTED_LICENSE = b"Creative Commons Attribution-ShareAlike 4.0 International"
 MAX_IPV4_RANGE = 4294967295
 MAX_RESPONSE_BYTES = 5000000
 BASE_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+DATA_PATH = os.path.join(BASE_PATH, "pynicotine", "external", "ip_country_data")
 
 
 def parse_ip_country_data():
@@ -42,9 +43,8 @@ def parse_ip_country_data():
     if int(headers["Content-Length"]) > MAX_RESPONSE_BYTES:
         raise ValueError("Country data response too large")
 
-    country_codes = set()
-    ip_ranges = []
-    country_values = []
+    ip_range_values = []
+    ip_range_countries = []
     copyright_notice = None
 
     with zipfile.ZipFile(file_path, "r") as zip_file_handle:
@@ -76,11 +76,10 @@ def parse_ip_country_data():
                 if address_to < 0 or address_to > MAX_IPV4_RANGE:
                     raise ValueError("Invalid IP address")
 
-                country_codes.add(country_code)
-                ip_ranges.append(address_to)
-                country_values.append(country_code)
+                ip_range_values.append(address_to)
+                ip_range_countries.append(country_code)
 
-    return country_codes, ip_ranges, country_values, copyright_notice
+    return ip_range_values, ip_range_countries, copyright_notice
 
 
 def update_ip_country_data():
@@ -88,52 +87,34 @@ def update_ip_country_data():
 
     timestamp_updated = int(time.time())
     h_timestamp_updated = time.strftime("%Y-%m-%d", time.localtime(timestamp_updated))
-    country_codes, ip_ranges, country_values, copyright_notice = parse_ip_country_data()
+    ip_range_values, ip_range_countries, copyright_notice = parse_ip_country_data()
 
     # File header
     output_header = bytearray(f"""# {PRODUCT_NAME} is licensed under
 # {EXPECTED_LICENSE.decode()}.
-#
 # {copyright_notice.decode()}
-#
-# Generated on {h_timestamp_updated}
 
-timestamp={timestamp_updated}
+# Generated on {h_timestamp_updated}
 """.encode())
 
-    output_ip_ranges = output_header.copy()
-    output_country_codes = output_header.copy()
+    output_ip_range_values = output_header.copy()
+    output_ip_range_countries = output_header.copy()
 
-    # IP ranges
-    output_ip_ranges.extend(b"values=")
+    # IP range countries
+    for country_code in ip_range_countries:
+        output_ip_range_countries.extend(f'{country_code.replace("-", "")},'.encode())
 
-    for ip_address in ip_ranges:
-        output_ip_ranges.extend(f"{ip_address},".encode())
-
-    # Country codes
-    start_output = bytearray()
-    end_output = bytearray()
-
-    for country_code in sorted(country_codes):
-        start_output.extend(f'{country_code.replace("-", "_")},'.encode())
-        end_output.extend(f'"{country_code.replace("-", "")}",'.encode())
-
-    output_country_codes.extend(start_output.rstrip(b","))
-    output_country_codes.extend(b"=")
-    output_country_codes.extend(end_output.rstrip(b","))
-
-    output_country_codes.extend(b"\nvalues=")
-
-    for country_code in country_values:
-        output_country_codes.extend(f'{country_code.replace("-", "_")},'.encode())
+    # IP range data
+    for ip_address in ip_range_values:
+        output_ip_range_values.extend(f"{ip_address},".encode())
 
     # Write data to files
     for basename, output in (
-        ("ip_ranges", output_ip_ranges),
-        ("country_codes", output_country_codes)
+        ("ip_range_countries", output_ip_range_countries),
+        ("ip_range_values", output_ip_range_values)
     ):
-        with open(os.path.join(BASE_PATH, "pynicotine", "external", "data", f"{basename}.py"), "wb") as file_handle:
-            file_handle.write(output.rstrip(b","))
+        with open(os.path.join(DATA_PATH, f"{basename}.txt"), "wb") as file_handle:
+            file_handle.write(output[:-1])
 
 
 if __name__ == "__main__":
