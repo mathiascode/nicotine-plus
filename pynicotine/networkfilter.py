@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 from bisect import bisect_left
 from socket import inet_aton
 from struct import Struct
@@ -24,8 +26,7 @@ from pynicotine import slskmessages
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
-from pynicotine.external.data import country_codes
-from pynicotine.external.data import ip_ranges
+from pynicotine.logfacility import log
 
 UINT32_UNPACK = Struct(">I").unpack_from
 
@@ -291,11 +292,102 @@ class NetworkFilter:
         self.ip_ban_requested = {}
         self.ip_ignore_requested = {}
 
+        self._countries = ()
+        self._ip_range_countries = ()
+        self._ip_range_values = ()
+        self._loaded_ip_country_data = False
+
         for event_name, callback in (
             ("peer-address", self._get_peer_address),
             ("server-disconnect", self._server_disconnect)
         ):
             events.connect(event_name, callback)
+
+    def _populate_ip_country_data(self):
+
+        def parse_data(data, is_integer=True):
+
+            data_mem = data
+            sep = b","
+            sep_len = len(sep)
+            start = 0
+
+            while True:
+                idx = data.find(sep, start)
+
+                if idx == -1:
+                    value = data_mem[start:]
+                    yield int(value) if is_integer else value.decode()
+                    return
+
+                value = data_mem[start:idx]
+                yield int(value) if is_integer else value.decode()
+                start = idx + sep_len
+
+        data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "external", "ip_country_data")
+        timestamp = None
+        is_invalid_data = False
+
+        for file_name, is_integer in (
+            ("ip_range_values", True),
+            ("ip_range_countries", True),
+            ("countries", False)
+        ):
+            new_timestamp = None
+
+            with open(os.path.join(data_path, f"{file_name}.txt"), "r", encoding="ascii") as file_handle:
+                reading_timestamp = False
+                reading_data = False
+
+                for line in file_handle:
+                    if line.startswith("# Timestamp"):
+                        reading_timestamp = True
+                        continue
+
+                    if line.startswith("# Data"):
+                        reading_data = True
+                        continue
+
+                    if reading_timestamp:
+                        new_timestamp = int(line)
+                        reading_timestamp = False
+                        continue
+
+                    if reading_data:
+                        try:
+                            if is_integer:
+                                data = tuple(map(int, line.split(",")))
+                            else:
+                                data = tuple(line.split(","))
+
+                        except ValueError:
+                            is_invalid_data = True
+                            break
+
+                        setattr(self, f"_{file_name}", data)
+                        reading_data = False
+                        continue
+
+            if timestamp is None:
+                timestamp = new_timestamp
+
+            if new_timestamp is None or new_timestamp != timestamp:
+                is_invalid_data = True
+                break
+
+        if len(self._ip_range_countries) != len(self._ip_range_values):
+            is_invalid_data = True
+        else:
+            num_countries = len(self._countries)
+
+            """for country_index in self._ip_range_countries:
+                if country_index < 0 or country_index > num_countries:
+                    is_invalid_data = True
+                    break"""
+
+        if is_invalid_data:
+            self._countries = self._ip_range_countries = self._ip_range_values = ()
+            log.add_debug("Invalid IP country data provided")
 
     def _server_disconnect(self, _msg):
         self.ip_ban_requested.clear()
@@ -411,9 +503,17 @@ class NetworkFilter:
 
     def get_country_code(self, ip_address):
 
+        if not self._loaded_ip_country_data:
+            self._populate_ip_country_data()
+            self._loaded_ip_country_data = True
+
+        if not self._countries:
+            return ""
+
         ip_num, = UINT32_UNPACK(inet_aton(ip_address))
-        ip_index = bisect_left(ip_ranges.values, ip_num)
-        country_code = country_codes.values[ip_index]
+        ip_index = bisect_left(self._ip_range_values, ip_num)
+        country_index = self._ip_range_countries[ip_index]
+        country_code = self._countries[country_index]
 
         return country_code
 
