@@ -753,9 +753,12 @@ class GetPeerAddress(ServerMessage):
 class WatchUser(ServerMessage):
     """Server code 5.
 
-    Used to be kept updated about a user's stats. When a user's stats
-    have changed, the server sends a GetUserStats response message with
-    the new user stats.
+    Used to be kept updated about a user's status. Whenever a user's status
+    changes, the server sends a GetUserStatus message.
+
+    Note that the server does not currently send stat updates (GetUserStats)
+    when watching a user, only the initial stats in the WatchUser response.
+    As a consequence, stats can be outdated.
     """
 
     __slots__ = ("user", "userexists", "status", "avgspeed", "uploadnum", "files", "dirs", "country")
@@ -798,7 +801,7 @@ class WatchUser(ServerMessage):
 class UnwatchUser(ServerMessage):
     """Server code 6.
 
-    Used when we no longer want to be kept updated about a user's stats.
+    Used when we no longer want to be kept updated about a user's status.
     """
 
     __slots__ = ("user",)
@@ -872,6 +875,10 @@ class JoinRoom(ServerMessage):
 
     Server responds with this message when we join a room. Contains
     users list with data on everyone.
+
+    As long as we're in the room, the server will automatically send us
+    status/stat updates for room users, including ourselves, in the form
+    of GetUserStatus and GetUserStats messages.
     """
 
     __slots__ = ("room", "private", "owner", "users", "operators")
@@ -974,11 +981,9 @@ class UserLeftRoom(ServerMessage):
 class ConnectToPeer(ServerMessage):
     """Server code 18.
 
-    Either we ask server to tell someone else we want to establish a
-    connection with them, or server tells us someone wants to connect
-    with us. Used when the side that wants a connection can't establish
-    it, and tries to go the other way around (direct connection has
-    failed).
+    We send this to the server to attempt an indirect connection with a user.
+    The server forwards the message to the user, who in turn attempts to establish
+    a connection to our IP address and port from their end.
     """
 
     __slots__ = ("token", "user", "conn_type", "ip_address", "port", "privileged", "unknown", "obfuscated_port")
@@ -1139,6 +1144,9 @@ class SetStatus(ServerMessage):
     We send our new status to the server. Status is a way to define
     whether we're available (online) or busy (away).
 
+    When changing our own status, the server sends us a GetUserStatus
+    message when enabling away status, but not when disabling it.
+
     1 = Away 2 = Online
     """
 
@@ -1245,12 +1253,12 @@ class GetUserStats(ServerMessage):
 
     __slots__ = ("user", "avgspeed", "uploadnum", "files", "dirs")
 
-    def __init__(self, user=None):
+    def __init__(self, user=None, avgspeed=None, files=None, dirs=None):
         self.user = user
-        self.avgspeed = None
+        self.avgspeed = avgspeed
+        self.files = files
+        self.dirs = dirs
         self.uploadnum = None
-        self.files = None
-        self.dirs = None
 
     def make_network_message(self):
         return self.pack_string(self.user)
@@ -2848,7 +2856,7 @@ class CantCreateRoom(ServerMessage):
     """Server code 1003.
 
     Server tells us a new room cannot be created. This message only
-    seems to be sent if you try to create a room with the same name as
+    seems to be sent if we try to create a room with the same name as
     an existing private room. In other cases, such as using a room name
     with leading or trailing spaces, only a private message containing
     an error message is sent.
@@ -3393,11 +3401,11 @@ class FolderContentsResponse(PeerMessage):
         msg = bytearray()
         msg.extend(self.pack_uint32(self.token))
         msg.extend(self.pack_string(self.dir))
-        msg.extend(self.pack_uint32(1))
-
-        msg.extend(self.pack_string(self.dir))
 
         if self.list is not None:
+            msg.extend(self.pack_uint32(1))
+            msg.extend(self.pack_string(self.dir))
+
             # We already saved the folder contents as a bytearray when scanning our shares
             msg.extend(self.list)
         else:

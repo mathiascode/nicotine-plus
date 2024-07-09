@@ -78,6 +78,7 @@ from pynicotine.slskmessages import SetDownloadLimit
 from pynicotine.slskmessages import SetUploadLimit
 from pynicotine.slskmessages import SetWaitPort
 from pynicotine.slskmessages import SharedFileListResponse
+from pynicotine.slskmessages import UnwatchUser
 from pynicotine.slskmessages import UploadFile
 from pynicotine.slskmessages import UserInfoResponse
 from pynicotine.slskmessages import UserStatus
@@ -443,8 +444,8 @@ class NetworkThread(Thread):
         if self._should_process_queue:
             self._message_queue.append(msg)
 
-    def _schedule_quit(self, should_finish_uploads):
-        self._want_abort = not should_finish_uploads
+    def _schedule_quit(self):
+        self._want_abort = True
 
     # Listening Socket #
 
@@ -1102,12 +1103,12 @@ class NetworkThread(Thread):
             if conn_obj is None or sock is self._server_socket:
                 continue
 
-            addr = conn_obj.addr
+            peer_ip_address, peer_port = conn_obj.addr
 
-            if ip_address == addr[0]:
+            if ip_address == peer_ip_address:
                 log.add_conn("Blocking peer connection to IP address %(ip)s:%(port)s", {
-                    "ip": addr[0],
-                    "port": addr[1]
+                    "ip": peer_ip_address,
+                    "port": peer_port
                 })
                 self._close_connection(self._conns, sock)
 
@@ -1236,12 +1237,12 @@ class NetworkThread(Thread):
     def _establish_outgoing_server_connection(self, conn_obj):
 
         self._conns[self._server_socket] = conn_obj
-        addr = conn_obj.addr
+        server_ip_address, server_port = conn_obj.addr
 
         log.add(
             _("Connected to server %(host)s:%(port)s, logging in…"), {
-                "host": addr[0],
-                "port": addr[1]
+                "host": server_ip_address,
+                "port": server_port
             }
         )
 
@@ -1249,7 +1250,7 @@ class NetworkThread(Thread):
         self._user_addresses[login] = (self._local_ip_address, self._listen_port)
         conn_obj.login = True
 
-        self._server_address = addr
+        self._server_address = conn_obj.addr
         self._server_username = self._branch_root = login
         self._server_timeout_value = -1
 
@@ -1462,6 +1463,9 @@ class NetworkThread(Thread):
             # Only cache IP address of watched users, otherwise we won't know if
             # a user reconnects and changes their IP address.
             self._user_addresses[msg_obj.user] = None
+
+        elif msg_class is UnwatchUser and msg_obj.user != self._server_username:
+            self._user_addresses.pop(msg_obj.user, None)
 
         conn_obj = self._conns[self._server_socket]
         conn_obj.obuf.extend(msg_obj.pack_uint32(len(msg) + 4))
@@ -2384,8 +2388,14 @@ class NetworkThread(Thread):
         if sock is self._listen_socket:
             # Manage incoming connections to listening socket
             while self._num_sockets < self.MAX_SOCKETS:
+                incoming_sock = None
+
                 try:
                     incoming_sock, incoming_addr = sock.accept()
+                    incoming_sock.setblocking(False)
+                    incoming_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.SOCKET_READ_BUFFER_SIZE)
+                    incoming_sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.SOCKET_WRITE_BUFFER_SIZE)
+                    incoming_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
                 except OSError as error:
                     if error.errno == errno.EWOULDBLOCK:
@@ -2393,13 +2403,13 @@ class NetworkThread(Thread):
                         break
 
                     log.add_conn("Incoming connection failed: %s", error)
-                    break
+
+                    if incoming_sock is not None:
+                        self._close_socket(incoming_sock)
+
+                    continue
 
                 selector_events = selectors.EVENT_READ
-                incoming_sock.setblocking(False)
-                incoming_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.SOCKET_READ_BUFFER_SIZE)
-                incoming_sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.SOCKET_WRITE_BUFFER_SIZE)
-                incoming_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
                 self._conns[incoming_sock] = PeerConnection(
                     sock=incoming_sock, addr=incoming_addr, selector_events=selector_events

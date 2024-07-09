@@ -524,9 +524,9 @@ class TreeView:
     def get_selected_rows(self):
 
         _model, paths = self._selection.get_selected_rows()
-        iterators = [self.model.get_iter(path) for path in paths]
 
-        return iterators
+        for path in paths:
+            yield self.model.get_iter(path)
 
     def get_num_selected_rows(self):
         return self._selection.count_selected_rows()
@@ -616,7 +616,10 @@ class TreeView:
         return column.id
 
     def get_visible_columns(self):
-        return [column.id for column in self.widget.get_columns() if column.get_visible()]
+
+        for column in self.widget.get_columns():
+            if column.get_visible():
+                yield column.id
 
     def is_empty(self):
         return not self.iterators
@@ -680,13 +683,11 @@ class TreeView:
         callback(self)
 
     def on_select_row(self, selection, callback):
+
         iterator = None
 
         if self.multi_select:
-            # We use the bottom selection here.
-            iterators = self.get_selected_rows()
-            if len(iterators):
-                iterator = iterators[-1]
+            iterator = next(self.get_selected_rows(), None)
         else:
             _model, iterator = selection.get_selected()
 
@@ -792,15 +793,16 @@ class TreeView:
         if not search_term:
             return True
 
-        for column_index in self._column_ids.values():
-            if model.get_column_type(column_index) != GObject.TYPE_STRING:
+        accepted_column_types = {"text", "number"}
+
+        for column_index, column_data in enumerate(self._columns.values()):
+            if "column_type" not in column_data:
+                continue
+
+            if column_data["column_type"] not in accepted_column_types:
                 continue
 
             column_value = model.get_value(iterator, column_index).lower()
-
-            if column_value.startswith("nplus-"):
-                # Ignore icon name columns
-                continue
 
             if search_term.lower() in column_value:
                 return False
@@ -914,25 +916,6 @@ class TreeView:
 # Legacy Functions (to be removed) #
 
 
-def verify_grouping_mode(mode):
-
-    # Map legacy values
-    if mode == "0":
-        mode = "ungrouped"
-
-    elif mode == "1":
-        mode = "folder_grouping"
-
-    elif mode == "2":
-        mode = "user_grouping"
-
-    # Verify mode validity
-    elif mode not in {"ungrouped", "folder_grouping", "user_grouping"}:
-        mode = "folder_grouping"
-
-    return mode
-
-
 def create_grouping_menu(window, active_mode, callback):
 
     action_id = f"grouping-{GLib.uuid_string_random()}"
@@ -947,7 +930,7 @@ def create_grouping_menu(window, active_mode, callback):
     menuitem = Gio.MenuItem.new(_("Group by User"), f"win.{action_id}::user_grouping")
     menu.append_item(menuitem)
 
-    state = GLib.Variant("s", verify_grouping_mode(active_mode))
+    state = GLib.Variant("s", active_mode)
     action = Gio.SimpleAction(name=action_id, parameter_type=GLib.VariantType("s"), state=state)
     action.connect("change-state", callback)
 

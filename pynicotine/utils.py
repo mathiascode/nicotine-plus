@@ -1,4 +1,4 @@
-# COPYRIGHT (C) 2020-2023 Nicotine+ Contributors
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
 # COPYRIGHT (C) 2020 Lene Preuss <lene.preuss@gmail.com>
 # COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
 # COPYRIGHT (C) 2007 daelstorm <daelstorm@gmail.com>
@@ -223,18 +223,14 @@ def _human_speed_or_size(number, unit=None):
     if unit == "B":
         return humanize(number)
 
-    try:
-        for suffix in FILE_SIZE_SUFFIXES:
-            if number < 1024:
-                if number > 999:
-                    return f"{number:.4g} {suffix}"
+    for suffix in FILE_SIZE_SUFFIXES:
+        if number < 1024:
+            if number > 999:
+                return f"{number:.4g} {suffix}"
 
-                return f"{number:.3g} {suffix}"
+            return f"{number:.3g} {suffix}"
 
-            number /= 1024
-
-    except TypeError:
-        pass
+        number /= 1024
 
     return str(number)
 
@@ -329,14 +325,16 @@ def find_whole_word(word, text):
         return -1
 
     word_boundaries = [" "] + PUNCTUATION
-    whole = False
+    len_text = len(text)
+    len_word = len(word)
     start = after = 0
+    whole = False
 
     while not whole and start > -1:
         start = text.find(word, after)
-        after = start + len(word)
+        after = start + len_word
 
-        whole = ((text[after] if after < len(text) else " ") in word_boundaries
+        whole = ((text[after] if after < len_text else " ") in word_boundaries
                  and (text[start - 1] if start > 0 else " ") in word_boundaries)
 
     return start if whole else -1

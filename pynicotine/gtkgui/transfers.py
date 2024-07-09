@@ -102,7 +102,7 @@ class Transfers:
     UNKNOWN_STATUS_PRIORITY = 1000
 
     path_separator = path_label = retry_label = abort_label = None
-    transfer_page = user_counter = file_counter = expand_button = expand_icon = grouping_button = None
+    transfer_page = user_counter = file_counter = expand_button = expand_icon = grouping_button = status_label = None
 
     def __init__(self, window, transfer_type):
 
@@ -366,6 +366,16 @@ class Transfers:
 
         return status
 
+    def update_limits(self):
+        """Underline status bar bandwidth labels when alternative speed limits
+        are active."""
+
+        if config.sections["transfers"][f"use_{self.type}_speed_limit"] == "alternative":
+            add_css_class(self.status_label, "underline")
+            return
+
+        remove_css_class(self.status_label, "underline")
+
     def update_num_users_files(self):
         self.user_counter.set_text(humanize(len(self.users)))
         self.file_counter.set_text(humanize(len(self.transfer_list)))
@@ -380,6 +390,7 @@ class Transfers:
             # No need to do unnecessary work if transfers are not visible
             return
 
+        has_disabled_sorting = False
         has_selected_parent = False
         update_counters = False
         use_reverse_file_path = config.sections["ui"]["reverse_file_paths"]
@@ -395,14 +406,24 @@ class Transfers:
                 if select_parent:
                     has_selected_parent = True
 
-                if row_added:
-                    update_counters = True
+                if not row_added:
+                    continue
+
+                update_counters = True
+
+                if not has_disabled_sorting:
+                    # Optimization: disable sorting while adding rows
+                    self.tree_view.disable_sorting()
+                    has_disabled_sorting = True
 
         if update_parent:
             self.update_parent_rows(transfer)
 
         if update_counters:
             self.update_num_users_files()
+
+        if has_disabled_sorting:
+            self.tree_view.enable_sorting()
 
         if self.pending_parent_rows_timer_id is None:
             # Limit individual parent row updates to once per second
@@ -461,6 +482,10 @@ class Transfers:
 
     @staticmethod
     def get_hsize(current_byte_offset, size):
+
+        if current_byte_offset >= size:
+            return human_size(size)
+
         return f"{human_size(current_byte_offset)} / {human_size(size)}"
 
     @staticmethod
@@ -632,6 +657,7 @@ class Transfers:
         user_iterator = None
         user_folder_path_iterator = None
         parent_iterator = None
+        select_iterator = None
 
         user = transfer.username
         folder_path, _separator, basename = transfer.virtual_path.rpartition("\\")
@@ -649,7 +675,6 @@ class Transfers:
         if self.grouping_mode != "ungrouped":
             # Group by folder or user
 
-            select_iterator = None
             empty_int = 0
             empty_str = ""
 
@@ -679,10 +704,17 @@ class Transfers:
                     ], select_row=False
                 )
 
+                if expand_allowed:
+                    expand_user = self.expand_button.get_active() or self.grouping_mode == "folder_grouping"
+
                 self.row_id += 1
                 self.users[user] = (iterator, [])
 
             user_iterator, user_child_transfers = self.users[user]
+            parent_iterator = user_iterator
+
+            if select_parent:
+                select_iterator = parent_iterator
 
             if self.grouping_mode == "folder_grouping":
                 # Group by folder
@@ -726,31 +758,13 @@ class Transfers:
                 parent_iterator = user_folder_path_iterator
                 user_folder_path_child_transfers.append(transfer)
 
-                if select_parent:
-                    self.tree_view.expand_row(user_iterator)
-                    select_iterator = user_folder_path_iterator
-                    expand_user = False
-                else:
-                    expand_user = expand_allowed
+                if select_parent and (expand_user or self.tree_view.is_row_expanded(user_iterator)):
+                    select_iterator = parent_iterator
 
                 # Group by folder, path not visible in file rows
                 folder_path = ""
             else:
-                parent_iterator = user_iterator
                 user_child_transfers.append(transfer)
-                expand_user = expand_allowed and self.expand_button.get_active()
-
-                if select_parent:
-                    select_iterator = user_iterator
-
-            if select_iterator and (not self.tree_view.is_row_selected(select_iterator)
-                                    or self.tree_view.get_num_selected_rows() != 1):
-                # Select parent row of newly added transfer, and scroll to it.
-                # Unselect any other rows to prevent accidental actions on previously
-                # selected transfers.
-                self.tree_view.unselect_all_rows()
-                self.tree_view.select_row(select_iterator, expand_rows=False)
-
         else:
             # No grouping
             if user not in self.users:
@@ -788,6 +802,14 @@ class Transfers:
 
         if expand_folder and user_folder_path_iterator is not None:
             self.tree_view.expand_row(user_folder_path_iterator)
+
+        if select_iterator and (not self.tree_view.is_row_selected(select_iterator)
+                                or self.tree_view.get_num_selected_rows() != 1):
+            # Select parent row of newly added transfer, and scroll to it.
+            # Unselect any other rows to prevent accidental actions on previously
+            # selected transfers.
+            self.tree_view.unselect_all_rows()
+            self.tree_view.select_row(select_iterator, expand_rows=False)
 
         return True
 

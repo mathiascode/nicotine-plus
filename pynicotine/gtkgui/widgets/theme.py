@@ -1,4 +1,4 @@
-# COPYRIGHT (C) 2020-2023 Nicotine+ Contributors
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
 #
 # GNU GENERAL PUBLIC LICENSE
 #    Version 3, 29 June 2007
@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import random
 import shutil
 import sys
 
@@ -57,8 +58,11 @@ if USE_COLOR_SCHEME_PORTAL:
 
         try:
             result = SETTINGS_PORTAL.call_sync(
-                "Read", GLib.Variant("(ss)", ("org.freedesktop.appearance", "color-scheme")),
-                Gio.DBusCallFlags.NONE, -1, None
+                method_name="Read",
+                parameters=GLib.Variant("(ss)", ("org.freedesktop.appearance", "color-scheme")),
+                flags=Gio.DBusCallFlags.NONE,
+                timeout_msec=-1,
+                cancellable=None
             )
 
             return result.unpack()[0]
@@ -82,9 +86,13 @@ if USE_COLOR_SCHEME_PORTAL:
 
     try:
         SETTINGS_PORTAL = Gio.DBusProxy.new_for_bus_sync(
-            Gio.BusType.SESSION, Gio.DBusProxyFlags.NONE, None,
-            "org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop",
-            "org.freedesktop.portal.Settings", None
+            bus_type=Gio.BusType.SESSION,
+            flags=Gio.DBusProxyFlags.NONE,
+            info=None,
+            name="org.freedesktop.portal.Desktop",
+            object_path="/org/freedesktop/portal/desktop",
+            interface_name="org.freedesktop.portal.Settings",
+            cancellable=None
         )
         SETTINGS_PORTAL.connect("g-signal", on_color_scheme_changed)
 
@@ -546,6 +554,18 @@ def _get_custom_color_css():
             }
             """
         )
+
+    # Workaround for GTK bug where tree view colors don't update until moving the
+    # cursor over the widget. Changing the color of the text caret to a random one
+    # forces the tree view to re-render with new icon/text colors (text carets are
+    # never visible in our tree views, so usability is unaffected).
+    css.extend(
+        f"""
+        treeview {{
+            caret-color: #{random.randint(0, 0xFFFFFF):06x};
+        }}
+        """.encode("utf-8")
+    )
 
     return css
 

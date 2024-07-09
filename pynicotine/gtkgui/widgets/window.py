@@ -23,9 +23,13 @@ from gi.repository import GLib
 from gi.repository import Gtk
 
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.application import LIBADWAITA_API_VERSION
 
 
 class Window:
+
+    DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19
+    DWMWA_USE_IMMERSIVE_DARK_MODE = 20
 
     active_dialogs = []  # Class variable keeping dialog objects alive
     activation_token = None
@@ -34,18 +38,65 @@ class Window:
 
         self.widget = widget
 
-        if GTK_API_VERSION >= 4 and sys.platform == "darwin":
+        if GTK_API_VERSION == 3:
+            return
+
+        if sys.platform == "win32":
+            widget.connect("realize", self._on_realize_win32)
+
+            # Use dark window controls on Windows when requested
+            if LIBADWAITA_API_VERSION:
+                from gi.repository import Adw  # pylint: disable=no-name-in-module
+                Adw.StyleManager.get_default().connect("notify::dark", self._on_dark_mode_win32)
+
+        elif sys.platform == "darwin":
             # Workaround to restore Ctrl-click to show context menu on macOS
             gesture_click = Gtk.GestureClick()
             gesture_click.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-            gesture_click.connect("pressed", self._callback_click_gtk4_darwin)
+            gesture_click.connect("pressed", self._on_click_gtk4_darwin)
             widget.add_controller(gesture_click)  # pylint: disable=no-member
 
     def _menu_popup(self, controller, widget):
         if controller.is_active():
             widget.activate_action("menu.popup")
 
-    def _callback_click_gtk4_darwin(self, controller, _num_p, pos_x, pos_y, *_args):
+    def _on_realize_win32(self, *_args):
+
+        from ctypes import windll
+
+        # Don't overlap taskbar when auto-hidden
+        h_wnd = self.get_surface().get_handle()
+        windll.user32.SetPropW(h_wnd, "NonRudeHWND", True)
+
+        # Set dark window controls
+        if LIBADWAITA_API_VERSION:
+            from gi.repository import Adw  # pylint: disable=no-name-in-module
+            self._on_dark_mode_win32(Adw.StyleManager.get_default())
+
+    def _on_dark_mode_win32(self, style_manager, *_args):
+
+        surface = self.get_surface()
+
+        if surface is None:
+            return
+
+        h_wnd = surface.get_handle()
+
+        if h_wnd is None:
+            return
+
+        from ctypes import byref, c_int, sizeof, windll
+
+        value = c_int(int(style_manager.get_dark()))
+
+        if not windll.dwmapi.DwmSetWindowAttribute(
+            h_wnd, self.DWMWA_USE_IMMERSIVE_DARK_MODE, byref(value), sizeof(value)
+        ):
+            windll.dwmapi.DwmSetWindowAttribute(
+                h_wnd, self.DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1, byref(value), sizeof(value)
+            )
+
+    def _on_click_gtk4_darwin(self, controller, _num_p, pos_x, pos_y, *_args):
 
         event = controller.get_last_event()
 

@@ -88,7 +88,7 @@ class NetworkPage:
         ) = ui.load(scope=self, path="settings/network.ui")
 
         self.application = application
-        self.portmap_required = False
+        self.portmap_required = None
 
         self.check_port_status_label.connect("activate-link", lambda x, url: open_uri(url))
 
@@ -162,14 +162,13 @@ class NetworkPage:
         listen_port, _unused_port = config.sections["server"]["portrange"]
         self.listen_port_spinner.set_value(listen_port)
 
-        self.portmap_required = False
+        self.portmap_required = None
 
     def get_settings(self):
 
         try:
             server_addr = self.soulseek_server_entry.get_text().split(":")
-            server_addr[1] = int(server_addr[1])
-            server_addr = tuple(server_addr)
+            server_addr = tuple(server_addr[0].strip(), int(server_addr[1].strip()))
 
         except Exception:
             server_addr = config.defaults["server"]["server"]
@@ -233,7 +232,7 @@ class NetworkPage:
         ).present()
 
     def on_toggle_upnp(self, *_args):
-        self.portmap_required = self.upnp_toggle.get_active()
+        self.portmap_required = "add" if self.upnp_toggle.get_active() else "remove"
 
     def on_default_server(self, *_args):
         server_address, server_port = config.defaults["server"]["server"]
@@ -375,6 +374,8 @@ class DownloadsPage:
         else:
             self.use_unlimited_speed_radio.set_active(True)
 
+        self.filter_list_view.disable_sorting()
+
         for item in config.sections["transfers"]["downloadfilters"]:
             if not isinstance(item, list) or len(item) < 2:
                 continue
@@ -383,6 +384,8 @@ class DownloadsPage:
             enable_regex = not escaped
 
             self.filter_list_view.add_row([dfilter, enable_regex], select_row=False)
+
+        self.filter_list_view.enable_sorting()
 
     def get_settings(self):
 
@@ -415,8 +418,8 @@ class DownloadsPage:
                 "downloadlimit": self.speed_spinner.get_value_as_int(),
                 "downloadlimitalt": self.alt_speed_spinner.get_value_as_int(),
                 "usernamesubfolders": self.enable_username_subfolders_toggle.get_active(),
-                "afterfinish": self.file_finished_command_entry.get_text(),
-                "afterfolder": self.folder_finished_command_entry.get_text(),
+                "afterfinish": self.file_finished_command_entry.get_text().strip(),
+                "afterfolder": self.folder_finished_command_entry.get_text().strip(),
                 "download_doubleclick": self.download_double_click_combobox.get_selected_pos()
             }
         }
@@ -500,7 +503,7 @@ class DownloadsPage:
 
     def on_remove_filter(self, *_args):
 
-        for iterator in reversed(self.filter_list_view.get_selected_rows()):
+        for iterator in reversed(list(self.filter_list_view.get_selected_rows())):
             self.filter_list_view.remove_row(iterator)
 
         self.on_verify_filter()
@@ -508,10 +511,13 @@ class DownloadsPage:
     def on_default_filters(self, *_args):
 
         self.filter_list_view.clear()
+        self.filter_list_view.disable_sorting()
 
-        for filter_row in config.defaults["transfers"]["downloadfilters"]:
-            self.filter_list_view.add_row(filter_row, select_row=False)
+        for download_filter, escaped in config.defaults["transfers"]["downloadfilters"]:
+            enable_regex = not escaped
+            self.filter_list_view.add_row([download_filter, enable_regex], select_row=False)
 
+        self.filter_list_view.enable_sorting()
         self.on_verify_filter()
 
     def on_verify_filter(self, *_args):
@@ -632,6 +638,7 @@ class SharesPage:
     def set_settings(self):
 
         self.shares_list_view.clear()
+        self.shares_list_view.disable_sorting()
 
         self.application.preferences.set_widgets_data(self.options)
 
@@ -651,6 +658,7 @@ class SharesPage:
             self.shares_list_view.add_row(
                 [virtual_name, folder_path, _("Trusted")], select_row=False)
 
+        self.shares_list_view.enable_sorting()
         self.rescan_required = self.recompress_shares_required = False
 
     def get_settings(self):
@@ -757,7 +765,7 @@ class SharesPage:
 
     def on_remove_shared_folder(self, *_args):
 
-        iterators = reversed(self.shares_list_view.get_selected_rows())
+        iterators = reversed(list(self.shares_list_view.get_selected_rows()))
 
         for iterator in iterators:
             virtual_name = self.shares_list_view.get_row_value(iterator, "virtual_name")
@@ -1033,7 +1041,7 @@ class IgnoredUsersPage:
 
     def on_add_ignored_user_response(self, dialog, _response_id, _data):
 
-        user = dialog.get_entry_value()
+        user = dialog.get_entry_value().strip()
 
         if user and user not in self.ignored_users:
             self.ignored_users.append(user)
@@ -1051,7 +1059,7 @@ class IgnoredUsersPage:
 
     def on_remove_ignored_user(self, *_args):
 
-        for iterator in reversed(self.ignored_users_list_view.get_selected_rows()):
+        for iterator in reversed(list(self.ignored_users_list_view.get_selected_rows())):
             user = self.ignored_users_list_view.get_row_value(iterator, "username")
 
             self.ignored_users_list_view.remove_row(iterator)
@@ -1059,7 +1067,7 @@ class IgnoredUsersPage:
 
     def on_add_ignored_ip_response(self, dialog, _response_id, _data):
 
-        ip_address = dialog.get_entry_value()
+        ip_address = dialog.get_entry_value().strip()
 
         if not core.network_filter.is_ip_address(ip_address):
             return
@@ -1081,7 +1089,7 @@ class IgnoredUsersPage:
 
     def on_remove_ignored_ip(self, *_args):
 
-        for iterator in reversed(self.ignored_ips_list_view.get_selected_rows()):
+        for iterator in reversed(list(self.ignored_ips_list_view.get_selected_rows())):
             ip_address = self.ignored_ips_list_view.get_row_value(iterator, "ip_address")
 
             self.ignored_ips_list_view.remove_row(iterator)
@@ -1196,7 +1204,7 @@ class BannedUsersPage:
 
     def on_add_banned_user_response(self, dialog, _response_id, _data):
 
-        user = dialog.get_entry_value()
+        user = dialog.get_entry_value().strip()
 
         if user and user not in self.banned_users:
             self.banned_users.append(user)
@@ -1214,7 +1222,7 @@ class BannedUsersPage:
 
     def on_remove_banned_user(self, *_args):
 
-        for iterator in reversed(self.banned_users_list_view.get_selected_rows()):
+        for iterator in reversed(list(self.banned_users_list_view.get_selected_rows())):
             user = self.banned_users_list_view.get_row_value(iterator, "username")
 
             self.banned_users_list_view.remove_row(iterator)
@@ -1222,7 +1230,7 @@ class BannedUsersPage:
 
     def on_add_banned_ip_response(self, dialog, _response_id, _data):
 
-        ip_address = dialog.get_entry_value()
+        ip_address = dialog.get_entry_value().strip()
 
         if not core.network_filter.is_ip_address(ip_address):
             return
@@ -1245,7 +1253,7 @@ class BannedUsersPage:
 
     def on_remove_banned_ip(self, *_args):
 
-        for iterator in reversed(self.banned_ips_list_view.get_selected_rows()):
+        for iterator in reversed(list(self.banned_ips_list_view.get_selected_rows())):
             ip_address = self.banned_ips_list_view.get_row_value(iterator, "ip_address")
 
             self.banned_ips_list_view.remove_row(iterator)
@@ -1427,7 +1435,7 @@ class ChatsPage:
             "ui": {
                 "spellcheck": self.enable_spell_checker_toggle.get_active(),
                 "speechenabled": self.enable_tts_toggle.get_active(),
-                "speechcommand": self.tts_command_combobox.get_text(),
+                "speechcommand": self.tts_command_combobox.get_text().strip(),
                 "speechrooms": self.tts_room_message_entry.get_text(),
                 "speechprivate": self.tts_private_message_entry.get_text()
             }
@@ -1499,7 +1507,7 @@ class ChatsPage:
 
     def on_remove_censored(self, *_args):
 
-        for iterator in reversed(self.censor_list_view.get_selected_rows()):
+        for iterator in reversed(list(self.censor_list_view.get_selected_rows())):
             censor = self.censor_list_view.get_row_value(iterator, "pattern")
 
             self.censor_list_view.remove_row(iterator)
@@ -1563,7 +1571,7 @@ class ChatsPage:
 
     def on_remove_replacement(self, *_args):
 
-        for iterator in reversed(self.replacement_list_view.get_selected_rows()):
+        for iterator in reversed(list(self.replacement_list_view.get_selected_rows())):
             replacement = self.replacement_list_view.get_row_value(iterator, "pattern")
 
             self.replacement_list_view.remove_row(iterator)
@@ -2002,22 +2010,22 @@ class UserInterfacePage:
                 "tab_select_previous": self.tab_restore_startup_toggle.get_active(),
                 "tabclosers": self.tab_close_buttons_toggle.get_active(),
                 "icontheme": self.icon_theme_button.get_path(),
-                "chatlocal": self.color_chat_local_entry.get_text(),
-                "chatremote": self.color_chat_remote_entry.get_text(),
-                "chatcommand": self.color_chat_command_entry.get_text(),
-                "chatme": self.color_chat_action_entry.get_text(),
-                "chathilite": self.color_chat_highlighted_entry.get_text(),
-                "urlcolor": self.color_url_entry.get_text(),
-                "textbg": self.color_input_background_entry.get_text(),
-                "inputcolor": self.color_input_text_entry.get_text(),
-                "search": self.color_list_text_entry.get_text(),
-                "searchq": self.color_queued_result_text_entry.get_text(),
-                "useraway": self.color_status_away_entry.get_text(),
-                "useronline": self.color_status_online_entry.get_text(),
-                "useroffline": self.color_status_offline_entry.get_text(),
-                "tab_hilite": self.color_tab_highlighted_entry.get_text(),
-                "tab_default": self.color_tab_entry.get_text(),
-                "tab_changed": self.color_tab_changed_entry.get_text(),
+                "chatlocal": self.color_chat_local_entry.get_text().strip(),
+                "chatremote": self.color_chat_remote_entry.get_text().strip(),
+                "chatcommand": self.color_chat_command_entry.get_text().strip(),
+                "chatme": self.color_chat_action_entry.get_text().strip(),
+                "chathilite": self.color_chat_highlighted_entry.get_text().strip(),
+                "urlcolor": self.color_url_entry.get_text().strip(),
+                "textbg": self.color_input_background_entry.get_text().strip(),
+                "inputcolor": self.color_input_text_entry.get_text().strip(),
+                "search": self.color_list_text_entry.get_text().strip(),
+                "searchq": self.color_queued_result_text_entry.get_text().strip(),
+                "useraway": self.color_status_away_entry.get_text().strip(),
+                "useronline": self.color_status_online_entry.get_text().strip(),
+                "useroffline": self.color_status_offline_entry.get_text().strip(),
+                "tab_hilite": self.color_tab_highlighted_entry.get_text().strip(),
+                "tab_default": self.color_tab_entry.get_text().strip(),
+                "tab_changed": self.color_tab_changed_entry.get_text().strip(),
                 "usernamestyle": self.chat_username_appearance_combobox.get_selected_id(),
                 "usernamehotspots": self.chat_colored_usernames_toggle.get_active(),
                 "buddylistinchatrooms": self.buddy_list_position_combobox.get_selected_id(),
@@ -2056,7 +2064,7 @@ class UserInterfacePage:
         self.editing_color = True
 
         rgba = Gdk.RGBA()
-        color_hex = entry.get_text()
+        color_hex = entry.get_text().strip()
 
         if color_hex:
             rgba.parse(color_hex)
@@ -2321,14 +2329,14 @@ class SearchesPage:
                 "maxresults": self.max_sent_results_spinner.get_value_as_int(),
                 "enablefilters": self.enable_default_filters_toggle.get_active(),
                 "defilter": [
-                    self.filter_include_entry.get_text(),
-                    self.filter_exclude_entry.get_text(),
-                    self.filter_file_size_entry.get_text(),
-                    self.filter_bitrate_entry.get_text(),
+                    self.filter_include_entry.get_text().strip(),
+                    self.filter_exclude_entry.get_text().strip(),
+                    self.filter_file_size_entry.get_text().strip(),
+                    self.filter_bitrate_entry.get_text().strip(),
                     self.filter_free_slot_toggle.get_active(),
-                    self.filter_country_entry.get_text(),
-                    self.filter_file_type_entry.get_text(),
-                    self.filter_length_entry.get_text()
+                    self.filter_country_entry.get_text().strip(),
+                    self.filter_file_type_entry.get_text().strip(),
+                    self.filter_length_entry.get_text().strip()
                 ],
                 "search_results": self.repond_search_requests_toggle.get_active(),
                 "max_displayed_results": self.max_displayed_results_spinner.get_value_as_int(),
@@ -2453,6 +2461,7 @@ class UrlHandlersPage:
     def set_settings(self):
 
         self.protocol_list_view.clear()
+        self.protocol_list_view.disable_sorting()
         self.protocols.clear()
 
         self.application.preferences.set_widgets_data(self.options)
@@ -2462,6 +2471,8 @@ class UrlHandlersPage:
         for protocol, command in self.protocols.items():
             self.protocol_list_view.add_row([str(protocol), str(command)], select_row=False)
 
+        self.protocol_list_view.enable_sorting()
+
     def get_settings(self):
 
         return {
@@ -2469,14 +2480,14 @@ class UrlHandlersPage:
                 "protocols": self.protocols.copy()
             },
             "ui": {
-                "filemanager": self.file_manager_combobox.get_text()
+                "filemanager": self.file_manager_combobox.get_text().strip()
             }
         }
 
     def on_add_handler_response(self, dialog, _response_id, _data):
 
-        protocol = dialog.get_entry_value()
-        command = dialog.get_second_entry_value()
+        protocol = dialog.get_entry_value().strip()
+        command = dialog.get_second_entry_value().strip()
 
         if not protocol or not command:
             return
@@ -2512,7 +2523,7 @@ class UrlHandlersPage:
 
     def on_edit_handler_response(self, dialog, _response_id, iterator):
 
-        command = dialog.get_entry_value()
+        command = dialog.get_entry_value().strip()
 
         if not command:
             return
@@ -2542,7 +2553,7 @@ class UrlHandlersPage:
 
     def on_remove_handler(self, *_args):
 
-        for iterator in reversed(self.protocol_list_view.get_selected_rows()):
+        for iterator in reversed(list(self.protocol_list_view.get_selected_rows())):
             protocol = self.protocol_list_view.get_row_value(iterator, "protocol")
 
             self.protocol_list_view.remove_row(iterator)
@@ -2660,7 +2671,7 @@ class NowPlayingPage:
         return player
 
     def get_command(self):
-        return self.command_entry.get_text()
+        return self.command_entry.get_text().strip()
 
     def get_format(self):
         return self.format_message_combobox.get_text()
@@ -2818,6 +2829,7 @@ class PluginsPage:
     def set_settings(self):
 
         self.plugin_list_view.clear()
+        self.plugin_list_view.disable_sorting()
 
         self.application.preferences.set_widgets_data(self.options)
 
@@ -2830,6 +2842,8 @@ class PluginsPage:
             plugin_name = info.get("Name", plugin_id)
             enabled = (plugin_id in config.sections["plugins"]["enabled"])
             self.plugin_list_view.add_row([enabled, plugin_name, plugin_id], select_row=False)
+
+        self.plugin_list_view.enable_sorting()
 
     def get_settings(self):
 
@@ -3070,6 +3084,8 @@ class Preferences(Dialog):
             widget.set_font(value)
 
         elif isinstance(widget, TreeView):
+            widget.disable_sorting()
+
             if isinstance(value, list):
                 for item in value:
                     if isinstance(item, list):
@@ -3082,6 +3098,8 @@ class Preferences(Dialog):
             elif isinstance(value, dict):
                 for item1, item2 in value.items():
                     widget.add_row([str(item1), str(item2)], select_row=False)
+
+            widget.enable_sorting()
 
         elif isinstance(widget, FileChooserButton):
             widget.set_path(value)
@@ -3168,9 +3186,10 @@ class Preferences(Dialog):
         for key, data in options.items():
             config.sections[key].update(data)
 
-        if portmap_required:
+        if portmap_required == "add":
             core.portmapper.add_port_mapping()
-        else:
+
+        elif portmap_required == "remove":
             core.portmapper.remove_port_mapping()
 
         if user_profile_required:

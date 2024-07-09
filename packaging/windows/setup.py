@@ -26,6 +26,8 @@ import sys
 import tempfile
 
 from cx_Freeze import Executable, setup  # pylint: disable=import-error
+from cx_Freeze.hooks import gi  # pylint: disable=import-error
+del gi.load_gi
 
 # pylint: disable=duplicate-code
 
@@ -45,7 +47,7 @@ elif sys.platform == "darwin":
     SYS_BASE_PATH = "/opt/homebrew" if platform.machine() == "arm64" else "/usr/local"
     LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
     LIB_EXTENSION = (".dylib", ".so")
-    UNAVAILABLE_MODULES = ["msilib", "msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]
+    UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]
     ICON_NAME = "icon.icns"
 
 else:
@@ -61,12 +63,15 @@ import pynicotine  # noqa: E402  # pylint: disable=import-error,wrong-import-pos
 
 SCRIPT_NAME = "nicotine"
 MODULE_NAME = "pynicotine"
+MANIFEST_NAME = os.path.join(CURRENT_PATH, f"{SCRIPT_NAME}.manifest") if sys.platform == "win32" else None
 GTK_VERSION = os.environ.get("NICOTINE_GTK_VERSION", "4")
 USE_LIBADWAITA = GTK_VERSION == "4" and os.environ.get("NICOTINE_LIBADWAITA") == "1"
 
 # Include (almost) all standard library modules for plugins
 EXCLUDED_MODULES = UNAVAILABLE_MODULES + [
-    "ensurepip", "idlelib", "pip", "tkinter", "turtle", "turtledemo", "venv", "zoneinfo"
+    f"{MODULE_NAME}.plugins.examplars", f"{MODULE_NAME}.tests",
+    "ctypes.test", "distutils", "ensurepip", "idlelib", "lib2to3", "msilib", "pip", "pydoc", "pydoc_data",
+    "pygtkcompat", "tkinter", "turtle", "turtledemo", "unittest.test", "venv", "zoneinfo"
 ]
 INCLUDED_MODULES = [MODULE_NAME, "gi"] + list(
     # pylint: disable=no-member
@@ -245,19 +250,6 @@ def add_icon_packs():
     )
 
 
-def add_themes():
-
-    # "Mac" is required for macOS-specific keybindings in GTK
-    required_themes = (
-        "Default",
-        "Mac"
-    )
-    add_files(
-        folder_path=os.path.join(SYS_BASE_PATH, "share/themes"), output_path="share/themes",
-        starts_with=required_themes, ends_with=".css", recursive=True
-    )
-
-
 def add_ssl_certs():
     ssl_paths = ssl.get_default_verify_paths()
     add_file(file_path=ssl_paths.openssl_cafile, output_path="lib/cert.pem")
@@ -277,7 +269,6 @@ def add_translations():
 # GTK
 add_gtk()
 add_icon_packs()
-add_themes()
 
 # SSL
 add_ssl_certs()
@@ -301,7 +292,8 @@ setup(
             "excludes": EXCLUDED_MODULES,
             "include_files": include_files,
             "zip_include_packages": ["*"],
-            "zip_exclude_packages": [MODULE_NAME]
+            "zip_exclude_packages": [MODULE_NAME],
+            "optimize": 2
         },
         "bdist_msi": {
             "all_users": True,
@@ -340,6 +332,7 @@ setup(
             base=GUI_BASE,
             target_name=pynicotine.__application_name__,
             icon=os.path.join(CURRENT_PATH, ICON_NAME),
+            manifest=MANIFEST_NAME,
             copyright=pynicotine.__copyright__,
             shortcut_name=pynicotine.__application_name__,
             shortcut_dir="ProgramMenuFolder"

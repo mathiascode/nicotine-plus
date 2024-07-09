@@ -649,7 +649,6 @@ class Shares:
         self.file_path_index = ()
         self._scanner_process = None
 
-        self.convert_shares()
         self.share_db_paths = [
             ("words", os.path.join(config.data_folder_path, "words.dbn")),
             ("public_files", os.path.join(config.data_folder_path, "publicfiles.dbn")),
@@ -679,6 +678,7 @@ class Shares:
         rescan_startup = (config.sections["transfers"]["rescanonstartup"]
                           and not config.need_config())
 
+        self.convert_shares()
         self.rescan_shares(init=True, rescan=rescan_startup)
 
     def _quit(self):
@@ -953,11 +953,12 @@ class Shares:
                 database.close()
 
     def send_num_shared_folders_files(self):
-        """Send number publicly shared files to the server."""
+        """Send number of publicly shared files to the server."""
 
         if self.rescanning:
             return
 
+        local_username = core.users.login_username
         num_shared_folders = len(self.share_dbs.get("public_streams", {}))
         num_shared_files = len(self.share_dbs.get("public_files", {}))
 
@@ -971,73 +972,28 @@ class Shares:
 
         core.send_message_to_server(slskmessages.SharedFoldersFiles(num_shared_folders, num_shared_files))
 
-    # Scanning #
+        if not local_username:
+            # The shares module is initialized before the users module (to send updated share
+            # stats to the server before watching our own username), and receives the login
+            # event first, so local_username is still None when connecting. For this reason,
+            # this check only happens after sending the SharedFoldersFiles server message.
+            return
 
-    def build_scanner_process(self, share_groups=None, init=False, rescan=True, rebuild=False):
-
-        import multiprocessing
-
-        context = multiprocessing.get_context(method="spawn")
-        scanner_queue = context.Queue()
-        scanner_obj = Scanner(
-            config,
-            scanner_queue,
-            share_groups,
-            self.share_db_paths,
-            init,
-            rescan,
-            rebuild,
-            reveal_buddy_shares=config.sections["transfers"]["reveal_buddy_shares"],
-            reveal_trusted_shares=config.sections["transfers"]["reveal_trusted_shares"]
+        # We've connected and rescanned our shares again. Fake a user stats message, since
+        # server doesn't send updates for our own username after the first WatchUser message
+        # response
+        events.emit(
+            "user-stats",
+            slskmessages.GetUserStats(
+                user=local_username,
+                avgspeed=core.uploads.upload_speed, files=num_shared_files, dirs=num_shared_folders
+            )
         )
-        scanner = context.Process(target=scanner_obj.run, daemon=True)
-        return scanner, scanner_queue
+
+    # Scanning #
 
     def rebuild_shares(self, use_thread=True):
         return self.rescan_shares(rebuild=True, use_thread=use_thread)
-
-    def process_scanner_messages(self, scanner_queue, emit_event):
-
-        while self._scanner_process.is_alive():
-            # Cooldown
-            time.sleep(0.05)
-
-            while not scanner_queue.empty():
-                item = scanner_queue.get()
-
-                if isinstance(item, Exception):
-                    return False
-
-                if isinstance(item, tuple):
-                    template, args = item
-                    log.add(template, args)
-
-                elif isinstance(item, slskmessages.SharedFileListResponse):
-                    self.compressed_shares[item.permission_level] = item
-
-                elif isinstance(item, list):
-                    self.file_path_index = tuple(item)
-
-                elif item == "rescanning":
-                    emit_event("shares-scanning")
-
-                elif item == "initialized":
-                    self.initialized = True
-
-        self._scanner_process = None
-        return True
-
-    def check_shares_available(self):
-
-        share_groups = self.get_shared_folders()
-        unavailable_shares = []
-
-        for share in share_groups:
-            for virtual_name, folder_path, *_unused in share:
-                if not os.access(encode_path(folder_path), os.R_OK):
-                    unavailable_shares.append((virtual_name, folder_path))
-
-        return unavailable_shares
 
     def rescan_shares(self, init=False, rescan=True, rebuild=False, use_thread=True, force=False):
 
@@ -1065,7 +1021,7 @@ class Shares:
         events.emit("shares-preparing")
 
         share_groups = self.get_shared_folders()
-        self._scanner_process, scanner_queue = self.build_scanner_process(share_groups, init, rescan, rebuild)
+        self._scanner_process, scanner_queue = self._build_scanner_process(share_groups, init, rescan, rebuild)
         self._scanner_process.start()
 
         if use_thread:
@@ -1075,13 +1031,76 @@ class Shares:
             ).start()
             return None
 
-        return self._process_scanner(scanner_queue, events.emit)
+        return self._process_scanner(scanner_queue)
 
-    def _process_scanner(self, scanner_queue, emit_event):
+    def check_shares_available(self):
 
-        # Let the scanner process do its thing
-        successful = self.process_scanner_messages(scanner_queue, emit_event)
-        emit_event("shares-ready", successful)
+        share_groups = self.get_shared_folders()
+        unavailable_shares = []
+
+        for share in share_groups:
+            for virtual_name, folder_path, *_unused in share:
+                if not os.access(encode_path(folder_path), os.R_OK):
+                    unavailable_shares.append((virtual_name, folder_path))
+
+        return unavailable_shares
+
+    def _build_scanner_process(self, share_groups=None, init=False, rescan=True, rebuild=False):
+
+        import multiprocessing
+
+        context = multiprocessing.get_context(method="spawn")
+        scanner_queue = context.Queue()
+        scanner_obj = Scanner(
+            config,
+            scanner_queue,
+            share_groups,
+            self.share_db_paths,
+            init,
+            rescan,
+            rebuild,
+            reveal_buddy_shares=config.sections["transfers"]["reveal_buddy_shares"],
+            reveal_trusted_shares=config.sections["transfers"]["reveal_trusted_shares"]
+        )
+        scanner = context.Process(target=scanner_obj.run, daemon=True)
+        return scanner, scanner_queue
+
+    def _process_scanner(self, scanner_queue, emit_event=None):
+
+        successful = True
+
+        while self._scanner_process.is_alive():
+            # Cooldown
+            time.sleep(0.05)
+
+            while not scanner_queue.empty():
+                item = scanner_queue.get()
+
+                if isinstance(item, Exception):
+                    successful = False
+                    break
+
+                if isinstance(item, tuple):
+                    template, args = item
+                    log.add(template, args)
+
+                elif isinstance(item, slskmessages.SharedFileListResponse):
+                    self.compressed_shares[item.permission_level] = item
+
+                elif isinstance(item, list):
+                    self.file_path_index = tuple(item)
+
+                elif item == "rescanning":
+                    if emit_event is not None:
+                        emit_event("shares-scanning")
+
+                elif item == "initialized":
+                    self.initialized = True
+
+        self._scanner_process = None
+
+        if emit_event is not None:
+            emit_event("shares-ready", successful)
 
         return successful
 
@@ -1136,31 +1155,22 @@ class Shares:
 
         ip_address, _port = msg.addr
         username = msg.username
+        folder_path = msg.dir
         permission_level, _reject_reason = self.check_user_permission(username, ip_address)
-
-        if permission_level == PermissionLevel.BANNED:
-            return
-
-        reveal_buddy_shares = config.sections["transfers"]["reveal_buddy_shares"]
-        reveal_trusted_shares = config.sections["transfers"]["reveal_trusted_shares"]
-        public_shares = self.share_dbs.get("public_streams")
-        buddy_shares = self.share_dbs.get("buddy_streams")
-        trusted_shares = self.share_dbs.get("trusted_streams")
         folder_data = None
 
-        try:
-            if (reveal_trusted_shares or permission_level == PermissionLevel.TRUSTED) and msg.dir in trusted_shares:
-                folder_data = trusted_shares[msg.dir]
+        if permission_level != PermissionLevel.BANNED:
+            folder_data = self.share_dbs.get("public_streams", {}).get(folder_path)
 
-            elif (reveal_buddy_shares or permission_level == PermissionLevel.BUDDY) and msg.dir in buddy_shares:
-                folder_data = buddy_shares[msg.dir]
+            if (folder_data is None
+                    and (config.sections["transfers"]["reveal_buddy_shares"]
+                         or permission_level in {PermissionLevel.BUDDY, PermissionLevel.TRUSTED})):
+                folder_data = self.share_dbs.get("buddy_streams", {}).get(folder_path)
 
-            elif msg.dir in public_shares:
-                folder_data = public_shares[msg.dir]
-
-        except Exception as error:
-            log.add(_("Failed to fetch the shared folder %(folder)s: %(error)s"),
-                    {"folder": msg.dir, "error": error})
+            if (folder_data is None
+                    and (config.sections["transfers"]["reveal_trusted_shares"]
+                         or permission_level == PermissionLevel.TRUSTED)):
+                folder_data = self.share_dbs.get("trusted_streams", {}).get(folder_path)
 
         core.send_message_to_peer(
-            username, slskmessages.FolderContentsResponse(directory=msg.dir, token=msg.token, shares=folder_data))
+            username, slskmessages.FolderContentsResponse(directory=folder_path, token=msg.token, shares=folder_data))

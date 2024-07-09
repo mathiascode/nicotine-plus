@@ -1,4 +1,4 @@
-# COPYRIGHT (C) 2020-2023 Nicotine+ Contributors
+# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
 # COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
 # COPYRIGHT (C) 2008-2011 quinox <quinox@users.sf.net>
 # COPYRIGHT (C) 2008 gallows <g4ll0ws@gmail.com>
@@ -180,7 +180,8 @@ class NowPlaying:
                 info=None,
                 name="org.freedesktop.DBus",
                 object_path="/org/freedesktop/DBus",
-                interface_name="org.freedesktop.DBus"
+                interface_name="org.freedesktop.DBus",
+                cancellable=None
             )
             names = dbus_proxy.ListNames()
             players = []
@@ -207,7 +208,8 @@ class NowPlaying:
                 info=None,
                 name=dbus_mpris_service + player,
                 object_path="/org/mpris/MediaPlayer2",
-                interface_name="org.freedesktop.DBus.Properties"
+                interface_name="org.freedesktop.DBus.Properties",
+                cancellable=None
             )
             metadata = dbus_proxy.Get("(ss)", "org.mpris.MediaPlayer2.Player", "Metadata")
 
@@ -301,7 +303,7 @@ class NowPlaying:
 
         try:
             output = execute_command(command, returnoutput=True, hidden=True)
-            self.title["nowplaying"] = output
+            self.title["nowplaying"] = output.decode()
             return True
 
         except Exception as error:

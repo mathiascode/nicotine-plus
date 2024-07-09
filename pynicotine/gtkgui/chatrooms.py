@@ -196,7 +196,8 @@ class ChatRooms(IconNotebook):
 
     def on_create_room(self, *_args):
 
-        room = self.window.chatrooms_entry.get_text().strip()
+        # Normalize room name, otherwise the server will complain
+        room = " ".join(self.window.chatrooms_entry.get_text().split())
 
         if not room:
             return
@@ -298,7 +299,7 @@ class ChatRooms(IconNotebook):
 
         self.highlighted_rooms[room] = user
         self.window.update_title()
-        self.window.application.tray_icon.update_icon()
+        self.window.application.tray_icon.update()
 
     def unhighlight_room(self, room):
 
@@ -307,7 +308,7 @@ class ChatRooms(IconNotebook):
 
         del self.highlighted_rooms[room]
         self.window.update_title()
-        self.window.application.tray_icon.update_icon()
+        self.window.application.tray_icon.update()
 
     def join_room(self, msg):
 
@@ -569,7 +570,7 @@ class ChatRoom:
         )
 
         self.setup_public_feed()
-        self.read_room_logs()
+        self.prepend_old_messages()
 
     def load(self):
         GLib.idle_add(self.read_room_logs_finished)
@@ -615,12 +616,12 @@ class ChatRoom:
         status_icon_name = USER_STATUS_ICON_NAMES.get(status, "")
         flag_icon_name = get_flag_icon_name(country_code)
         h_speed = ""
-        avgspeed = userdata.avgspeed
+        avgspeed = userdata.avgspeed or 0
 
         if avgspeed > 0:
             h_speed = human_speed(avgspeed)
 
-        files = userdata.files
+        files = userdata.files or 0
         h_files = humanize(files)
 
         weight = Pango.Weight.NORMAL
@@ -658,14 +659,15 @@ class ChatRoom:
 
         self.activity_view.auto_scroll = self.chat_view.auto_scroll = True
 
-    def read_room_logs(self):
+    def prepend_old_messages(self):
 
-        self.chat_view.append_log_lines(
+        log_lines = log.read_log(
             folder_path=log.room_folder_path,
             basename=self.room,
-            num_lines=config.sections["logging"]["readroomlines"],
-            timestamp_format=config.sections["logging"]["rooms_timestamp"]
+            num_lines=config.sections["logging"]["readroomlines"]
         )
+
+        self.chat_view.append_log_lines(log_lines, login_username=config.sections["server"]["login"])
 
     def populate_room_users(self, users):
 
@@ -869,17 +871,20 @@ class ChatRoom:
         if iterator is None:
             return
 
-        speed = msg.avgspeed
-        num_files = msg.files
-        h_speed = ""
+        speed = msg.avgspeed or 0
+        num_files = msg.files or 0
 
-        if speed > 0:
-            h_speed = human_speed(speed)
+        if speed != self.users_list_view.get_row_value(iterator, "speed_data"):
+            h_speed = human_speed(speed) if speed > 0 else ""
 
-        self.users_list_view.set_row_value(iterator, "speed", h_speed)
-        self.users_list_view.set_row_value(iterator, "files", humanize(num_files))
-        self.users_list_view.set_row_value(iterator, "speed_data", speed)
-        self.users_list_view.set_row_value(iterator, "files_data", num_files)
+            self.users_list_view.set_row_value(iterator, "speed", h_speed)
+            self.users_list_view.set_row_value(iterator, "speed_data", speed)
+
+        if num_files != self.users_list_view.get_row_value(iterator, "files_data"):
+            h_num_files = humanize(num_files)
+
+            self.users_list_view.set_row_value(iterator, "files", h_num_files)
+            self.users_list_view.set_row_value(iterator, "files_data", num_files)
 
     def user_status(self, msg):
 
@@ -923,11 +928,8 @@ class ChatRoom:
 
         flag_icon_name = get_flag_icon_name(country_code)
 
-        if not flag_icon_name or flag_icon_name == self.users_list_view.get_row_value(iterator, "country"):
-            # Country didn't change, no need to update
-            return
-
-        self.users_list_view.set_row_value(iterator, "country", flag_icon_name)
+        if flag_icon_name and flag_icon_name != self.users_list_view.get_row_value(iterator, "country"):
+            self.users_list_view.set_row_value(iterator, "country", flag_icon_name)
 
     def username_event(self, pos_x, pos_y, user):
 

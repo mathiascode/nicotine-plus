@@ -1,4 +1,4 @@
-# COPYRIGHT (C) 2022-2023 Nicotine+ Contributors
+# COPYRIGHT (C) 2022-2024 Nicotine+ Contributors
 #
 # GNU GENERAL PUBLIC LICENSE
 #    Version 3, 29 June 2007
@@ -116,13 +116,14 @@ class ChatHistory(Popover):
 
         for iterator in self.list_view.iterators.values():
             username = self.list_view.get_row_value(iterator, "user")
-            core.users.watch_user(username)
+            core.users.watch_user(username, context="chathistory")
 
     def server_disconnect(self, *_args):
         for iterator in self.list_view.iterators.values():
             self.list_view.set_row_value(iterator, "status", USER_STATUS_ICON_NAMES[UserStatus.OFFLINE])
 
-    def load_user(self, file_path):
+    @staticmethod
+    def load_user(file_path):
         """Reads the username and latest message from a given log file path.
 
         Usernames are first extracted from the file name. In case the
@@ -184,6 +185,8 @@ class ChatHistory(Popover):
 
     def load_users(self):
 
+        self.list_view.disable_sorting()
+
         try:
             with os.scandir(encode_path(log.private_chat_folder_path)) as entries:
                 for entry in entries:
@@ -202,6 +205,8 @@ class ChatHistory(Popover):
         except OSError:
             pass
 
+        self.list_view.enable_sorting()
+
     def remove_user(self, username):
 
         iterator = self.list_view.iterators.get(username)
@@ -212,7 +217,7 @@ class ChatHistory(Popover):
     def update_user(self, username, message, timestamp=None):
 
         self.remove_user(username)
-        core.users.watch_user(username)
+        core.users.watch_user(username, context="chathistory")
 
         if not timestamp:
             timestamp_format = config.sections["logging"]["log_timestamp"]

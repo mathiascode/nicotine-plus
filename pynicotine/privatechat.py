@@ -37,10 +37,6 @@ class PrivateChat:
         self.away_message_users = set()
         self.users = set()
 
-        # Clear list of previously open chats if we don't want to restore them
-        if not config.sections["privatechat"]["store"]:
-            config.sections["privatechat"]["users"].clear()
-
         for event_name, callback in (
             ("message-user", self._message_user),
             ("peer-address", self._get_peer_address),
@@ -55,6 +51,8 @@ class PrivateChat:
     def _start(self):
 
         if not config.sections["privatechat"]["store"]:
+            # Clear list of previously open chats if we don't want to restore them
+            config.sections["privatechat"]["users"].clear()
             return
 
         for username in config.sections["privatechat"]["users"]:
@@ -73,7 +71,7 @@ class PrivateChat:
             return
 
         for username in self.users:
-            core.users.watch_user(username)  # Get notified of user status
+            core.users.watch_user(username, context="privatechat")  # Get notified of user status
 
     def _server_disconnect(self, _msg):
 
@@ -97,6 +95,7 @@ class PrivateChat:
             config.sections["privatechat"]["users"].remove(username)
 
         self.users.remove(username)
+        core.users.unwatch_user(username, context="privatechat")
         events.emit("private-chat-remove-user", username)
 
     def remove_all_users(self, is_permanent=True):
@@ -107,7 +106,7 @@ class PrivateChat:
 
         self.add_user(username)
         events.emit("private-chat-show-user", username, switch_page, remembered)
-        core.users.watch_user(username)
+        core.users.watch_user(username, context="privatechat")
 
     def clear_private_messages(self, username):
         events.emit("clear-private-messages", username)
