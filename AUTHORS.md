@@ -159,7 +159,138 @@
 
 # Contributors
 
-See [Contributors](https://github.com/nicotine-plus/nicotine-plus/graphs/contributors) on GitHub
+ - Adam Cecile
+ - Adam Cécile
+ - Adam Cécile (Le_Vert)
+ - AHOHNMYC
+ - alekksander
+ - Allan Nordhøy
+ - Anonymous
+ - Artem
+ - AtticFinder65536
+ - Attila Fidan
+ - baloo79
+ - bgo-eiu
+ - Bonislaw
+ - ButterflyOfFire
+ - Cata
+ - César Augusto do Nascimento
+ - Chris McKenzie
+ - chz
+ - Coda
+ - cwpute
+ - Daelstorm
+ - droserasprout
+ - dtalens
+ - Elias Groß
+ - eL_vErDe
+ - Emily
+ - Eryk Michalak
+ - Everly
+ - Gabriele
+ - gahag
+ - gallegonovato
+ - Gallows
+ - gfarmerfr
+ - Gianluca Boiano
+ - Guilherme Santos
+ - hadwin
+ - Han
+ - Han Boetes
+ - Havokdan
+ - Hedonist
+ - homedirectory
+ - Hosted Weblate
+ - hylau
+ - ian andrew remsen
+ - Inso-m-niaC
+ - Jackson Baber
+ - Jean-Baptiste ALLAIN
+ - Jimmy
+ - J. Lavoie
+ - Jordan Rodrigues
+ - Jörn Weigend
+ - jose alberto matos
+ - Josep Anguera
+ - JP Dillingham
+ - Juan
+ - Juan Benites
+ - Julian
+ - Kawasumi Ayako
+ - Kian-Meng Ang
+ - Kip
+ - Kip Warner
+ - Kirill Feoktistov
+ - Lene Preuss
+ - Lev Gorodetskiy
+ - Lucas Vieites
+ - M0Rf30
+ - Maite Guix
+ - marciozomb13
+ - Mariusz
+ - Mat
+ - Mathias
+ - mathiascode
+ - Maxime Leroy
+ - Mehavoid
+ - MELERIX
+ - MendelGusmao
+ - Michael Laboube
+ - Michael Labouebe
+ - Micke Nilsson
+ - Miodrag Milić
+ - Mohamed El Morabity
+ - ms-afk
+ - Mutnick
+ - mzf-guest
+ - Nachtalb
+ - Nick
+ - Nicolas Abril
+ - Nince78
+ - nyoooooooooooooooom
+ - Offhand
+ - Oğuz Ersen
+ - Oliver Hattshire
+ - OpenAI
+ - Osiris
+ - Pagal3
+ - Patrik
+ - phelissimo_
+ - phlostically
+ - Piotr Strebski
+ - Poesty Li
+ - PriitUring
+ - Quinox
+ - redactedscribe
+ - rimasx
+ - Saumon
+ - SeeSchloss
+ - Sigrid Davis
+ - Slendi
+ - slook
+ - SnIPeRSnIPeR
+ - spongy
+ - ssantos
+ - Ștefan Talpalaru
+ - subu_versus
+ - Szia Tomi
+ - Tagomago
+ - Timo Vanwynsberghe
+ - Toine
+ - Toine Rademacher
+ - tsointsoin
+ - Vinícius Soares
+ - Vladimir Sedach
+ - Vladyslav Anisimov
+ - wanderer
+ - Weblate (bot)
+ - W L
+ - X Kowalsky
+ - zniavre
+ - ZTetriminos
+ - Олег Грицун
+
+And everyone on the Nicotine+, Nicotine and PySoulSeek teams.
 
 
 # Translators
