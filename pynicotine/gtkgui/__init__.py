@@ -131,7 +131,7 @@ def run(hidden, ci_mode, multi_instance):
         # Always enable CSD on macOS for a more uniform look
         os.environ["GTK_CSD"] = "1"
 
-    if "GSK_RENDERER" not in os.environ:
+    if "GSK_RENDERER" not in os.environ and os.environ.get("GDK_BACKEND") != "broadway":
         # Old GL renderer is faster for now. Make it the default.
         os.environ["GSK_RENDERER"] = "gl"
 
