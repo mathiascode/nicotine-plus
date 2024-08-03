@@ -35,8 +35,7 @@ def install_pacman():
                 f"{prefix}gtk{gtk_version}",
                 f"{prefix}python-build",
                 f"{prefix}python-cx-freeze",
-                f"{prefix}python-pycodestyle",
-                f"{prefix}python-pylint",
+                f"{prefix}python-ruff",
                 f"{prefix}python-gobject"]
 
     if gtk_version == "3":

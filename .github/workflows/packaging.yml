@@ -102,9 +102,8 @@ jobs:
             mingw-w64-${{ matrix.arch }}-libadwaita
             mingw-w64-${{ matrix.arch }}-python-build
             mingw-w64-${{ matrix.arch }}-python-cx-freeze
-            mingw-w64-${{ matrix.arch }}-python-pycodestyle
-            mingw-w64-${{ matrix.arch }}-python-pylint
             mingw-w64-${{ matrix.arch }}-python-gobject
+            mingw-w64-${{ matrix.arch }}-python-ruff
 
       - name: Install additional dependencies
         run: python3 packaging/windows/dependencies.py

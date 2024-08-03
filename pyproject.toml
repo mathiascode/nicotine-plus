@@ -1,3 +1,14 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+builtins = ["_"]
+extend-exclude = ["pynicotine/external/tinytag.py"]
+line-length = 120
+indent-width = 4
+target-version = "py37"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["ANN", "BLE", "C90", "COM", "D", "EM", "FBT", "I", "PLR", "PT", "PTH", "RUF001", "RUF012", "SIM115", "TRY"]

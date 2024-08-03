@@ -21,8 +21,7 @@
 
 ## Testing
 
-- [pycodestyle](https://pycodestyle.pycqa.org/) for code style checks;
-- [pylint](https://pylint.readthedocs.io/) for linting.
+- [ruff](https://pylint.readthedocs.io/) for linting.
 
 
 ## Installing Dependencies
@@ -71,22 +70,16 @@ sudo zypper install gettext-tools python312-build python312-setuptools
 
 #### Installing Test Dependencies
 
-- On Debian/Ubuntu-based distributions:
-
-```sh
-sudo apt install pylint3 python3-pycodestyle
-```
-
 - On Redhat/Fedora-based distributions:
 
 ```sh
-sudo dnf install pylint python3-pycodestyle
+sudo dnf install ruff
 ```
 
 - On SUSE-based distributions:
 
 ```sh
-sudo zypper install python312-pylint python312-pycodestyle
+sudo zypper install python312-ruff
 ```
 
 ### Windows and macOS
