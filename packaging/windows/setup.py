@@ -41,6 +41,7 @@ if sys.platform == "win32":
         "fcntl", "grp", "nis", "ossaudiodev", "posix", "pwd", "readline", "resource", "spwd", "syslog", "termios"
     ]
     ICON_NAME = "icon.ico"
+    SHORTCUT_DIRS = ["ProgramMenuFolder", "StartupFolder"]
 
 elif sys.platform == "darwin":
     GUI_BASE = None
@@ -49,6 +50,7 @@ elif sys.platform == "darwin":
     LIB_EXTENSION = (".dylib", ".so")
     UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]
     ICON_NAME = "icon.icns"
+    SHORTCUT_DIRS = [None]
 
 else:
     raise RuntimeError("Only Windows and macOS are supported")
@@ -76,6 +78,7 @@ INCLUDED_MODULES = [MODULE_NAME, "gi"] + list(
     {module for module in sys.stdlib_module_names if not module.startswith("_")}.difference(EXCLUDED_MODULES)
 )
 
+executables = []
 include_files = []
 
 
@@ -253,6 +256,23 @@ def add_translations():
     )
 
 
+def add_executables():
+
+    for shortcut_dir in SHORTCUT_DIRS:
+        executables.append(
+            Executable(
+                script=os.path.join(PROJECT_PATH, SCRIPT_NAME),
+                base=GUI_BASE,
+                target_name=pynicotine.__application_name__,
+                icon=os.path.join(CURRENT_PATH, ICON_NAME),
+                manifest=MANIFEST_NAME,
+                copyright=pynicotine.__copyright__,
+                shortcut_name=pynicotine.__application_name__,
+                shortcut_dir=shortcut_dir
+            )
+        )
+
+
 # GTK
 add_gtk()
 add_icon_packs()
@@ -262,6 +282,9 @@ add_ssl_certs()
 
 # Translations
 add_translations()
+
+# Executables
+add_executables()
 
 # Setup
 setup(
@@ -313,16 +336,5 @@ setup(
     },
     data_files=[],
     packages=[],
-    executables=[
-        Executable(
-            script=os.path.join(PROJECT_PATH, SCRIPT_NAME),
-            base=GUI_BASE,
-            target_name=pynicotine.__application_name__,
-            icon=os.path.join(CURRENT_PATH, ICON_NAME),
-            manifest=MANIFEST_NAME,
-            copyright=pynicotine.__copyright__,
-            shortcut_name=pynicotine.__application_name__,
-            shortcut_dir="ProgramMenuFolder"
-        )
-    ],
+    executables=executables,
 )
