@@ -111,31 +111,6 @@ def add_files(folder_path, output_path, starts_with=None, ends_with=None, recurs
     )
 
 
-def add_pixbuf_loaders():
-
-    loaders_file = "lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
-    temp_loaders_file = os.path.join(TEMP_PATH, "loaders.cache")
-
-    with open(temp_loaders_file, "w", encoding="utf-8") as temp_file_handle, \
-         open(os.path.join(SYS_BASE_PATH, loaders_file), "r", encoding="utf-8") as real_file_handle:
-        data = real_file_handle.read()
-
-        if sys.platform == "win32":
-            data = data.replace("lib\\\\gdk-pixbuf-2.0\\\\2.10.0\\\\loaders", "lib")
-
-        elif sys.platform == "darwin":
-            data = data.replace(
-                os.path.join(SYS_BASE_PATH, "lib/gdk-pixbuf-2.0/2.10.0/loaders"), "@executable_path/lib")
-
-        temp_file_handle.write(data)
-
-    add_file(file_path=temp_loaders_file, output_path="lib/pixbuf-loaders.cache")
-    add_files(
-        folder_path=os.path.join(SYS_BASE_PATH, "lib/gdk-pixbuf-2.0/2.10.0/loaders"), output_path="lib",
-        starts_with="libpixbufloader-", ends_with=LIB_EXTENSION
-    )
-
-
 def _add_typelibs_callback(full_path, short_path, _callback_data=None):
 
     temp_file_gir = os.path.join(TEMP_PATH, short_path)
@@ -219,9 +194,6 @@ def add_gtk():
         ends_with=".conf", recursive=True
     )
 
-    # Pixbuf loaders
-    add_pixbuf_loaders()
-
     # Typelibs
     add_typelibs()
 
@@ -233,7 +205,7 @@ def add_icon_packs():
     )
     add_files(
         folder_path=os.path.join(SYS_BASE_PATH, "share/icons"), output_path="share/icons",
-        starts_with=required_icon_packs, ends_with=(".theme", ".svg"), recursive=True
+        starts_with=required_icon_packs, ends_with=(".theme", ".png", ".svg"), recursive=True
     )
 
 
