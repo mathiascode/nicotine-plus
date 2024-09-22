@@ -141,7 +141,7 @@ jobs:
       - name: Install dependencies
         run: |
           apk update
-          apk add gettext gtk4.0 libadwaita py3-build py3-gobject3 py3-pycodestyle py3-pylint
+          apk add gettext gtk4.0-dev libadwaita py3-build py3-gobject3 py3-pycodestyle py3-pylint
 
       - name: PEP 8 style checks
         run: python3 -m pycodestyle

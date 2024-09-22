@@ -58,7 +58,7 @@ class StartupTest(TestCase):
                     pass
 
         if broadway_process is not None:
-            os.environ["GDK_BACKEND"] = "broadway"
+            os.environ["GDK_BACKEND"] = os.environ["GSK_RENDERER"] = "broadway"
             os.environ["BROADWAY_DISPLAY"] = broadway_display
 
         with subprocess.Popen(command) as process:
