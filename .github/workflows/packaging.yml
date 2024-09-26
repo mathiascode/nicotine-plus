@@ -93,19 +93,19 @@ jobs:
       - name: Setup msys2
         uses: msys2/setup-msys2@v2
         with:
-          msystem: clang64
+          msystem: ucrt64
           release: false
           update: true
           install: >-
-            mingw-w64-clang-${{ matrix.arch }}-ca-certificates
-            mingw-w64-clang-${{ matrix.arch }}-gettext-tools
-            mingw-w64-clang-${{ matrix.arch }}-gtk4
-            mingw-w64-clang-${{ matrix.arch }}-libadwaita
-            mingw-w64-clang-${{ matrix.arch }}-python-build
-            mingw-w64-clang-${{ matrix.arch }}-python-cx-freeze
-            mingw-w64-clang-${{ matrix.arch }}-python-pycodestyle
-            mingw-w64-clang-${{ matrix.arch }}-python-pylint
-            mingw-w64-clang-${{ matrix.arch }}-python-gobject
+            mingw-w64-ucrt-${{ matrix.arch }}-ca-certificates
+            mingw-w64-ucrt-${{ matrix.arch }}-gettext-tools
+            mingw-w64-ucrt-${{ matrix.arch }}-gtk4
+            mingw-w64-ucrt-${{ matrix.arch }}-libadwaita
+            mingw-w64-ucrt-${{ matrix.arch }}-python-build
+            mingw-w64-ucrt-${{ matrix.arch }}-python-cx-freeze
+            mingw-w64-ucrt-${{ matrix.arch }}-python-pycodestyle
+            mingw-w64-ucrt-${{ matrix.arch }}-python-pylint
+            mingw-w64-ucrt-${{ matrix.arch }}-python-gobject
 
       - name: Install additional dependencies
         run: python3 packaging/windows/dependencies.py
