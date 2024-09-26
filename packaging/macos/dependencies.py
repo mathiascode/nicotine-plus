@@ -28,7 +28,8 @@ def install_brew():
                 "gettext",
                 "gobject-introspection",
                 "gtk4",
-                "libadwaita"]
+                "libadwaita",
+                "webp-pixbuf-loader"]
 
     subprocess.check_call(["brew", "install"] + packages)
 

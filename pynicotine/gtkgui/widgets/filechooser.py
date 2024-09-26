@@ -202,7 +202,7 @@ class ImageChooser(FileChooser):
         file_filter = Gtk.FileFilter()
         file_filter.set_name(_("All images"))
 
-        for pattern in ("*.png", "*.jpg", "*.jpeg", "*.bmp", "*.tiff", "*.gif"):
+        for pattern in ("*.png", "*.jpg", "*.jpeg", "*.tiff", "*.gif", "*.svg", "*.webp"):
             file_filter.add_pattern(pattern)
 
         if self.using_new_api:

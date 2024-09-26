@@ -106,6 +106,7 @@ jobs:
             mingw-w64-${{ matrix.arch }}-python-pycodestyle
             mingw-w64-${{ matrix.arch }}-python-pylint
             mingw-w64-${{ matrix.arch }}-python-gobject
+            mingw-w64-${{ matrix.arch }}-webp-pixbuf-loader
 
       - name: Install additional dependencies
         run: python3 packaging/windows/dependencies.py
