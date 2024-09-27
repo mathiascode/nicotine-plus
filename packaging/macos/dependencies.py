@@ -26,11 +26,12 @@ def install_brew():
 
     packages = ["adwaita-icon-theme",
                 "gettext",
+                "glib",
                 "gobject-introspection",
                 "gtk4",
                 "libadwaita"]
 
-    subprocess.check_call(["brew", "install"] + packages)
+    subprocess.check_call(["brew", "reinstall"] + packages)
 
 
 def install_pypi():
