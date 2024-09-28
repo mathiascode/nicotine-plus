@@ -253,6 +253,84 @@ def add_translations():
     )
 
 
+def add_licenses():
+
+    for dependency in (
+        "adwaita-icon-theme",
+        "adwaita-icon-theme-legacy",
+        "appstream",
+        "brotli",
+        "bzip2",
+        "cairo",
+        "c-ares",
+        "curl",
+        "expat",
+        "fontconfig",
+        "freetype",
+        "fribidi",
+        "gdk-pixbuf2",
+        "gettext",
+        "gettext-runtime",
+        "glib2",
+        "graphene",
+        "graphite2",
+        "gtk4",
+        "harfbuzz",
+        "hicolor-icon-theme",
+        "jbigkit",
+        "json-glib",
+        "lerc",
+        "libadwaita",
+        "libc++",
+        "libdatrie",
+        "libdeflate",
+        "libepoxy",
+        "libffi",
+        "libiconv",
+        "libjpeg-turbo",
+        "libpng",
+        "libpsl",
+        "librsvg",
+        "libssh2",
+        "libsystre",
+        "libtasn1",
+        "libthai",
+        "libtiff",
+        "libtre",
+        "libunistring",
+        "libunwind",
+        "libwebp",
+        "libxml2",
+        "libxmlb",
+        "lief",
+        "nghttp2",
+        "nghttp3",
+        "openssl",
+        "pango",
+        "pcre2",
+        "pixman",
+        "python-cairo",
+        "python-cx-freeze",
+        "readline",
+        "shared-mime-info",
+        "sqlite3",
+        "tzdata",
+        "wineditline",
+        "xz",
+        "zlib",
+        "zstd"
+    ):
+        add_files(
+            folder_path=os.path.join(SYS_BASE_PATH, "share/licenses", dependency),
+            output_path="share/licenses", recursive=True
+        )
+
+    add_files(
+        folder_path=os.path.dirname(os.__file__), output_path="share/licenses/python",
+        starts_with="LICENSE"
+    )
+
+
 # GTK
 add_gtk()
 add_icon_packs()
@@ -262,6 +340,9 @@ add_ssl_certs()
 
 # Translations
 add_translations()
+
+# Licenses
+add_licenses()
 
 # Setup
 setup(
