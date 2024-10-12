@@ -29,7 +29,8 @@ def install_brew():
                 "glib",
                 "gtk4",
                 "libadwaita",
-                "librsvg"]
+                "librsvg",
+                "webp-pixbuf-loader"]
 
     subprocess.check_call(["brew", "reinstall"] + packages)
 
