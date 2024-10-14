@@ -28,8 +28,7 @@ def install_brew():
                 "gobject-introspection",
                 "glib",
                 "gtk4",
-                "libadwaita",
-                "librsvg"]
+                "libadwaita"]
 
     subprocess.check_call(["brew", "reinstall"] + packages)
 
