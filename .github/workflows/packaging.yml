@@ -78,7 +78,7 @@ jobs:
           path: ${{ steps.build-snap.outputs.snap }}
 
   windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
     timeout-minutes: 15
     strategy:
       matrix:
