@@ -1029,7 +1029,12 @@ class Transfers:
         transfer = treeview.get_row_value(iterator, "transfer_data")
         return transfer.virtual_path or self.get_transfer_folder_path(transfer)
 
-    def on_row_activated(self, _treeview, iterator, _column_id):
+    def on_row_activated(self, _treeview, iterator, column_id):
+
+        if column_id == "user":
+            username = self.tree_view.get_row_value(iterator, "user")
+            core.userinfo.show_user(username)
+            return
 
         if self.tree_view.collapse_row(iterator):
             return

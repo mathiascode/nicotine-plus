@@ -1482,11 +1482,24 @@ class Search:
 
         return file_data.path
 
-    def on_row_activated(self, treeview, iterator, _column):
+    def on_row_activated(self, treeview, iterator, column_id):
+
+        if column_id == "user":
+            username = self.tree_view.get_row_value(iterator, "user")
+            core.userinfo.show_user(username)
+            return
 
         self.select_results()
-
         folder_path = treeview.get_row_value(iterator, "folder")
+
+        # Always expand/collapse rows unless clicking a folder path
+        if column_id != "folder" and not folder_path:
+            if self.tree_view.collapse_row(iterator):
+                return
+
+            if self.tree_view.expand_row(iterator):
+                return
+
         basename = treeview.get_row_value(iterator, "filename")
 
         if not folder_path and not basename:
