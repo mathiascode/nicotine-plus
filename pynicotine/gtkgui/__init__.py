@@ -110,6 +110,7 @@ def run(hidden, ci_mode, multi_instance):
     if getattr(sys, "frozen", False):
         # Set up paths for frozen binaries (Windows and macOS)
         executable_folder = os.path.dirname(sys.executable)
+        print("HI")
 
         os.environ["GTK_EXE_PREFIX"] = executable_folder
         os.environ["GTK_DATA_PREFIX"] = executable_folder

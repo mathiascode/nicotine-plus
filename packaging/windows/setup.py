@@ -87,7 +87,9 @@ include_files = []
 def process_files(folder_path, callback, callback_data=None, starts_with=None, ends_with=None, recursive=False):
 
     for full_path in glob.glob(os.path.join(folder_path, "**"), recursive=recursive):
-        short_path = os.path.relpath(full_path, folder_path)
+        short_folder_path = os.path.dirname(os.path.relpath(full_path, folder_path))
+        real_full_path = os.path.realpath(full_path)
+        short_path = os.path.join(short_folder_path, os.path.basename(real_full_path))
 
         if starts_with and not short_path.startswith(starts_with):
             continue
@@ -95,7 +97,7 @@ def process_files(folder_path, callback, callback_data=None, starts_with=None, e
         if ends_with and not short_path.endswith(ends_with):
             continue
 
-        callback(full_path, short_path, callback_data)
+        callback(real_full_path, short_path, callback_data)
 
 
 def add_file(file_path, output_path):
@@ -281,6 +283,21 @@ setup(
             "packages": INCLUDED_MODULES,
             "excludes": EXCLUDED_MODULES,
             "include_files": include_files,
+            "bin_path_includes": ["/"],
+            "bin_excludes": [
+                "ldd",  # old alpine uses ldd instead of ld.so
+                "ld.so",
+                "ld64.so",
+                "ld-linux.so",
+                "ld-linux-*.so",  # ld-linux-x86-64.so.2, ld-linux-aarch64.so.2
+                "libc.so",
+                "libdl.so",
+                "libm.so",
+                "libpthread.so",
+                "libutil.so",
+                # musllinux
+                "ld-musl-*.so",
+            ],
             "zip_include_packages": ["*"],
             "zip_exclude_packages": [MODULE_NAME],
             "optimize": 2
