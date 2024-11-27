@@ -28,7 +28,8 @@ def install_brew():
                 "gobject-introspection",
                 "gtk4",
                 "libadwaita",
-                "librsvg"]
+                "librsvg",
+                "webp-pixbuf-loader"]
 
     subprocess.check_call(["brew", "install", "--quiet"] + packages)
 
