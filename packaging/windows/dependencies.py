@@ -19,29 +19,64 @@
 
 import os
 import subprocess
+import sys
 
 
-def install_pacman():
-    """Install dependencies from the main MinGW repos."""
+def install_windows():
+    """Install dependencies from the main MinGW repos (Windows)."""
 
     arch = os.environ.get("ARCH", "x86_64")
     prefix = "mingw-w64-clang-aarch64" if arch == "arm64" else "mingw-w64-x86_64"
 
-    packages = [f"{prefix}-ca-certificates",
-                f"{prefix}-gettext-tools",
-                f"{prefix}-gtk4",
-                f"{prefix}-libadwaita",
-                f"{prefix}-python-build",
-                f"{prefix}-python-cx-freeze",
-                f"{prefix}-python-gobject",
-                f"{prefix}-python-pycodestyle",
-                f"{prefix}-python-pylint",
-                f"{prefix}-python-setuptools",
-                f"{prefix}-python-wheel",
-                f"{prefix}-webp-pixbuf-loader"]
-
+    packages = [
+        f"{prefix}-ca-certificates",
+        f"{prefix}-cmake",
+        f"{prefix}-toolchain",
+        f"{prefix}-gobject-introspection",
+        f"{prefix}-gettext-tools",
+        f"{prefix}-gtk4",
+        f"{prefix}-libadwaita",
+        f"{prefix}-webp-pixbuf-loader"
+    ]
     subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
 
 
+def install_macos():
+    """Install dependencies from the main Homebrew repos (macOS)."""
+
+    packages = [
+        "gettext",
+        "gobject-introspection",
+        "glib",
+        "gtk4",
+        "libadwaita",
+        "librsvg"
+    ]
+    subprocess.check_call(["brew", "install"] + packages)
+
+
+def install_pypi():
+    """Install dependencies from PyPi."""
+
+    os.environ["PIP_CONSTRAINT"] = "packaging/windows/constraints.txt"
+    subprocess.check_call([
+        sys.executable, "-m", "pip", "install",
+        "--no-binary", "cx_Freeze",
+        "--no-binary", "PyGObject",
+        "--no-binary", "pycairo",
+        "-c", "packaging/windows/constraints.txt",
+        "-e", ".[packaging,tests]",
+        "build",
+        "setuptools",
+        "wheel"
+    ])
+
+
 if __name__ == "__main__":
-    install_pacman()
+    if sys.platform == "win32":
+        install_windows()
+
+    elif sys.platform == "darwin":
+        install_macos()
+
+    install_pypi()

@@ -103,20 +103,17 @@ jobs:
             ${{ matrix.prefix }}-gettext-tools
             ${{ matrix.prefix }}-gtk4
             ${{ matrix.prefix }}-libadwaita
-            ${{ matrix.prefix }}-python-build
-            ${{ matrix.prefix }}-python-cx-freeze
-            ${{ matrix.prefix }}-python-gobject
-            ${{ matrix.prefix }}-python-pycodestyle
-            ${{ matrix.prefix }}-python-pylint
-            ${{ matrix.prefix }}-python-setuptools
-            ${{ matrix.prefix }}-python-wheel
+            ${{ matrix.prefix }}-python
             ${{ matrix.prefix }}-webp-pixbuf-loader
 
+      - name: Create Python virtual environment
+        run: python3 -m venv venv
+
       - name: Install additional dependencies
-        run: python3 packaging/windows/dependencies.py
+        run: venv/bin/python3 packaging/windows/dependencies.py
 
       - name: Freeze application
-        run: python3 packaging/windows/setup.py bdist_msi
+        run: venv/bin/python3 packaging/windows/setup.py bdist_msi
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v4

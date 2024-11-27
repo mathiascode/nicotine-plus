@@ -196,32 +196,29 @@ jobs:
             ${{ matrix.prefix }}-gettext-tools
             ${{ matrix.prefix }}-gtk4
             ${{ matrix.prefix }}-libadwaita
-            ${{ matrix.prefix }}-python-build
-            ${{ matrix.prefix }}-python-cx-freeze
-            ${{ matrix.prefix }}-python-gobject
-            ${{ matrix.prefix }}-python-pycodestyle
-            ${{ matrix.prefix }}-python-pylint
-            ${{ matrix.prefix }}-python-setuptools
-            ${{ matrix.prefix }}-python-wheel
+            ${{ matrix.prefix }}-python
             ${{ matrix.prefix }}-webp-pixbuf-loader
 
+      - name: Create Python virtual environment
+        run: python3 -m venv venv
+
       - name: Install additional dependencies
-        run: python3 packaging/windows/dependencies.py
+        run: venv/bin/python3 packaging/windows/dependencies.py
 
       - name: PEP 8 style checks
-        run: python3 -m pycodestyle
+        run: venv/bin/python3 -m pycodestyle
 
       - name: Linting
-        run: python3 -m pylint --recursive=y .
+        run: venv/bin/python3 -m pylint --recursive=y .
 
       - name: Integration and unit tests
-        run: python3 -m unittest -v
+        run: venv/bin/python3 -m unittest -v
 
       - name: Build
-        run: python3 -m build
+        run: venv/bin/python3 -m build
 
       - name: Build without isolation
-        run: python3 -m build --no-isolation
+        run: venv/bin/python3 -m build --no-isolation
 
   macos:
     strategy:
