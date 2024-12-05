@@ -154,9 +154,6 @@ class NATPMP(BaseImplementation):
     def _request_port_mapping(self, public_port, private_port, lease_duration):
 
         with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as sock:
-            log.add_debug("NAT-PMP: Binding socket to local IP address %s", self.local_ip_address)
-
-            sock.bind((self.local_ip_address, 0))
             request = self.PortmapRequest(public_port, private_port, lease_duration)
             timeout = self.REQUEST_INIT_TIMEOUT
 
@@ -355,13 +352,12 @@ class UPnP(BaseImplementation):
 
             # Create a UDP socket and set its timeout
             with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as sock:
-                log.add_debug("UPnP: Binding socket to local IP address %s", private_ip)
+                log.add_debug("UPnP: Setting IP_MULTICAST_IF to %s", private_ip)
 
                 sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(private_ip))
                 sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack("B", UPnP.MULTICAST_TTL))
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                 sock.settimeout(UPnP.MX_RESPONSE_DELAY + 0.1)  # Larger timeout in case data arrives at the last moment
-                sock.bind((private_ip, 0))
 
                 # Protocol 1
                 wan_ip1 = UPnP.SSDPRequest("urn:schemas-upnp-org:service:WANIPConnection:1")
