@@ -3498,7 +3498,7 @@ class Preferences(Dialog):
                 elif isinstance(obj, Gtk.SpinButton):
                     if GTK_API_VERSION >= 4:
                         scroll_controller = Gtk.EventControllerScroll(
-                            flags=int(Gtk.EventControllerScrollFlags.VERTICAL)
+                            flags=Gtk.EventControllerScrollFlags.VERTICAL
                         )
                         scroll_controller.connect("scroll", self.on_widget_scroll)
                         obj.add_controller(scroll_controller)
