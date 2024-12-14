@@ -25,20 +25,14 @@ def install_brew():
     """Install dependencies from the main Homebrew repos."""
 
     packages = ["gettext",
-                "gtk4",
+                "gobject-introspection",
+                "libadwaita",
                 "librsvg",
-                "mozilla-rootcerts-openssl",
-                "py312-build",
-                "py312-codestyle",
-                "py312-gobject3",
-                "py312-pip",
-                "py312-pylint",
-                "py312-setuptools",
-                "py312-wheel",
-                "webp-pixbuf-loader"]
+                "py312-pip"]
 
-    subprocess.check_call(
-        ["sudo", "/opt/pkg/bin/pkgin", "-y", "install"] + packages)
+    subprocess.check_call(["sudo", "port", "install", "gtk4",
+                           "+quartz", "-x11"])
+    subprocess.check_call(["sudo", "port", "install"] + packages)
 
 
 def install_pypi():
@@ -46,8 +40,18 @@ def install_pypi():
 
     subprocess.check_call([
         sys.executable, "-m", "pip", "install",
-        "--no-binary", ":all:",
-        "cx_Freeze"
+
+        # For consistency, avoid including pre-built binaries from PyPI
+        # in the application.
+        "--no-binary", "cx_Freeze",
+        "--no-binary", "PyGObject",
+        "--no-binary", "pycairo",
+
+        "-e", ".[packaging,tests]",
+        "build",
+        "setuptools",
+        "wheel",
+        "--break-system-packages"
     ])
 
 

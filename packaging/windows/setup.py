@@ -44,7 +44,7 @@ if sys.platform == "win32":
 
 elif sys.platform == "darwin":
     GUI_BASE = None
-    SYS_BASE_PATH = "/opt/pkg"
+    SYS_BASE_PATH = "/opt/local"
     LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
     LIB_EXTENSION = (".dylib", ".so")
     UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]

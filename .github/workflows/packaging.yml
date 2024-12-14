@@ -137,31 +137,36 @@ jobs:
         include:
           - arch: x86_64
             platform: macos-13
-            bootstrap: bootstrap-macos12.3-trunk-x86_64-20240426.tar.gz
+            bootstrap: MacPorts-2.10.5-13-Ventura.pkg
 
           - arch: arm64
             platform: macos-14
-            bootstrap: bootstrap-macos12.3-trunk-arm64-20240426.tar.gz
+            bootstrap: MacPorts-2.10.5-14-Sonoma.pkg
     runs-on: ${{ matrix.platform }}
     timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up pkgsrc
+      - name: Set up MacPorts
         run: |
-          curl -O https://pkgsrc.smartos.org/packages/Darwin/bootstrap/${{ matrix.bootstrap }}
-          sudo tar -zxpf ${{ matrix.bootstrap }} -C /
-          eval $(/usr/libexec/path_helper)
+          wget https://github.com/macports/macports-base/releases/download/v2.10.5/${{ matrix.bootstrap }}
+          sudo installer -pkg ${{ matrix.bootstrap }} -target /
+
+      - name: Update path
+        run: echo "/opt/local/bin:/opt/local/sbin" >> "$GITHUB_PATH"
 
       - name: Install Python
-        run: sudo /opt/pkg/bin/pkgin -y install python312
+        run: sudo port install python312
 
       - name: Install build dependencies
-        run: /opt/pkg/bin/python3 packaging/macos/dependencies.py
+        run: |
+          /opt/local/bin/python3.12 packaging/macos/dependencies.py
+          sudo gdk-pixbuf-query-loaders --update-cache
+          sudo glib-compile-schemas /opt/local/share/glib-2.0/schemas
 
       - name: Freeze application
-        run: /opt/pkg/bin/python3 packaging/macos/setup.py bdist_dmg
+        run: /opt/local/bin/python3.12 packaging/macos/setup.py bdist_dmg
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v4
