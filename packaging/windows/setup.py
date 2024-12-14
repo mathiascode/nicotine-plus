@@ -44,7 +44,7 @@ if sys.platform == "win32":
 
 elif sys.platform == "darwin":
     GUI_BASE = None
-    SYS_BASE_PATH = "/opt/homebrew" if platform.machine() == "arm64" else "/usr/local"
+    SYS_BASE_PATH = "/opt/pkg"
     LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
     LIB_EXTENSION = (".dylib", ".so")
     UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]
@@ -177,13 +177,13 @@ def add_typelibs():
     required_typelibs = tuple(required_typelibs)
     folder_path = os.path.join(SYS_BASE_PATH, "lib/girepository-1.0")
 
-    if sys.platform == "darwin":
+    """if sys.platform == "darwin":
         # Remove absolute paths added by Homebrew (macOS)
         process_files(
             folder_path=os.path.join(SYS_BASE_PATH, "share/gir-1.0"),
             callback=_add_typelibs_callback, starts_with=required_typelibs, ends_with=".gir"
         )
-        folder_path = TEMP_PATH
+        folder_path = TEMP_PATH"""
 
     add_files(
         folder_path=folder_path, output_path="lib/typelibs",
@@ -228,7 +228,7 @@ def add_gtk():
 
 def add_ssl_certs():
     ssl_paths = ssl.get_default_verify_paths()
-    add_file(file_path=ssl_paths.openssl_cafile, output_path="lib/cert.pem")
+    #add_file(file_path=ssl_paths.openssl_cafile, output_path="lib/cert.pem")
 
 
 def add_translations():
