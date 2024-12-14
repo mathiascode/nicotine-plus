@@ -133,31 +133,35 @@ jobs:
   macos:
     strategy:
       matrix:
+        arch: [x86_64, arm64]
         include:
           - arch: x86_64
             platform: macos-13
+            bootstrap: bootstrap-macos12.3-trunk-x86_64-20240426.tar.gz
+
           - arch: arm64
             platform: macos-14
+            bootstrap: bootstrap-macos12.3-trunk-arm64-20240426.tar.gz
     runs-on: ${{ matrix.platform }}
     timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set system language
-        run: defaults write NSGlobalDomain AppleLanguages "(en-US)"
-
-      - name: Create Python virtual environment
+      - name: Set up pkgsrc
         run: |
-          brew uninstall --ignore-dependencies python@3.12
-          brew install --overwrite python@3.12
-          python3.12 -m venv venv
+          curl -O https://pkgsrc.smartos.org/packages/Darwin/bootstrap/${{ matrix.bootstrap }}
+          sudo tar -zxpf ${{ matrix.bootstrap }} -C /
+          eval $(/usr/libexec/path_helper)
+
+      - name: Install Python
+        run: sudo /opt/pkg/bin/pkgin -y install python312
 
       - name: Install build dependencies
-        run: venv/bin/python3 packaging/macos/dependencies.py
+        run: /opt/pkg/bin/python3 packaging/macos/dependencies.py
 
       - name: Freeze application
-        run: venv/bin/python3 packaging/macos/setup.py bdist_dmg
+        run: /opt/pkg/bin/python3 packaging/macos/setup.py bdist_dmg
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v4
