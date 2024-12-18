@@ -181,7 +181,6 @@ def add_typelibs():
         "PangoCairo-",
         "GObject-",
         "GdkPixbuf-",
-        "cairo-",
         "GModule-",
         "freetype2-"
     ]
