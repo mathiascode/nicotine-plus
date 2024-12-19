@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 import gi
 from gi.repository import Gtk
 
@@ -69,6 +71,11 @@ class ChatEntry:
         Accelerator("Page_Up", self.widget, self.on_page_up_accelerator)
 
         self.set_spell_check_enabled(enable_spell_check)
+
+        # Workaround for GTK 4 bug where broadwayd uses a lot of CPU after hiding popover
+        if GTK_API_VERSION >= 4 and os.environ.get("GDK_BACKEND") == "broadway":
+            completion_popover = list(self.widget)[-1]
+            completion_popover.connect("hide", self.on_popover_hide_broadway)
 
     def destroy(self):
 
@@ -241,6 +248,9 @@ class ChatEntry:
         if icon_pos == Gtk.EntryIconPosition.PRIMARY:
             self.on_send_message()
 
+    def on_popover_hide_broadway(self, popover):
+        popover.unrealize()
+
     def entry_completion_find_match(self, _completion, entry_text, iterator):
 
         if not entry_text:
@@ -392,6 +402,11 @@ class CompletionEntry:
         completion.set_match_func(self.entry_completion_find_match)
         widget.set_completion(completion)
 
+        # Workaround for GTK 4 bug where broadwayd uses a lot of CPU after hiding popover
+        if GTK_API_VERSION >= 4 and os.environ.get("GDK_BACKEND") == "broadway":
+            completion_popover = list(widget)[-1]
+            completion_popover.connect("hide", self.on_popover_hide_broadway)
+
     def destroy(self):
         self.__dict__.clear()
 
@@ -423,6 +438,9 @@ class CompletionEntry:
             return True
 
         return False
+
+    def on_popover_hide_broadway(self, popover):
+        popover.unrealize()
 
 
 class SpellChecker:
