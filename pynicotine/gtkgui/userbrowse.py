@@ -767,7 +767,7 @@ class UserBrowse:
         # Temporarily disable sorting for increased performance
         self.file_list_view.freeze()
 
-        for _code, basename, size, _ext, file_attributes, *_unused in files:
+        for basename, size, file_attributes, *_unused in files:
             h_size = human_size(size, config.sections["ui"]["file_size_unit"])
             h_quality, bitrate, h_length, length = FileListMessage.parse_audio_quality_length(size, file_attributes)
 
@@ -1103,7 +1103,7 @@ class UserBrowse:
                 return
 
         for file_data in files:
-            _code, basename, *_unused = file_data
+            basename, *_unused = file_data
 
             # Find the wanted file
             if basename not in self.selected_files:
@@ -1187,7 +1187,7 @@ class UserBrowse:
                     selected_folder_path, browsed_user=core.userbrowse.users[self.user], recurse=True
                 ):
                     for file_data in files:
-                        _code, basename, file_size, _ext, file_attributes, *_unused = file_data
+                        basename, file_size, file_attributes, *_unused = file_data
                         _bitrate, length, *_unused = FileListMessage.parse_file_attributes(file_attributes)
                         file_path = "\\".join([folder_path, basename])
                         selected_size += file_size

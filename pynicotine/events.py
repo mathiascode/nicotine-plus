@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import threading
 import time
 
 from collections import defaultdict
@@ -268,6 +269,11 @@ class Events:
         self._callbacks[event_name].remove(function)
 
     def emit(self, event_name, *args, **kwargs):
+
+        if threading.current_thread() is not threading.main_thread():
+            # Emit in main thread
+            self._thread_events.append(ThreadEvent(event_name, args, kwargs))
+            return
 
         callbacks = self._callbacks[event_name]
 

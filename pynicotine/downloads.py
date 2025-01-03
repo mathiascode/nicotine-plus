@@ -1038,7 +1038,7 @@ class Downloads(Transfers):
             log.add_transfer("Attempting to download files in folder %s for user %s. "
                              "Destination path: %s", (folder_path, username, destination_folder_path))
 
-            for _code, basename, file_size, _ext, file_attributes, *_unused in files:
+            for basename, file_size, file_attributes, *_unused in files:
                 virtual_path = folder_path.rstrip("\\") + "\\" + basename
 
                 self.enqueue_download(

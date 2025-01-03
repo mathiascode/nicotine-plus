@@ -3163,7 +3163,6 @@ class SharedFileListResponse(PeerMessage):
     def _parse_result_list(self, message, pos=0):
         pos, ndir = self.unpack_uint32(message, pos)
 
-        ext = None
         shares = []
 
         for _ in range(ndir):
@@ -3174,13 +3173,12 @@ class SharedFileListResponse(PeerMessage):
             files = []
 
             for _ in range(nfiles):
-                pos, code = self.unpack_uint8(message, pos)
-                pos, name = self.unpack_string(message, pos)
+                pos, name = self.unpack_string(message, pos + 1)  # Skip code
                 pos, size = FileListMessage.parse_file_size(message, pos)
                 pos, ext_len = self.unpack_uint32(message, pos)  # Obsolete, ignore
                 pos, attrs = FileListMessage.unpack_file_attributes(message, pos + ext_len)
 
-                files.append((code, name, size, ext, attrs))
+                files.append((name, size, attrs))
 
             if nfiles > 1:
                 files.sort(key=itemgetter(1))
@@ -3308,17 +3306,15 @@ class FileSearchResponse(PeerMessage):
     def _parse_result_list(self, message, pos=0):
         pos, nfiles = self.unpack_uint32(message, pos)
 
-        ext = None
         results = []
 
         for _ in range(nfiles):
-            pos, code = self.unpack_uint8(message, pos)
-            pos, name = self.unpack_string(message, pos)
+            pos, name = self.unpack_string(message, pos + 1)  # Skip code
             pos, size = FileListMessage.parse_file_size(message, pos)
             pos, ext_len = self.unpack_uint32(message, pos)  # Obsolete, ignore
             pos, attrs = FileListMessage.unpack_file_attributes(message, pos + ext_len)
 
-            results.append((code, name.replace("/", "\\"), size, ext, attrs))
+            results.append((name.replace("/", "\\"), size, attrs))
 
         if nfiles > 1:
             results.sort(key=itemgetter(1))
@@ -3487,17 +3483,15 @@ class FolderContentsResponse(PeerMessage):
             directory = directory.replace("/", "\\")
             pos, nfiles = self.unpack_uint32(message, pos)
 
-            ext = None
             folders[directory] = []
 
             for _ in range(nfiles):
-                pos, code = self.unpack_uint8(message, pos)
-                pos, name = self.unpack_string(message, pos)
+                pos, name = self.unpack_string(message, pos + 1)  # Skip code
                 pos, size = self.unpack_uint64(message, pos)
                 pos, ext_len = self.unpack_uint32(message, pos)  # Obsolete, ignore
                 pos, attrs = FileListMessage.unpack_file_attributes(message, pos + ext_len)
 
-                folders[directory].append((code, name, size, ext, attrs))
+                folders[directory].append((name, size, attrs))
 
             if nfiles > 1:
                 folders[directory].sort(key=itemgetter(1))

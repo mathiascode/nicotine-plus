@@ -795,7 +795,7 @@ class Search:
         search = core.search.searches[self.token]
         row_id = 0
 
-        for _code, file_path, size, _ext, file_attributes, *_unused in result_list:
+        for file_path, size, file_attributes, *_unused in result_list:
             if self.num_results_found >= self.max_limit:
                 self.max_limited = True
                 break

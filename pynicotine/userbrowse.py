@@ -192,6 +192,9 @@ class UserBrowse:
     def load_shares_list_from_disk(self, file_path):
 
         file_path_encoded = encode_path(file_path)
+        username = None
+        shares_list = []
+        private_shares_list = []
 
         try:
             try:
@@ -206,20 +209,32 @@ class UserBrowse:
                 # Try new format
 
                 with open(file_path_encoded, encoding="utf-8") as file_handle:
-                    shares_list = json.load(file_handle)
+                    json_obj = json.load(file_handle)
 
-            ext = ""
+                    if isinstance(json_obj, dict):
+                        metadata = json_obj.get("metadata", {})
+                        shares_list = json_obj.get("shares", [])
+                        private_shares_list = json_obj.get("private_shares", [])
 
-            for _folder_path, files in shares_list:
+                        if "username" in metadata:
+                            username = metadata["username"]
+
+                    elif isinstance(json_obj, list):
+                        shares_list = json_obj
+
+            for _folder_path, files in chain(shares_list, private_shares_list):
                 # Sanitization
                 for file_info in files:
-                    if not isinstance(file_info[1], str):
+                    if isinstance(file_info[0], int):
+                        file_info = [file_info[1], file_info[2], file_info[4]]
+
+                    if not isinstance(file_info[0], str):
                         raise TypeError("Invalid file name")
 
-                    if not isinstance(file_info[2], int):
+                    if not isinstance(file_info[1], int):
                         raise TypeError("Invalid file size")
 
-                    attrs = file_info[4]
+                    attrs = file_info[2]
 
                     if isinstance(attrs, dict):
                         # JSON stores file attribute types as strings, convert them back to integers
@@ -227,13 +242,13 @@ class UserBrowse:
                     else:
                         attrs = list(attrs)
 
-                    file_info[3] = ext
-
         except Exception as error:
             log.add(_("Loading Shares from disk failed: %(error)s"), {"error": error})
             return
 
-        username = os.path.basename(file_path)
+        if not username:
+            username = os.path.basename(file_path)
+
         browsed_user = self.users.get(username)
 
         if browsed_user is not None:
@@ -244,6 +259,7 @@ class UserBrowse:
         msg = SharedFileListResponse()
         msg.username = username
         msg.list = shares_list
+        msg.privatelist = private_shares_list
 
         events.emit("shared-file-list-response", msg)
 
@@ -255,7 +271,7 @@ class UserBrowse:
             return
 
         try:
-            file_path = os.path.join(folder_path, clean_file(username))
+            file_path = os.path.join(folder_path, clean_file(username) + ".json")
             browsed_user = self.users[username]
 
             with open(encode_path(file_path), "w", encoding="utf-8") as file_handle:
@@ -263,9 +279,19 @@ class UserBrowse:
                 json_encoder = json.JSONEncoder(check_circular=False, ensure_ascii=False)
                 is_first_item = True
 
-                file_handle.write("[")
+                file_handle.write("{\n")
+                file_handle.write('"metadata": ')
+                file_handle.write(json_encoder.encode(
+                    {"username": username}
+                ))
 
-                for folders in (browsed_user.public_folders, browsed_user.private_folders):
+                for key, folders in (
+                    ("shares", browsed_user.public_folders),
+                    ("private_shares", browsed_user.private_folders)
+                ):
+                    file_handle.write(",\n")
+                    file_handle.write(f'"{key}": [')
+
                     for item in folders.items():
                         if is_first_item:
                             is_first_item = False
@@ -274,7 +300,9 @@ class UserBrowse:
 
                         file_handle.write(json_encoder.encode(item))
 
-                file_handle.write("]")
+                    file_handle.write("]")
+
+                file_handle.write("}")
 
             log.add(_("Saved list of shared files for user '%(user)s' to %(dir)s"),
                     {"user": username, "dir": folder_path})
@@ -284,7 +312,7 @@ class UserBrowse:
 
     def download_file(self, username, folder_path, file_data, download_folder_path=None):
 
-        _code, basename, file_size, _ext, file_attributes, *_unused = file_data
+        basename, file_size, file_attributes, *_unused = file_data
         file_path = "\\".join([folder_path, basename])
 
         core.downloads.enqueue_download(
@@ -323,7 +351,7 @@ class UserBrowse:
                 download_folder_path=download_folder_path)
 
             if files:
-                for _code, basename, file_size, _ext, file_attributes, *_unused in files:
+                for basename, file_size, file_attributes, *_unused in files:
                     file_path = "\\".join([folder_path, basename])
 
                     core.downloads.enqueue_download(
@@ -332,7 +360,7 @@ class UserBrowse:
 
     def upload_file(self, username, folder_path, file_data):
 
-        _code, basename, *_unused = file_data
+        basename, *_unused = file_data
         file_path = "\\".join([folder_path, basename])
 
         core.uploads.enqueue_upload(username, file_path)
@@ -345,7 +373,7 @@ class UserBrowse:
         for folder_path, files in self.iter_matching_folders(
             requested_folder_path, browsed_user=local_browsed_user, recurse=recurse
         ):
-            for _code, basename, *_unused in files:
+            for basename, *_unused in files:
                 file_path = "\\".join([folder_path, basename])
                 core.uploads.enqueue_upload(username, file_path)
 
@@ -383,7 +411,7 @@ class UserBrowse:
 
         for _folder_path, files in chain(msg.list, msg.privatelist):
             for file_info in files:
-                shared_size += file_info[2]
+                shared_size += file_info[1]
 
             num_files += len(files)
 
