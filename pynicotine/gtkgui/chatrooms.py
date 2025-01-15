@@ -129,19 +129,6 @@ class ChatRooms(IconNotebook):
     def quit(self):
         self.freeze()
 
-    def destroy(self):
-
-        self.chat_entry.destroy()
-        self.room_list.destroy()
-
-        if self.command_help is not None:
-            self.command_help.destroy()
-
-        if self.room_wall is not None:
-            self.room_wall.destroy()
-
-        super().destroy()
-
     def on_focus(self, *_args):
 
         if self.window.current_page_id != self.window.chatrooms_page.id:
@@ -654,14 +641,8 @@ class ChatRoom:
         self.users_list_view.clear()
 
     def destroy(self):
-
         for menu in self.popup_menus:
             menu.destroy()
-
-        self.activity_view.destroy()
-        self.chat_view.destroy()
-        self.users_list_view.destroy()
-        self.__dict__.clear()
 
     def set_label(self, label):
         self.tab_menu.set_parent(label)

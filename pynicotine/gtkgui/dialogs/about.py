@@ -24,6 +24,7 @@ import pynicotine
 from pynicotine.core import core
 from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.dialogs import Dialog
 from pynicotine.gtkgui.widgets.theme import add_css_class
@@ -413,7 +414,7 @@ class About(Dialog):
         gtk_version = f"{Gtk.get_major_version()}.{Gtk.get_minor_version()}.{Gtk.get_micro_version()}"
 
         self.main_icon.set_from_icon_name(icon_name, *icon_args)
-        self.website_label.connect("activate-link", self.on_activate_link)
+        signal.weak(self.website_label, "activate-link", self.on_activate_link)
 
         for label_widget, text in (
             (self.application_version_label, f"{pynicotine.__application_name__} {pynicotine.__version__}"),
@@ -433,7 +434,7 @@ class About(Dialog):
                 label = Gtk.Label(label=text, use_markup=True, selectable=True, wrap=True, xalign=0, visible=True)
 
                 if entries is self.LICENSE:
-                    label.connect("activate-link", self.on_activate_link)
+                    signal.weak(label, "activate-link", self.on_activate_link)
 
                 if GTK_API_VERSION >= 4:
                     container.append(label)  # pylint: disable=no-member

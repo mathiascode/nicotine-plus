@@ -113,13 +113,6 @@ class FastConfigure(Dialog):
 
         self.reset_completeness()
 
-    def destroy(self):
-
-        self.download_folder_button.destroy()
-        self.shares_list_view.destroy()
-
-        super().destroy()
-
     def reset_completeness(self):
         """Turns on the complete flag if everything required is filled in."""
 

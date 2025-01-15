@@ -93,16 +93,6 @@ class PrivateChats(IconNotebook):
     def quit(self):
         self.freeze()
 
-    def destroy(self):
-
-        self.chat_entry.destroy()
-        self.history.destroy()
-
-        if self.command_help is not None:
-            self.command_help.destroy()
-
-        super().destroy()
-
     def on_focus(self, *_args):
 
         if self.window.current_page_id != self.window.private_page.id:
@@ -422,13 +412,8 @@ class PrivateChat:
         self.chats.unhighlight_user(self.user)
 
     def destroy(self):
-
         for menu in self.popup_menus:
             menu.destroy()
-
-        self.chat_view.destroy()
-        self.search_bar.destroy()
-        self.__dict__.clear()
 
     def set_label(self, label):
         self.popup_menu_user_tab.set_parent(label)

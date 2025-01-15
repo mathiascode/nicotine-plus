@@ -45,6 +45,7 @@ from pynicotine.gtkgui.search import Searches
 from pynicotine.gtkgui.uploads import Uploads
 from pynicotine.gtkgui.userbrowse import UserBrowses
 from pynicotine.gtkgui.userinfo import UserInfos
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.dialogs import MessageDialog
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
@@ -73,8 +74,6 @@ class MainWindow(Window):
         self.away_timer_id = None
         self.away_cooldown_time = 0
         self.gesture_click = None
-        self.window_active_handler = None
-        self.window_visible_handler = None
 
         # Load UI
 
@@ -345,26 +344,26 @@ class MainWindow(Window):
 
             key_controller = Gtk.EventControllerKey()
             key_controller.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-            key_controller.connect("key-released", self.on_cancel_auto_away)
+            signal.weak(key_controller, "key-released", self.on_cancel_auto_away)
             self.widget.add_controller(key_controller)
 
         else:
             self.gesture_click = Gtk.GestureMultiPress(widget=self.widget)
-            self.widget.connect("key-release-event", self.on_cancel_auto_away)
+            signal.weak(self.widget, "key-release-event", self.on_cancel_auto_away)
 
         self.gesture_click.set_button(0)
         self.gesture_click.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-        self.gesture_click.connect("pressed", self.on_cancel_auto_away)
+        signal.weak(self.gesture_click, "pressed", self.on_cancel_auto_away)
 
         # Clear notifications when main window is focused
-        self.window_active_handler = self.widget.connect("notify::is-active", self.on_window_active_changed)
-        self.window_visible_handler = self.widget.connect("notify::visible", self.on_window_visible_changed)
+        signal.weak(self.widget, "notify::is-active", self.on_window_active_changed)
+        signal.weak(self.widget, "notify::visible", self.on_window_visible_changed)
 
         # System window close (X)
         if GTK_API_VERSION >= 4:
-            self.widget.connect("close-request", self.on_close_window_request)
+            signal.weak(self.widget, "close-request", self.on_close_window_request)
         else:
-            self.widget.connect("delete-event", self.on_close_window_request)
+            signal.weak(self.widget, "delete-event", self.on_close_window_request)
 
         self.application.add_window(self.widget)
 
@@ -470,52 +469,52 @@ class MainWindow(Window):
 
         if GTK_API_VERSION == 3:
             action = Gio.SimpleAction(name="main-menu")
-            action.connect("activate", self.on_menu)
+            signal.weak(action, "activate", self.on_menu)
             self.add_action(action)
 
         action = Gio.SimpleAction(name="change-focus-view")
-        action.connect("activate", self.on_change_focus_view)
+        signal.weak(action, "activate", self.on_change_focus_view)
         self.add_action(action)
 
         action = Gio.SimpleAction(name="toggle-status")
-        action.connect("activate", self.on_toggle_status)
+        signal.weak(action, "activate", self.on_toggle_status)
         self.add_action(action)
 
         # View
 
         state = GLib.Variant.new_boolean(not config.sections["logging"]["logcollapsed"])
         action = Gio.SimpleAction(name="show-log-pane", state=state)
-        action.connect("change-state", self.on_show_log_pane)
+        signal.weak(action, "change-state", self.on_show_log_pane)
         self.add_action(action)
 
         # Search
 
         state = GLib.Variant.new_string("global")
         action = Gio.SimpleAction(name="search-mode", parameter_type=state.get_type(), state=state)
-        action.connect("change-state", self.search.on_search_mode)
+        signal.weak(action, "change-state", self.search.on_search_mode)
         self.add_action(action)
 
         # Notebook Tabs
 
         action = Gio.SimpleAction(name="reopen-closed-tab")
-        action.connect("activate", self.on_reopen_closed_tab)
+        signal.weak(action, "activate", self.on_reopen_closed_tab)
         self.add_action(action)
 
         action = Gio.SimpleAction(name="close-tab")
-        action.connect("activate", self.on_close_tab)
+        signal.weak(action, "activate", self.on_close_tab)
         self.add_action(action)
 
         action = Gio.SimpleAction(name="cycle-tabs")
-        action.connect("activate", self.on_cycle_tabs)
+        signal.weak(action, "activate", self.on_cycle_tabs)
         self.add_action(action)
 
         action = Gio.SimpleAction(name="cycle-tabs-reverse")
-        action.connect("activate", self.on_cycle_tabs, True)
+        signal.weak(action, "activate", self.on_cycle_tabs, True)
         self.add_action(action)
 
         for num in range(1, 10):
             action = Gio.SimpleAction(name=f"primary-tab-{num}")
-            action.connect("activate", self.on_change_primary_tab, num)
+            signal.weak(action, "activate", self.on_change_primary_tab, num)
             self.add_action(action)
 
     # Primary Menus #
@@ -534,7 +533,7 @@ class MainWindow(Window):
         # Ensure menu button always gets focus after closing menu (fixed in GTK 4.16)
         if (GTK_API_VERSION, GTK_MINOR_VERSION) < (4, 16):
             popover = self.header_menu.get_popover()
-            popover.connect("closed", lambda *_args: self.header_menu.grab_focus())
+            signal.weak(popover, "closed", lambda *_args: self.header_menu.grab_focus())
 
     def on_menu(self, *_args):
         self.header_menu.set_active(not self.header_menu.get_active())
@@ -1252,15 +1251,10 @@ class MainWindow(Window):
     def destroy(self):
 
         for tab in self.tabs.values():
-            tab.destroy()
+            if hasattr(tab, "destroy"):
+                tab.destroy()
 
-        self.notebook.destroy()
-        self.log_search_bar.destroy()
-        self.log_view.destroy()
         self.popup_menu_log_view.destroy()
         self.popup_menu_log_categories.destroy()
-
-        self.widget.disconnect(self.window_active_handler)
-        self.widget.disconnect(self.window_visible_handler)
 
         super().destroy()

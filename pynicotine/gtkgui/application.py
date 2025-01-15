@@ -31,6 +31,7 @@ import pynicotine
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.logfacility import log
 from pynicotine.shares import PermissionLevel
 from pynicotine.slskmessages import UserStatus
@@ -96,8 +97,8 @@ class Application:
         # Show errors in the GUI from here on
         sys.excepthook = self.on_critical_error
 
-        self._instance.connect("activate", self.on_activate)
-        self._instance.connect("shutdown", self.on_shutdown)
+        signal.weak(self._instance, "activate", self.on_activate)
+        signal.weak(self._instance, "shutdown", self.on_shutdown)
 
         for event_name, callback in (
             ("confirm-quit", self.on_confirm_quit),
@@ -191,7 +192,7 @@ class Application:
             action = Gio.SimpleAction(name=action_name, parameter_type=parameter_type, enabled=is_enabled)
 
             if callback:
-                action.connect("activate", callback)
+                signal.weak(action, "activate", callback)
 
             self.add_action(action)
 
@@ -213,7 +214,7 @@ class Application:
             ("log-miscellaneous", self.on_debug_miscellaneous, ("miscellaneous" in enabled_logs))
         ):
             action = Gio.SimpleAction(name=action_name, state=GLib.Variant.new_boolean(state))
-            action.connect("change-state", callback)
+            signal.weak(action, "change-state", callback)
             self.add_action(action)
 
     def _set_accels_for_action(self, action, accels):
@@ -657,12 +658,10 @@ class Application:
 
         self.statistics.present()
 
-    @staticmethod
-    def on_report_bug(*_args):
+    def on_report_bug(self, *_args):
         open_uri(pynicotine.__issue_tracker_url__)
 
-    @staticmethod
-    def on_improve_translations(*_args):
+    def on_improve_translations(self, *_args):
         open_uri(pynicotine.__translations_url__)
 
     def on_wishlist(self, *_args):
@@ -1023,5 +1022,3 @@ class Application:
 
         if self.tray_icon is not None:
             self.tray_icon.destroy()
-
-        self.__dict__.clear()

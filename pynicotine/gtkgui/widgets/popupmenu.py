@@ -32,6 +32,7 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.widgets import clipboard
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.utils import TRANSLATE_PUNCTUATION
 
@@ -69,7 +70,6 @@ class PopupMenu:
 
     def destroy(self):
         self.clear()
-        self.__dict__.clear()
 
     def set_parent(self, parent):
 
@@ -111,7 +111,7 @@ class PopupMenu:
             self.popup_menu.set_has_arrow(False)
 
             # Workaround for wrong widget receiving focus after closing menu in GTK 4
-            self.popup_menu.connect("closed", lambda *_args: self.parent.child_focus(Gtk.DirectionType.TAB_FORWARD))
+            signal.weak(self.popup_menu, "closed", lambda *_args: self.parent.child_focus(Gtk.DirectionType.TAB_FORWARD))
         else:
             self.popup_menu = Gtk.Menu.new_from_model(self.model)
             self.popup_menu.attach_to_widget(parent)
@@ -186,7 +186,7 @@ class PopupMenu:
         elif action and item[1]:
             # Callback
             action_name = "change-state" if boolean or choice else "activate"
-            action.connect(action_name, *item[1:])
+            signal.weak(action, action_name, *item[1:])
 
         self.items[label] = menuitem
 
@@ -350,7 +350,7 @@ class PopupMenu:
         if GTK_API_VERSION >= 4:
             self.gesture_click = Gtk.GestureClick()
             self.gesture_click.set_button(Gdk.BUTTON_SECONDARY)
-            self.gesture_click.connect("pressed", self._callback_click_gtk4)
+            signal.weak(self.gesture_click, "pressed", self._callback_click_gtk4)
             parent.add_controller(self.gesture_click)
 
             self.gesture_press = Gtk.GestureLongPress()
@@ -363,23 +363,23 @@ class PopupMenu:
                 parent.add_controller(gesture_click_darwin)
 
                 gesture_click_darwin.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-                gesture_click_darwin.connect("pressed", self._callback_click_gtk4_darwin)
+                signal.weak(gesture_click_darwin, "pressed", self._callback_click_gtk4_darwin)
 
         else:
             self.gesture_click = Gtk.GestureMultiPress(widget=parent)
             self.gesture_click.set_button(0)
-            self.gesture_click.connect("pressed", self._callback_click_gtk3)
+            signal.weak(self.gesture_click, "pressed", self._callback_click_gtk3)
 
             self.gesture_press = Gtk.GestureLongPress(widget=parent)
 
             # Shift+F10
-            parent.connect("popup-menu", self._callback_menu)
+            signal.weak(parent, "popup-menu", self._callback_menu)
 
         self.gesture_click.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
 
         self.gesture_press.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         self.gesture_press.set_touch_only(True)
-        self.gesture_press.connect("pressed", self._callback)
+        signal.weak(self.gesture_press, "pressed", self._callback)
 
 
 class FilePopupMenu(PopupMenu):

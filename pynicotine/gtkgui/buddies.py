@@ -186,11 +186,7 @@ class Buddies:
         self.list_view.unfreeze()
 
     def destroy(self):
-
-        self.list_view.destroy()
         self.popup_menu.destroy()
-
-        self.__dict__.clear()
 
     def on_focus(self, *_args):
 

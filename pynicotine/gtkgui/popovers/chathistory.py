@@ -102,13 +102,6 @@ class ChatHistory(Popover):
         ):
             events.connect(event_name, callback)
 
-    def destroy(self):
-
-        self.list_view.destroy()
-        self.completion_entry.destroy()
-
-        super().destroy()
-
     def server_login(self, msg):
 
         if not msg.success:

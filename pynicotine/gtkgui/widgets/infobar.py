@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import weakref
+
+from weakref import WeakMethod
+
 from gi.repository import Gtk
 
 from pynicotine.gtkgui.application import GTK_API_VERSION
@@ -64,9 +68,6 @@ class InfoBar:
                 self.button_container.add(button)         # pylint: disable=no-member
 
         self.set_visible(False)
-
-    def destroy(self):
-        self.__dict__.clear()
 
     def _show_message(self, message, message_type):
 

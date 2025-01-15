@@ -24,6 +24,7 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.popover import Popover
@@ -104,10 +105,10 @@ class RoomList(Popover):
                 parent.set_has_window(True)
                 parent.gesture_click = Gtk.GestureMultiPress(widget=parent)
 
-            parent.gesture_click.connect("released", self.on_toggle_label_pressed, toggle)
+            signal.weak(parent.gesture_click, "released", self.on_toggle_label_pressed, toggle)
 
         self.private_room_toggle.set_active(config.sections["server"]["private_chatrooms"])
-        self.private_room_toggle.connect("notify::active", self.on_toggle_accept_private_room)
+        signal.weak(self.private_room_toggle, "notify::active", self.on_toggle_accept_private_room)
 
         Accelerator("<Primary>f", self.widget, self.on_search_accelerator)
         self.completion_entry = CompletionEntry(window.chatrooms_entry, self.list_view.model, column=0)
@@ -129,14 +130,6 @@ class RoomList(Popover):
             ("user-left-room", self.user_left_room)
         ):
             events.connect(event_name, callback)
-
-    def destroy(self):
-
-        self.list_view.destroy()
-        self.popup_menu.destroy()
-        self.completion_entry.destroy()
-
-        super().destroy()
 
     def get_selected_room(self):
 

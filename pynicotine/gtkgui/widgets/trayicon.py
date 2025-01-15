@@ -29,6 +29,7 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.application import GTK_GUI_FOLDER_PATH
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.theme import ICON_THEME
 from pynicotine.gtkgui.widgets.window import Window
 from pynicotine.logfacility import log
@@ -1113,8 +1114,8 @@ class StatusIconImplementation(BaseImplementation):
             raise ImplementationUnavailable("StatusIcon implementation not available")
 
         self.tray_icon = Gtk.StatusIcon(tooltip_text=pynicotine.__application_name__)
-        self.tray_icon.connect("activate", self.activate_callback)
-        self.tray_icon.connect("popup-menu", self.on_status_icon_popup)
+        signal.weak(self.tray_icon, "activate", self.activate_callback)
+        signal.weak(self.tray_icon, "popup-menu", self.on_status_icon_popup)
 
         self.gtk_menu = self._build_gtk_menu()
         GLib.idle_add(self._update_icon, priority=GLib.PRIORITY_HIGH_IDLE)
@@ -1155,7 +1156,7 @@ class StatusIconImplementation(BaseImplementation):
                 item["gtk_menu_item"] = gtk_menu_item = gtk_menu_item_class(
                     label=text, use_underline=True, visible=True
                 )
-                item["gtk_handler"] = gtk_menu_item.connect("activate", item["callback"])
+                item["gtk_handler"] = signal.weak(gtk_menu_item, "activate", item["callback"])
 
             gtk_menu.append(gtk_menu_item)
 
@@ -1273,4 +1274,3 @@ class TrayIcon:
 
     def destroy(self):
         self.unload()
-        self.__dict__.clear()

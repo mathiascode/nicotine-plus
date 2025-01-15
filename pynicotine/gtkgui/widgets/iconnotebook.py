@@ -31,6 +31,7 @@ from gi.repository import Gtk
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.dialogs import OptionDialog
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
@@ -74,15 +75,12 @@ class TabLabel:
 
         if close_callback:
             self.gesture_click.set_button(Gdk.BUTTON_MIDDLE)
-            self.gesture_click.connect("pressed", close_callback)
+            signal.weak(self.gesture_click, "pressed", close_callback)
 
         self.start_icon = Gtk.Image(visible=False)
         self.end_icon = Gtk.Image(visible=False)
 
         self._pack_children()
-
-    def destroy(self):
-        self.__dict__.clear()
 
     def _remove_tab_label(self):
 
@@ -119,7 +117,7 @@ class TabLabel:
         self.close_button.set_visible(True)
 
         if self.close_callback is not None:
-            self.close_button.connect("clicked", self.close_callback)
+            signal.weak(self.close_button, "clicked", self.close_callback)
 
     def _remove_close_button(self):
 
@@ -289,7 +287,7 @@ class IconNotebook:
 
         if parent_page is not None:
             content_box = next(iter(parent_page))
-            content_box.connect("show", self.on_show_parent_page)
+            signal.weak(content_box, "show", self.on_show_parent_page)
 
         if GTK_API_VERSION >= 4:
             parent.append(self.widget)
@@ -301,7 +299,7 @@ class IconNotebook:
             self.scroll_controller = Gtk.EventControllerScroll(
                 flags=int(Gtk.EventControllerScrollFlags.BOTH_AXES | Gtk.EventControllerScrollFlags.DISCRETE)
             )
-            self.scroll_controller.connect("scroll", self.on_tab_scroll)
+            signal.weak(self.scroll_controller, "scroll", self.on_tab_scroll)
 
             tab_bar = next(iter(self.widget))
             tab_bar.add_controller(self.scroll_controller)
@@ -314,8 +312,8 @@ class IconNotebook:
             self.gesture_click = Gtk.GestureClick(
                 button=Gdk.BUTTON_PRIMARY, propagation_phase=Gtk.PropagationPhase.CAPTURE
             )
-            self.gesture_click.connect("pressed", self.on_notebook_click_pressed)
-            self.gesture_click.connect("released", self.on_notebook_click_released)
+            signal.weak(self.gesture_click, "pressed", self.on_notebook_click_pressed)
+            signal.weak(self.gesture_click, "released", self.on_notebook_click_released)
 
             self.widget.add_controller(self.gesture_click)                         # pylint: disable=no-member
 
@@ -323,12 +321,12 @@ class IconNotebook:
             parent.add(self.widget)
 
             self.pages_button.set_use_popover(False)            # pylint: disable=no-member
-            self.pages_button.connect("toggled", self.on_pages_button_pressed)
+            signal.weak(self.pages_button, "toggled", self.on_pages_button_pressed)
             self.pages_button_container.add(self.pages_button)  # pylint: disable=no-member
 
             self.widget.add_events(  # pylint: disable=no-member
                 int(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK))
-            self.widget.connect("scroll-event", self.on_tab_scroll_event)
+            signal.weak(self.widget, "scroll-event", self.on_tab_scroll_event)
 
         for style_class in ("circular", "flat"):
             add_css_class(self.pages_button, style_class)
@@ -340,20 +338,6 @@ class IconNotebook:
         self.update_pages_menu_button()
 
         self.popup_menu_pages.set_menu_button(self.pages_button)
-
-    def destroy(self):
-
-        if self.switch_page_handler is not None:
-            self.widget.disconnect(self.switch_page_handler)
-
-        if self.reorder_page_handler is not None:
-            self.widget.disconnect(self.reorder_page_handler)
-
-        for i in reversed(range(self.get_n_pages())):
-            page = self.get_nth_page(i)
-            self.remove_page(page)
-
-        self.__dict__.clear()
 
     def grab_focus(self):
         self.widget.grab_focus()
@@ -433,8 +417,7 @@ class IconNotebook:
         if hasattr(page, "focus_callback"):
             del page.focus_callback
 
-        tab_label = self.tab_labels.pop(page)
-        tab_label.destroy()
+        self.tab_labels.pop(page)
 
         if page_args:
             # Allow for restoring page after closing it
@@ -630,9 +613,9 @@ class IconNotebook:
 
     def connect_signals(self):
 
-        self.reorder_page_handler = self.widget.connect("page-reordered", self.on_reorder_page)
-        self.switch_page_handler = self.widget.connect("switch-page", self.on_switch_page)
-        self.widget.connect("page-removed", self.on_remove_page)
+        self.reorder_page_handler = signal.weak(self.widget, "page-reordered", self.on_reorder_page)
+        self.switch_page_handler = signal.weak(self.widget, "switch-page", self.on_switch_page)
+        signal.weak(self.widget, "page-removed", self.on_remove_page)
 
         if self.parent_page is None:
             # Show active page and focus default widget

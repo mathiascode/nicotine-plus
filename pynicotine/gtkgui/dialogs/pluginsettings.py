@@ -22,6 +22,7 @@ from gi.repository import Gtk
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.combobox import ComboBox
 from pynicotine.gtkgui.widgets.dialogs import Dialog
 from pynicotine.gtkgui.widgets.dialogs import EntryDialog
@@ -40,10 +41,10 @@ class PluginSettings(Dialog):
         self.option_widgets = {}
 
         cancel_button = Gtk.Button(label=_("_Cancel"), use_underline=True, visible=True)
-        cancel_button.connect("clicked", self.on_cancel)
+        signal.weak(cancel_button, "clicked", self.on_cancel)
 
         ok_button = Gtk.Button(label=_("_Apply"), use_underline=True, visible=True)
-        ok_button.connect("clicked", self.on_ok)
+        signal.weak(ok_button, "clicked", self.on_ok)
         add_css_class(ok_button, "suggested-action")
 
         self.primary_container = Gtk.Box(
@@ -66,9 +67,6 @@ class PluginSettings(Dialog):
             height=425,
             show_title_buttons=False
         )
-
-    def destroy(self):
-        self.__dict__.clear()
 
     @staticmethod
     def _generate_label(text):
@@ -228,7 +226,7 @@ class PluginSettings(Dialog):
             icon = Gtk.Image(icon_name=icon_name, visible=True)
             label = Gtk.Label(label=label_text, mnemonic_widget=button, visible=True)
 
-            button.connect("clicked", callback, treeview)
+            signal.weak(button, "clicked", callback, treeview)
             add_css_class(button, "flat")
 
             if GTK_API_VERSION >= 4:

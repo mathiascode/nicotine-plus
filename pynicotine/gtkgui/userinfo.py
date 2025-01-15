@@ -34,6 +34,7 @@ from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.application import GTK_MINOR_VERSION
 from pynicotine.gtkgui.widgets import clipboard
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.combobox import ComboBox
 from pynicotine.gtkgui.widgets.dialogs import EntryDialog
@@ -102,10 +103,6 @@ class UserInfos(IconNotebook):
 
     def quit(self):
         self.freeze()
-
-    def destroy(self):
-        self.userinfo_combobox.destroy()
-        super().destroy()
 
     def on_focus(self, *_args):
 
@@ -283,6 +280,7 @@ class UserInfo:
             self.user_label
         ) = ui.load(scope=self, path="userinfo.ui")
 
+        self.container.weak_ref(lambda *_args: print("GDODODO"))
         self.userinfos = userinfos
         self.window = userinfos.window
 
@@ -305,7 +303,7 @@ class UserInfo:
             self.country_icon.set_pixel_size(0)
 
             self.picture = Gtk.EventBox(can_focus=True, hexpand=True, vexpand=True, visible=True)
-            self.picture.connect("draw", self.on_draw_picture)
+            signal.weak(self.picture, "draw", self.on_draw_picture)
 
             self.picture_view.add(self.picture)    # pylint: disable=no-member
 
@@ -395,12 +393,6 @@ class UserInfo:
 
         for menu in self.popup_menus:
             menu.destroy()
-
-        self.info_bar.destroy()
-        self.description_view.destroy()
-        self.likes_list_view.destroy()
-        self.dislikes_list_view.destroy()
-        self.__dict__.clear()
 
         self.indeterminate_progress = False  # Stop progress bar timer
 

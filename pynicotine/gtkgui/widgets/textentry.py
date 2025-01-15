@@ -23,6 +23,7 @@ from gi.repository import Gtk
 
 from pynicotine.config import config
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.theme import add_css_class
 
@@ -56,14 +57,14 @@ class ChatEntry:
         self.entry_completion = Gtk.EntryCompletion(model=self.model, popup_single_match=False)
         self.entry_completion.set_text_column(0)
         self.entry_completion.set_match_func(self.entry_completion_find_match)
-        self.entry_completion.connect("match-selected", self.entry_completion_found_match)
+        signal.weak(self.entry_completion, "match-selected", self.entry_completion_found_match)
 
         self.widget.set_completion(self.entry_completion)
         CompletionEntry.patch_popover_hide_broadway(self.widget)
 
-        self.widget.connect("activate", self.on_send_message)
-        self.widget.connect("changed", self.on_changed)
-        self.widget.connect("icon-press", self.on_icon_pressed)
+        signal.weak(self.widget, "activate", self.on_send_message)
+        signal.weak(self.widget, "changed", self.on_changed)
+        signal.weak(self.widget, "icon-press", self.on_icon_pressed)
 
         Accelerator("<Shift>Tab", self.widget, self.on_tab_complete_accelerator, True)
         Accelerator("Tab", self.widget, self.on_tab_complete_accelerator)
@@ -72,13 +73,6 @@ class ChatEntry:
         Accelerator("Page_Up", self.widget, self.on_page_up_accelerator)
 
         self.set_spell_check_enabled(enable_spell_check)
-
-    def destroy(self):
-
-        if self.spell_checker is not None:
-            self.spell_checker.destroy()
-
-        self.__dict__.clear()
 
     def clear_unsent_message(self, entity):
         self.unsent_messages.pop(entity, None)
@@ -397,9 +391,6 @@ class CompletionEntry:
         widget.set_completion(completion)
         self.patch_popover_hide_broadway(widget)
 
-    def destroy(self):
-        self.__dict__.clear()
-
     def add_completion(self, item):
         if item not in self.completions:
             self.completions[item] = self.model.insert_with_valuesv(-1, self.column_numbers, [item])
@@ -435,7 +426,7 @@ class CompletionEntry:
         # Workaround for GTK 4 bug where broadwayd uses a lot of CPU after hiding popover
         if GTK_API_VERSION >= 4 and os.environ.get("GDK_BACKEND") == "broadway":
             completion_popover = list(entry)[-1]
-            completion_popover.connect("hide", cls.on_popover_hide_broadway)
+            signal.weak(completion_popover, "hide", cls.on_popover_hide_broadway)
 
     @staticmethod
     def on_popover_hide_broadway(popover):
@@ -500,9 +491,6 @@ class SpellChecker:
     def set_enabled(self, enabled):
         self.entry.set_inline_spell_checking(enabled)
 
-    def destroy(self):
-        self.__dict__.clear()
-
 
 class TextSearchBar:
 
@@ -545,14 +533,14 @@ class TextSearchBar:
 
         self.search_bar.connect_entry(self.entry)
 
-        self.entry.connect("activate", self.on_search_next_match)
-        self.entry.connect("search-changed", self.on_search_changed)
-        self.entry.connect("stop-search", self.on_hide_search_accelerator)
+        signal.weak(self.entry, "activate", self.on_search_next_match)
+        signal.weak(self.entry, "search-changed", self.on_search_changed)
+        signal.weak(self.entry, "stop-search", self.on_hide_search_accelerator)
 
-        self.entry.connect("previous-match", self.on_search_previous_match)
-        self.entry.connect("next-match", self.on_search_next_match)
-        self.previous_button.connect("clicked", self.on_search_previous_match)
-        self.next_button.connect("clicked", self.on_search_next_match)
+        signal.weak(self.entry, "previous-match", self.on_search_previous_match)
+        signal.weak(self.entry, "next-match", self.on_search_next_match)
+        signal.weak(self.previous_button, "clicked", self.on_search_previous_match)
+        signal.weak(self.next_button, "clicked", self.on_search_next_match)
 
         Accelerator("Up", self.entry, self.on_search_previous_match)
         Accelerator("Down", self.entry, self.on_search_next_match)
@@ -564,9 +552,6 @@ class TextSearchBar:
 
         for accelerator in ("<Shift><Primary>g", "<Shift>F3"):
             Accelerator(accelerator, controller_widget, self.on_search_previous_match)
-
-    def destroy(self):
-        self.__dict__.clear()
 
     def on_search_match(self, search_type, restarted=False):
 

@@ -42,6 +42,7 @@ from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.application import GTK_MINOR_VERSION
 from pynicotine.gtkgui.dialogs.pluginsettings import PluginSettings
 from pynicotine.gtkgui.popovers.searchfilterhelp import SearchFilterHelp
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.combobox import ComboBox
@@ -91,7 +92,7 @@ class NetworkPage:
         self.application = application
 
         self.username_entry.set_max_length(core.users.USERNAME_MAX_LENGTH)
-        self.check_port_status_label.connect("activate-link", self.on_activate_link)
+        signal.weak(self.check_port_status_label, "activate-link", self.on_activate_link)
 
         self.network_interface_combobox = ComboBox(
             container=self.network_interface_label.get_parent(), has_entry=True,
@@ -116,10 +117,6 @@ class NetworkPage:
             ("server-login", self.update_port_label)
         ):
             events.connect(event_name, callback)
-
-    def destroy(self):
-        self.network_interface_combobox.destroy()
-        self.__dict__.clear()
 
     def update_port_label(self, *_args):
 
@@ -357,15 +354,6 @@ class DownloadsPage:
                 "download_doubleclick": self.download_double_click_combobox
             }
         }
-
-    def destroy(self):
-
-        self.download_folder_button.destroy()
-        self.incomplete_folder_button.destroy()
-        self.received_folder_button.destroy()
-        self.filter_list_view.destroy()
-
-        self.__dict__.clear()
 
     def set_settings(self):
 
@@ -639,10 +627,6 @@ class SharesPage:
             }
         }
 
-    def destroy(self):
-        self.shares_list_view.destroy()
-        self.__dict__.clear()
-
     def set_settings(self):
 
         self.shares_list_view.clear()
@@ -850,13 +834,6 @@ class UploadsPage:
             }
         }
 
-    def destroy(self):
-
-        self.upload_double_click_combobox.destroy()
-        self.upload_queue_type_combobox.destroy()
-
-        self.__dict__.clear()
-
     def set_settings(self):
 
         self.application.preferences.set_widgets_data(self.options)
@@ -930,13 +907,6 @@ class UserProfilePage:
             }
         }
 
-    def destroy(self):
-
-        self.description_view.destroy()
-        self.select_picture_button.destroy()
-
-        self.__dict__.clear()
-
     def set_settings(self):
         self.description_view.clear()
         self.application.preferences.set_widgets_data(self.options)
@@ -1009,13 +979,6 @@ class IgnoredUsersPage:
                 "ipignorelist": self.ignored_ips_list_view
             }
         }
-
-    def destroy(self):
-
-        self.ignored_users_list_view.destroy()
-        self.ignored_ips_list_view.destroy()
-
-        self.__dict__.clear()
 
     def set_settings(self):
 
@@ -1190,13 +1153,6 @@ class BannedUsersPage:
             }
         }
 
-    def destroy(self):
-
-        self.banned_users_list_view.destroy()
-        self.banned_ips_list_view.destroy()
-
-        self.__dict__.clear()
-
     def set_settings(self):
 
         self.clear_changes()
@@ -1351,7 +1307,7 @@ class ChatsPage:
 
         self.format_codes_label.set_markup(
             f"<a href='{format_codes_url}' title='{format_codes_url}'>{format_codes_label}</a>")
-        self.format_codes_label.connect("activate-link", self.on_activate_link)
+        signal.weak(self.format_codes_label, "activate-link", self.on_activate_link)
 
         self.tts_command_combobox = ComboBox(
             container=self.tts_command_label.get_parent(), label=self.tts_command_label, has_entry=True,
@@ -1431,14 +1387,6 @@ class ChatsPage:
                 "speechprivate": self.tts_private_message_entry
             }
         }
-
-    def destroy(self):
-
-        self.tts_command_combobox.destroy()
-        self.censor_list_view.destroy()
-        self.replacement_list_view.destroy()
-
-        self.__dict__.clear()
 
     def set_settings(self):
 
@@ -1898,14 +1846,14 @@ class UserInterfacePage:
 
         for color_id, button in self.color_buttons.items():
             button.set_rgba(rgba)
-            button.connect("notify::rgba", self.on_color_button_changed, color_id)
+            signal.weak(button, "notify::rgba", self.on_color_button_changed, color_id)
 
         for color_id, entry in self.color_entries.items():
-            entry.connect("icon-press", self.on_default_color, color_id)
-            entry.connect("changed", self.on_color_entry_changed, color_id)
+            signal.weak(entry, "icon-press", self.on_default_color, color_id)
+            signal.weak(entry, "changed", self.on_color_entry_changed, color_id)
 
         for font_id, button in self.font_clear_buttons.items():
-            button.connect("clicked", self.on_clear_font, font_id)
+            signal.weak(button, "clicked", self.on_clear_font, font_id)
 
         if (GTK_API_VERSION, GTK_MINOR_VERSION) >= (4, 10):
             color_dialog = Gtk.ColorDialog()
@@ -2013,19 +1961,6 @@ class UserInterfacePage:
             self.tab_position_comboboxes
         ):
             self.options["ui"].update(dictionary)
-
-    def destroy(self):
-
-        self.language_combobox.destroy()
-        self.close_action_combobox.destroy()
-        self.chat_username_appearance_combobox.destroy()
-        self.buddy_list_position_combobox.destroy()
-        self.icon_theme_button.destroy()
-
-        for combobox in self.tab_position_comboboxes.values():
-            combobox.destroy()
-
-        self.__dict__.clear()
 
     def set_settings(self):
 
@@ -2228,7 +2163,7 @@ class LoggingPage:
 
         self.format_codes_label.set_markup(
             f"<a href='{format_codes_url}' title='{format_codes_url}'>{format_codes_label}</a>")
-        self.format_codes_label.connect("activate-link", self.on_activate_link)
+        signal.weak(self.format_codes_label, "activate-link", self.on_activate_link)
 
         self.private_chat_log_folder_button = FileChooserButton(
             self.private_chat_log_folder_label.get_parent(), window=application.preferences,
@@ -2264,15 +2199,6 @@ class LoggingPage:
                 "log_timestamp": self.log_timestamp_format_entry
             }
         }
-
-    def destroy(self):
-
-        self.private_chat_log_folder_button.destroy()
-        self.chatroom_log_folder_button.destroy()
-        self.transfer_log_folder_button.destroy()
-        self.debug_log_folder_button.destroy()
-
-        self.__dict__.clear()
 
     def set_settings(self):
 
@@ -2362,10 +2288,6 @@ class SearchesPage:
                 "private_search_results": self.show_private_results_toggle
             }
         }
-
-    def destroy(self):
-        self.filter_help.destroy()
-        self.__dict__.clear()
 
     def set_settings(self):
 
@@ -2528,13 +2450,6 @@ class UrlHandlersPage:
             }
         )
 
-    def destroy(self):
-
-        self.file_manager_combobox.destroy()
-        self.protocol_list_view.destroy()
-
-        self.__dict__.clear()
-
     def set_settings(self):
 
         self.protocol_list_view.clear()
@@ -2695,7 +2610,7 @@ class NowPlayingPage:
         self.custom_format_list = []
 
         # Supply the information needed for the Now Playing class to return a song
-        self.test_configuration_button.connect(
+        signal.weak(self.test_configuration_button,
             "clicked",
             core.now_playing.display_now_playing,
             self.set_now_playing_output,   # Callback to update the song displayed
@@ -2706,10 +2621,6 @@ class NowPlayingPage:
 
         self.mpris_radio.set_visible(self.enable_mpris)
         self.other_radio.set_visible(self.enable_other)
-
-    def destroy(self):
-        self.format_message_combobox.destroy()
-        self.__dict__.clear()
 
     def set_settings(self):
 
@@ -2895,16 +2806,6 @@ class PluginsPage:
         )
         self.add_plugins_button.set_visible(not self.application.isolated_mode)
 
-    def destroy(self):
-
-        self.plugin_description_view.destroy()
-        self.plugin_list_view.destroy()
-
-        if self.plugin_settings is not None:
-            self.plugin_settings.destroy()
-
-        self.__dict__.clear()
-
     def set_settings(self):
 
         self.plugin_list_view.clear()
@@ -3087,13 +2988,6 @@ class Preferences(Dialog):
 
         Accelerator("Tab", self.preferences_list, self.on_sidebar_tab_accelerator)
         Accelerator("<Shift>Tab", self.preferences_list, self.on_sidebar_shift_tab_accelerator)
-
-    def destroy(self):
-
-        for page in self.pages.values():
-            page.destroy()
-
-        super().destroy()
 
     def set_active_page(self, page_id):
 
@@ -3521,17 +3415,17 @@ class Preferences(Dialog):
                         switch_label.gesture_click = Gtk.GestureMultiPress(widget=switch_label)
 
                     obj.set_receives_default(True)
-                    switch_label.gesture_click.connect("released", self.on_toggle_label_pressed, obj)
+                    signal.weak(switch_label.gesture_click, "released", self.on_toggle_label_pressed, obj)
 
                 elif isinstance(obj, Gtk.SpinButton):
                     if GTK_API_VERSION >= 4:
                         scroll_controller = Gtk.EventControllerScroll(
                             flags=int(Gtk.EventControllerScrollFlags.VERTICAL)
                         )
-                        scroll_controller.connect("scroll", self.on_widget_scroll)
+                        signal.weak(scroll_controller, "scroll", self.on_widget_scroll)
                         obj.add_controller(scroll_controller)
                     else:
-                        obj.connect("scroll-event", self.on_widget_scroll_event)
+                        signal.weak(obj, "scroll-event", self.on_widget_scroll_event)
 
                 elif (isinstance(obj, Gtk.FontButton)
                       or ((GTK_API_VERSION, GTK_MINOR_VERSION) >= (4, 10) and isinstance(obj, Gtk.FontDialogButton))):

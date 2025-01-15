@@ -25,6 +25,7 @@ from gi.repository import Gtk
 from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.widgets import clipboard
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.theme import update_tag_visuals
 from pynicotine.gtkgui.widgets.theme import USER_STATUS_COLORS
@@ -62,6 +63,7 @@ class TextView:
             pixels_above_lines=pixels_above_lines, pixels_below_lines=pixels_below_lines,
             wrap_mode=Gtk.WrapMode.WORD_CHAR, visible=True
         )
+        self.widget.weak_ref(lambda *_args: print("SUSgo"))
 
         if GTK_API_VERSION >= 4:
             parent.set_child(self.widget)  # pylint: disable=no-member
@@ -76,8 +78,8 @@ class TextView:
         self.adjustment = self.scrollable.get_vadjustment()
         self.auto_scroll = auto_scroll
         self.adjustment_bottom = self.adjustment_value = 0
-        self.notify_upper_handler = self.adjustment.connect("notify::upper", self.on_adjustment_upper_changed)
-        self.notify_value_handler = self.adjustment.connect("notify::value", self.on_adjustment_value_changed)
+        self.notify_upper_handler = signal.weak(self.adjustment, "notify::upper", self.on_adjustment_upper_changed)
+        self.notify_value_handler = signal.weak(self.adjustment, "notify::value", self.on_adjustment_value_changed)
 
         self.pressed_x = self.pressed_y = 0
         self.type_tags = {}
@@ -95,7 +97,7 @@ class TextView:
             self.cursor_window = self.widget
 
             self.motion_controller = Gtk.EventControllerMotion()
-            self.motion_controller.connect("motion", self.on_move_cursor)
+            signal.weak(self.motion_controller, "motion", self.on_move_cursor)
             self.widget.add_controller(self.motion_controller)  # pylint: disable=no-member
         else:
             self.gesture_click_primary = Gtk.GestureMultiPress(widget=scrollable_container)
@@ -103,22 +105,14 @@ class TextView:
 
             self.cursor_window = None
 
-            self.widget.connect("motion-notify-event", self.on_move_cursor_event)
+            signal.weak(self.widget, "motion-notify-event", self.on_move_cursor_event)
 
         self.gesture_click_primary.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-        self.gesture_click_primary.connect("released", self.on_released_primary)
+        signal.weak(self.gesture_click_primary, "released", self.on_released_primary)
 
         self.gesture_click_secondary.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         self.gesture_click_secondary.set_button(Gdk.BUTTON_SECONDARY)
-        self.gesture_click_secondary.connect("pressed", self.on_pressed_secondary)
-
-    def destroy(self):
-
-        # Prevent updates while destroying widget
-        self.adjustment.disconnect(self.notify_upper_handler)
-        self.adjustment.disconnect(self.notify_value_handler)
-
-        self.__dict__.clear()
+        signal.weak(self.gesture_click_secondary, "pressed", self.on_pressed_secondary)
 
     def scroll_bottom(self):
         self.adjustment_value = (self.adjustment.get_upper() - self.adjustment.get_page_size())

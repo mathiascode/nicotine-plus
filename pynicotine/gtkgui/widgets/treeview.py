@@ -33,6 +33,7 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.widgets import clipboard
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.theme import FILE_TYPE_ICON_LABELS
@@ -69,7 +70,6 @@ class TreeView:
         self._sort_column = None
         self._sort_type = None
         self._persistent_sort = persistent_sort
-        self._columns_changed_handler = None
         self._last_redraw_time = 0
         self._selection = self.widget.get_selection()
         self._h_adjustment = parent.get_hadjustment()
@@ -77,7 +77,7 @@ class TreeView:
         self._v_adjustment_upper = 0
         self._v_adjustment_value = 0
         self._is_scrolling_to_row = False
-        self.notify_value_handler = self._v_adjustment.connect("notify::value", self.on_v_adjustment_value)
+        signal.weak(self._v_adjustment, "notify::value", self.on_v_adjustment_value)
 
         if GTK_API_VERSION >= 4:
             parent.set_child(self.widget)  # pylint: disable=no-member
@@ -104,18 +104,18 @@ class TreeView:
             self._selection.set_mode(Gtk.SelectionMode.MULTIPLE)
 
         if activate_row_callback:
-            self.widget.connect("row-activated", self.on_activate_row, activate_row_callback)
+            signal.weak(self.widget, "row-activated", self.on_activate_row, activate_row_callback)
 
         if focus_in_callback:
             if GTK_API_VERSION >= 4:
                 focus_controller = Gtk.EventControllerFocus()
-                focus_controller.connect("enter", self.on_focus_in, focus_in_callback)
+                signal.weak(focus_controller, "enter", self.on_focus_in, focus_in_callback)
                 self.widget.add_controller(focus_controller)  # pylint: disable=no-member
             else:
-                self.widget.connect("focus-in-event", self.on_focus_in, focus_in_callback)
+                signal.weak(self.widget, "focus-in-event", self.on_focus_in, focus_in_callback)
 
         if select_row_callback:
-            self._selection.connect("changed", self.on_select_row, select_row_callback)
+            signal.weak(self._selection, "changed", self.on_select_row, select_row_callback)
 
         if delete_accelerator_callback:
             Accelerator("Delete", self.widget, self.on_delete_accelerator, delete_accelerator_callback)
@@ -123,21 +123,11 @@ class TreeView:
         if search_entry:
             self.widget.set_search_entry(search_entry)
 
-        self._query_tooltip_handler = self.widget.connect("query-tooltip", self.on_tooltip)
-        self.widget.connect("move-cursor", self.on_key_move_cursor)
+        signal.weak(self.widget, "query-tooltip", self.on_tooltip)
+        signal.weak(self.widget, "move-cursor", self.on_key_move_cursor)
         self.widget.set_search_equal_func(self.on_search_match)
 
         add_css_class(self.widget, "treeview-spacing")
-
-    def destroy(self):
-
-        # Prevent updates while destroying widget
-        self.widget.disconnect(self._columns_changed_handler)
-        self.widget.disconnect(self._query_tooltip_handler)
-        self._v_adjustment.disconnect(self.notify_value_handler)
-
-        self._column_menu.destroy()
-        self.__dict__.clear()
 
     def create_model(self):
 
@@ -347,7 +337,7 @@ class TreeView:
             elif column_type == "toggle":
                 xalign = 0.5
                 renderer = Gtk.CellRendererToggle(mode=mode, xalign=xalign, xpad=13)
-                renderer.connect("toggled", self.on_toggle, column_data["toggle_callback"])
+                signal.weak(renderer, "toggled", self.on_toggle, column_data["toggle_callback"])
 
                 column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, active=column_index)
 
@@ -374,7 +364,7 @@ class TreeView:
                 gesture_click = Gtk.GestureMultiPress(widget=column_header)
 
             gesture_click.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-            gesture_click.connect("released", self.on_column_header_pressed, column_id, sort_column_id)
+            signal.weak(gesture_click, "released", self.on_column_header_pressed, column_id, sort_column_id)
             self._column_gesture_controllers.append(gesture_click)
 
             title_container = next(iter(column_header))
@@ -409,7 +399,7 @@ class TreeView:
                 column.set_expand(True)
 
             if self._widget_name:
-                column.connect("notify::x-offset", self.on_column_position_changed)
+                signal.weak(column, "notify::x-offset", self.on_column_position_changed)
 
             column.id = column_id
             column.type = column_type
@@ -422,7 +412,7 @@ class TreeView:
 
         self._append_columns(column_widgets, column_config)
 
-        self._columns_changed_handler = self.widget.connect("columns-changed", self._update_column_properties)
+        signal.weak(self.widget, "columns-changed", self._update_column_properties)
         self.widget.emit("columns-changed")
 
     def save_columns(self):
@@ -782,7 +772,7 @@ class TreeView:
             if column in visible_columns:
                 menu.actions[title].set_enabled(len(visible_columns) > 1)
 
-            menu.actions[title].connect("activate", self.on_column_header_toggled, column)
+            signal.weak(menu.actions[title], "activate", self.on_column_header_toggled, column)
 
     def on_column_position_changed(self, column, _param):
         """Save column position and width to config."""
@@ -961,7 +951,7 @@ def create_grouping_menu(window, active_mode, callback):
 
     state = GLib.Variant.new_string(active_mode)
     action = Gio.SimpleAction(name=action_id, parameter_type=state.get_type(), state=state)
-    action.connect("change-state", callback)
+    signal.weak(action, "change-state", callback)
 
     window.add_action(action)
     action.change_state(state)

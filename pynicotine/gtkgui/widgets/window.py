@@ -25,6 +25,7 @@ from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.application import GTK_MINOR_VERSION
 from pynicotine.gtkgui.application import GTK_MICRO_VERSION
 from pynicotine.gtkgui.application import LIBADWAITA_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 
 
 class Window:
@@ -38,27 +39,24 @@ class Window:
     def __init__(self, widget):
 
         self.widget = widget
-        self._dark_mode_handler = None
         self._text_widget = None
 
         if GTK_API_VERSION == 3:
             return
 
-        self.widget.connect("notify::focus-widget", self._on_focus_widget_changed)
+        signal.weak(self.widget, "notify::focus-widget", self._on_focus_widget_changed)
 
         if sys.platform == "win32":
-            widget.connect("realize", self._on_realize_win32)
+            signal.weak(widget, "realize", self._on_realize_win32)
 
             # Use dark window controls on Windows when requested
             if LIBADWAITA_API_VERSION:
                 from gi.repository import Adw  # pylint: disable=no-name-in-module
-                self._dark_mode_handler = Adw.StyleManager.get_default().connect(
-                    "notify::dark", self._on_dark_mode_win32
-                )
+                signal.weak(Adw.StyleManager.get_default(), "notify::dark", self._on_dark_mode_win32)
 
         elif os.environ.get("GDK_BACKEND") == "broadway":
             # Workaround for GTK 4 bug where broadwayd uses a lot of CPU after hiding window
-            self.widget.connect("hide", self._on_hide_broadway)
+            signal.weak(self.widget, "hide", self._on_hide_broadway)
 
     def _on_focus_widget_changed(self, *_args):
 
@@ -87,8 +85,8 @@ class Window:
         popover.old_text = self._text_widget.get_text()
         popover.old_pos = self._text_widget.get_position()
 
-        popover.picked_handler = popover.connect("emoji-picked", self._on_emoji_chooser_picked)
-        popover.hide_handler = popover.connect("hide", self._on_emoji_chooser_hide)
+        popover.picked_handler = signal.weak(popover, "emoji-picked", self._on_emoji_chooser_picked)
+        popover.hide_handler = signal.weak(popover, "hide", self._on_emoji_chooser_hide)
 
     def _on_emoji_chooser_picked(self, chooser, emoji):
 
@@ -219,10 +217,4 @@ class Window:
         self.widget.close()
 
     def destroy(self):
-
-        if self._dark_mode_handler is not None:
-            from gi.repository import Adw  # pylint: disable=no-name-in-module
-            Adw.StyleManager.get_default().disconnect(self._dark_mode_handler)
-
         self.widget.destroy()
-        self.__dict__.clear()

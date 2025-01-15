@@ -22,6 +22,7 @@ from gi.repository import Gdk
 from gi.repository import Gtk
 
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 
 
 class Accelerator:
@@ -63,7 +64,7 @@ class Accelerator:
         self.callback = callback
         self.user_data = user_data
 
-        widget.connect("key-press-event", self._activate_accelerator)
+        signal.weak(widget, "key-press-event", self._activate_accelerator)
 
     @classmethod
     def parse_accelerator(cls, accelerator):

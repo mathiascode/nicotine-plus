@@ -27,6 +27,7 @@ from gi.repository import Pango
 
 from pynicotine.config import config
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.theme import add_css_class
 from pynicotine.utils import encode_path
 from pynicotine.utils import open_folder_path
@@ -80,7 +81,7 @@ class FileChooser:
                 modal=True,
                 action=Gtk.FileChooserAction.OPEN
             )
-            self.file_chooser.connect("response", self.on_response)
+            signal.weak(self.file_chooser, "response", self.on_response)
 
             if GTK_API_VERSION >= 4:
                 if initial_folder:
@@ -121,7 +122,6 @@ class FileChooser:
 
         except GLib.GError:
             # Nothing was selected
-            self.destroy()
             return
 
         selected = []
@@ -134,15 +134,12 @@ class FileChooser:
         if selected:
             self.callback(selected, self.callback_data)
 
-        self.destroy()
-
     def on_response(self, _dialog, response_id):
 
         FileChooser.active_chooser = None
         self.file_chooser.destroy()
 
         if response_id != Gtk.ResponseType.ACCEPT:
-            self.destroy()
             return
 
         if self.select_multiple:
@@ -153,8 +150,6 @@ class FileChooser:
         if selected:
             self.callback(selected, self.callback_data)
 
-        self.destroy()
-
     def present(self):
 
         FileChooser.active_chooser = self
@@ -164,9 +159,6 @@ class FileChooser:
             return
 
         self.select_method(parent=self.parent.widget, callback=self.on_finish)
-
-    def destroy(self):
-        self.__dict__.clear()
 
 
 class FolderChooser(FileChooser):
@@ -218,7 +210,7 @@ class ImageChooser(FileChooser):
 
         if GTK_API_VERSION == 3 and sys.platform not in {"win32", "darwin"}:
             # Image preview
-            self.file_chooser.connect("update-preview", self.on_update_image_preview)
+            signal.weak(self.file_chooser, "update-preview", self.on_update_image_preview)
 
             self.preview = Gtk.Image()
             self.file_chooser.set_preview_widget(self.preview)  # pylint: disable=no-member
@@ -273,7 +265,7 @@ class FileChooserButton:
         widget = Gtk.Box(visible=True)
 
         self.chooser_button = Gtk.Button(hexpand=True, valign=Gtk.Align.CENTER, visible=True)
-        self.chooser_button.connect("clicked", self.on_open_file_chooser)
+        signal.weak(self.chooser_button, "clicked", self.on_open_file_chooser)
 
         if label:
             label.set_mnemonic_widget(self.chooser_button)
@@ -326,10 +318,7 @@ class FileChooserButton:
         else:
             add_css_class(widget, "linked")
 
-        self.open_folder_button.connect("clicked", self.on_open_folder)
-
-    def destroy(self):
-        self.__dict__.clear()
+        signal.weak(self.open_folder_button, "clicked", self.on_open_folder)
 
     def on_open_file_chooser_response(self, selected, _data):
 

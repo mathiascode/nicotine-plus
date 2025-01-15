@@ -21,6 +21,7 @@ import os
 from gi.repository import Gtk
 
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.theme import add_css_class
 
 
@@ -37,8 +38,8 @@ class Popover:
 
         self.widget = Gtk.Popover(child=content_box)
         self.menu_button = None
-        self.widget.connect("map", self._on_map)
-        self.widget.connect("unmap", self._on_unmap)
+        signal.weak(self.widget, "map", self._on_map)
+        signal.weak(self.widget, "unmap", self._on_unmap)
 
         add_css_class(self.widget, "custom")
 
@@ -58,7 +59,7 @@ class Popover:
             (content_box.get_parent(), self._on_click_content_gtk4)
         ):
             gesture_click = Gtk.GestureClick(button=0)
-            gesture_click.connect("pressed", callback)
+            signal.weak(gesture_click, "pressed", callback)
             widget.add_controller(gesture_click)
 
     def _on_click_popover_gtk4(self, *_args):
@@ -128,7 +129,3 @@ class Popover:
             return
 
         self.widget.set_visible(False)
-
-    def destroy(self):
-        self.set_menu_button(None)
-        self.__dict__.clear()

@@ -34,6 +34,7 @@ from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.dialogs.fileproperties import FileProperties
 from pynicotine.gtkgui.widgets import clipboard
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.combobox import ComboBox
@@ -97,15 +98,6 @@ class UserBrowses(IconNotebook):
 
     def quit(self):
         self.freeze()
-
-    def destroy(self):
-
-        self.userbrowse_combobox.destroy()
-
-        if self.file_properties is not None:
-            self.file_properties.destroy()
-
-        super().destroy()
 
     def on_focus(self, *_args):
 
@@ -247,7 +239,7 @@ class UserBrowse:
         self.search_position = 0
 
         self.info_bar = InfoBar(parent=self.info_bar_container, button=self.retry_button)
-        self.path_bar_container.get_hadjustment().connect("changed", self.on_path_bar_scroll)
+        signal.weak(self.path_bar_container.get_hadjustment(), "changed", self.on_path_bar_scroll)
 
         # Setup folder_tree_view
         self.folder_tree_view = TreeView(
@@ -449,11 +441,6 @@ class UserBrowse:
 
         for menu in self.popup_menus:
             menu.destroy()
-
-        self.info_bar.destroy()
-        self.folder_tree_view.destroy()
-        self.file_list_view.destroy()
-        self.__dict__.clear()
 
         self.indeterminate_progress = False  # Stop progress bar timer
 
@@ -719,12 +706,12 @@ class UserBrowse:
                     box.add(arrow_icon)                                         # pylint: disable=no-member
 
                     button.add(box)                                             # pylint: disable=no-member
-                    button.connect("clicked", self.on_folder_popup_menu)
+                    signal.weak(button, "clicked", self.on_folder_popup_menu)
 
                     button_label.set_mnemonic_widget(button)
             else:
                 button = Gtk.Button(child=button_label, visible=True)
-                button.connect("clicked", self.on_path_bar_clicked, i_folder_path)
+                signal.weak(button, "clicked", self.on_path_bar_clicked, i_folder_path)
                 add_css_class(button_label, "normal")
 
                 button_label.set_mnemonic_widget(button)

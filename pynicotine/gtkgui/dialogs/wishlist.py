@@ -89,8 +89,6 @@ class WishList(Dialog):
 
     def destroy(self):
 
-        self.list_view.destroy()
-        self.completion_entry.destroy()
         self.popup_menu.destroy()
 
         super().destroy()

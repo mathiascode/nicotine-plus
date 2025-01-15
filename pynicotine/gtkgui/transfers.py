@@ -34,6 +34,7 @@ from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.dialogs.fileproperties import FileProperties
 from pynicotine.gtkgui.widgets import clipboard
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
@@ -252,7 +253,7 @@ class Transfers:
                 popover = list(self.grouping_button)[-1]
                 popover.set_has_arrow(False)
 
-        self.expand_button.connect("toggled", self.on_expand_tree)
+        signal.weak(self.expand_button, "toggled", self.on_expand_tree)
         self.expand_button.set_active(config.sections["transfers"][f"{transfer_type}sexpanded"])
 
         self.popup_menu_users = UserPopupMenu(window.application, tab_name="transfers")
@@ -293,13 +294,10 @@ class Transfers:
     def destroy(self):
 
         self.clear_model()
-        self.tree_view.destroy()
         self.popup_menu.destroy()
         self.popup_menu_users.destroy()
         self.popup_menu_clear.destroy()
         self.popup_menu_copy.destroy()
-
-        self.__dict__.clear()
 
     def on_focus(self, *_args):
 

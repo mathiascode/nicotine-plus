@@ -25,6 +25,7 @@ from gi.repository import Gtk
 
 from pynicotine.config import config
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.combobox import ComboBox
 from pynicotine.gtkgui.widgets.textview import TextView
@@ -185,11 +186,11 @@ class Dialog(Window):
     def _set_dialog_properties(self):
 
         if GTK_API_VERSION >= 4:
-            self.widget.connect("close-request", self._on_close_request)
+            signal.weak(self.widget, "close-request", self._on_close_request)
         else:
-            self.widget.connect("delete-event", self._on_close_request)
+            signal.weak(self.widget, "delete-event", self._on_close_request)
 
-        self.widget.connect("show", self._on_show)
+        signal.weak(self.widget, "show", self._on_show)
 
         # Make all dialogs resizable to fix positioning issue.
         # Workaround for https://gitlab.gnome.org/GNOME/mutter/-/issues/3099
@@ -350,7 +351,7 @@ class MessageDialog(Window):
         if GTK_API_VERSION >= 4:
             header_bar_handle = Gtk.WindowHandle(child=header_bar, visible=True)
             widget.set_titlebar(header_bar_handle)
-            widget.connect("close-request", self._on_close_request)
+            signal.weak(widget, "close-request", self._on_close_request)
 
             internal_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, visible=True)
 
@@ -369,7 +370,7 @@ class MessageDialog(Window):
             widget.set_skip_taskbar_hint(True)                        # pylint: disable=no-member
             widget.set_type_hint(Gdk.WindowTypeHint.DIALOG)           # pylint: disable=no-member
             widget.set_titlebar(header_bar)
-            widget.connect("delete-event", self._on_close_request)
+            signal.weak(widget, "delete-event", self._on_close_request)
 
             vbox.set_spacing(20)
             vbox.add(box)                                             # pylint: disable=no-member
@@ -384,7 +385,7 @@ class MessageDialog(Window):
 
         for response_type, button_label in buttons:
             button = Gtk.Button(use_underline=True, hexpand=True, visible=True)
-            button.connect("clicked", self._on_button_pressed, response_type)
+            signal.weak(button, "clicked", self._on_button_pressed, response_type)
 
             if GTK_API_VERSION >= 4:
                 action_area.append(button)  # pylint: disable=no-member

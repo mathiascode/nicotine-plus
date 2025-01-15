@@ -21,6 +21,7 @@ from gi.repository import Gtk
 from gi.repository import Pango
 
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.textentry import CompletionEntry
 from pynicotine.gtkgui.widgets.theme import add_css_class
@@ -62,9 +63,6 @@ class ComboBox:
 
         self.set_visible(visible)
 
-    def destroy(self):
-        self.__dict__.clear()
-
     def _create_combobox_gtk4(self, container, label, has_entry):
 
         self._model = Gtk.StringList()
@@ -78,19 +76,19 @@ class ComboBox:
         if not has_entry:
             button_factory = Gtk.SignalListItemFactory()
 
-            button_factory.connect("setup", self._on_button_factory_setup)
-            button_factory.connect("bind", self._on_button_factory_bind)
+            signal.weak(button_factory, "setup", self._on_button_factory_setup)
+            signal.weak(button_factory, "bind", self._on_button_factory_bind)
 
         self.dropdown.set_factory(button_factory)
         self.dropdown.set_list_factory(list_factory)
 
         self._popover = list(self.dropdown)[-1]
-        self._popover.connect("notify::visible", self._on_dropdown_visible)
+        signal.weak(self._popover, "notify::visible", self._on_dropdown_visible)
 
         try:
             scrollable = list(self._popover.get_child())[-1]
             list_view = scrollable.get_child()
-            list_view.connect("activate", self._on_item_selected)
+            signal.weak(list_view, "activate", self._on_item_selected)
 
         except AttributeError:
             pass
@@ -106,13 +104,13 @@ class ComboBox:
 
         list_factory = Gtk.SignalListItemFactory()
 
-        list_factory.connect("setup", self._on_entry_list_factory_setup)
-        list_factory.connect("bind", self._on_entry_list_factory_bind)
+        signal.weak(list_factory, "setup", self._on_entry_list_factory_setup)
+        signal.weak(list_factory, "bind", self._on_entry_list_factory_bind)
 
         self.dropdown.set_list_factory(list_factory)
 
         self.widget = Gtk.Box(valign=Gtk.Align.CENTER, visible=True)
-        self._popover.connect("map", self._on_dropdown_map)
+        signal.weak(self._popover, "map", self._on_dropdown_map)
 
         if self.entry is None:
             self.entry = Gtk.Entry(hexpand=True, width_chars=8, visible=True)
@@ -134,9 +132,9 @@ class ComboBox:
         self.dropdown = self.widget = Gtk.ComboBoxText(has_entry=has_entry, valign=Gtk.Align.CENTER, visible=True)
         self._model = self.dropdown.get_model()
 
-        self.dropdown.connect("scroll-event", self._on_button_scroll_event)
-        self.dropdown.connect("notify::active", self._on_item_selected)
-        self.dropdown.connect("notify::popup-shown", self._on_dropdown_visible)
+        signal.weak(self.dropdown, "scroll-event", self._on_button_scroll_event)
+        signal.weak(self.dropdown, "notify::active", self._on_item_selected)
+        signal.weak(self.dropdown, "notify::popup-shown", self._on_dropdown_visible)
 
         if label:
             label.set_mnemonic_widget(self.widget)
