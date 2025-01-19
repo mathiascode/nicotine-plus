@@ -372,7 +372,7 @@ class NetworkThread(Thread):
         # This limit is hardcoded, so we'll have to live with it for now.
         # https://github.com/python/cpython/issues/72894
 
-        MAX_SOCKETS = 512
+        MAX_SOCKETS = 128
 
     def __init__(self):
 
