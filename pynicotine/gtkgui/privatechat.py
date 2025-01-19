@@ -29,6 +29,7 @@ from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.popovers.chatcommandhelp import ChatCommandHelp
 from pynicotine.gtkgui.popovers.chathistory import ChatHistory
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
@@ -60,6 +61,7 @@ class PrivateChats(IconNotebook):
         self.toolbar_start_content = window.private_title
         self.toolbar_end_content = window.private_end
         self.toolbar_default_widget = window.private_entry
+        self.widget.weak_ref(lambda *_args: print("mmmmmmmmmmmmmmmmmmmm"))
 
         self.chat_entry = ChatEntry(
             window.application, send_message_callback=core.privatechat.send_message,
@@ -312,6 +314,7 @@ class PrivateChat:
             self.speech_toggle
         ) = ui.load(scope=self, path="privatechat.ui")
 
+        self.container.weak_ref(lambda *_args: print("vvvvvvvvvv"))
         self.user = user
         self.chats = chats
         self.window = chats.window
@@ -377,6 +380,11 @@ class PrivateChat:
         )
 
         self.popup_menus = (self.popup_menu, self.popup_menu_user_chat, self.popup_menu_user_tab)
+
+        for widget, signal_name, callback in (
+            (self.log_toggle, "toggled", self.on_log_toggled),
+        ):
+            signal.weak(widget, signal_name, callback)
 
         self.prepend_old_messages()
 

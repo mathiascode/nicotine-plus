@@ -66,6 +66,12 @@ class FileProperties(Dialog):
             width=600
         )
 
+        for widget, signal_name, callback in (
+            (self.previous_button, "clicked", self.on_previous),
+            (self.next_button, "clicked", self.on_next)
+        ):
+            signal.weak(widget, signal_name, callback)
+
     def update_title(self):
 
         index = self.current_index + 1

@@ -71,6 +71,7 @@ class UserInfos(IconNotebook):
         self.toolbar_start_content = window.userinfo_title
         self.toolbar_end_content = window.userinfo_end
         self.toolbar_default_widget = window.userinfo_entry
+        self.widget.weak_ref(lambda *_args: print("oooooooooooooooooooooooo"))
 
         self.userinfo_combobox = ComboBox(
             container=self.window.userinfo_title, has_entry=True, has_entry_completion=True,
@@ -249,9 +250,11 @@ class UserInfo:
     def __init__(self, userinfos, user):
 
         (
+            self.add_remove_buddy_button,
             self.add_remove_buddy_label,
             self.ban_unban_user_button,
             self.ban_unban_user_label,
+            self.browse_files_button,
             self.container,
             self.country_button,
             self.country_icon,
@@ -272,13 +275,14 @@ class UserInfo:
             self.queued_uploads_label,
             self.refresh_button,
             self.retry_button,
+            self.send_message_button,
             self.shared_files_label,
             self.shared_folders_label,
             self.upload_slots_label,
             self.upload_speed_label,
             self.user_info_container,
             self.user_label
-        ) = ui.load(scope=self, path="userinfo.ui")
+        ) = self.widgets = ui.load(scope=self, path="userinfo.ui")
 
         self.container.weak_ref(lambda *_args: print("GDODODO"))
         self.userinfos = userinfos
@@ -382,6 +386,22 @@ class UserInfo:
         self.populate_stats()
         self.update_button_states()
 
+        for widget, signal_name, callback in (
+            (self.refresh_button, "clicked", self.on_refresh),
+            (self.country_button, "clicked", self.on_show_ip_address),
+            (self.edit_profile_button, "clicked", self.on_edit_profile),
+            (self.edit_interests_button, "clicked", self.on_edit_interests),
+            (self.send_message_button, "clicked", self.on_send_message),
+            (self.browse_files_button, "clicked", self.on_browse_user),
+            (self.add_remove_buddy_button, "clicked", self.on_add_remove_buddy),
+            (self.ban_unban_user_button, "clicked", self.on_ban_unban_user),
+            (self.ignore_unignore_user_button, "clicked", self.on_ignore_unignore_user),
+            (self.gift_privileges_button, "clicked", self.on_give_privileges),
+            (self.progress_bar, "map", self.on_show_progress_bar),
+            (self.progress_bar, "unmap", self.on_hide_progress_bar)
+        ):
+            signal.weak(widget, signal_name, callback)
+
     def clear(self):
 
         self.description_view.clear()
@@ -393,6 +413,23 @@ class UserInfo:
 
         for menu in self.popup_menus:
             menu.destroy()
+
+            for key, value in list(self.__dict__.items()):
+                if value == menu:
+                    del self.__dict__[key]
+        """for widget in self.widgets:
+            for key, value in list(self.__dict__.items()):
+                if value == widget:
+                    del self.__dict__[key]"""
+
+        del self.__dict__["popup_menus"]
+        del self.__dict__["info_bar"]
+        del self.__dict__["description_view"]
+        del self.__dict__["dislikes_list_view"]
+        del self.__dict__["likes_list_view"]
+        del self.__dict__["userinfos"]
+        del self.__dict__["window"]
+        self.widgets.clear()
 
         self.indeterminate_progress = False  # Stop progress bar timer
 

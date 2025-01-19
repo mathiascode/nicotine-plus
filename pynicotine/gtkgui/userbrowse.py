@@ -224,6 +224,8 @@ class UserBrowse:
             self.share_size_label
         ) = ui.load(scope=self, path="userbrowse.ui")
 
+        self.container.weak_ref(lambda *_args: print("niiiiiiiiiice"))
+
         self.userbrowses = userbrowses
         self.window = userbrowses.window
         self.user = user

@@ -29,6 +29,7 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.dialogs import EntryDialog
 from pynicotine.gtkgui.widgets.popupmenu import UserPopupMenu
@@ -46,10 +47,12 @@ class Buddies:
     def __init__(self, window):
 
         (
+            self.add_buddy_entry,
             self.container,
             self.list_container,
             self.side_toolbar
         ) = ui.load(scope=self, path="buddies.ui")
+        self.container.weak_ref(lambda *_args: print("zzzzzzzzzzzzzzzzzz"))
 
         self.window = window
         self.page = window.userlist_page
@@ -144,6 +147,12 @@ class Buddies:
             ("", None),
             ("#" + _("Remove"), self.on_remove_buddy)
         )
+
+        for widget, signal_name, callback in (
+            (self.add_buddy_entry, "activate", self.on_add_buddy),
+            (self.add_buddy_entry, "icon-press", self.on_add_buddy)
+        ):
+            signal.weak(widget, signal_name, callback)
 
         # Events
         for event_name, callback in (

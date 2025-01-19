@@ -258,7 +258,6 @@
         <property name="halign">center</property>
         <property name="height-request">36</property>
         <property name="visible">True</property>
-        <signal name="clicked" handler="on_reset_statistics"/>
         <child>
           <object class="GtkBox">
             <property name="halign">center</property>

@@ -119,6 +119,13 @@ class RoomList(Popover):
 
         self.set_menu_button(window.room_list_button)
 
+        for widget, signal_name, callback in (
+            (self.search_entry, "activate", self.on_row_activated),
+            (self.refresh_button, "clicked", self.on_refresh),
+            (self.public_feed_toggle, "notify::active", self.on_toggle_public_feed)
+        ):
+            signal.weak(widget, signal_name, callback)
+
         for event_name, callback in (
             ("join-room", self.join_room),
             ("private-room-added", self.private_room_added),

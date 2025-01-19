@@ -405,6 +405,7 @@ class About(Dialog):
             height=540,
             show_title=False
         )
+        self.container.weak_ref(lambda *_args: print("rrrrrrrrrrrrrrrrrrrrrr"))
 
         self.is_version_outdated = False
 
@@ -441,7 +442,7 @@ class About(Dialog):
                 else:
                     container.add(label)     # pylint: disable=no-member
 
-        events.connect("check-latest-version", self.on_check_latest_version)
+        #events.connect("check-latest-version", self.on_check_latest_version)
 
     def on_activate_link(self, _label, url):
         open_uri(url)

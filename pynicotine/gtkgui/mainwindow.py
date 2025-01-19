@@ -297,6 +297,25 @@ class MainWindow(Window):
         # Apply UI customizations
         set_global_style(self.application.isolated_mode)
 
+        for widget, signal_name, callback in (
+            (self.room_search_entry, "activate", self.on_search),
+            (self.user_search_entry, "activate", self.on_search),
+            (self.search_entry, "activate", self.on_search),
+            (self.search_entry, "changed", self.on_search_entry_changed),
+            (self.search_entry, "icon-press", self.on_search_entry_icon_press),
+            (self.userbrowse_entry, "activate", self.on_get_shares),
+            (self.userbrowse_entry, "icon-press", self.on_get_shares),
+            (self.userinfo_entry, "activate", self.on_show_user_profile),
+            (self.userinfo_entry, "icon-press", self.on_show_user_profile),
+            (self.private_entry, "activate", self.on_get_private_chat),
+            (self.private_entry, "icon-press", self.on_get_private_chat),
+            (self.add_buddy_entry, "activate", self.on_add_buddy),
+            (self.add_buddy_entry, "icon-press", self.on_add_buddy),
+            (self.chatrooms_entry, "activate", self.on_create_room),
+            (self.chatrooms_entry, "icon-press", self.on_create_room)
+        ):
+            signal.weak(widget, signal_name, callback)
+
         # Show window
         self.init_window()
 
@@ -1253,6 +1272,7 @@ class MainWindow(Window):
         for tab in self.tabs.values():
             if hasattr(tab, "destroy"):
                 tab.destroy()
+        self.notebook.__dict__.clear()
 
         self.popup_menu_log_view.destroy()
         self.popup_menu_log_categories.destroy()

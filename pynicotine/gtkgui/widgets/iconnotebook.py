@@ -23,6 +23,7 @@
 import sys
 
 from collections import deque
+from weakref import WeakMethod
 
 from gi.repository import Gdk
 from gi.repository import GLib
@@ -71,7 +72,7 @@ class TabLabel:
 
         self.close_button = None
         self.close_button_visible = close_button_visible and close_callback
-        self.close_callback = close_callback
+        self.close_callback = WeakMethod(close_callback) if close_callback else None
 
         if close_callback:
             self.gesture_click.set_button(Gdk.BUTTON_MIDDLE)
@@ -117,7 +118,7 @@ class TabLabel:
         self.close_button.set_visible(True)
 
         if self.close_callback is not None:
-            signal.weak(self.close_button, "clicked", self.close_callback)
+            signal.weak(self.close_button, "clicked", self.close_callback())
 
     def _remove_close_button(self):
 
@@ -267,8 +268,9 @@ class IconNotebook:
         self.window = window
         self.parent = parent
         self.parent_page = parent_page
-        self.switch_page_callback = switch_page_callback
-        self.reorder_page_callback = reorder_page_callback
+        from weakref import WeakMethod
+        self.switch_page_callback = WeakMethod(switch_page_callback) if switch_page_callback else None
+        self.reorder_page_callback = WeakMethod(reorder_page_callback) if reorder_page_callback else None
         self.switch_page_handler = None
         self.reorder_page_handler = None
 
@@ -383,7 +385,7 @@ class IconNotebook:
             text, full_text, close_button_visible=config.sections["ui"]["tabclosers"], close_callback=close_callback)
 
         if focus_callback:
-            page.focus_callback = focus_callback
+            page.focus_callback = WeakMethod(focus_callback)
 
         first_child = next(iter(page))
         first_child.set_visible(False)
@@ -626,7 +628,7 @@ class IconNotebook:
         if not hasattr(page, "focus_callback"):
             return
 
-        if not page.focus_callback():
+        if not page.focus_callback()():
             # Page didn't grab focus, fall back to the notebook
             self.widget.grab_focus()
 
@@ -651,7 +653,7 @@ class IconNotebook:
     def on_switch_page(self, _notebook, new_page, page_num):
 
         if self.switch_page_callback is not None:
-            self.switch_page_callback(self, new_page, page_num)
+            self.switch_page_callback()(self, new_page, page_num)
 
         # Hide container widget on previous page for a performance boost
         current_page = self.get_current_page()
@@ -675,7 +677,7 @@ class IconNotebook:
 
     def on_reorder_page(self, _notebook, page, page_num):
         if self.reorder_page_callback is not None:
-            self.reorder_page_callback(self, page, page_num)
+            self.reorder_page_callback()(self, page, page_num)
 
     def on_show_page(self, _action, _state, page):
         self.set_current_page(page)

@@ -5,7 +5,6 @@
     <property name="label" translatable="yes">Retry</property>
     <property name="valign">center</property>
     <property name="visible">True</property>
-    <signal name="clicked" handler="on_refresh"/>
   </object>
   <object class="GtkBox" id="container">
     <property name="visible">True</property>
@@ -68,7 +67,6 @@
                                 <child>
                                   <object class="GtkButton" id="country_button">
                                     <property name="visible">False</property>
-                                    <signal name="clicked" handler="on_show_ip_address"/>
                                     <child>
                                       <object class="GtkBox">
                                         <property name="spacing">8</property>
@@ -100,7 +98,6 @@
                               <object class="GtkButton" id="edit_profile_button">
                                 <property name="tooltip-text" translatable="yes">Edit Profile</property>
                                 <property name="visible">True</property>
-                                <signal name="clicked" handler="on_edit_profile"/>
                                 <child>
                                   <object class="GtkImage">
                                     <property name="icon-name">document-edit-symbolic</property>
@@ -354,7 +351,6 @@
                           <object class="GtkButton" id="edit_interests_button">
                             <property name="tooltip-text" translatable="yes">Edit Interests</property>
                             <property name="visible">True</property>
-                            <signal name="clicked" handler="on_edit_interests"/>
                             <child>
                               <object class="GtkImage">
                                 <property name="icon-name">document-edit-symbolic</property>
@@ -430,9 +426,8 @@
                     <property name="spacing">4</property>
                     <property name="visible">True</property>
                     <child>
-                      <object class="GtkButton" id="_send_message_button">
+                      <object class="GtkButton" id="send_message_button">
                         <property name="visible">True</property>
-                        <signal name="clicked" handler="on_send_message"/>
                         <child>
                           <object class="GtkBox">
                             <property name="spacing">6</property>
@@ -447,7 +442,7 @@
                               <object class="GtkLabel">
                                 <property name="ellipsize">end</property>
                                 <property name="label" translatable="yes">_Send Message</property>
-                                <property name="mnemonic-widget">_send_message_button</property>
+                                <property name="mnemonic-widget">send_message_button</property>
                                 <property name="use-underline">True</property>
                                 <property name="visible">True</property>
                                 <property name="width-chars">8</property>
@@ -464,9 +459,8 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkButton" id="_browse_files_button">
+                      <object class="GtkButton" id="browse_files_button">
                         <property name="visible">True</property>
-                        <signal name="clicked" handler="on_browse_user"/>
                         <child>
                           <object class="GtkBox">
                             <property name="spacing">6</property>
@@ -481,7 +475,7 @@
                               <object class="GtkLabel">
                                 <property name="ellipsize">end</property>
                                 <property name="label" translatable="yes">_Browse Files</property>
-                                <property name="mnemonic-widget">_browse_files_button</property>
+                                <property name="mnemonic-widget">browse_files_button</property>
                                 <property name="use-underline">True</property>
                                 <property name="visible">True</property>
                                 <style>
@@ -497,9 +491,8 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkButton" id="_add_remove_buddy_button">
+                      <object class="GtkButton" id="add_remove_buddy_button">
                         <property name="visible">True</property>
-                        <signal name="clicked" handler="on_add_remove_buddy"/>
                         <child>
                           <object class="GtkBox">
                             <property name="spacing">6</property>
@@ -513,7 +506,7 @@
                             <child>
                               <object class="GtkLabel" id="add_remove_buddy_label">
                                 <property name="ellipsize">end</property>
-                                <property name="mnemonic-widget">_add_remove_buddy_button</property>
+                                <property name="mnemonic-widget">add_remove_buddy_button</property>
                                 <property name="use-underline">True</property>
                                 <property name="visible">True</property>
                                 <style>
@@ -531,7 +524,6 @@
                     <child>
                       <object class="GtkButton" id="ban_unban_user_button">
                         <property name="visible">True</property>
-                        <signal name="clicked" handler="on_ban_unban_user"/>
                         <child>
                           <object class="GtkBox">
                             <property name="spacing">6</property>
@@ -562,7 +554,6 @@
                     <child>
                       <object class="GtkButton" id="ignore_unignore_user_button">
                         <property name="visible">True</property>
-                        <signal name="clicked" handler="on_ignore_unignore_user"/>
                         <child>
                           <object class="GtkBox">
                             <property name="spacing">6</property>
@@ -593,7 +584,6 @@
                     <child>
                       <object class="GtkButton" id="gift_privileges_button">
                         <property name="visible">True</property>
-                        <signal name="clicked" handler="on_give_privileges"/>
                         <child>
                           <object class="GtkBox">
                             <property name="spacing">6</property>
@@ -632,7 +622,6 @@
                     <child>
                       <object class="GtkButton" id="refresh_button">
                         <property name="visible">True</property>
-                        <signal name="clicked" handler="on_refresh"/>
                         <child>
                           <object class="GtkBox">
                             <property name="spacing">6</property>
@@ -678,8 +667,6 @@
               <object class="GtkProgressBar" id="progress_bar">
                 <property name="pulse-step">0.72</property>
                 <property name="visible">True</property>
-                <signal name="map" handler="on_show_progress_bar"/>
-                <signal name="unmap" handler="on_hide_progress_bar"/>
                 <style>
                   <class name="osd"/>
                 </style>

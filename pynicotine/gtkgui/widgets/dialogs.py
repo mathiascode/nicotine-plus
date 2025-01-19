@@ -19,6 +19,8 @@
 import os
 import sys
 
+from weakref import WeakMethod
+
 from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -45,8 +47,8 @@ class Dialog(Window):
         self.default_height = height
         self.default_button = default_button
 
-        self.show_callback = show_callback
-        self.close_callback = close_callback
+        self.show_callback = WeakMethod(show_callback) if show_callback else None
+        self.close_callback = WeakMethod(close_callback) if close_callback else None
 
         if widget:
             super().__init__(widget=widget)
@@ -161,7 +163,7 @@ class Dialog(Window):
         self._focus_default_button()
 
         if self.show_callback is not None:
-            self.show_callback(self)
+            self.show_callback()(self)
 
     def _on_close_request(self, *_args):
 
@@ -171,7 +173,7 @@ class Dialog(Window):
         Window.active_dialogs.remove(self)
 
         if self.close_callback is not None:
-            self.close_callback(self)
+            self.close_callback()(self)
 
         # Hide the dialog
         self.widget.set_visible(False)

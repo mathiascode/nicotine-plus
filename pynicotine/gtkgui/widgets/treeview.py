@@ -24,6 +24,8 @@ import time
 
 import gi.module
 
+from weakref import WeakMethod
+
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import GObject
@@ -104,21 +106,21 @@ class TreeView:
             self._selection.set_mode(Gtk.SelectionMode.MULTIPLE)
 
         if activate_row_callback:
-            signal.weak(self.widget, "row-activated", self.on_activate_row, activate_row_callback)
+            signal.weak(self.widget, "row-activated", self.on_activate_row, WeakMethod(activate_row_callback))
 
         if focus_in_callback:
             if GTK_API_VERSION >= 4:
                 focus_controller = Gtk.EventControllerFocus()
-                signal.weak(focus_controller, "enter", self.on_focus_in, focus_in_callback)
+                signal.weak(focus_controller, "enter", self.on_focus_in, WeakMethod(focus_in_callback))
                 self.widget.add_controller(focus_controller)  # pylint: disable=no-member
             else:
-                signal.weak(self.widget, "focus-in-event", self.on_focus_in, focus_in_callback)
+                signal.weak(self.widget, "focus-in-event", self.on_focus_in, WeakMethod(focus_in_callback))
 
         if select_row_callback:
-            signal.weak(self._selection, "changed", self.on_select_row, select_row_callback)
+            signal.weak(self._selection, "changed", self.on_select_row, WeakMethod(select_row_callback))
 
         if delete_accelerator_callback:
-            Accelerator("Delete", self.widget, self.on_delete_accelerator, delete_accelerator_callback)
+            Accelerator("Delete", self.widget, self.on_delete_accelerator, WeakMethod(delete_accelerator_callback))
 
         if search_entry:
             self.widget.set_search_entry(search_entry)
@@ -337,7 +339,7 @@ class TreeView:
             elif column_type == "toggle":
                 xalign = 0.5
                 renderer = Gtk.CellRendererToggle(mode=mode, xalign=xalign, xpad=13)
-                signal.weak(renderer, "toggled", self.on_toggle, column_data["toggle_callback"])
+                signal.weak(renderer, "toggled", self.on_toggle, WeakMethod(column_data["toggle_callback"]))
 
                 column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, active=column_index)
 
@@ -404,6 +406,8 @@ class TreeView:
             column.id = column_id
             column.type = column_type
             column.tooltip_callback = column_data.get("tooltip_callback")
+            if column.tooltip_callback:
+                column.tooltip_callback = WeakMethod(column.tooltip_callback)
 
             column.set_sort_column_id(sort_column_id)
             column_widgets[column_id] = column
@@ -682,10 +686,10 @@ class TreeView:
         return icon_name
 
     def on_toggle(self, _widget, path, callback):
-        callback(self, self.model.get_iter(path))
+        callback()(self, self.model.get_iter(path))
 
     def on_activate_row(self, _widget, path, column, callback):
-        callback(self, self.model.get_iter(path), column.id)
+        callback()(self, self.model.get_iter(path), column.id)
 
     def on_focus_in(self, *args):
 
@@ -694,7 +698,7 @@ class TreeView:
         else:
             _widget, _controller, callback = args
 
-        callback(self)
+        callback()(self)
 
     def on_select_row(self, selection, callback):
 
@@ -705,10 +709,10 @@ class TreeView:
         else:
             _model, iterator = selection.get_selected()
 
-        callback(self, iterator)
+        callback()(self, iterator)
 
     def on_delete_accelerator(self, _treeview, _state, callback):
-        callback(self)
+        callback()(self)
 
     def on_column_header_pressed(self, controller, _num_p, _pos_x, _pos_y, column_id, sort_column_id):
         """Reset sorting when column header has been pressed three times."""
@@ -843,7 +847,7 @@ class TreeView:
         iterator = self.model.get_iter(path)
 
         if column.tooltip_callback:
-            value = column.tooltip_callback(self, iterator)
+            value = column.tooltip_callback()(self, iterator)
         else:
             value = self.get_row_value(iterator, column.id)
 

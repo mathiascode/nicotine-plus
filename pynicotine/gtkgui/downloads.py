@@ -31,6 +31,8 @@ from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.popovers.downloadspeeds import DownloadSpeeds
 from pynicotine.gtkgui.transfers import Transfers
 from pynicotine.gtkgui.widgets import clipboard
+from pynicotine.gtkgui.widgets import signal
+from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.dialogs import OptionDialog
 from pynicotine.transfers import TransferStatus
 from pynicotine.utils import human_speed
@@ -61,6 +63,17 @@ class Downloads(Transfers):
         self.grouping_button = window.downloads_grouping_button
         self.status_label = window.download_status_label
 
+        (
+            self.clear_all_button,
+            self.clear_all_label,
+            self.clear_finished_button,
+            self.container,
+            self.pause_button,
+            self.remove_button,
+            self.resume_button,
+            self.tree_container
+        ) = ui.load(scope=self, path=f"downloads.ui")
+
         super().__init__(window, transfer_type="download")
 
         if GTK_API_VERSION >= 4:
@@ -80,6 +93,14 @@ class Downloads(Transfers):
             ("#" + _("Everything…"), self.on_try_clear_all),
         )
         self.popup_menu_clear.update_model()
+
+        for widget, signal_name, callback in (
+            (self.resume_button, "clicked", self.on_retry_transfer),
+            (self.pause_button, "clicked", self.on_abort_transfer),
+            (self.remove_button, "clicked", self.on_remove_transfer),
+            (self.clear_finished_button, "clicked", self.on_clear_finished_filtered)
+        ):
+            signal.weak(widget, signal_name, callback)
 
         for event_name, callback in (
             ("abort-download", self.abort_transfer),

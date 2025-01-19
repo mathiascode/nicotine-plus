@@ -42,7 +42,6 @@
             <property name="hexpand">True</property>
             <property name="label" translatable="yes">Unlimited download speed</property>
             <property name="visible">True</property>
-            <signal name="toggled" handler="on_active_limit_toggled"/>
           </object>
         </child>
         <child>
@@ -55,7 +54,6 @@
                 <property name="hexpand">True</property>
                 <property name="label" translatable="yes">Use download speed limit (KiB/s):</property>
                 <property name="visible">True</property>
-                <signal name="toggled" handler="on_active_limit_toggled"/>
               </object>
             </child>
             <child>
@@ -64,7 +62,6 @@
                 <property name="numeric">True</property>
                 <property name="valign">center</property>
                 <property name="visible">True</property>
-                <signal name="value-changed" handler="on_limit_changed"/>
               </object>
             </child>
           </object>
@@ -79,7 +76,6 @@
                 <property name="hexpand">True</property>
                 <property name="label" translatable="yes">Use alternative download speed limit (KiB/s):</property>
                 <property name="visible">True</property>
-                <signal name="toggled" handler="on_active_limit_toggled"/>
               </object>
             </child>
             <child>
@@ -88,7 +84,6 @@
                 <property name="numeric">True</property>
                 <property name="valign">center</property>
                 <property name="visible">True</property>
-                <signal name="value-changed" handler="on_alt_limit_changed"/>
               </object>
             </child>
           </object>

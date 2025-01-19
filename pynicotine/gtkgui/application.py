@@ -1022,3 +1022,19 @@ class Application:
 
         if self.tray_icon is not None:
             self.tray_icon.destroy()
+
+        from pynicotine.gtkgui.widgets.window import Window
+        print("YYRTRYT")
+        Window.active_dialogs.clear()
+
+        import gc
+
+        #gc.set_debug(gc.DEBUG_SAVEALL)  # Save objects involved in cycles
+
+        gc.collect()  # Run garbage collection
+        gc.collect()
+        gc.collect()
+        gc.collect()
+
+        for obj in gc.garbage:
+            print(obj)

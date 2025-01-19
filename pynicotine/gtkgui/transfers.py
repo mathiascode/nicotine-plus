@@ -108,13 +108,6 @@ class Transfers:
 
     def __init__(self, window, transfer_type):
 
-        (
-            self.clear_all_button,
-            self.clear_all_label,
-            self.container,
-            self.tree_container
-        ) = ui.load(scope=self, path=f"{transfer_type}s.ui")
-
         self.window = window
         self.type = transfer_type
 
@@ -136,6 +129,8 @@ class Transfers:
         # Use dict instead of list for faster membership checks
         self.selected_users = {}
         self.selected_transfers = {}
+
+        self.tree_container.weak_ref(lambda *_args: print("aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb"))
 
         self.tree_view = TreeView(
             window, parent=self.tree_container, name=transfer_type,

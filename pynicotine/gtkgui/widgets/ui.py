@@ -74,13 +74,12 @@ def load(scope, path):
             ui_data[path] = ui_content
 
     if GTK_API_VERSION >= 4:
-        builder = Gtk.Builder(scope)
+        builder = Gtk.Builder()
         builder.add_from_string(ui_data[path])
         Gtk.Buildable.get_name = Gtk.Buildable.get_buildable_id  # pylint: disable=no-member
     else:
         builder = Gtk.Builder()
         builder.add_from_string(ui_data[path])
-        builder.connect_signals(scope)                      # pylint: disable=no-member
 
     widgets = builder.get_objects()
 

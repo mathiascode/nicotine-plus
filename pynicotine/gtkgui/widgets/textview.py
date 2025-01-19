@@ -19,6 +19,8 @@
 import re
 import time
 
+from weakref import WeakMethod
+
 from gi.repository import Gdk
 from gi.repository import Gtk
 
@@ -309,7 +311,7 @@ class TextView:
                 return True
 
             if hasattr(tag, "username"):
-                tag.callback(pressed_x, pressed_y, tag.username)
+                tag.callback()(pressed_x, pressed_y, tag.username)
                 return True
 
         return False
@@ -324,7 +326,7 @@ class TextView:
 
         for tag in self.get_tags_for_pos(pressed_x, pressed_y):
             if hasattr(tag, "username"):
-                tag.callback(pressed_x, pressed_y, tag.username)
+                tag.callback()(pressed_x, pressed_y, tag.username)
                 return True
 
         return False
@@ -376,7 +378,7 @@ class ChatView(TextView):
 
         self.user_tags = self.status_users = {}
         self.chat_entry = chat_entry
-        self.username_event = username_event
+        self.username_event = WeakMethod(username_event) if username_event else None
 
         if status_users is not None:
             # In chatrooms, we only want to set the online status for users that are

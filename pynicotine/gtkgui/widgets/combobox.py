@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from weakref import WeakMethod
+
 from gi.repository import GLib
 from gi.repository import Gtk
 from gi.repository import Pango
@@ -35,7 +37,7 @@ class ComboBox:
         self.widget = None
         self.dropdown = None
         self.entry = entry
-        self.item_selected_callback = item_selected_callback
+        self.item_selected_callback = WeakMethod(item_selected_callback) if item_selected_callback else None
 
         self._ids = {}
         self._positions = {}
@@ -462,4 +464,4 @@ class ComboBox:
             self.entry.grab_focus_without_selecting()
 
         if self.item_selected_callback is not None:
-            self.item_selected_callback(self, selected_id)
+            self.item_selected_callback()(self, selected_id)

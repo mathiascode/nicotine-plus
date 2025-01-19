@@ -27,6 +27,7 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.popover import Popover
@@ -94,6 +95,11 @@ class ChatHistory(Popover):
 
         self.set_menu_button(window.private_history_button)
         self.load_users()
+
+        for widget, signal_name, callback in (
+            (self.search_entry, "activate", self.on_show_user),
+        ):
+            signal.weak(widget, signal_name, callback)
 
         for event_name, callback in (
             ("server-login", self.server_login),

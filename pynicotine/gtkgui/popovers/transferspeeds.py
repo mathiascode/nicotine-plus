@@ -18,6 +18,7 @@
 
 from pynicotine.config import config
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.popover import Popover
 from pynicotine.gtkgui.widgets.theme import add_css_class
@@ -33,8 +34,8 @@ class TransferSpeeds(Popover):
             self.alt_speed_spinner,
             self.container,
             self.speed_spinner,
-            self.use_alt_limit_radio,
-            self.use_limit_radio,
+            self.use_alt_speed_limit_radio,
+            self.use_speed_limit_radio,
             self.use_unlimited_speed_radio
         ) = ui.load(scope=self, path=f"popovers/{transfer_type}speeds.ui")
 
@@ -43,6 +44,15 @@ class TransferSpeeds(Popover):
             content_box=self.container,
             show_callback=self.on_show
         )
+
+        for widget, signal_name, callback in (
+            (self.use_unlimited_speed_radio, "toggled", self.on_active_limit_toggled),
+            (self.use_speed_limit_radio, "toggled", self.on_active_limit_toggled),
+            (self.speed_spinner, "value-changed", self.on_limit_changed),
+            (self.use_alt_speed_limit_radio, "toggled", self.on_active_limit_toggled),
+            (self.alt_speed_spinner, "value-changed", self.on_alt_limit_changed)
+        ):
+            signal.weak(widget, signal_name, callback)
 
     def set_menu_button(self, menu_button):
 
@@ -61,10 +71,10 @@ class TransferSpeeds(Popover):
         use_limit_config_key = f"use_{self.transfer_type}_speed_limit"
         prev_active_limit = config.sections["transfers"][use_limit_config_key]
 
-        if self.use_limit_radio.get_active():
+        if self.use_speed_limit_radio.get_active():
             config.sections["transfers"][use_limit_config_key] = "primary"
 
-        elif self.use_alt_limit_radio.get_active():
+        elif self.use_alt_speed_limit_radio.get_active():
             config.sections["transfers"][use_limit_config_key] = "alternative"
 
         else:
@@ -101,10 +111,10 @@ class TransferSpeeds(Popover):
         use_speed_limit = config.sections["transfers"][f"use_{self.transfer_type}_speed_limit"]
 
         if use_speed_limit == "primary":
-            self.use_limit_radio.set_active(True)
+            self.use_speed_limit_radio.set_active(True)
 
         elif use_speed_limit == "alternative":
-            self.use_alt_limit_radio.set_active(True)
+            self.use_alt_speed_limit_radio.set_active(True)
 
         else:
             self.use_unlimited_speed_radio.set_active(True)

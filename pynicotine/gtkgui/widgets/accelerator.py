@@ -36,27 +36,6 @@ class Accelerator:
     def __init__(self, accelerator, widget, callback, user_data=None):
 
         if GTK_API_VERSION >= 4:
-            if sys.platform == "darwin":
-                # Use Command key instead of Ctrl in accelerators on macOS
-                accelerator = accelerator.replace("<Primary>", "<Meta>")
-
-            shortcut_trigger = self.shortcut_triggers.get(accelerator)
-
-            if not hasattr(widget, "shortcut_controller"):
-                widget.shortcut_controller = Gtk.ShortcutController(
-                    propagation_phase=Gtk.PropagationPhase.CAPTURE
-                )
-                widget.add_controller(widget.shortcut_controller)
-
-            if not shortcut_trigger:
-                self.shortcut_triggers[accelerator] = shortcut_trigger = Gtk.ShortcutTrigger.parse_string(accelerator)
-
-            widget.shortcut_controller.add_shortcut(
-                Gtk.Shortcut(
-                    trigger=shortcut_trigger,
-                    action=Gtk.CallbackAction.new(callback, user_data)
-                )
-            )
             return
 
         # GTK 3 replacement for Gtk.ShortcutController

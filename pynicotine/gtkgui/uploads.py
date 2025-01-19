@@ -33,6 +33,8 @@ from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.popovers.uploadspeeds import UploadSpeeds
 from pynicotine.gtkgui.transfers import Transfers
 from pynicotine.gtkgui.widgets import clipboard
+from pynicotine.gtkgui.widgets import signal
+from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.dialogs import OptionDialog
 from pynicotine.transfers import TransferStatus
 from pynicotine.utils import human_speed
@@ -63,6 +65,17 @@ class Uploads(Transfers):
         self.grouping_button = window.uploads_grouping_button
         self.status_label = window.upload_status_label
 
+        (
+            self.abort_button,
+            self.abort_users_button,
+            self.ban_users_button,
+            self.clear_all_button,
+            self.clear_all_label,
+            self.clear_finished_button,
+            self.container,
+            self.tree_container
+        ) = ui.load(scope=self, path=f"uploads.ui")
+
         super().__init__(window, transfer_type="upload")
 
         if GTK_API_VERSION >= 4:
@@ -83,6 +96,14 @@ class Uploads(Transfers):
             ("#" + _("Everything…"), self.on_try_clear_all),
         )
         self.popup_menu_clear.update_model()
+
+        for widget, signal_name, callback in (
+            (self.abort_button, "clicked", self.on_abort_transfer),
+            (self.abort_users_button, "clicked", self.on_abort_users),
+            (self.ban_users_button, "clicked", self.on_ban_users),
+            (self.clear_finished_button, "clicked", self.on_clear_finished_cancelled)
+        ):
+            signal.weak(widget, signal_name, callback)
 
         for event_name, callback in (
             ("abort-upload", self.abort_transfer),

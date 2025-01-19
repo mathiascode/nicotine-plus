@@ -19,6 +19,7 @@
 from gi.repository import Gtk
 
 from pynicotine.core import core
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.popover import Popover
 from pynicotine.gtkgui.widgets.textview import TextView
@@ -45,6 +46,12 @@ class RoomWall(Popover):
         self.room = None
         self.message_view = TextView(self.message_view_container, editable=False, vertical_margin=4,
                                      pixels_above_lines=3, pixels_below_lines=3)
+
+        for widget, signal_name, callback in (
+            (self.message_entry, "activate", self.on_set_room_wall_message),
+            (self.message_entry, "icon-press", self.on_icon_pressed)
+        ):
+            signal.weak(widget, signal_name, callback)
 
     def _update_message_list(self):
 

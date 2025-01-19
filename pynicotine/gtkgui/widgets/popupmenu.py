@@ -23,6 +23,8 @@
 import os
 import sys
 
+from weakref import WeakMethod
+
 from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
@@ -46,7 +48,7 @@ class PopupMenu:
         self.model = Gio.Menu()
         self.application = application
         self.parent = parent
-        self.callback = callback
+        self.callback = WeakMethod(callback) if callback else None
 
         self.popup_menu = None
         self.menu_button = None
@@ -94,6 +96,9 @@ class PopupMenu:
             popover = list(button)[-1]
             popover.set_has_arrow(False)
 
+    def workaround(self, *_args):
+        self.parent.child_focus(Gtk.DirectionType.TAB_FORWARD)
+
     def create_context_menu(self, parent):
 
         if self.popup_menu:
@@ -111,7 +116,7 @@ class PopupMenu:
             self.popup_menu.set_has_arrow(False)
 
             # Workaround for wrong widget receiving focus after closing menu in GTK 4
-            signal.weak(self.popup_menu, "closed", lambda *_args: self.parent.child_focus(Gtk.DirectionType.TAB_FORWARD))
+            signal.weak(self.popup_menu, "closed", self.workaround)
         else:
             self.popup_menu = Gtk.Menu.new_from_model(self.model)
             self.popup_menu.attach_to_widget(parent)
@@ -243,6 +248,7 @@ class PopupMenu:
 
         self.actions.clear()
         self.items.clear()
+        self.pending_items.clear()
 
         self.menu_section = None
 
@@ -305,7 +311,7 @@ class PopupMenu:
                 return False
 
         if callback is not None:
-            callback(menu_model, self.parent)
+            callback()(menu_model, self.parent)
 
         self.popup(pos_x, pos_y, controller, menu=menu)
         return True

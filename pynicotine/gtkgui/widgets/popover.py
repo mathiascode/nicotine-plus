@@ -18,6 +18,8 @@
 
 import os
 
+from weakref import WeakMethod
+
 from gi.repository import Gtk
 
 from pynicotine.gtkgui.application import GTK_API_VERSION
@@ -30,13 +32,14 @@ class Popover:
     def __init__(self, window, content_box=None, show_callback=None, close_callback=None, width=0, height=0):
 
         self.window = window
-        self.show_callback = show_callback
-        self.close_callback = close_callback
+        self.show_callback = WeakMethod(show_callback) if show_callback else None
+        self.close_callback = WeakMethod(close_callback) if close_callback else None
 
         self.default_width = width
         self.default_height = height
 
         self.widget = Gtk.Popover(child=content_box)
+        content_box.weak_ref(lambda *_args: print("qqqqqqqqqqqqqqqqqqqq"))
         self.menu_button = None
         signal.weak(self.widget, "map", self._on_map)
         signal.weak(self.widget, "unmap", self._on_unmap)
@@ -80,11 +83,11 @@ class Popover:
         self._resize_popover()
 
         if self.show_callback is not None:
-            self.show_callback(self)
+            self.show_callback()(self)
 
     def _on_unmap(self, *_args):
         if self.close_callback is not None:
-            self.close_callback(self)
+            self.close_callback()(self)
 
     def _resize_popover(self):
 

@@ -50,8 +50,6 @@
             <property name="primary-icon-name">user-available-symbolic</property>
             <property name="secondary-icon-name">edit-clear-symbolic</property>
             <property name="visible">True</property>
-            <signal name="activate" handler="on_set_room_wall_message"/>
-            <signal name="icon-press" handler="on_icon_pressed"/>
           </object>
         </child>
       </object>

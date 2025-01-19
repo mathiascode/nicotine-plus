@@ -34,6 +34,7 @@ from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.popovers.chatcommandhelp import ChatCommandHelp
 from pynicotine.gtkgui.popovers.roomlist import RoomList
 from pynicotine.gtkgui.popovers.roomwall import RoomWall
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.iconnotebook import IconNotebook
 from pynicotine.gtkgui.widgets.dialogs import OptionDialog
@@ -626,6 +627,11 @@ class ChatRoom:
             self.popup_menu_user_chat, self.popup_menu_user_list,
             self.popup_menu_activity_view, self.popup_menu_chat_view, self.tab_menu
         )
+
+        for widget, signal_name, callback in (
+            (self.log_toggle, "toggled", self.on_log_toggled),
+        ):
+            signal.weak(widget, signal_name, callback)
 
         self.setup_public_feed()
         self.prepend_old_messages()

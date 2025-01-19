@@ -43,7 +43,6 @@
     <property name="placeholder-text" translatable="yes">Room…</property>
     <property name="visible">True</property>
     <property name="width-chars">5</property>
-    <signal name="activate" handler="on_search"/>
   </object>
   <object class="GtkEntry" id="user_search_entry">
     <property name="hexpand">False</property>
@@ -51,7 +50,6 @@
     <property name="placeholder-text" translatable="yes">Username…</property>
     <property name="visible">True</property>
     <property name="width-chars">5</property>
-    <signal name="activate" handler="on_search"/>
   </object>
   <object class="GtkEntry" id="search_entry">
     <property name="max-width-chars">72</property>
@@ -61,9 +59,6 @@
     <property name="tooltip-text" translatable="yes">Search patterns: with a word = term, without a word = -term, partial word = *erm</property>
     <property name="visible">True</property>
     <property name="width-chars">5</property>
-    <signal name="activate" handler="on_search"/>
-    <signal name="changed" handler="on_search_entry_changed"/>
-    <signal name="icon-press" handler="on_search_entry_icon_press"/>
   </object>
   <object class="GtkBox" id="search_page">
     <property name="visible">False</property>
@@ -733,8 +728,6 @@
     <property name="primary-icon-name">avatar-default-symbolic</property>
     <property name="visible">True</property>
     <property name="width-chars">5</property>
-    <signal name="activate" handler="on_get_shares"/>
-    <signal name="icon-press" handler="on_get_shares"/>
   </object>
   <object class="GtkBox" id="userbrowse_page">
     <property name="visible">False</property>
@@ -901,8 +894,6 @@
     <property name="primary-icon-name">avatar-default-symbolic</property>
     <property name="visible">True</property>
     <property name="width-chars">5</property>
-    <signal name="activate" handler="on_show_user_profile"/>
-    <signal name="icon-press" handler="on_show_user_profile"/>
   </object>
   <object class="GtkBox" id="userinfo_page">
     <property name="visible">False</property>
@@ -1096,8 +1087,6 @@
                         <property name="primary-icon-name">avatar-default-symbolic</property>
                         <property name="visible">True</property>
                         <property name="width-chars">5</property>
-                        <signal name="activate" handler="on_get_private_chat"/>
-                        <signal name="icon-press" handler="on_get_private_chat"/>
                       </object>
                     </child>
                     <child>
@@ -1255,8 +1244,6 @@
                         <property name="primary-icon-name">system-users-symbolic</property>
                         <property name="visible">True</property>
                         <property name="width-chars">5</property>
-                        <signal name="activate" handler="on_add_buddy"/>
-                        <signal name="icon-press" handler="on_add_buddy"/>
                       </object>
                     </child>
                   </object>
@@ -1430,8 +1417,6 @@
                             <property name="primary-icon-name">user-available-symbolic</property>
                             <property name="visible">True</property>
                             <property name="width-chars">5</property>
-                            <signal name="activate" handler="on_create_room"/>
-                            <signal name="icon-press" handler="on_create_room"/>
                           </object>
                         </child>
                         <child>

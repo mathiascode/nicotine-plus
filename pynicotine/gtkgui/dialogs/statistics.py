@@ -20,6 +20,7 @@ import time
 
 from pynicotine.core import core
 from pynicotine.events import events
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.dialogs import Dialog
 from pynicotine.gtkgui.widgets.dialogs import OptionDialog
@@ -75,6 +76,11 @@ class Statistics(Dialog):
             title=_("Transfer Statistics"),
             width=425
         )
+
+        for widget, signal_name, callback in (
+            (self.reset_button, "clicked", self.on_reset_statistics),
+        ):
+            signal.weak(widget, signal_name, callback)
 
         events.connect("update-stat", self.update_stat)
 

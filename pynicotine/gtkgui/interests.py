@@ -25,6 +25,7 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
+from pynicotine.gtkgui.widgets import signal
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.popupmenu import UserPopupMenu
@@ -53,6 +54,7 @@ class Interests:
             self.similar_users_list_container
         ) = ui.load(scope=self, path="interests.ui")
 
+        self.container.weak_ref(lambda *_args: print("bbbbbbbbbbbbbbbb"))
         if GTK_API_VERSION >= 4:
             window.interests_container.append(self.container)
         else:
@@ -214,6 +216,15 @@ class Interests:
         )
         self.popup_menus.append(popup)
 
+        for widget, signal_name, callback in (
+            (self.add_like_entry, "activate", self.on_add_thing_i_like),
+            (self.add_like_entry, "icon-press", self.on_add_thing_i_like),
+            (self.add_dislike_entry, "activate", self.on_add_thing_i_dislike),
+            (self.add_dislike_entry, "icon-press", self.on_add_thing_i_dislike),
+            (self.recommendations_button, "clicked", self.on_refresh_recommendations)
+        ):
+            signal.weak(widget, signal_name, callback)
+
         for event_name, callback in (
             ("add-dislike", self.add_thing_i_hate),
             ("add-interest", self.add_thing_i_like),
@@ -235,6 +246,19 @@ class Interests:
     def destroy(self):
         for menu in self.popup_menus:
             menu.destroy()
+        self.window.interests_container.remove(self.container)
+        #self.__dict__.clear()
+        del self.__dict__["likes_list_view"]
+        del self.__dict__["dislikes_list_view"]
+        del self.__dict__["recommendations_list_view"]
+        del self.__dict__["similar_users_list_view"]
+        del self.__dict__["page"]
+        del self.__dict__["toolbar"]
+        del self.__dict__["toolbar_start_content"]
+        del self.__dict__["toolbar_end_content"]
+        del self.__dict__["window"]
+        del self.__dict__["container"]
+        print(self.__dict__)
 
     def on_focus(self, *_args):
 
