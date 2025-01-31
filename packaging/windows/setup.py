@@ -33,7 +33,7 @@ del gi.load_gi
 
 
 if sys.platform == "win32":
-    GUI_BASE = "Win32GUI"
+    GUI_BASE = None
     SYS_BASE_PATH = sys.prefix
     LIB_PATH = os.path.join(SYS_BASE_PATH, "bin")
     LIB_EXTENSION = ".dll"
