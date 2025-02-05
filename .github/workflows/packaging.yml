@@ -102,6 +102,8 @@ jobs:
     defaults:
       run:
         shell: msys2 {0}
+    env:
+      CX_FREEZE_BIND: imagehlp
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
