@@ -391,6 +391,14 @@ class Scanner:
         ))
         self.queue.put(file_path_index)
 
+        # Map lowercase virtual paths to file path index. Used for Soulseek NS clients
+        # that erroneously convert virtual paths to lowercase when requesting a download.
+        lowercase_mapping = {
+            self.real2virtual(file_path).lower(): index
+            for index, file_path in enumerate(file_path_index)
+        }
+        self.queue.put(lowercase_mapping)
+
         Shares.close_shares(self.share_dbs)
 
     def real2virtual(self, real_path):
@@ -679,7 +687,7 @@ class Scanner:
 
 class Shares:
     __slots__ = ("share_dbs", "requested_share_times", "initialized", "rescanning", "compressed_shares",
-                 "share_db_paths", "file_path_index", "_scanner_process")
+                 "share_db_paths", "file_path_index", "lowercase_mapping", "_scanner_process")
 
     def __init__(self):
 
@@ -706,6 +714,7 @@ class Shares:
             "trusted_streams": os.path.join(config.data_folder_path, "trustedstreams.dbn")
         }
         self.file_path_index = ()
+        self.lowercase_mapping = {}
 
         self._scanner_process = None
 
@@ -762,13 +771,15 @@ class Shares:
             import shutil
             shutil.rmtree(db_path_encoded)
 
-    def virtual2real(self, virtual_path):
+    def virtual2real(self, virtual_path, check_lowercase=False):
 
-        for shares in (
-            config.sections["transfers"]["shared"],
-            config.sections["transfers"]["buddyshared"],
-            config.sections["transfers"]["trustedshared"]
-        ):
+        if check_lowercase and virtual_path in core.shares.lowercase_mapping:
+            # Mangled path from a Soulseek NS client (all lowercase)
+            return self.file_path_index[self.lowercase_mapping[virtual_path]]
+
+        share_groups = self.get_shared_folders()
+
+        for shares in share_groups:
             for virtual_name, folder_path, *_unused in shares:
                 if virtual_path == virtual_name:
                     return folder_path
@@ -1056,6 +1067,7 @@ class Shares:
         self.rescanning = True
         self.close_shares(self.share_dbs)
         self.file_path_index = ()
+        self.lowercase_mapping.clear()
 
         events.emit("shares-preparing")
 
@@ -1128,6 +1140,9 @@ class Shares:
                 elif isinstance(item, tuple):
                     self.file_path_index = item
 
+                elif isinstance(item, dict):
+                    self.lowercase_mapping = item
+
                 elif isinstance(item, SharedFileListResponse):
                     self.compressed_shares[item.permission_level] = item
 
@@ -1163,6 +1178,7 @@ class Shares:
 
         if not successful:
             self.file_path_index = ()
+            self.lowercase_mapping.clear()
             return
 
         self.send_num_shared_folders_files()
