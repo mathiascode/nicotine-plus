@@ -29,7 +29,7 @@
  - [python3-wheel](https://wheel.readthedocs.io/)
       for packaging;
  - [gettext](https://www.gnu.org/software/gettext/)
-      for generating translations;
+      for generating translations.
 
 ## Testing
 
@@ -74,25 +74,25 @@
  - On Debian/Ubuntu-based distributions:
 
    ```sh
-   sudo apt install gettext librsvg2-bin python3-build python3-setuptools python3-wheel
+   sudo apt install gettext python3-build python3-setuptools python3-wheel
    ```
 
  - On Redhat/Fedora-based distributions:
 
    ```sh
-   sudo dnf install gettext librsvg2-tools python3-build python3-setuptools python3-wheel
+   sudo dnf install gettext python3-build python3-setuptools python3-wheel
    ```
 
  - On SUSE-based distributions:
 
    ```sh
-   sudo zypper install gettext-tools python312-build python312-setuptools python312-wheel rsvg-convert
+   sudo zypper install gettext-tools python312-build python312-setuptools python312-wheel
    ```
 
  - On Alpine-based distributions:
 
    ```sh
-   sudo apk add gettext py3-build py3-setuptools py3-wheel rsvg-convert
+   sudo apk add gettext py3-build py3-setuptools py3-wheel
    ```
 
 #### Installing Test Dependencies
