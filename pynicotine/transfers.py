@@ -504,7 +504,7 @@ class Transfers:
         virtual_path = transfer.virtual_path
 
         if virtual_path not in self.queued_users.get(username, {}):
-            return
+            return False
 
         self._user_queue_sizes[username] -= transfer.size
         del self.queued_transfers[transfer]
@@ -520,6 +520,7 @@ class Transfers:
             self._enqueue_limited_transfers(username)
 
         transfer.queue_position = 0
+        return True
 
     def _activate_transfer(self, transfer, token):
 
