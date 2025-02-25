@@ -38,10 +38,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
+      fail-fast: false
       matrix:
         include:
           - arch: x86_64
             platform: ubuntu-latest
+          - arch: aarch64
+            platform: ubuntu-24.04-arm
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
       options: --privileged
@@ -63,6 +66,7 @@ jobs:
           cache-key: flatpak-builder-${{ github.sha }}
           arch: ${{ matrix.arch }}
           upload-artifact: false
+          verbose: true
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
