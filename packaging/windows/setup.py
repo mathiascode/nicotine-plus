@@ -36,7 +36,7 @@ if sys.platform == "win32":
     GUI_BASE = "Win32GUI"
     SYS_BASE_PATH = sys.prefix
     LIB_PATH = os.path.join(SYS_BASE_PATH, "bin")
-    LIB_EXTENSION = LIB_EXTENSION_PIXBUF = ".dll"
+    LIB_EXTENSION = ".dll"
     UNAVAILABLE_MODULES = [
         "fcntl", "grp", "nis", "ossaudiodev", "posix", "pwd", "readline", "resource", "spwd", "syslog", "termios"
     ]
@@ -46,8 +46,7 @@ elif sys.platform == "darwin":
     GUI_BASE = None
     SYS_BASE_PATH = "/opt/homebrew" if platform.machine() == "arm64" else "/usr/local"
     LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
-    LIB_EXTENSION = ".dylib"
-    LIB_EXTENSION_PIXBUF = ".so"
+    LIB_EXTENSION = (".dylib", ".so")
     UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]
     ICON_NAME = "icon.icns"
 
@@ -131,7 +130,7 @@ def add_pixbuf_loaders():
     add_file(file_path=temp_loaders_file, output_path="lib/pixbuf-loaders.cache")
     add_files(
         folder_path=os.path.join(SYS_BASE_PATH, "lib/gdk-pixbuf-2.0/2.10.0/loaders"), output_path="lib",
-        ends_with=LIB_EXTENSION_PIXBUF
+        ends_with=LIB_EXTENSION
     )
 
 
