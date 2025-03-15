@@ -154,8 +154,8 @@ jobs:
       - name: Install dependencies
         run: |
           apk update
-          apk add font-dejavu gettext gtk4.0 py3-build py3-gobject3 py3-pycodestyle \
-            py3-pylint py3-setuptools py3-wheel
+          apk add font-dejavu gettext gobject-introspection gtk4.0 py3-build py3-gobject3 \
+            py3-pycodestyle py3-pylint py3-setuptools py3-wheel
 
       - name: PEP 8 style checks
         run: python3 -m pycodestyle
