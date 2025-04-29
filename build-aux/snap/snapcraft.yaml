@@ -42,6 +42,7 @@ parts:
       for i in `find $CRAFT_PART_INSTALL/meta/gui/icons -name "*.svg" -o -name "*.png"`; do
         mv $i "`dirname $i`/snap.$CRAFT_PROJECT_NAME.`basename $i`"
       done
+      python3 -m unittest -v
 
 slots:
   nicotine-plus:
