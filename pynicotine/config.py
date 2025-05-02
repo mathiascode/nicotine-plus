@@ -225,6 +225,7 @@ class Config:
                 "autoclear_downloads": False,
                 "autoclear_uploads": False,
                 "rescanonstartup": True,
+                "rescan_interval": 24,
                 "enablefilters": False,
                 "downloadregexp": "",
                 "downloadfilters": [
