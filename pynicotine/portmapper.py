@@ -110,9 +110,9 @@ class NATPMP(BaseImplementation):
     @staticmethod
     def _get_gateway_address():
 
-        if sys.platform == "linux":
-            gateway_address = None
+        gateway_address = None
 
+        if sys.platform == "linux":
             with open("/proc/net/route", encoding="utf-8") as file_handle:
                 next(file_handle)  # Skip header
 
@@ -126,9 +126,7 @@ class NATPMP(BaseImplementation):
                     gateway_address = socket.inet_ntoa(struct.pack("<L", int(routes[2], 16)))
                     break
 
-            return gateway_address
-
-        if sys.platform.startswith("haiku"):
+        elif sys.platform.startswith("haiku"):
             gateway_address = None
             output = execute_command("route", returnoutput=True, hidden=True)
 
@@ -146,15 +144,31 @@ class NATPMP(BaseImplementation):
                     gateway_address = new_gateway_address
                     break
 
-            return gateway_address
+        elif sys.platform == "win32":
+            # pylint: disable=invalid-name
+            from ctypes import POINTER, Structure, windll, wintypes
 
-        if sys.platform == "win32":
-            gateway_pattern = re.compile(b".*?0.0.0.0 +0.0.0.0 +(.*?) +?[^\n]*\n")
+            class IpForwardRow(Structure):
+                pass
+
+            IpForwardRow._fields_ = [  # pylint: disable=protected-access
+                ("dw_forward_dest", wintypes.DWORD),
+                ("dw_forward_mask", wintypes.DWORD),
+                ("dw_forward_next_hop", wintypes.DWORD)
+            ]
+
+            ip_forward = IpForwardRow()
+            result = windll.iphlpapi.GetBestRoute(socket.inet_aton("0.0.0.0"), 0, POINTER(ip_forward))
+
+            if not result:
+                gateway_address = socket.inet_ntoa(struct.pack("!I", ip_forward.dw_forward_next_hop))
+
         else:
             gateway_pattern = re.compile(b"(?:default|0\\.0\\.0\\.0|::/0)\\s+([\\w\\.:]+)\\s+.*UG")
+            output = execute_command("netstat -rn", returnoutput=True, hidden=True)
+            gateway_address = gateway_pattern.search(output).group(1)
 
-        output = execute_command("netstat -rn", returnoutput=True, hidden=True)
-        return gateway_pattern.search(output).group(1)
+        return gateway_address
 
     def _request_port_mapping(self, public_port, private_port, lease_duration):
 
