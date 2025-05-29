@@ -46,7 +46,7 @@
  - On Debian/Ubuntu-based distributions:
 
    ```sh
-   sudo apt install gir1.2-gspell-1 gir1.2-gtk-4.0 gir1.2-adw-1 python3-gi python3-gi-cairo
+   sudo apt install gir1.2-gspell-1 gir1.2-gtk-4.0 gir1.2-adw-1 python3-gi
    ```
 
  - On Redhat/Fedora-based distributions:
@@ -58,7 +58,7 @@
  - On SUSE-based distributions:
 
    ```sh
-   sudo zypper install typelib-1_0-Gspell-1 typelib-1_0-Gtk-4_0 typelib-1_0-Adw-1 python313-gobject python313-gobject-cairo python313-gobject-Gdk
+   sudo zypper install typelib-1_0-Gspell-1 typelib-1_0-Gtk-4_0 typelib-1_0-Adw-1 python313-gobject python313-gobject-Gdk
    ```
 
  - On Alpine-based distributions:

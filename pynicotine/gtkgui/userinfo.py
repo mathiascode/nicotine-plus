@@ -20,6 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import tempfile
 import time
 
 from gi.repository import Gdk
@@ -312,13 +314,11 @@ class UserInfo:
             self.picture = Gtk.EventBox(           # pylint: disable=c-extension-no-member
                 can_focus=True, hexpand=True, vexpand=True, visible=True
             )
-            self.picture.connect("draw", self.on_draw_picture)
-
             self.picture_view.add(self.picture)    # pylint: disable=no-member
 
         self.user = user
         self.picture_data = None
-        self.picture_surface = None
+        self.picture_css_provider = None
         self.indeterminate_progress = False
         self.refreshing = False
 
@@ -404,6 +404,7 @@ class UserInfo:
         for menu in self.popup_menus:
             menu.destroy()
 
+        self.clear()
         self.info_bar.destroy()
         self.description_view.destroy()
         self.likes_list_view.destroy()
@@ -445,11 +446,13 @@ class UserInfo:
     def remove_picture(self):
 
         if GTK_API_VERSION >= 4:
-            # Empty paintable to prevent container width from shrinking
-            self.picture.set_paintable(Gdk.Paintable.new_empty(intrinsic_width=1, intrinsic_height=1))
+            self.picture.set_paintable(None)
+
+        elif self.picture_css_provider:
+            self.picture_view.get_style_context().remove_provider(self.picture_css_provider)
 
         self.picture_data = None
-        self.picture_surface = None
+        self.picture_css_provider = None
 
         self.hide_picture()
 
@@ -463,11 +466,29 @@ class UserInfo:
             if GTK_API_VERSION >= 4:
                 self.picture_data = Gdk.Texture.new_from_bytes(GLib.Bytes(data))
                 self.picture.set_paintable(self.picture_data)
+                self.show_picture()
             else:
                 data_stream = Gio.MemoryInputStream.new_from_bytes(GLib.Bytes(data))
                 self.picture_data = GdkPixbuf.Pixbuf.new_from_stream(data_stream, cancellable=None)
-                self.picture_surface = Gdk.cairo_surface_create_from_pixbuf(  # pylint: disable=c-extension-no-member
-                    self.picture_data, scale=1, for_window=None)
+
+                with tempfile.NamedTemporaryFile(delete=True) as file_handle:
+                    file_handle.write(data)
+
+                    if self.picture_css_provider is None:
+                        self.picture_css_provider = Gtk.CssProvider()
+                        self.picture_view.get_style_context().add_provider(
+                            self.picture_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
+                        )
+
+                    self.picture_css_provider.load_from_data(f"""
+                        box {{
+                            background: url('{file_handle.name}');
+                            background-position: center;
+                            background-repeat: no-repeat;
+                            background-size: contain;
+                        }}
+                    """)
+                    self.show_picture()
 
         except Exception as error:
             log.add(_("Failed to load picture for user %(user)s: %(error)s"), {
@@ -475,9 +496,6 @@ class UserInfo:
                 "error": error
             })
             self.remove_picture()
-            return
-
-        self.show_picture()
 
     def show_picture(self):
 
@@ -699,23 +717,6 @@ class UserInfo:
         if self.indeterminate_progress:
             self.indeterminate_progress = False
             progress_bar.set_fraction(0.0)
-
-    def on_draw_picture(self, area, context):
-        """Draws a centered picture that fills the drawing area."""
-
-        area_width = area.get_allocated_width()
-        area_height = area.get_allocated_height()
-        picture_width = self.picture_surface.get_width()
-        picture_height = self.picture_surface.get_height()
-
-        scale_factor = min(area_width / picture_width, area_height / picture_height)
-        translate_x = (area_width - (picture_width * scale_factor)) / 2
-        translate_y = (area_height - (picture_height * scale_factor)) / 2
-
-        context.translate(translate_x, translate_y)
-        context.scale(scale_factor, scale_factor)
-        context.set_source_surface(self.picture_surface, 0, 0)
-        context.paint()
 
     def on_tab_popup(self, *_args):
         self.user_popup_menu.toggle_user_items()
