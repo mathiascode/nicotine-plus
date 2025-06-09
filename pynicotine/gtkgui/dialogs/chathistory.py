@@ -74,7 +74,8 @@ class ChatHistory(Dialog):
                     "column_type": "text",
                     "title": _("Latest Message"),
                     "sort_column": "timestamp_data",
-                    "default_sort_type": "descending"
+                    "default_sort_type": "descending",
+                    "expand_column": True
                 },
 
                 # Hidden data columns

@@ -28,6 +28,7 @@ from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import Pango
 
 from pynicotine.config import config
 from pynicotine.core import core
@@ -41,6 +42,35 @@ from pynicotine.gtkgui.widgets.theme import USER_STATUS_ICON_LABELS
 from pynicotine.gtkgui.widgets.theme import add_css_class
 
 
+class Row(GObject.Object):
+
+    def __init__(self, *args):
+        super().__init__()
+        self.values = [*args]
+        self.widgets = [None] * len(self.values)
+
+    def set_value(self, index, value):
+
+        self.values[index] = value
+        widget = self.widgets[index]
+
+        if widget is None:
+            return
+
+        if isinstance(widget, Gtk.Inscription):
+            widget.set_text(value)
+
+        elif isinstance(widget, Gtk.Image):
+            widget.set_from_icon_name(value)
+
+        elif isinstance(widget, Gtk.ProgressBar):
+            widget.set_fraction(value)
+
+        elif isinstance(widget, Gtk.CheckButton):
+            widget.blocked = True
+            widget.set_active(value)
+            widget.blocked = False
+
 class TreeView:
 
     def __init__(self, window, parent, columns, has_tree=False, multi_select=False,
@@ -49,7 +79,7 @@ class TreeView:
                  search_entry=None):
 
         self.window = window
-        self.widget = Gtk.TreeView(fixed_height_mode=True, has_tooltip=True, visible=True)
+        self.widget = None
         self.model = None
         self.multi_select = multi_select
         self.iterators = {}
@@ -66,13 +96,14 @@ class TreeView:
         self._column_gesture_controllers = []
         self._column_numbers = None
         self._default_sort_column = None
+        self._default_sort_column_widget = None
         self._default_sort_type = Gtk.SortType.ASCENDING
         self._sort_column = None
+        self._sort_column_widget = None
         self._sort_type = None
         self._persistent_sort = persistent_sort
-        self._columns_changed_handler = None
         self._last_redraw_time = 0
-        self._selection = self.widget.get_selection()
+        self._selection = None
         self._h_adjustment = parent.get_hadjustment()
         self._v_adjustment = parent.get_vadjustment()
         self._v_adjustment_upper = 0
@@ -81,9 +112,15 @@ class TreeView:
         self.notify_value_handler = self._v_adjustment.connect("notify::value", self.on_v_adjustment_value)
 
         if GTK_API_VERSION >= 4:
+            self.widget = Gtk.ColumnView(visible=True)
             parent.set_child(self.widget)  # pylint: disable=no-member
         else:
+            self.widget = Gtk.TreeView(fixed_height_mode=True, has_tooltip=True, visible=True)
+            self._selection = self.widget.get_selection()
             parent.add(self.widget)        # pylint: disable=no-member
+
+        self._column_menu = self.widget.column_menu = PopupMenu(
+            self.window.application, self.widget, callback=self.on_column_header_menu, connect_events=False)
 
         self._initialise_columns(columns)
 
@@ -97,15 +134,18 @@ class TreeView:
         Accelerator("equal", self.widget, self.on_expand_row_blocked_accelerator)
         Accelerator("backslash", self.widget, self.on_expand_row_level_accelerator)
 
-        self._column_menu = self.widget.column_menu = PopupMenu(
-            self.window.application, self.widget, callback=self.on_column_header_menu, connect_events=False)
-
         if multi_select:
-            self.widget.set_rubber_banding(True)
-            self._selection.set_mode(Gtk.SelectionMode.MULTIPLE)
+            if GTK_API_VERSION >= 4:
+                self.widget.set_enable_rubberband(True)
+            else:
+                self.widget.set_rubber_banding(True)
+                self._selection.set_mode(Gtk.SelectionMode.MULTIPLE)
 
         if activate_row_callback:
-            self.widget.connect("row-activated", self.on_activate_row, activate_row_callback)
+            if GTK_API_VERSION >= 4:
+                self.widget.connect("activate", self.on_activate_row_gtk4, activate_row_callback)
+            else:
+                self.widget.connect("row-activated", self.on_activate_row_gtk3, activate_row_callback)
 
         if focus_in_callback:
             if GTK_API_VERSION >= 4:
@@ -116,31 +156,44 @@ class TreeView:
                 self.widget.connect("focus-in-event", self.on_focus_in, focus_in_callback)
 
         if select_row_callback:
-            self._selection.connect("changed", self.on_select_row, select_row_callback)
+            if GTK_API_VERSION >= 4:
+                self._selection.connect("selection-changed", self.on_select_row_gtk4, select_row_callback)
+            else:
+                self._selection.connect("changed", self.on_select_row_gtk3, select_row_callback)
 
         if delete_accelerator_callback:
             Accelerator("Delete", self.widget, self.on_delete_accelerator, delete_accelerator_callback)
 
-        if search_entry:
-            self.widget.set_search_entry(search_entry)
+        if GTK_API_VERSION == 3:
+            if search_entry:
+                self.widget.set_search_entry(search_entry)
 
-        self._query_tooltip_handler = self.widget.connect("query-tooltip", self.on_tooltip)
-        self.widget.connect("move-cursor", self.on_key_move_cursor)
-        self.widget.set_search_equal_func(self.on_search_match)
+            self._query_tooltip_handler = self.widget.connect("query-tooltip", self.on_tooltip)
+            self.widget.connect("move-cursor", self.on_key_move_cursor)
+            self.widget.set_search_equal_func(self.on_search_match)
 
+        add_css_class(self.widget, "data-table")
         add_css_class(self.widget, "treeview-spacing")
 
     def destroy(self):
 
         # Prevent updates while destroying widget
-        self.widget.disconnect(self._columns_changed_handler)
-        self.widget.disconnect(self._query_tooltip_handler)
+        if GTK_API_VERSION == 3:
+            self.widget.disconnect(self._query_tooltip_handler)
+
         self._v_adjustment.disconnect(self.notify_value_handler)
 
         self._column_menu.destroy()
         self.__dict__.clear()
 
     def create_model(self):
+
+        if GTK_API_VERSION >= 4:
+            self.model = Gio.ListStore(item_type=Row)
+            sort_model = Gtk.SortListModel(model=self.model, sorter=self.widget.get_sorter())
+            self._selection = Gtk.MultiSelection(model=sort_model) if self.multi_select else Gtk.SingleSelection(model=sort_model)
+            self.widget.set_model(self._selection)
+            return self.model
 
         # Bypass Tree/ListStore overrides for improved performance in set_value()
         gtk_module = gi.module.get_introspection_module("Gtk")
@@ -188,11 +241,79 @@ class TreeView:
         # If any columns were missing in the config, append them
         for index, column in enumerate(cols.values()):
             if column not in added_columns:
-                self.widget.insert_column(column, index)
+                if GTK_API_VERSION >= 4:
+                    self.widget.insert_column(index, column)
+                else:
+                    self.widget.insert_column(column, index)
+
+        column_header_row = None
+        has_visible_column_header = False
+
+        for index, column in enumerate(self.widget.get_columns()):
+            if GTK_API_VERSION >= 4:
+                column_header = None
+
+                for widget in list(self.widget):
+                    if widget.get_css_name() == "header":
+                        column_header = list(widget)[index]
+
+                column_header_row = column_header.get_parent()
+
+                gesture_click = Gtk.GestureClick()
+                column_header.add_controller(gesture_click)                  # pylint: disable=no-member
+
+                if self._sort_column == column.sort_column_id:
+                    self._sort_column_widget = column
+                    self.widget.sort_by_column(column, self._sort_type)
+
+                if self._default_sort_column == column.sort_column_id:
+                    self._default_sort_column_widget = column
+
+                column_header.connect("notify::css-classes", self.on_column_position_changed_header)
+            else:
+                column_header = column.get_button()
+                gesture_click = Gtk.GestureMultiPress(widget=column_header)  # pylint: disable=c-extension-no-member
+
+            gesture_click.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+            gesture_click.connect("pressed", self.on_column_header_pressed, column)
+            self._column_gesture_controllers.append(gesture_click)
+
+            title_container = next(iter(column_header))
+            title_widget = next(iter(title_container)) if column.xalign < 1 else list(title_container)[-1]
+
+            if not column.header_visible:
+                title_widget.set_visible(False)
+            else:
+                has_visible_column_header = True
+
+            if GTK_API_VERSION == 3:
+                continue
+
+            if column.xalign == 1:
+                title_widget = next(iter(title_container))
+                title_widget.set_halign(Gtk.Align.END)
+                title_widget.set_hexpand(True)
+
+                title_container.remove(title_widget)
+                title_container.append(title_widget)
 
         # Read Show / Hide column settings from last session
         for column_id, column in cols.items():
             column.set_visible(bool(column_config.get(column_id, {}).get("visible", True)))
+
+        if GTK_API_VERSION >= 4:
+            column_header_row.set_visible(has_visible_column_header)
+
+            def on_sorter_changed(*_args):
+                if hasattr(self, "widget") and self.model.get_n_items() > 0:
+                    self.widget.scroll_to(0, None, Gtk.ListScrollFlags.FOCUS)
+
+            self.widget.get_sorter().connect("changed", on_sorter_changed)
+        else:
+            self.widget.set_headers_visible(has_visible_column_header)
+
+            if self._sort_column is not None and self._sort_type is not None:
+                self.model.set_sort_column_id(self._sort_column, self._sort_type)
 
     def _update_column_properties(self, *_args):
 
@@ -218,7 +339,7 @@ class TreeView:
         # Set first non-icon column as the expander column
         for column in columns:
             if column.type != "icon" and column.get_visible():
-                self.widget.set_expander_column(column)
+                #self.widget.set_expander_column(column)
                 break
 
     def _initialise_column_ids(self, columns):
@@ -254,7 +375,177 @@ class TreeView:
 
         self._column_numbers = list(self._column_ids.values())
 
+    def _create_text_factory(self, column_index, nat_chars=0, text_underline_column=None, text_weight_column=None):
+
+        def _on_factory_setup(factory, list_item):
+
+            cell = Gtk.Inscription(
+                focusable=True, margin_start=12, margin_end=12, margin_top=4, margin_bottom=4,
+                nat_chars=nat_chars, wrap_mode=Pango.WrapMode.NONE, xalign=0.0
+            )
+            list_item.set_child(cell)
+
+        def _on_factory_bind(factory, list_item, column_index, text_underline_column, text_weight_column):
+
+            cell = list_item.get_child()
+            row = list_item.get_item()
+            row.widgets[column_index] = cell
+
+            if text_underline_column is not None or text_weight_column is not None:
+                has_text_underline = row.values[text_underline_column] if text_underline_column is not None else False
+                has_text_weight = row.values[text_weight_column] if text_weight_column is not None else False
+
+                attributes = cell.get_attributes()
+                attributes.change(
+                    Pango.attr_underline_new(
+                        Pango.Underline.SINGLE if has_text_underline else Pango.Style.NORMAL
+                    )
+                )
+                attributes.change(
+                    Pango.attr_weight_new(
+                        Pango.Weight.BOLD if has_text_weight else Pango.Weight.NORMAL
+                    )
+                )
+
+            cell.set_text(row.values[column_index])
+
+        def _on_factory_unbind(factory, list_item, column_index):
+            row = list_item.get_item()
+            row.widgets[column_index] = None
+
+        factory = Gtk.SignalListItemFactory()
+        factory.connect("setup", _on_factory_setup)
+        factory.connect("bind", _on_factory_bind, column_index, text_underline_column, text_weight_column)
+        factory.connect("unbind", _on_factory_unbind, column_index)
+
+        return factory
+
+    def _create_number_factory(self, column_index, nat_chars=None):
+
+        def _on_factory_setup(factory, list_item):
+
+            cell = Gtk.Inscription(
+                focusable=True, margin_start=12, margin_end=12, margin_top=4, margin_bottom=4,
+                nat_chars=nat_chars, wrap_mode=Pango.WrapMode.NONE, xalign=1.0
+            )
+            list_item.set_child(cell)
+
+        def _on_factory_bind(factory, list_item, column_index):
+
+            cell = list_item.get_child()
+            row = list_item.get_item()
+            row.widgets[column_index] = cell
+            cell.set_text(row.values[column_index])
+
+        def _on_factory_unbind(factory, list_item, column_index):
+            row = list_item.get_item()
+            row.widgets[column_index] = None
+
+        factory = Gtk.SignalListItemFactory()
+        factory.connect("setup", _on_factory_setup)
+        factory.connect("bind", _on_factory_bind, column_index)
+        factory.connect("unbind", _on_factory_unbind, column_index)
+
+        return factory
+
+    def _create_progress_factory(self, column_index):
+
+        def _on_factory_setup(factory, list_item):
+            progress_bar = Gtk.ProgressBar(focusable=True, show_text=True)
+            list_item.set_child(progress_bar)
+
+        def _on_factory_bind(factory, list_item, column_index):
+
+            progress_bar = list_item.get_child()
+            row = list_item.get_item()
+            fraction = row.values[column_index]
+
+            row.widgets[column_index] = progress_bar
+            progress_bar.set_fraction(fraction)
+            progress_bar.set_text(f"{fraction}%")
+
+        def _on_factory_unbind(factory, list_item, column_index):
+            row = list_item.get_item()
+            row.widgets[column_index] = None
+
+        factory = Gtk.SignalListItemFactory()
+        factory.connect("setup", _on_factory_setup)
+        factory.connect("bind", _on_factory_bind, column_index)
+        factory.connect("unbind", _on_factory_unbind, column_index)
+
+        return factory
+
+    def _create_toggle_factory(self, column_index, toggled_callback):
+
+        def _on_factory_setup(factory, list_item):
+            toggle = Gtk.CheckButton(
+                focusable=True, halign=Gtk.Align.CENTER, margin_start=13, margin_end=13
+            )
+            list_item.set_child(toggle)
+
+        def _on_factory_bind(factory, list_item, column_index, toggled_callback):
+
+            toggle = list_item.get_child()
+            row = list_item.get_item()
+            row.widgets[column_index] = toggle
+            toggle.set_active(row.values[column_index])
+            toggle.blocked = False
+            toggle.position = list_item.get_position()
+            toggle.signal_id = toggle.connect("toggled", self.on_toggle_gtk4, toggled_callback)
+
+        def _on_factory_unbind(factory, list_item, column_index):
+
+            toggle = list_item.get_child()
+            row = list_item.get_item()
+
+            toggle.disconnect(toggle.signal_id)
+            toggle.blocked = False
+            toggle.signal_id = None
+            toggle.position = None
+            row.widgets[column_index] = None
+
+        factory = Gtk.SignalListItemFactory()
+        factory.connect("setup", _on_factory_setup)
+        factory.connect("bind", _on_factory_bind, column_index, toggled_callback)
+        factory.connect("unbind", _on_factory_unbind, column_index)
+
+        return factory
+
+    def _create_icon_factory(self, column_index, is_country_flag=False):
+
+        def _on_factory_setup(factory, list_item):
+            icon = Gtk.Image(focusable=True, halign=Gtk.Align.END, pixel_size=21 if is_country_flag else -1)
+            list_item.set_child(icon)
+
+        def _on_factory_bind(factory, list_item, column_index):
+
+            icon = list_item.get_child()
+            row = list_item.get_item()
+            row.widgets[column_index] = icon
+            icon.set_from_icon_name(row.values[column_index])
+
+        def _on_factory_unbind(factory, list_item, column_index):
+            row = list_item.get_item()
+            row.widgets[column_index] = None
+
+        factory = Gtk.SignalListItemFactory()
+        factory.connect("setup", _on_factory_setup)
+        factory.connect("bind", _on_factory_bind, column_index)
+        factory.connect("unbind", _on_factory_unbind, column_index)
+
+        return factory
+
     def _initialise_columns(self, columns):
+
+        def sort_strings(row_a, row_b, column_index):
+            a = row_a.values[column_index].lower()
+            b = row_b.values[column_index].lower()
+            return (a > b) - (a < b)
+
+        def sort_numbers(row_a, row_b, column_index):
+            a = row_a.values[column_index]
+            b = row_b.values[column_index]
+            return (a > b) - (a < b)
 
         self._initialise_column_ids(columns)
         self.model = self.create_model()
@@ -288,8 +579,6 @@ class TreeView:
                     self._sort_column = self._default_sort_column
                     self._sort_type = self._default_sort_type
 
-                    self.model.set_sort_column_id(self._default_sort_column, self._default_sort_type)
-
             if title is None:
                 # Hidden data column
                 continue
@@ -317,85 +606,121 @@ class TreeView:
                     self._sort_column = sort_column_id
                     self._sort_type = (Gtk.SortType.DESCENDING if column_sort_type == "descending"
                                        else Gtk.SortType.ASCENDING)
-                    self.model.set_sort_column_id(self._sort_column, self._sort_type)
 
             # Allow individual cells to receive visual focus
             mode = Gtk.CellRendererMode.ACTIVATABLE if len(columns) > 1 else Gtk.CellRendererMode.INERT
             xalign = 0.0
 
+            if GTK_API_VERSION >= 4:
+                sorter = Gtk.CustomSorter()
+                sort_func = sort_strings if self._data_types[sort_column_id] == GObject.TYPE_STRING else sort_numbers
+                sorter.set_sort_func(sort_func, sort_column_id)
+
             if column_type == "text":
-                renderer = Gtk.CellRendererText(
-                    mode=mode, single_paragraph_mode=True, xpad=width_padding, ypad=height_padding
-                )
-                column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, text=column_index)
                 text_underline_column = column_data.get("text_underline_column")
                 text_weight_column = column_data.get("text_weight_column")
+                text_underline_column_index = text_weight_column_index = None
 
-                if text_underline_column:
-                    column.add_attribute(renderer, "underline", self._column_ids[text_underline_column])
+                if text_underline_column is not None:
+                    text_underline_column_index = self._column_ids[text_underline_column]
 
-                if text_weight_column:
-                    column.add_attribute(renderer, "weight", self._column_ids[text_weight_column])
+                if text_weight_column is not None:
+                    text_weight_column_index = self._column_ids[text_weight_column]
+
+                if GTK_API_VERSION >= 4:
+                    nat_chars = width // 4 if width else 0
+                    column = Gtk.ColumnViewColumn(
+                        title=title, factory=self._create_text_factory(
+                            column_index, nat_chars, text_underline_column_index, text_weight_column_index
+                        ),
+                        sorter=sorter
+                    )
+                else:
+                    renderer = Gtk.CellRendererText(
+                        mode=mode, single_paragraph_mode=True, xpad=width_padding, ypad=height_padding
+                    )
+                    column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, text=column_index)
+
+                    if text_underline_column_index is not None:
+                        column.add_attribute(renderer, "underline", text_underline_column_index)
+
+                    if text_weight_column_index is not None:
+                        column.add_attribute(renderer, "weight", text_weight_column_index)
 
             elif column_type == "number":
                 xalign = 1
-                renderer = Gtk.CellRendererText(mode=mode, xalign=xalign, xpad=width_padding, ypad=height_padding)
-                column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, text=column_index)
-                column.set_alignment(xalign)
+
+                if GTK_API_VERSION >= 4:
+                    nat_chars = width // 4 if width else 0
+                    column = Gtk.ColumnViewColumn(
+                        title=title, factory=self._create_number_factory(column_index, nat_chars),
+                        sorter=sorter
+                    )
+                else:
+                    renderer = Gtk.CellRendererText(mode=mode, xalign=xalign, xpad=width_padding, ypad=height_padding)
+                    column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, text=column_index)
+                    column.set_alignment(xalign)
 
             elif column_type == "progress":
                 xalign = 1
-                renderer = Gtk.CellRendererProgress(mode=mode, ypad=progress_padding)
-                column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, value=column_index)
-                column.set_alignment(xalign)
+
+                if GTK_API_VERSION >= 4:
+                    column = Gtk.ColumnViewColumn(
+                        title=title, factory=self._create_progress_factory(column_index),
+                        sorter=sorter
+                    )
+                else:
+                    renderer = Gtk.CellRendererProgress(mode=mode, ypad=progress_padding)
+                    column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, value=column_index)
+                    column.set_alignment(xalign)
 
             elif column_type == "toggle":
                 xalign = 0.5
-                renderer = Gtk.CellRendererToggle(mode=mode, xalign=xalign, xpad=13)
-                renderer.connect("toggled", self.on_toggle, column_data["toggle_callback"])
 
-                column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, active=column_index)
-                inconsistent_column = column_data.get("inconsistent_column")
+                if GTK_API_VERSION >= 4:
+                    column = Gtk.ColumnViewColumn(
+                        title=title, factory=self._create_toggle_factory(column_index, column_data["toggle_callback"]),
+                        sorter=sorter
+                    )
+                else:
+                    renderer = Gtk.CellRendererToggle(mode=mode, xalign=xalign, xpad=13)
+                    renderer.connect("toggled", self.on_toggle_gtk3, column_data["toggle_callback"])
 
-                if inconsistent_column is not None:
-                    column.add_attribute(renderer, "inconsistent", self._column_ids[inconsistent_column])
+                    column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, active=column_index)
+                    inconsistent_column = column_data.get("inconsistent_column")
+
+                    if inconsistent_column is not None:
+                        column.add_attribute(renderer, "inconsistent", self._column_ids[inconsistent_column])
 
             elif column_type == "icon":
-                icon_args = {}
+                if GTK_API_VERSION >= 4:
+                    column = Gtk.ColumnViewColumn(
+                        title=title, factory=self._create_icon_factory(column_index, column_id == "country"),
+                        sorter=sorter
+                    )
+                else:
+                    icon_args = {}
 
-                if column_id == "country":
-                    if GTK_API_VERSION >= 4:
-                        # Custom icon size defined in theme.py
-                        icon_args["icon_size"] = Gtk.IconSize.NORMAL  # pylint: disable=no-member
-                    else:
-                        # Use the same size as the original icon
-                        icon_args["stock_size"] = 0
+                    if column_id == "country":
+                        if GTK_API_VERSION >= 4:
+                            # Custom icon size defined in theme.py
+                            icon_args["icon_size"] = Gtk.IconSize.NORMAL  # pylint: disable=no-member
+                        else:
+                            # Use the same size as the original icon
+                            icon_args["stock_size"] = 0
 
-                renderer = Gtk.CellRendererPixbuf(mode=mode, xalign=1.0, **icon_args)
-                column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, icon_name=column_index)
+                    renderer = Gtk.CellRendererPixbuf(mode=mode, xalign=1.0, **icon_args)
+                    column = Gtk.TreeViewColumn(title=title, cell_renderer=renderer, icon_name=column_index)
 
-            column_header = column.get_button()
+            if GTK_API_VERSION == 3:
+                # Required for fixed height mode
+                column.set_sizing(Gtk.TreeViewColumnSizing.FIXED)
+                column.set_reorderable(True)
+                column.set_min_width(24)
+                column.set_sort_column_id(sort_column_id)
 
-            if GTK_API_VERSION >= 4:
-                gesture_click = Gtk.GestureClick()
-                column_header.add_controller(gesture_click)                  # pylint: disable=no-member
-            else:
-                gesture_click = Gtk.GestureMultiPress(widget=column_header)  # pylint: disable=c-extension-no-member
-
-            gesture_click.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-            gesture_click.connect("released", self.on_column_header_pressed, column_id, sort_column_id)
-            self._column_gesture_controllers.append(gesture_click)
-
-            title_container = next(iter(column_header))
-            title_widget = next(iter(title_container)) if xalign < 1 else list(title_container)[-1]
-
-            if column_data.get("hide_header"):
-                title_widget.set_visible(False)
-            else:
-                has_visible_column_header = True
-
-            # Required for fixed height mode
-            column.set_sizing(Gtk.TreeViewColumnSizing.FIXED)
+                if sensitive_column:
+                    column.add_attribute(renderer, "sensitive", self._column_ids[sensitive_column])
 
             if width is not None:
                 column.set_resizable(column_type != "icon")
@@ -403,36 +728,31 @@ class TreeView:
             if isinstance(width, int) and width > 0:
                 column.set_fixed_width(width)
 
-            column.set_reorderable(True)
-            column.set_min_width(24)
-
-            if xalign == 1 and GTK_API_VERSION >= 4:
-                # Gtk.TreeViewColumn.set_alignment() only changes the sort arrow position in GTK 4
-                # Actually align the label to the right here instead
-                title_widget.set_halign(Gtk.Align.END)
-
-            if sensitive_column:
-                column.add_attribute(renderer, "sensitive", self._column_ids[sensitive_column])
-
             if should_expand_column:
                 column.set_expand(True)
 
-            if self._widget_name:
-                column.connect("notify::x-offset", self.on_column_position_changed)
+            if GTK_API_VERSION >= 4:
+                if self._widget_name:
+                    column.connect("notify::fixed-width", self.on_column_position_changed)
+
+                column.connect("notify::visible", self._update_column_properties)
+            else:
+                if self._widget_name:
+                    column.connect("notify::x-offset", self.on_column_position_changed)
+
+                column.connect("notify::visible", self._update_column_properties)
 
             column.id = column_id
             column.type = column_type
+            column.sort_column_id = sort_column_id
+            column.xalign = xalign
+            column.header_visible = not column_data.get("hide_header", False)
             column.tooltip_callback = column_data.get("tooltip_callback")
 
-            column.set_sort_column_id(sort_column_id)
             column_widgets[column_id] = column
 
-        self.widget.set_headers_visible(has_visible_column_header)
-
         self._append_columns(column_widgets, column_config)
-
-        self._columns_changed_handler = self.widget.connect("columns-changed", self._update_column_properties)
-        self.widget.emit("columns-changed")
+        self._update_column_properties()
 
     def save_columns(self):
         """Save a treeview's column widths and visibilities for the next
@@ -444,11 +764,15 @@ class TreeView:
         saved_columns = {}
         column_config = config.sections["columns"]
 
-        for column in self.widget.get_columns():
+        for index, column in enumerate(self.widget.get_columns()):
             title = column.id
-            width = column.get_width()
             visible = column.get_visible()
-            sort_column_id = column.get_sort_column_id()
+            sort_column_id = column.sort_column_id
+
+            if GTK_API_VERSION >= 4:
+                width = column.get_fixed_width()
+            else:
+                width = column.get_width()
 
             # A column width of zero should not be saved to the config.
             # When a column is hidden, the correct width will be remembered during the
@@ -485,14 +809,25 @@ class TreeView:
             column_config[self._widget_name] = saved_columns
 
     def freeze(self):
+
+        if GTK_API_VERSION >= 4:
+            self.widget.set_model(None)
+            return
+
         self.model.set_sort_column_id(Gtk.TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID, Gtk.SortType.ASCENDING)
 
     def unfreeze(self):
+
+        if GTK_API_VERSION >= 4:
+            self.widget.set_model(self._selection)
+            return
+
         if self._sort_column is not None and self._sort_type is not None:
             self.model.set_sort_column_id(self._sort_column, self._sort_type)
 
     def set_show_expanders(self, show):
-        self.widget.set_show_expanders(show)
+        if GTK_API_VERSION == 3:
+            self.widget.set_show_expanders(show)
 
     def add_row(self, values, select_row=True, parent_iterator=None):
 
@@ -519,7 +854,12 @@ class TreeView:
             value_columns.append(index)
             included_values.append(value)
 
-        if self.has_tree:
+        if GTK_API_VERSION >= 4:
+            self.iterators[key] = iterator = self.model.get_n_items()
+            row = Row(*values)
+            self.model.append(row)
+
+        elif self.has_tree:
             self.iterators[key] = iterator = self.model.insert_with_values(
                 parent_iterator, position, value_columns, included_values
             )
@@ -537,15 +877,29 @@ class TreeView:
 
     def get_selected_rows(self):
 
+        if GTK_API_VERSION >= 4:
+            selected = self._selection.get_selection()
+
+            for i in range(selected.get_size()):
+                yield selected.get_nth(i)
+            return
+
         _model, paths = self._selection.get_selected_rows()
 
         for path in paths:
             yield self.model.get_iter(path)
 
     def get_num_selected_rows(self):
+
+        if GTK_API_VERSION >= 4:
+            return self._selection.get_selection().get_size()
+
         return self._selection.count_selected_rows()
 
     def get_focused_row(self):
+
+        if GTK_API_VERSION >= 4:
+            return
 
         path, _column = self.widget.get_cursor()
 
@@ -555,9 +909,21 @@ class TreeView:
         return self.model.get_iter(path)
 
     def get_row_value(self, iterator, column_id):
+
+        if GTK_API_VERSION >= 4:
+            item = self.model.get_item(iterator)
+            column_index = self._column_ids[column_id]
+            return item.values[column_index]
+
         return self.model.get_value(iterator, self._column_ids[column_id])
 
     def set_row_value(self, iterator, column_id, value):
+
+        if GTK_API_VERSION >= 4:
+            item = self.model.get_item(iterator)
+            column_index = self._column_ids[column_id]
+            item.set_value(column_index, value)
+            return
 
         column_index = self._column_ids[column_id]
 
@@ -570,6 +936,14 @@ class TreeView:
         return self.model.set_value(iterator, column_index, value)
 
     def set_row_values(self, iterator, column_ids, values):
+
+        if GTK_API_VERSION >= 4:
+            item = self.model.get_item(iterator)
+
+            for index, column_id in enumerate(column_ids):
+                column_index = self._column_ids[column_id]
+                item.set_value(column_index, values[index])
+            return
 
         value_columns = []
 
@@ -587,30 +961,55 @@ class TreeView:
         return self.model.set(iterator, value_columns, values)
 
     def remove_row(self, iterator):
+
         del self.iterators[self._iterator_keys[iterator]]
         self.model.remove(iterator)
+
+        if GTK_API_VERSION >= 4:
+            end_position = self.model.get_n_items()
+            new_iterator_keys = {}
+
+            for position in range(iterator, end_position):
+                column_id = self._iterator_keys.pop(position + 1)
+                new_iterator_keys[position] = column_id
+                self.iterators[column_id] = position
+
+            self._iterator_keys.update(new_iterator_keys)
 
     def select_row(self, iterator=None, expand_rows=True, should_scroll=True):
 
         if iterator is None:
             # Select first row if available
-            iterator = self.model.get_iter_first()
+            if GTK_API_VERSION >= 4:
+                if not self.model.get_n_items():
+                    return
 
-            if iterator is None:
-                return
+                iterator = 0
+            else:
+                iterator = self.model.get_iter_first()
+
+                if iterator is None:
+                    return
 
         if should_scroll:
-            path = self.model.get_path(iterator)
+            if GTK_API_VERSION >= 4:
+                self.widget.scroll_to(
+                    iterator, column=None, flags=Gtk.ListScrollFlags.FOCUS | Gtk.ListScrollFlags.SELECT)
+            else:
+                path = self.model.get_path(iterator)
 
-            if expand_rows:
-                self.widget.expand_to_path(path)
+                if expand_rows:
+                    self.widget.expand_to_path(path)
 
-            self._is_scrolling_to_row = True
-            self.widget.set_cursor(path)
-            self.widget.scroll_to_cell(path, column=None, use_align=True, row_align=0.5, col_align=0.5)
+                self._is_scrolling_to_row = True
+                self.widget.set_cursor(path)
+                self.widget.scroll_to_cell(path, column=None, use_align=True, row_align=0.5, col_align=0.5)
             return
 
-        self._selection.select_iter(iterator)
+        if GTK_API_VERSION >= 4:
+            self._selection.select_item(iterator, True)
+        else:
+            self._selection.select_iter(iterator)
 
     def select_all_rows(self):
         self._selection.select_all()
@@ -619,20 +1018,33 @@ class TreeView:
         self._selection.unselect_all()
 
     def expand_row(self, iterator):
-        path = self.model.get_path(iterator)
-        return self.widget.expand_row(path, open_all=False)
+
+        if GTK_API_VERSION == 3:
+            path = self.model.get_path(iterator)
+            return self.widget.expand_row(path, open_all=False)
+
+        return True
 
     def collapse_row(self, iterator):
-        path = self.model.get_path(iterator)
-        return self.widget.collapse_row(path)
+
+        if GTK_API_VERSION == 3:
+            path = self.model.get_path(iterator)
+            return self.widget.collapse_row(path)
+
+        return True
 
     def expand_all_rows(self):
-        self.widget.expand_all()
+        if GTK_API_VERSION == 3:
+            self.widget.expand_all()
 
     def collapse_all_rows(self):
-        self.widget.collapse_all()
+        if GTK_API_VERSION == 3:
+            self.widget.collapse_all()
 
     def expand_root_rows(self):
+
+        if GTK_API_VERSION >= 4:
+            return
 
         model = self.model
         iterator = model.get_iter_first()
@@ -656,6 +1068,10 @@ class TreeView:
         return not self.iterators
 
     def is_selection_empty(self):
+
+        if GTK_API_VERSION >= 4:
+            return self._selection.get_selection().get_size() <= 0
+
         return self._selection.count_selected_rows() <= 0
 
     def is_row_expanded(self, iterator):
@@ -663,6 +1079,10 @@ class TreeView:
         return self.widget.row_expanded(path)
 
     def is_row_selected(self, iterator):
+
+        if GTK_API_VERSION >= 4:
+            return self._selection.is_selected(iterator)
+
         return self._selection.iter_is_selected(iterator)
 
     def grab_focus(self):
@@ -673,12 +1093,20 @@ class TreeView:
         self.widget.set_model(None)
         self.freeze()
 
-        self.model.clear()
+        if GTK_API_VERSION >= 4:
+            self.model.remove_all()
+        else:
+            self.model.clear()
+
         self.iterators.clear()
         self._iterator_keys.clear()
 
         self.unfreeze()
-        self.widget.set_model(self.model)
+
+        if GTK_API_VERSION >= 4:
+            self.widget.set_model(self._selection)
+        else:
+            self.widget.set_model(self.model)
 
     @staticmethod
     def get_icon_label(column, icon_name, is_short_country_label=False):
@@ -703,11 +1131,19 @@ class TreeView:
 
         return icon_name
 
-    def on_toggle(self, _widget, path, callback):
+    def on_toggle_gtk3(self, _widget, path, callback):
         callback(self, self.model.get_iter(path))
 
-    def on_activate_row(self, _widget, path, column, callback):
+    def on_toggle_gtk4(self, widget, callback):
+
+        if not widget.blocked:
+            callback(self, widget.position)
+
+    def on_activate_row_gtk3(self, _widget, path, column, callback):
         callback(self, self.model.get_iter(path), column.id)
+
+    def on_activate_row_gtk4(self, _widget, iterator, callback):
+        callback(self, iterator, None)
 
     def on_focus_in(self, *args):
 
@@ -718,7 +1154,7 @@ class TreeView:
 
         callback(self)
 
-    def on_select_row(self, selection, callback):
+    def on_select_row_gtk3(self, selection, callback):
 
         iterator = None
 
@@ -729,20 +1165,24 @@ class TreeView:
 
         callback(self, iterator)
 
+    def on_select_row_gtk4(self, selection, _position, _n_items, callback):
+        iterator = selection.get_selection().get_nth(0)
+        callback(self, iterator)
+
     def on_delete_accelerator(self, _treeview, _state, callback):
         callback(self)
 
-    def on_column_header_pressed(self, controller, _num_p, _pos_x, _pos_y, column_id, sort_column_id):
+    def on_column_header_pressed(self, controller, _num_p, _pos_x, _pos_y, column):
         """Reset sorting when column header has been pressed three times."""
 
-        self._sort_column, self._sort_type = self.model.get_sort_column_id()
+        sort_column_id = column.sort_column_id
 
         if self._default_sort_column is None:
             # No default sort column for treeview, keep standard GTK behavior
             self.save_columns()
             return False
 
-        if self._data_types[sort_column_id] == GObject.TYPE_STRING or column_id in {"in_queue", "queue_position"}:
+        if self._data_types[sort_column_id] == GObject.TYPE_STRING or column.id in {"in_queue", "queue_position"}:
             # String value (or queue position column): ascending sort by default
             first_sort_type = Gtk.SortType.ASCENDING
             second_sort_type = Gtk.SortType.DESCENDING
@@ -751,19 +1191,31 @@ class TreeView:
             first_sort_type = Gtk.SortType.DESCENDING
             second_sort_type = Gtk.SortType.ASCENDING
 
+        is_different_column = True
+
         if self._sort_column != sort_column_id:
             self._sort_column = sort_column_id
+            self._sort_column_widget = column
             self._sort_type = first_sort_type
 
         elif self._sort_type == first_sort_type:
             self._sort_type = second_sort_type
+            is_different_column = False
 
         elif self._sort_type == second_sort_type:
             # Reset treeview to default state
             self._sort_column = self._default_sort_column
+            self._sort_column_widget = self._default_sort_column_widget
             self._sort_type = self._default_sort_type
 
-        self.model.set_sort_column_id(self._sort_column, self._sort_type)
+        if GTK_API_VERSION >= 4:
+            if is_different_column:
+                self.widget.sort_by_column(None, self._sort_type)
+
+            self.widget.sort_by_column(self._sort_column_widget, self._sort_type)
+        else:
+            self.model.set_sort_column_id(self._sort_column, self._sort_type)
+
         self.save_columns()
 
         controller.set_state(Gtk.EventSequenceState.CLAIMED)
@@ -778,15 +1230,25 @@ class TreeView:
         self._sort_type = (Gtk.SortType.DESCENDING if self._sort_type == Gtk.SortType.ASCENDING
                            else Gtk.SortType.ASCENDING)
 
-        self.model.set_sort_column_id(self._sort_column, self._sort_type)
+        if GTK_API_VERSION >= 4:
+            self.widget.sort_by_column(self._sort_column_widget, self._sort_type)
+        else:
+            self.model.set_sort_column_id(self._sort_column, self._sort_type)
+
         self.save_columns()
 
     def on_reset_sort_column(self, *_args):
 
         self._sort_column = self._default_sort_column
+        self._sort_column_widget = self._default_sort_column_widget
         self._sort_type = self._default_sort_type
 
-        self.model.set_sort_column_id(self._sort_column, self._sort_type)
+        if GTK_API_VERSION >= 4:
+            self.widget.sort_by_column(None, self._sort_type)
+            self.widget.sort_by_column(self._sort_column_widget, self._sort_type)
+        else:
+            self.model.set_sort_column_id(self._sort_column, self._sort_type)
+
         self.save_columns()
 
     def on_reset_columns(self, *_args):
@@ -812,7 +1274,10 @@ class TreeView:
             column.set_fixed_width(width)
             column.set_visible(True)
 
-            self.widget.move_column_after(column, None)
+            if GTK_API_VERSION >= 4:
+                self.widget.insert_column(0, column)
+            else:
+                self.widget.move_column_after(column, None)
 
         self.on_reset_sort_column()
 
@@ -858,13 +1323,22 @@ class TreeView:
         """Save column position and width to config."""
 
         column_id = column.id
-        offset = column.get_x_offset()
+
+        if GTK_API_VERSION >= 4:
+            offset = column.get_fixed_width()
+        else:
+            offset = column.get_x_offset()
 
         if self._column_offsets.get(column_id) == offset:
             return
 
         self._column_offsets[column_id] = offset
         self.save_columns()
+
+    def on_column_position_changed_header(self, _column_header, _param):
+        """Save column position and width to config."""
+
+        GLib.idle_add(self.save_columns)
 
     def on_key_move_cursor(self, _widget, step, *_args):
 
@@ -951,7 +1425,7 @@ class TreeView:
             return False
 
         iterator = self.model.get_iter(path)
-        value = str(self.model.get_value(iterator, column.get_sort_column_id()))
+        value = str(self.model.get_value(iterator, column.sort_column_id))
 
         if not value:
             return False
@@ -1041,6 +1515,20 @@ def create_grouping_menu(window, active_mode, callback):
 
 def set_treeview_selected_row(treeview, bin_x, bin_y):
     """Handles row selection when right-clicking in a treeview."""
+
+    if GTK_API_VERSION >= 4:
+        widget = treeview.pick(bin_x, bin_y, 0)
+
+        while widget.get_css_name() != "cell" and widget != treeview:
+            widget = widget.get_parent()
+
+        if widget != treeview:
+            #treeview.get_model().select_item(widget.get_position(), False)
+            pass
+        else:
+            treeview.get_model().unselect_all()
+
+        return
 
     pathinfo = treeview.get_path_at_pos(bin_x, bin_y)
     selection = treeview.get_selection()

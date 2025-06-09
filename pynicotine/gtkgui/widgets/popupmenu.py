@@ -290,23 +290,45 @@ class PopupMenu:
         callback = self.callback
         self.update_model()
 
-        if isinstance(self.parent, Gtk.TreeView):
-            if pos_x and pos_y:
-                from pynicotine.gtkgui.widgets.treeview import set_treeview_selected_row
+        if GTK_API_VERSION >= 4:
+            if isinstance(self.parent, Gtk.ColumnView):
+                if pos_x and pos_y:
+                    widget = self.parent.pick(pos_x, pos_y, 0)
 
-                bin_x, bin_y = self.parent.convert_widget_to_bin_window_coords(pos_x, pos_y)
-                set_treeview_selected_row(self.parent, bin_x, bin_y)
+                    while widget.get_css_name() != "header" and widget != self.parent:
+                        widget = widget.get_parent()
 
-                if not self.parent.get_path_at_pos(bin_x, bin_y):
-                    # Special case for column header menu
+                    if widget != self.parent:
+                        # Special case for column header menu
 
-                    menu_model = self.parent.column_menu
-                    menu = menu_model.create_context_menu(menu_model.parent)
-                    callback = menu_model.callback
+                        menu_model = self.parent.column_menu
+                        menu = menu_model.create_context_menu(menu_model.parent)
+                        callback = menu_model.callback
+                    else:
+                        from pynicotine.gtkgui.widgets.treeview import set_treeview_selected_row
+                        set_treeview_selected_row(self.parent, pos_x, pos_y)
 
-            elif not self.parent.get_selection().count_selected_rows():
-                # No rows selected, don't show menu
-                return False
+                elif not self.parent.get_model().get_selection().get_size():
+                    # No rows selected, don't show menu
+                    return False
+        else:
+            if isinstance(self.parent, Gtk.TreeView):
+                if pos_x and pos_y:
+                    from pynicotine.gtkgui.widgets.treeview import set_treeview_selected_row
+
+                    bin_x, bin_y = self.parent.convert_widget_to_bin_window_coords(pos_x, pos_y)
+                    set_treeview_selected_row(self.parent, bin_x, bin_y)
+
+                    if not self.parent.get_path_at_pos(bin_x, bin_y):
+                        # Special case for column header menu
+
+                        menu_model = self.parent.column_menu
+                        menu = menu_model.create_context_menu(menu_model.parent)
+                        callback = menu_model.callback
+
+                elif not self.parent.get_selection().count_selected_rows():
+                    # No rows selected, don't show menu
+                    return False
 
         if callback is not None:
             callback(menu_model, self.parent)

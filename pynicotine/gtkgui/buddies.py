@@ -124,7 +124,8 @@ class Buddies:
                 "comments": {
                     "column_type": "text",
                     "title": _("Note"),
-                    "width": 400
+                    "width": 400,
+                    "expand_column": True
                 },
 
                 # Hidden data columns

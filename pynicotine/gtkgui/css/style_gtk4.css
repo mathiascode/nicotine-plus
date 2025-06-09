@@ -65,3 +65,34 @@ tabs > arrow {
     margin-bottom: -5px;
 }
 
+columnview header button {
+    /* Remove bottom border from column headers */
+    border: 0;
+
+    /* Column header padding to match rows */
+    padding-left: 1px;
+    padding-right: 1px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+columnview header button > box {
+    /* Column header padding to match rows */
+    padding-left: 11px;
+    padding-right: 11px;
+}
+
+columnview header button:not(:last-child):dir(rtl) > box,
+columnview header button:not(:first-child):dir(ltr) > box {
+    /* Add column header separators */
+    box-shadow: -1px 0 0 0 alpha(@borders, 2.8);
+}
+
+columnview row cell {
+    padding: 0;
+}
+
+columnview progressbar trough {
+    min-width: 8px;
+}
+

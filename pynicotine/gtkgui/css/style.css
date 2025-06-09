@@ -104,20 +104,26 @@ treeview .progressbar:disabled {
     color: alpha(alpha(currentColor, 1.12), .8);
 }
 
-treeview button > box {
+treeview header button > box {
     /* Column header padding to match rows */
     padding-right: 11px;
 }
 
-treeview button {
+treeview header button {
     /* Remove bottom border from column headers */
     border: 0;
 
     /* Column header padding to match rows */
-    padding-left: 11px;
+    padding-left: 1px;
     padding-right: 1px;
     padding-bottom: 3px;
     padding-top: 3px;
+}
+
+treeview header button > box {
+    /* Column header padding to match rows */
+    padding-left: 11px;
+    padding-right: 11px;
 }
 
 infobar box {
@@ -132,8 +138,8 @@ progressbar.osd progress {
     min-width: 4px;
 }
 
-treeview button:not(:last-child):dir(ltr) > box,
-treeview button:not(:first-child):dir(rtl) > box {
+treeview header button:not(:last-child):dir(ltr) > box,
+treeview header button:not(:first-child):dir(rtl) > box {
     /* Add column header separators */
     box-shadow: 1px 0 0 0 alpha(@borders, 2.8);
 }

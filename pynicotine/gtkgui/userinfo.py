@@ -330,7 +330,8 @@ class UserInfo:
                 "likes": {
                     "column_type": "text",
                     "title": _("Likes"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
+                    "expand_column": True
                 }
             }
         )
@@ -343,7 +344,8 @@ class UserInfo:
                 "dislikes": {
                     "column_type": "text",
                     "title": _("Dislikes"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
+                    "expand_column": True
                 }
             }
         )

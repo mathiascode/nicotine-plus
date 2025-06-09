@@ -983,7 +983,8 @@ class IgnoredUsersPage:
                 "username": {
                     "column_type": "text",
                     "title": _("Username"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
+                    "expand_column": True
                 }
             }
         )
@@ -1155,7 +1156,8 @@ class BannedUsersPage:
                 "username": {
                     "column_type": "text",
                     "title": _("Username"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
+                    "expand_column": True
                 }
             }
         )
@@ -1362,7 +1364,8 @@ class ChatsPage:
                 "pattern": {
                     "column_type": "text",
                     "title": _("Pattern"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
+                    "expand_column": True
                 }
             }
         )
@@ -2861,7 +2864,8 @@ class PluginsPage:
                 "human_name": {
                     "column_type": "text",
                     "title": _("Plugin"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
+                    "expand_column": True
                 },
 
                 # Hidden data columns

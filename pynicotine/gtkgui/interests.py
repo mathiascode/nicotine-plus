@@ -80,7 +80,8 @@ class Interests:
                 "likes": {
                     "column_type": "text",
                     "title": _("Likes"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
+                    "expand_column": True
                 }
             }
         )
@@ -92,7 +93,8 @@ class Interests:
                 "dislikes": {
                     "column_type": "text",
                     "title": _("Dislikes"),
-                    "default_sort_type": "ascending"
+                    "default_sort_type": "ascending",
+                    "expand_column": True
                 }
             }
         )
@@ -112,6 +114,7 @@ class Interests:
                 "item": {
                     "column_type": "text",
                     "title": _("Item"),
+                    "expand_column": True,
                     "iterator_key": True
                 },
 

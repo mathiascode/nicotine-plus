@@ -270,6 +270,7 @@ class UserBrowse:
                     "column_type": "text",
                     "title": _("Folder"),
                     "hide_header": True,
+                    "expand_column": True,
                     "tooltip_callback": self.on_folder_path_tooltip
                 },
 
@@ -490,10 +491,13 @@ class UserBrowse:
             return
 
         # Generate the folder tree and select first folder
+        self.folder_tree_view.freeze()
         self.create_folder_tree(browsed_user.public_folders)
 
         if browsed_user.private_folders:
             self.create_folder_tree(browsed_user.private_folders, private=True)
+
+        self.folder_tree_view.unfreeze()
 
         self.num_folders_label.set_text(humanize(browsed_user.num_folders))
         self.share_size_label.set_text(human_size(browsed_user.shared_size))
