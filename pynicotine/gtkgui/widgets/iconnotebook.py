@@ -329,7 +329,9 @@ class IconNotebook:
         else:
             parent.add(self.widget)
 
-            self.pages_button_gesture_click = Gtk.GestureMultiPress(widget=self.pages_button)
+            self.pages_button_gesture_click = Gtk.GestureMultiPress(  # pylint: disable=c-extension-no-member
+                widget=self.pages_button
+            )
             self.pages_button.set_use_popover(False)            # pylint: disable=no-member
             self.pages_button_container.add(self.pages_button)  # pylint: disable=no-member
 
