@@ -146,7 +146,7 @@ class NATPMP(BaseImplementation):
 
         elif sys.platform == "win32":
             # pylint: disable=invalid-name
-            from ctypes import POINTER, Structure, windll, wintypes
+            from ctypes import byref, Structure, windll, wintypes
 
             class IpForwardRow(Structure):
                 pass
@@ -158,7 +158,7 @@ class NATPMP(BaseImplementation):
             ]
 
             ip_forward = IpForwardRow()
-            result = windll.iphlpapi.GetBestRoute(socket.inet_aton("0.0.0.0"), 0, POINTER(ip_forward))
+            result = windll.iphlpapi.GetBestRoute(0, 0, byref(ip_forward))
 
             if not result:
                 gateway_address = socket.inet_ntoa(struct.pack("!I", ip_forward.dw_forward_next_hop))
@@ -181,6 +181,7 @@ class NATPMP(BaseImplementation):
 
             for i in range(1, self.REQUEST_ATTEMPTS + 1):
                 sock.settimeout(timeout)
+                log.add(self._gateway_address)
                 request.sendto(sock, (self._gateway_address, self.REQUEST_PORT), i)
 
                 try:
@@ -643,6 +644,8 @@ class PortMapper:
 
         except Exception as natpmp_error:
             log.add_debug("NAT-PMP not available, falling back to UPnP: %s", natpmp_error)
+            from traceback import format_exc
+            log.add_debug(format_exc())
 
             try:
                 self._active_implementation = self._upnp
