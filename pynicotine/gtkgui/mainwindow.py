@@ -291,6 +291,15 @@ class MainWindow(Window):
         # Show window
         self.init_window()
 
+        from pynicotine.gtkgui.widgets.theme import ICON_THEME
+        snapshot = Gtk.Snapshot()
+        icon_size = 16
+        icon = ICON_THEME.lookup_icon("list-add-symbolic", fallbacks=None, size=icon_size, scale=1, direction=0, flags=0)
+        icon.snapshot(snapshot, icon_size, icon_size)
+
+        node = snapshot.to_node()
+        print(node)
+
     # Initialize #
 
     def init_window(self):
