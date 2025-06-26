@@ -45,6 +45,9 @@ jobs:
           cp NEWS.md $WEBSITE_ROOT/
           cp data/icons/icon.svg $WEBSITE_ROOT/data/icons/
 
+      - name: Strip headers
+        run: find $WEBSITE_ROOT -name "*.md" -exec sed -i '1{/^<!--/,/-->/d}' {} +
+
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
