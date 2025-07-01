@@ -285,7 +285,9 @@ setup(
         },
         "bdist_msi": {
             "all_users": True,
+            "launch_on_finish": True,
             "dist_dir": BUILD_PATH,
+            "license_file": os.path.join(PROJECT_PATH, "COPYING"),
             "install_icon": os.path.join(CURRENT_PATH, ICON_NAME),
             "upgrade_code": "{8ffb9dbb-7106-41fc-9e8a-b2469aa1fe9f}"
         },
