@@ -83,7 +83,6 @@ jobs:
     runs-on: ${{ matrix.platform }}
     container:
       image: ${{ matrix.container }}
-      options: --privileged
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
