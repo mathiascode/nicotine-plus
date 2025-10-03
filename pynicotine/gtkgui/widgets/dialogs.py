@@ -1,20 +1,5 @@
-# COPYRIGHT (C) 2020-2025 Nicotine+ Contributors
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import sys
@@ -34,7 +19,7 @@ from pynicotine.gtkgui.widgets.window import Window
 
 class Dialog(Window):
 
-    def __init__(self, widget=None, parent=None, content_box=None, buttons_start=(), buttons_end=(),
+    def __init__(self, parent=None, content_box=None, buttons_start=(), buttons_end=(),
                  default_button=None, show_callback=None, close_callback=None, title="", width=0, height=0,
                  modal=True, show_title=True, show_title_buttons=True):
 
@@ -46,11 +31,6 @@ class Dialog(Window):
 
         self.show_callback = show_callback
         self.close_callback = close_callback
-
-        if widget:
-            super().__init__(widget=widget)
-            self._set_dialog_properties()
-            return
 
         container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, vexpand=True, visible=True)
         widget = Gtk.Window(
@@ -65,12 +45,12 @@ class Dialog(Window):
         if GTK_API_VERSION == 3:
             if os.environ.get("GDK_BACKEND") == "broadway":
                 # Workaround for dialogs being centered at (0,0) coords on startup
-                position = Gtk.WindowPosition.CENTER            # pylint: disable=c-extension-no-member
+                position = Gtk.WindowPosition.CENTER
             else:
-                position = Gtk.WindowPosition.CENTER_ON_PARENT  # pylint: disable=c-extension-no-member
+                position = Gtk.WindowPosition.CENTER_ON_PARENT
 
             widget.set_position(position)                    # pylint: disable=no-member
-            widget.set_type_hint(Gdk.WindowTypeHint.DIALOG)  # pylint: disable=c-extension-no-member,no-member
+            widget.set_type_hint(Gdk.WindowTypeHint.DIALOG)  # pylint: disable=no-member
 
         if content_box:
             content_box.set_vexpand(True)
@@ -101,6 +81,13 @@ class Dialog(Window):
         self.widget.set_titlebar(header_bar)
 
         if GTK_API_VERSION >= 4:
+            try:
+                header_bar.set_use_native_controls(True)             # pylint: disable=no-member
+
+            except AttributeError:
+                # Older GTK version
+                pass
+
             header_bar.set_show_title_buttons(show_title_buttons)    # pylint: disable=no-member
 
             if not show_title:
@@ -375,9 +362,9 @@ class MessageDialog(Window):
 
             action_box.append(action_area)                            # pylint: disable=no-member
         else:
-            widget.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)  # pylint: disable=c-extension-no-member,no-member
+            widget.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)  # pylint: disable=no-member
             widget.set_skip_taskbar_hint(True)                        # pylint: disable=no-member
-            widget.set_type_hint(Gdk.WindowTypeHint.DIALOG)           # pylint: disable=c-extension-no-member,no-member
+            widget.set_type_hint(Gdk.WindowTypeHint.DIALOG)           # pylint: disable=no-member
             widget.set_titlebar(header_bar)
             widget.connect("delete-event", self._on_close_request)
 
@@ -441,7 +428,7 @@ class MessageDialog(Window):
             self.container.add(frame)     # pylint: disable=no-member
 
         textview = self.default_focus_widget = TextView(scrolled_window, editable=False)
-        textview.append_line(text)
+        textview.add_line(text)
 
         self.container.set_visible(True)
 

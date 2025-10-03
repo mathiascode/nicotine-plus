@@ -1,20 +1,5 @@
-# COPYRIGHT (C) 2020-2024 Nicotine+ Contributors
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import random
@@ -213,7 +198,7 @@ def set_global_css():
 
     else:
         add_provider_func = Gtk.StyleContext.add_provider_for_screen  # pylint: disable=no-member
-        display = Gdk.Screen.get_default()  # pylint: disable=c-extension-no-member
+        display = Gdk.Screen.get_default()
 
         with open(encode_path(os.path.join(css_folder_path, "style_gtk3.css")), "rb") as file_handle:
             css += file_handle.read()
@@ -248,6 +233,9 @@ FILE_TYPE_ICON_LABELS = {
     "folder-videos-symbolic": _("Video"),
     "x-office-document-symbolic": _("Document"),
     "emblem-documents-symbolic": _("Text")
+}
+PRIVATE_ICON_LABELS = {
+    "changes-prevent-symbolic": _("Private")
 }
 USER_STATUS_ICON_LABELS = {
     "nplus-status-available": _("Online"),
@@ -615,14 +603,12 @@ def update_custom_css():
     load_css(CUSTOM_CSS_PROVIDER, css)
 
 
-def update_tag_visuals(tag, color_id):
+def update_tag_visuals(tag):
 
-    enable_colored_usernames = config.sections["ui"]["usernamehotspots"]
-    is_hotspot_tag = (color_id in {"useraway", "useronline", "useroffline"})
-    color_hex = config.sections["ui"].get(color_id)
+    color_hex = config.sections["ui"].get(tag.color_id)
     tag_props = tag.props
 
-    if is_hotspot_tag and not enable_colored_usernames:
+    if tag.secondary_callback and not config.sections["ui"]["usernamehotspots"]:
         color_hex = None
 
     if not color_hex:
@@ -637,11 +623,11 @@ def update_tag_visuals(tag, color_id):
             tag_props.foreground_rgba = new_rgba
 
     # URLs
-    if color_id == "urlcolor" and tag_props.underline != Pango.Underline.SINGLE:
+    if tag.url and tag_props.underline != Pango.Underline.SINGLE:
         tag_props.underline = Pango.Underline.SINGLE
 
     # Hotspots
-    if not is_hotspot_tag:
+    if not tag.callback_arg:
         return
 
     username_style = config.sections["ui"]["usernamestyle"]

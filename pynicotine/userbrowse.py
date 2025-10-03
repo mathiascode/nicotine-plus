@@ -1,20 +1,5 @@
-# COPYRIGHT (C) 2020-2025 Nicotine+ Contributors
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
 import os
@@ -32,6 +17,8 @@ from pynicotine.slskmessages import SharedFileListResponse
 from pynicotine.slskmessages import UploadQueueNotification
 from pynicotine.utils import clean_file
 from pynicotine.utils import encode_path
+from pynicotine.utils import human_size
+from pynicotine.utils import humanize
 
 
 class BrowsedUser:
@@ -357,6 +344,21 @@ class UserBrowse:
             for _code, basename, *_unused in files:
                 file_path = "\\".join([folder_path, basename])
                 core.uploads.enqueue_upload(username, file_path)
+
+    def show_user_statistics(self, username):
+
+        browsed_user = self.users.get(username)
+
+        if browsed_user is None:
+            return
+
+        log.add(_("User %(user)s is sharing %(num_files)s files totaling %(shared_size)s across "
+                  "%(num_folders)s folders."), {
+            "user": username,
+            "num_files": humanize(browsed_user.num_files or 0),
+            "shared_size": human_size(browsed_user.shared_size or 0),
+            "num_folders": humanize(browsed_user.num_folders or 0)
+        }, title=_("User Statistics"))
 
     @staticmethod
     def get_soulseek_url(username, path):

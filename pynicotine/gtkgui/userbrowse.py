@@ -1,25 +1,10 @@
-# COPYRIGHT (C) 2020-2025 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2013 SeeSchloss <see@seos.fr>
-# COPYRIGHT (C) 2009-2010 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-FileCopyrightText: 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
+# SPDX-FileCopyrightText: 2013 SeeSchloss <see@seos.fr>
+# SPDX-FileCopyrightText: 2009-2010 quinox <quinox@users.sf.net>
+# SPDX-FileCopyrightText: 2006-2009 daelstorm <daelstorm@gmail.com>
+# SPDX-FileCopyrightText: 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 
@@ -79,7 +64,7 @@ class UserBrowses(IconNotebook):
         self.file_properties = None
 
         self.userbrowse_combobox = ComboBox(
-            container=self.window.userbrowse_title, has_entry=True, has_entry_completion=True,
+            container=self.window.userbrowse_title, has_entry=True,
             entry=self.window.userbrowse_entry, item_selected_callback=self.on_get_shares
         )
 
@@ -158,16 +143,16 @@ class UserBrowses(IconNotebook):
                              close_callback=page.on_close, user=user)
             page.set_label(self.get_tab_label_inner(page.container))
 
+        if switch_page:
+            self.set_current_page(page.container)
+            self.window.change_main_page(self.window.userbrowse_page)
+
         if new_request:
             page.clear_model()
             page.set_indeterminate_progress()
 
         page.queued_path = path
         page.browse_queued_path()
-
-        if switch_page:
-            self.set_current_page(page.container)
-            self.window.change_main_page(self.window.userbrowse_page)
 
     def remove_user(self, user):
 
@@ -294,7 +279,7 @@ class UserBrowse:
 
         if user == config.sections["server"]["login"]:
             self.folder_popup_menu.add_items(
-                ("#" + _("Upload Folder & Subfolders…"), self.on_upload_folder_recursive_to),
+                ("#" + "upload_folder", self.on_upload_folder_recursive_to),
                 ("", None)
             )
             if not self.window.application.isolated_mode:
@@ -311,8 +296,8 @@ class UserBrowse:
             )
         else:
             self.folder_popup_menu.add_items(
-                ("#" + _("_Download Folder & Subfolders"), self.on_download_folder_recursive),
-                ("#" + _("Download Folder & Subfolders _To…"), self.on_download_folder_recursive_to),
+                ("#" + "download_folder", self.on_download_folder_recursive),
+                ("#" + "download_folder_to", self.on_download_folder_recursive_to),
                 ("", None),
                 ("#" + _("F_ile Properties"), self.on_file_properties, True),
                 ("", None),
@@ -375,7 +360,7 @@ class UserBrowse:
         )
         if user == config.sections["server"]["login"]:
             self.file_popup_menu.add_items(
-                ("#" + _("Up_load File(s)…"), self.on_upload_files_to),
+                ("#" + "upload_files", self.on_upload_files_to),
                 ("#" + _("Upload Folder…"), self.on_upload_folder_to),
                 ("", None)
             )
@@ -394,8 +379,8 @@ class UserBrowse:
             )
         else:
             self.file_popup_menu.add_items(
-                ("#" + _("_Download File(s)"), self.on_download_files),
-                ("#" + _("Download File(s) _To…"), self.on_download_files_to),
+                ("#" + "download_files", self.on_download_files),
+                ("#" + "download_files_to", self.on_download_files_to),
                 ("", None),
                 ("#" + _("F_ile Properties"), self.on_file_properties),
                 ("", None),
@@ -658,19 +643,19 @@ class UserBrowse:
             return
 
         self.indeterminate_progress = self.refreshing = True
+        self.info_bar.set_visible(False)
+
+        if core.users.login_status == UserStatus.OFFLINE and self.user != config.sections["server"]["login"]:
+            self.peer_connection_error()
+            return
 
         self.progress_bar.get_parent().set_reveal_child(True)
         self.progress_bar.pulse()
         GLib.timeout_add(320, self.pulse_progress, False)
         GLib.timeout_add(1000, self.pulse_progress)
 
-        self.info_bar.set_visible(False)
-
         self.refresh_button.set_sensitive(False)
         self.save_button.set_sensitive(False)
-
-        if core.users.login_status == UserStatus.OFFLINE and self.user != config.sections["server"]["login"]:
-            self.peer_connection_error()
 
     def set_finishing(self):
 
@@ -928,8 +913,27 @@ class UserBrowse:
         return treeview.get_row_value(iterator, "folder_path_data")
 
     def on_folder_popup_menu(self, *_args):
+
         self.folder_popup_menu.update_model()
         self.user_popup_menu.toggle_user_items()
+
+        num_folders = self.folder_tree_view.get_num_selected_rows()
+
+        if self.user == config.sections["server"]["login"]:
+            self.folder_popup_menu.update_item_label(
+                "upload_folder",
+                _("Upload Folder & Subfolders…") if num_folders == 1 else _("Upload Folders & Subfolders…")
+            )
+            return
+
+        self.folder_popup_menu.update_item_label(
+            "download_folder",
+            _("_Download Folder & Subfolders") if num_folders == 1 else _("_Download Folders & Subfolders")
+        )
+        self.folder_popup_menu.update_item_label(
+            "download_folder_to",
+            _("Download Folder & Subfolders _To…") if num_folders == 1 else _("Download Folders & Subfolders _To…")
+        )
 
     def on_download_folder_recursive(self, *_args, download_folder_path=None):
 
@@ -1003,10 +1007,14 @@ class UserBrowse:
 
     def on_upload_folder_to(self, *_args, recurse=False):
 
+        num_folders = self.folder_tree_view.get_num_selected_rows()
+
         if recurse:
-            str_title = _("Upload Folder (with Subfolders) To User")
+            str_title = _(
+                "Upload Folder (with Subfolders) To User") if num_folders == 1 else _(
+                "Upload Folders (with Subfolders) To User")
         else:
-            str_title = _("Upload Folder To User")
+            str_title = _("Upload Folder To User") if num_folders == 1 else _("Upload Folders To User")
 
         EntryDialog(
             parent=self.window,
@@ -1112,7 +1120,25 @@ class UserBrowse:
     def on_file_popup_menu(self, menu, _widget):
 
         self.select_files()
-        menu.set_num_selected_files(len(self.selected_files))
+
+        num_files = len(self.selected_files)
+        menu.set_num_selected_files(num_files)
+
+        if self.user == config.sections["server"]["login"]:
+            menu.update_item_label(
+                "upload_files",
+                _("Up_load File…") if num_files == 1 else _("Up_load Files…")
+            )
+            return
+
+        menu.update_item_label(
+            "download_files",
+            _("_Download File") if num_files == 1 else _("_Download Files")
+        )
+        menu.update_item_label(
+            "download_files_to",
+            _("Download File _To…") if num_files == 1 else _("Download Files _To…")
+        )
 
         self.user_popup_menu.toggle_user_items()
 
@@ -1195,7 +1221,7 @@ class UserBrowse:
 
         EntryDialog(
             parent=self.window,
-            title=_("Upload File(s) To User"),
+            title=_("Upload File To User") if len(self.selected_files) == 1 else ("Upload Files To User"),
             message=_("Enter the name of the user you want to upload to:"),
             action_button_label=_("_Upload"),
             callback=self.on_upload_files_to_response,
@@ -1432,19 +1458,25 @@ class UserBrowse:
         if adjustment.get_value() < adjustment_end:
             self.path_bar_container.emit("scroll-child", Gtk.ScrollType.END, True)
 
+    def on_user_statistics(self, *_args):
+        core.userbrowse.show_user_statistics(self.user)
+
     def on_expand(self, *_args):
 
         active = self.expand_button.get_active()
 
         if active:
             icon_name = "view-restore-symbolic"
+            tooltip_text = _("Collapse All")
             self.folder_tree_view.expand_all_rows()
         else:
             icon_name = "view-fullscreen-symbolic"
+            tooltip_text = _("Expand All")
             self.folder_tree_view.collapse_all_rows()
 
         icon_args = (Gtk.IconSize.BUTTON,) if GTK_API_VERSION == 3 else ()  # pylint: disable=no-member
         self.expand_icon.set_from_icon_name(icon_name, *icon_args)
+        self.expand_button.set_tooltip_text(tooltip_text)
 
         config.sections["userbrowse"]["expand_folders"] = active
 

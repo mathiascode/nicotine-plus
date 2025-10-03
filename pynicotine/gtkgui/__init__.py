@@ -1,20 +1,5 @@
-# COPYRIGHT (C) 2021-2025 Nicotine+ Contributors
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2021-2025 Nicotine+ Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import sys
@@ -96,7 +81,7 @@ def check_gtk_version(gtk_api_version, is_fallback=False):
 
         return _("Cannot find %s, please install it.") % f"GTK >={gtk_api_version}"
 
-    from gi.repository import Gtk
+    from gi.repository import Gtk  # pylint:disable=unused-import
 
     if sys.platform == "win32":
         # Ensure all Windows-specific APIs are available
@@ -109,9 +94,6 @@ def check_gtk_version(gtk_api_version, is_fallback=False):
         # on Windows while a proxy is enabled. We always keep the loop active anyway
         # (on_process_thread_events in application.py).
         gi._ossighelper._wakeup_fd_is_active = True  # pylint:disable=protected-access
-
-    gtk_version = f"{Gtk.get_major_version()}.{Gtk.get_minor_version()}.{Gtk.get_micro_version()}"
-    log.add(_("Loading %(program)s %(version)s"), {"program": "GTK", "version": gtk_version})
 
     return None
 
@@ -145,10 +127,6 @@ def run(hidden, ci_mode, isolated_mode, multi_instance):
         # https://blog.gtk.org/2024/01/28/new-renderers-for-gtk/
         os.environ["GDK_DISABLE"] = "gl,vulkan"
         os.environ["GSK_RENDERER"] = "cairo"
-
-    elif sys.platform == "darwin":
-        # Older GL renderer is still faster on macOS for now
-        os.environ["GSK_RENDERER"] = "gl"
 
     error = check_gtk_version(gtk_api_version=os.environ.get("NICOTINE_GTK_VERSION", get_default_gtk_version()))
 

@@ -1,24 +1,9 @@
-# COPYRIGHT (C) 2020-2025 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2008-2009 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-FileCopyrightText: 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
+# SPDX-FileCopyrightText: 2008-2009 quinox <quinox@users.sf.net>
+# SPDX-FileCopyrightText: 2006-2009 daelstorm <daelstorm@gmail.com>
+# SPDX-FileCopyrightText: 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
 
@@ -31,13 +16,13 @@ from gi.repository import Gtk
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
-from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.dialogs import OptionDialog
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.theme import USER_STATUS_ICON_NAMES
 from pynicotine.gtkgui.widgets.theme import add_css_class
 from pynicotine.gtkgui.widgets.theme import remove_css_class
 from pynicotine.slskmessages import UserStatus
+from pynicotine.utils import humanize
 
 
 class TabLabel:
@@ -56,12 +41,11 @@ class TabLabel:
 
             self.eventbox = Gtk.Box()
         else:
-            self.gesture_click = Gtk.GestureMultiPress(widget=self.container)  # pylint: disable=c-extension-no-member
+            self.gesture_click = Gtk.GestureMultiPress(widget=self.container)
 
-            self.eventbox = Gtk.EventBox(visible=True)   # pylint: disable=c-extension-no-member
+            self.eventbox = Gtk.EventBox(visible=True)
             self.eventbox.add_events(
-                int(Gdk.EventMask.SCROLL_MASK            # pylint: disable=c-extension-no-member
-                    | Gdk.EventMask.SMOOTH_SCROLL_MASK)  # pylint: disable=c-extension-no-member
+                int(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
             )
 
         self.box = Gtk.Box(spacing=6, visible=True)
@@ -116,8 +100,7 @@ class TabLabel:
             self.close_button = Gtk.Button(image=Gtk.Image(icon_name="window-close-symbolic"))
             self.container.add(self.close_button)        # pylint: disable=no-member
             self.close_button.add_events(                # pylint: disable=no-member
-                int(Gdk.EventMask.SCROLL_MASK            # pylint: disable=c-extension-no-member
-                    | Gdk.EventMask.SMOOTH_SCROLL_MASK)  # pylint: disable=c-extension-no-member
+                int(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
             )
 
         add_css_class(self.close_button, "flat")
@@ -286,12 +269,12 @@ class IconNotebook:
         self.unread_pages = {}
         self.recently_removed_pages = deque(maxlen=5)  # Low limit to prevent excessive server traffic
         self.scroll_x = self.scroll_y = 0
-        self.should_focus_page = True
 
         self.widget = Gtk.Notebook(enable_popup=False, scrollable=True, show_border=False, visible=True)
 
         self.pages_button_container = Gtk.Box(halign=Gtk.Align.CENTER, visible=(self.parent_page is not None))
         self.pages_button = Gtk.MenuButton(halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER, visible=True)
+        self.pages_button.icon_name = None
         self.widget.set_action_widget(self.pages_button_container, Gtk.PackType.END)
 
         if parent_page is not None:
@@ -301,8 +284,9 @@ class IconNotebook:
         if GTK_API_VERSION >= 4:
             parent.append(self.widget)
 
+            self.pages_button_gesture_click = Gtk.GestureClick()
+            self.pages_button.add_controller(self.pages_button_gesture_click)      # pylint: disable=no-member
             self.pages_button.set_has_frame(False)                                 # pylint: disable=no-member
-            self.pages_button.set_create_popup_func(self.on_pages_button_pressed)  # pylint: disable=no-member
             self.pages_button_container.append(self.pages_button)                  # pylint: disable=no-member
 
             self.scroll_controller = Gtk.EventControllerScroll(
@@ -330,21 +314,21 @@ class IconNotebook:
         else:
             parent.add(self.widget)
 
+            self.pages_button_gesture_click = Gtk.GestureMultiPress(widget=self.pages_button)
             self.pages_button.set_use_popover(False)            # pylint: disable=no-member
-            self.pages_button.connect("toggled", self.on_pages_button_pressed)
             self.pages_button_container.add(self.pages_button)  # pylint: disable=no-member
 
             self.widget.add_events(                      # pylint: disable=no-member
-                int(Gdk.EventMask.SCROLL_MASK            # pylint: disable=c-extension-no-member
-                    | Gdk.EventMask.SMOOTH_SCROLL_MASK)  # pylint: disable=c-extension-no-member
+                int(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
             )
             self.widget.connect("scroll-event", self.on_tab_scroll_event)
 
         for style_class in ("circular", "flat"):
             add_css_class(self.pages_button, style_class)
 
-        Accelerator("Left", self.widget, self.on_arrow_accelerator)
-        Accelerator("Right", self.widget, self.on_arrow_accelerator)
+        self.pages_button_gesture_click.set_button(Gdk.BUTTON_PRIMARY)
+        self.pages_button_gesture_click.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+        self.pages_button_gesture_click.connect("released", self.on_pages_button_pressed)
 
         self.popup_menu_pages = PopupMenu(self.window.application)
         self.update_pages_menu_button()
@@ -466,10 +450,25 @@ class IconNotebook:
             callback=self._on_remove_all_pages
         ).present()
 
-    def _update_pages_menu_button(self, icon_name, tooltip_text):
+    def update_pages_menu_button(self):
 
-        if self.pages_button.get_tooltip_text() == tooltip_text:
+        tab_pos = self.get_tab_pos()
+
+        if self.unread_pages:
+            icon_name = "emblem-important-symbolic"
+            num_pages = len(self.unread_pages)
+            tooltip_text = ngettext("%s Unread Tab", "%s Unread Tabs", num_pages) % humanize(num_pages)
+        else:
+            icon_name = "pan-down-symbolic" if tab_pos == Gtk.PositionType.TOP else "pan-up-symbolic"
+            tooltip_text = _("All Tabs")
+
+        self.pages_button.set_direction(
+            Gtk.ArrowType.DOWN if tab_pos == Gtk.PositionType.TOP else Gtk.ArrowType.UP)
+
+        if self.pages_button.icon_name == icon_name:
             return
+
+        self.pages_button.icon_name = icon_name
 
         if GTK_API_VERSION >= 4:
             self.pages_button.set_icon_name(icon_name)                   # pylint: disable=no-member
@@ -480,17 +479,6 @@ class IconNotebook:
         self.pages_button.set_visible(False)
         self.pages_button.set_tooltip_text(tooltip_text)
         self.pages_button.set_visible(True)
-
-    def update_pages_menu_button(self):
-
-        if self.unread_pages:
-            icon_name = "emblem-important-symbolic"
-            tooltip_text = _("%i Unread Tab(s)") % len(self.unread_pages)
-        else:
-            icon_name = "pan-down-symbolic"
-            tooltip_text = _("All Tabs")
-
-        self._update_pages_menu_button(icon_name, tooltip_text)
 
     def get_current_page(self):
         return self.get_nth_page(self.widget.get_current_page())
@@ -519,8 +507,12 @@ class IconNotebook:
     def set_tab_reorderable(self, page, reorderable):
         self.widget.set_tab_reorderable(page, reorderable)
 
+    def get_tab_pos(self):
+        return self.widget.get_tab_pos()
+
     def set_tab_pos(self, pos):
         self.widget.set_tab_pos(pos)
+        self.update_pages_menu_button()
 
     def get_n_pages(self):
         return self.widget.get_n_pages()
@@ -688,16 +680,12 @@ class IconNotebook:
         new_first_child.set_visible(True)
 
         # Focus the default widget on the page
-        if (self.should_focus_page
-                and (self.parent_page is None or self.window.current_page_id == self.parent_page.id
-                     and self.window.notebook.should_focus_page)):
+        if self.parent_page is None or self.window.current_page_id == self.parent_page.id:
             GLib.idle_add(self.on_focus_page, new_page, priority=GLib.PRIORITY_HIGH_IDLE)
 
         # Dismiss tab highlight
         if self.parent_page is not None:
             self.remove_tab_changed(new_page)
-
-        self.should_focus_page = True
 
     def on_reorder_page(self, _notebook, page, page_num):
         if self.reorder_page_callback is not None:
@@ -710,9 +698,6 @@ class IconNotebook:
         self.emit_switch_page_signal()
 
     def on_pages_button_pressed(self, *_args):
-
-        if GTK_API_VERSION == 3 and not self.pages_button.get_active():
-            return
 
         self.popup_menu_pages.clear()
 
@@ -755,7 +740,7 @@ class IconNotebook:
         if not current_page:
             return False
 
-        if Gtk.get_event_widget(event).is_ancestor(current_page):  # pylint: disable=c-extension-no-member
+        if Gtk.get_event_widget(event).is_ancestor(current_page):
             return False
 
         if event.direction == Gdk.ScrollDirection.SMOOTH:
@@ -784,10 +769,6 @@ class IconNotebook:
             self.scroll_x = self.scroll_y = 0
 
         return True
-
-    def on_arrow_accelerator(self, *_args):
-        """Left, Right - disable page focus callback when moving through tabs."""
-        self.should_focus_page = False
 
     # Signals (GTK 4) #
 

@@ -1,20 +1,5 @@
-# COPYRIGHT (C) 2024 Nicotine+ Contributors
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2024-2025 Nicotine+ Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 
@@ -48,6 +33,7 @@ class Download(Dialog):
             self.download_button,
             self.download_folder_default_button,
             self.download_folder_label,
+            self.download_paused_button,
             self.enable_subfolders_toggle,
             self.expand_button,
             self.expand_icon,
@@ -64,12 +50,12 @@ class Download(Dialog):
             parent=application.window,
             content_box=self.container,
             buttons_start=(self.cancel_button,),
-            buttons_end=(self.download_button,),
+            buttons_end=(self.download_paused_button, self.download_button),
             default_button=self.download_button,
             close_callback=self.on_close,
             title=_("Download Files"),
-            width=600,
-            height=600,
+            width=650,
+            height=650,
             show_title_buttons=False
         )
         application.add_window(self.widget)
@@ -172,7 +158,6 @@ class Download(Dialog):
 
         self.rename_button.set_sensitive(False)
         self.expand_button.set_active(True)
-        self.download_button.set_sensitive(not partial_files)
         self.enable_subfolders_toggle.set_active(True)
         self.enable_subfolders_toggle.get_parent().set_visible(partial_files)
         self.download_folder_button.set_path(config.sections["transfers"]["downloaddir"])
@@ -291,10 +276,60 @@ class Download(Dialog):
             for count in folders.values():
                 num_selected_files += count
 
-        self.set_title(_("Download %(num_files)s file(s) (%(total_size)s)") % {
-            "num_files": humanize(num_selected_files),
-            "total_size": human_size(self.total_selected_size)
-        })
+        self.set_title(
+            ngettext(
+                "Download %(num_files)s file  /  %(total_size)s",
+                "Download %(num_files)s files  /  %(total_size)s",
+                num_selected_files
+            ) % {
+                "num_files": humanize(num_selected_files),
+                "total_size": human_size(self.total_selected_size)
+            }
+        )
+
+    def download(self, paused=False):
+
+        files = []
+
+        for iterator in self.tree_view.iterators.values():
+            selected = self.tree_view.get_row_value(iterator, "selected")
+
+            if not selected:
+                continue
+
+            row_id = self.tree_view.get_row_value(iterator, "id_data")
+
+            if row_id in self.parent_iterators:
+                continue
+
+            username = self.tree_view.get_row_value(iterator, "user_data")
+            folder_path = self.tree_view.get_row_value(iterator, "folder_path_data")
+            file_name = self.tree_view.get_row_value(iterator, "name")
+            file_path = "\\".join([folder_path, file_name])
+            size = self.tree_view.get_row_value(iterator, "size_data")
+            file_attributes = self.tree_view.get_row_value(iterator, "file_attributes_data")
+            destination_folder_path = None
+
+            if self.enable_subfolders_toggle.get_active():
+                download_folder_path = self.download_folder_button.get_path()
+
+                if download_folder_path == config.sections["transfers"]["downloaddir"]:
+                    download_folder_path = core.downloads.get_default_download_folder(username)
+
+                destination_folder_name = self.folder_names[folder_path]
+                destination_folder_path = os.path.join(download_folder_path, destination_folder_name)
+
+            files.append((username, file_path, destination_folder_path, size, file_attributes))
+
+        files.sort(key=lambda x: strxfrm(x[1]))
+
+        for username, file_path, destination_folder_path, size, file_attributes in files:
+            core.downloads.enqueue_download(
+                username, file_path, folder_path=destination_folder_path, size=size,
+                file_attributes=file_attributes, paused=paused
+            )
+
+        self.close()
 
     def pulse_progress(self, repeat=True):
 
@@ -323,7 +358,6 @@ class Download(Dialog):
         self.progress_bar.get_parent().set_reveal_child(False)
 
         self.info_bar.set_visible(False)
-        self.download_button.set_sensitive(True)
 
     def set_failed(self):
 
@@ -543,13 +577,16 @@ class Download(Dialog):
 
         if expanded:
             icon_name = "view-restore-symbolic"
+            tooltip_text = _("Collapse All")
             self.tree_view.expand_all_rows()
         else:
             icon_name = "view-fullscreen-symbolic"
+            tooltip_text = _("Expand All")
             self.tree_view.collapse_all_rows()
 
         icon_args = (Gtk.IconSize.BUTTON,) if GTK_API_VERSION == 3 else ()  # pylint: disable=no-member
         self.expand_icon.set_from_icon_name(icon_name, *icon_args)
+        self.expand_button.set_tooltip_text(tooltip_text)
 
     def on_select_file(self, tree_view, iterator):
 
@@ -635,48 +672,10 @@ class Download(Dialog):
         self.close()
 
     def on_download(self, *_args):
+        self.download()
 
-        files = []
-
-        for iterator in self.tree_view.iterators.values():
-            selected = self.tree_view.get_row_value(iterator, "selected")
-
-            if not selected:
-                continue
-
-            row_id = self.tree_view.get_row_value(iterator, "id_data")
-
-            if row_id in self.parent_iterators:
-                continue
-
-            username = self.tree_view.get_row_value(iterator, "user_data")
-            folder_path = self.tree_view.get_row_value(iterator, "folder_path_data")
-            file_name = self.tree_view.get_row_value(iterator, "name")
-            file_path = "\\".join([folder_path, file_name])
-            size = self.tree_view.get_row_value(iterator, "size_data")
-            file_attributes = self.tree_view.get_row_value(iterator, "file_attributes_data")
-            destination_folder_path = None
-
-            if self.enable_subfolders_toggle.get_active():
-                download_folder_path = self.download_folder_button.get_path()
-
-                if download_folder_path == config.sections["transfers"]["downloaddir"]:
-                    download_folder_path = core.downloads.get_default_download_folder(username)
-
-                destination_folder_name = self.folder_names[folder_path]
-                destination_folder_path = os.path.join(download_folder_path, destination_folder_name)
-
-            files.append((username, file_path, destination_folder_path, size, file_attributes))
-
-        files.sort(key=lambda x: strxfrm(x[1]))
-
-        for username, file_path, destination_folder_path, size, file_attributes in files:
-            core.downloads.enqueue_download(
-                username, file_path, folder_path=destination_folder_path, size=size,
-                file_attributes=file_attributes
-            )
-
-        self.close()
+    def on_download_paused(self, *_args):
+        self.download(paused=True)
 
     def on_close(self, *_args):
         self.clear()

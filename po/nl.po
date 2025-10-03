@@ -1,13 +1,13 @@
-# Copyright (C) 2003-2024 Nicotine+ Translators
-# This file is distributed under the same license as the Nicotine+ package.
+# SPDX-FileCopyrightText: 2003-2025 Nicotine+ Translators
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-03-08 11:16+0200\n"
-"PO-Revision-Date: 2024-11-17 12:58+0000\n"
-"Last-Translator: Mat <mail@mathias.is>\n"
+"PO-Revision-Date: 2025-06-18 14:51+0000\n"
+"Last-Translator: Toine Rademacher <hi@toine.zip>\n"
 "Language-Team: Dutch <https://hosted.weblate.org/projects/nicotine-plus/"
 "nicotine-plus/nl/>\n"
 "Language: nl\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.9-dev\n"
+"X-Generator: Weblate 5.12.1\n"
 
 #: data/org.nicotine_plus.Nicotine.desktop.in:5
 msgid "Soulseek Client"
@@ -5103,8 +5103,8 @@ msgid ""
 "phrase two"
 msgstr ""
 "Resultaten in-filteren waarvan de bestandspaden de opgegeven tekst bevatten. "
-"Meerdere zinnen en woorden kunnen worden opgegeven, bijvoorbeeld exacte zin|"
-"muziek|term|exacte zin twee"
+"Meerdere zinnen en woorden kunnen worden opgegeven, bijv. exacte "
+"zin|muziek|term|exacte zin twee"
 
 #: pynicotine/gtkgui/ui/search.ui:18
 msgid "Exclude text…"
@@ -5118,8 +5118,8 @@ msgid ""
 "phrase two"
 msgstr ""
 "Resultaten uit-filteren waarvan de bestandspaden de opgegeven tekst "
-"bevatten. Meerdere zinnen en woorden kunnen worden opgegeven, bijvoorbeeld "
-"exacte zin|muziek|term|exacte zin twee"
+"bevatten. Meerdere zinnen en woorden kunnen worden opgegeven, bijv. exacte "
+"zin|muziek|term|exacte zin twee"
 
 #: pynicotine/gtkgui/ui/search.ui:29
 msgid "File type…"
@@ -5146,7 +5146,7 @@ msgstr "Bitrate…"
 #: pynicotine/gtkgui/ui/search.ui:53
 #: pynicotine/gtkgui/ui/settings/search.ui:327
 msgid "Bitrate, e.g. 256 <1412"
-msgstr "Bitsnelheid, b.v. 256 <1412"
+msgstr "Bitrate, bijv. 256 <1412"
 
 #: pynicotine/gtkgui/ui/search.ui:62
 msgid "Duration…"
@@ -5499,10 +5499,10 @@ msgid ""
 "a VPN is used at all times. Leave empty to use any available interface. Only "
 "change this value if you know what you are doing."
 msgstr ""
-"Bindt verbindingen aan een specifieke netwerkinterface, handig om er "
-"bijvoorbeeld voor te zorgen dat er altijd een VPN wordt gebruikt. Laat leeg "
-"om elke beschikbare interface te gebruiken. Verander deze waarde alleen als "
-"je weet wat je doet."
+"Bindt verbindingen aan een specifieke netwerkinterface, handig om er bijv. "
+"voor te zorgen dat er altijd een VPN wordt gebruikt. Laat leeg om elke "
+"beschikbare interface te gebruiken. Verander deze waarde alleen als je weet "
+"wat je doet."
 
 #: pynicotine/gtkgui/ui/settings/network.ui:351
 msgid "Network interface:"

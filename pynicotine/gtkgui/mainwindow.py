@@ -1,26 +1,11 @@
-# COPYRIGHT (C) 2020-2025 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2016-2018 Mutnick <mutnick@techie.com>
-# COPYRIGHT (C) 2008-2011 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2009 hedonist <ak@sensi.org>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-FileCopyrightText: 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
+# SPDX-FileCopyrightText: 2016-2018 Mutnick <mutnick@techie.com>
+# SPDX-FileCopyrightText: 2008-2011 quinox <quinox@users.sf.net>
+# SPDX-FileCopyrightText: 2006-2009 daelstorm <daelstorm@gmail.com>
+# SPDX-FileCopyrightText: 2009 hedonist <ak@sensi.org>
+# SPDX-FileCopyrightText: 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import sys
@@ -88,6 +73,7 @@ class MainWindow(Window):
             self.chatrooms_content,
             self.chatrooms_end,
             self.chatrooms_entry,
+            self.chatrooms_entry_container,
             self.chatrooms_page,
             self.chatrooms_paned,
             self.chatrooms_title,
@@ -126,13 +112,10 @@ class MainWindow(Window):
             self.private_content,
             self.private_end,
             self.private_entry,
-            self.private_history_button,
-            self.private_history_label,
+            self.private_entry_container,
             self.private_page,
             self.private_title,
             self.private_toolbar,
-            self.room_list_button,
-            self.room_list_label,
             self.room_search_entry,
             self.scan_progress_container,
             self.scan_progress_label,
@@ -187,6 +170,13 @@ class MainWindow(Window):
         self.header_bar.pack_end(self.header_end)
 
         if GTK_API_VERSION >= 4:
+            try:
+                self.header_bar.set_use_native_controls(True)  # pylint: disable=no-member
+
+            except AttributeError:
+                # Older GTK version
+                pass
+
             self.header_bar.set_show_title_buttons(True)
 
             self.horizontal_paned.set_resize_start_child(True)
@@ -203,8 +193,6 @@ class MainWindow(Window):
             # Workaround for screen reader support in GTK <4.12
             for label, button in (
                 (self.search_mode_label, self.search_mode_button),
-                (self.private_history_label, self.private_history_button),
-                (self.room_list_label, self.room_list_button),
                 (self.download_status_label, self.download_status_button),
                 (self.upload_status_label, self.upload_status_button)
             ):
@@ -332,7 +320,7 @@ class MainWindow(Window):
             y_pos = config.sections["ui"]["yposition"]
 
             if x_pos == -1 and y_pos == -1:
-                self.widget.set_position(Gtk.WindowPosition.CENTER)  # pylint: disable=c-extension-no-member
+                self.widget.set_position(Gtk.WindowPosition.CENTER)
             else:
                 self.widget.move(x_pos, y_pos)
 
@@ -351,7 +339,7 @@ class MainWindow(Window):
             self.widget.add_controller(key_controller)
 
         else:
-            self.gesture_click = Gtk.GestureMultiPress(widget=self.widget)  # pylint: disable=c-extension-no-member
+            self.gesture_click = Gtk.GestureMultiPress(widget=self.widget)
             self.widget.connect("key-release-event", self.on_cancel_auto_away)
 
         self.gesture_click.set_button(0)
@@ -396,12 +384,10 @@ class MainWindow(Window):
 
     def on_window_state_changed_gtk3(self, _window, event):
 
-        if not event.changed_mask & Gdk.WindowState.FULLSCREEN:  # pylint: disable=c-extension-no-member
+        if not event.changed_mask & Gdk.WindowState.FULLSCREEN:
             return
 
-        self.is_fullscreen = (
-            event.new_window_state & Gdk.WindowState.FULLSCREEN  # pylint: disable=c-extension-no-member
-        )
+        self.is_fullscreen = (event.new_window_state & Gdk.WindowState.FULLSCREEN)
         self.toggle_fullscreen_toolbar()
 
     def on_window_visible_changed(self, *_args):
@@ -1148,7 +1134,7 @@ class MainWindow(Window):
         if level not in {"transfer", "connection", "message", "miscellaneous"}:
             self.set_status_text(msg)
 
-        self.log_view.append_line(msg, timestamp_format=timestamp_format)
+        self.log_view.add_line(msg, timestamp_format=timestamp_format)
 
     def on_popup_menu_log(self, menu, _textview):
         menu.actions[_("_Copy")].set_enabled(self.log_view.get_has_selection())
@@ -1209,13 +1195,12 @@ class MainWindow(Window):
 
     def shares_scanning(self, folder_count=None):
 
-        label = _("Scanning Shares")
-
         if folder_count is not None:
-            # TODO: turn this into a proper translated string in 3.4.0
             self.scan_progress_label.set_label(
-                f"{_('Shared Folders')}: {humanize(folder_count)}")
+                _("Scanned Folders: %s") % humanize(folder_count))
             return
+
+        label = _("Scanning Shares")
 
         # Hide widget to keep tooltips for other widgets visible
         self.scan_progress_container.set_visible(False)

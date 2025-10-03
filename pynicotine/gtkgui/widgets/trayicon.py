@@ -1,25 +1,9 @@
-# COPYRIGHT (C) 2020-2025 Nicotine+ Contributors
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import sys
 
-from gi.repository import GdkPixbuf
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -291,13 +275,17 @@ class StatusNotifierImplementation(BaseImplementation):
 
         def _emit_signal(self, name, parameters=None):
 
-            self._bus.emit_signal(
-                destination_bus_name=None,
-                object_path=self._object_path,
-                interface_name=self._interface_name,
-                signal_name=name,
-                parameters=parameters
-            )
+            try:
+                self._bus.emit_signal(
+                    destination_bus_name=None,
+                    object_path=self._object_path,
+                    interface_name=self._interface_name,
+                    signal_name=name,
+                    parameters=parameters
+                )
+            except GLib.Error as error:
+                log.add_debug("Error while emitting DBus signal %s on interface %s: %s",
+                              (name, self._interface_name, error))
 
         def on_method_call(self, _connection, _sender, _path, _interface_name, method_name, parameters, invocation):
 
@@ -702,8 +690,7 @@ class Win32Implementation(BaseImplementation):
     WS_SYSMENU = 524288
     CW_USEDEFAULT = -2147483648
 
-    IMAGE_ICON = 1
-    LR_LOADFROMFILE = 16
+    LR_DEFAULTCOLOR = 0
     SM_CXSMICON = 49
 
     if sys.platform == "win32":
@@ -845,28 +832,26 @@ class Win32Implementation(BaseImplementation):
         windll.user32.DestroyWindow(self._h_wnd)
         self._h_wnd = None
 
-    def _load_ico_buffer(self, icon_name, icon_size):
+    def _load_png_buffer(self, icon_name, icon_size):
 
-        ico_buffer = b""
+        if not ICON_THEME.has_icon(icon_name):
+            return b""
 
         if GTK_API_VERSION >= 4:
+            snapshot = Gtk.Snapshot()
             icon = ICON_THEME.lookup_icon(icon_name, fallbacks=None, size=icon_size, scale=1, direction=0, flags=0)
-            icon_path = icon.get_file().get_path()
+            icon.snapshot(snapshot, icon_size, icon_size)
 
-            if not icon_path:
-                return ico_buffer
-
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_path, icon_size, icon_size)
+            node = snapshot.to_node()
+            texture = node.get_texture()
+            png_buffer = texture.save_to_png_bytes().get_data()
         else:
             icon = ICON_THEME.lookup_icon(icon_name, size=icon_size, flags=0)
-
-            if not icon:
-                return ico_buffer
-
             pixbuf = icon.load_icon()
+            _success, png_buffer = pixbuf.save_to_bufferv(
+                type="png", option_keys=[], option_values=[])
 
-        _success, ico_buffer = pixbuf.save_to_bufferv("ico")
-        return ico_buffer
+        return png_buffer
 
     def _load_h_icon(self, icon_name):
 
@@ -874,31 +859,22 @@ class Win32Implementation(BaseImplementation):
 
         # Attempt to load custom icons first
         icon_size = windll.user32.GetSystemMetrics(self.SM_CXSMICON)
-        ico_buffer = self._load_ico_buffer(
+        png_buffer = self._load_png_buffer(
             icon_name.replace(f"{pynicotine.__application_id__}-", "nplus-tray-"), icon_size)
 
-        if not ico_buffer:
+        if not png_buffer:
             # No custom icons present, fall back to default icons
-            ico_buffer = self._load_ico_buffer(icon_name, icon_size)
+            png_buffer = self._load_png_buffer(icon_name, icon_size)
 
-        try:
-            import tempfile
-            file_handle = tempfile.NamedTemporaryFile(delete=False)
-
-            with file_handle:
-                file_handle.write(ico_buffer)
-
-            return windll.user32.LoadImageA(
-                0,
-                encode_path(file_handle.name),
-                self.IMAGE_ICON,
-                icon_size,
-                icon_size,
-                self.LR_LOADFROMFILE
-            )
-
-        finally:
-            os.remove(file_handle.name)
+        return windll.user32.CreateIconFromResourceEx(
+            png_buffer,
+            len(png_buffer),
+            True,
+            0x00030000,
+            icon_size,
+            icon_size,
+            self.LR_DEFAULTCOLOR
+        )
 
     def _destroy_h_icon(self):
 
@@ -1117,9 +1093,7 @@ class StatusIconImplementation(BaseImplementation):
             # GtkStatusIcon does not work on Wayland
             raise ImplementationUnavailable("StatusIcon implementation not available")
 
-        self.tray_icon = Gtk.StatusIcon(  # pylint: disable=c-extension-no-member
-            tooltip_text=pynicotine.__application_name__
-        )
+        self.tray_icon = Gtk.StatusIcon(tooltip_text=pynicotine.__application_name__)
         self.tray_icon.connect("activate", self.activate_callback)
         self.tray_icon.connect("popup-menu", self.on_status_icon_popup)
 
@@ -1129,7 +1103,7 @@ class StatusIconImplementation(BaseImplementation):
     def on_status_icon_popup(self, _status_icon, button, _activate_time):
 
         if button == 3:
-            time = Gtk.get_current_event_time()  # pylint: disable=c-extension-no-member
+            time = Gtk.get_current_event_time()
             self.gtk_menu.popup(None, None, None, None, button, time)
 
     def _set_item_text(self, item, text):
@@ -1150,7 +1124,6 @@ class StatusIconImplementation(BaseImplementation):
 
     def _build_gtk_menu(self):
 
-        # pylint: disable=c-extension-no-member
         gtk_menu = Gtk.Menu()
 
         for item in self.menu_items.values():

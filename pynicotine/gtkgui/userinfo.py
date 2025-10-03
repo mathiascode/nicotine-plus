@@ -1,29 +1,13 @@
-# COPYRIGHT (C) 2020-2025 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2008-2010 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-FileCopyrightText: 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
+# SPDX-FileCopyrightText: 2008-2010 quinox <quinox@users.sf.net>
+# SPDX-FileCopyrightText: 2006-2009 daelstorm <daelstorm@gmail.com>
+# SPDX-FileCopyrightText: 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import time
 
 from gi.repository import Gdk
-from gi.repository import GdkPixbuf
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -72,7 +56,7 @@ class UserInfos(IconNotebook):
         self.toolbar_default_widget = window.userinfo_entry
 
         self.userinfo_combobox = ComboBox(
-            container=self.window.userinfo_title, has_entry=True, has_entry_completion=True,
+            container=self.window.userinfo_title, has_entry=True,
             entry=self.window.userinfo_entry, item_selected_callback=self.on_show_user_profile
         )
 
@@ -149,12 +133,12 @@ class UserInfos(IconNotebook):
                              close_callback=page.on_close, user=user)
             page.set_label(self.get_tab_label_inner(page.container))
 
-        if refresh:
-            page.set_indeterminate_progress()
-
         if switch_page:
             self.set_current_page(page.container)
             self.window.change_main_page(self.window.userinfo_page)
+
+        if refresh:
+            page.set_indeterminate_progress()
 
     def remove_user(self, user):
 
@@ -215,6 +199,7 @@ class UserInfos(IconNotebook):
         page = self.pages.get(msg.user)
 
         if page is not None:
+            page.user_status(msg)
             self.set_user_status(page.container, msg.user, msg.status)
 
     def user_country(self, user, country_code):
@@ -274,6 +259,7 @@ class UserInfo:
             self.interests_container,
             self.likes_list_container,
             self.picture_view,
+            self.privileged_user_button,
             self.progress_bar,
             self.queued_uploads_label,
             self.refresh_button,
@@ -307,7 +293,7 @@ class UserInfo:
             # Setting a pixel size of 21 results in a misaligned country flag
             self.country_icon.set_pixel_size(0)
 
-            self.picture = Gtk.EventBox(           # pylint: disable=c-extension-no-member
+            self.picture = Gtk.EventBox(
                 can_focus=True, hexpand=True, vexpand=True, visible=True
             )
             self.picture.connect("draw", self.on_draw_picture)
@@ -375,10 +361,10 @@ class UserInfo:
 
         self.picture_popup_menu = PopupMenu(self.window.application, self.picture)
         self.picture_popup_menu.add_items(
-            ("#" + _("Copy Picture"), self.on_copy_picture),
-            ("#" + _("Save Picture"), self.on_save_picture),
+            ("#" + _("_Copy Picture"), self.on_copy_picture),
+            ("#" + _("_Save Picture"), self.on_save_picture),
             ("", None),
-            ("#" + _("Remove"), self.on_hide_picture)
+            ("#" + _("_Hide"), self.on_hide_picture)
         )
 
         self.popup_menus = (
@@ -462,9 +448,11 @@ class UserInfo:
                 self.picture_data = Gdk.Texture.new_from_bytes(GLib.Bytes(data))
                 self.picture.set_paintable(self.picture_data)
             else:
+                from gi.repository import GdkPixbuf
+
                 data_stream = Gio.MemoryInputStream.new_from_bytes(GLib.Bytes(data))
                 self.picture_data = GdkPixbuf.Pixbuf.new_from_stream(data_stream, cancellable=None)
-                self.picture_surface = Gdk.cairo_surface_create_from_pixbuf(  # pylint: disable=c-extension-no-member
+                self.picture_surface = Gdk.cairo_surface_create_from_pixbuf(
                     self.picture_data, scale=1, for_window=None)
 
         except Exception as error:
@@ -545,17 +533,18 @@ class UserInfo:
             return
 
         self.indeterminate_progress = self.refreshing = True
+        self.info_bar.set_visible(False)
+
+        if core.users.login_status == UserStatus.OFFLINE and self.user != config.sections["server"]["login"]:
+            self.peer_connection_error()
+            return
 
         self.progress_bar.get_parent().set_reveal_child(True)
         self.progress_bar.pulse()
         GLib.timeout_add(320, self.pulse_progress, False)
         GLib.timeout_add(1000, self.pulse_progress)
 
-        self.info_bar.set_visible(False)
         self.refresh_button.set_sensitive(False)
-
-        if core.users.login_status == UserStatus.OFFLINE and self.user != config.sections["server"]["login"]:
-            self.peer_connection_error()
 
     def set_finished(self):
 
@@ -614,7 +603,7 @@ class UserInfo:
 
         if msg.descr is not None:
             self.description_view.clear()
-            self.description_view.append_line(msg.descr)
+            self.description_view.add_line(msg.descr)
 
         self.free_upload_slots_label.set_text(_("Yes") if msg.slotsavail else _("No"))
         self.upload_slots_label.set_text(humanize(msg.totalupl))
@@ -627,6 +616,9 @@ class UserInfo:
 
         self.info_bar.set_visible(False)
         self.set_finished()
+
+    def user_status(self, msg):
+        self.privileged_user_button.set_visible(msg.privileged)
 
     def user_stats(self, msg):
 
@@ -764,6 +756,12 @@ class UserInfo:
             return
 
         core.network_filter.ignore_user(self.user)
+
+    def on_privileged_user(self, *_args):
+        log.add(_("User %(user)s has Soulseek privileges. Their downloads are queued ahead "
+                  "of those of non-privileged users."), {
+            "user": self.user
+        }, title=_("Privileged User"))
 
     def on_give_privileges_response(self, dialog, _response_id, _data):
 

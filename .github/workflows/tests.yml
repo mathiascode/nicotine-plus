@@ -1,6 +1,9 @@
-name: Tests
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
+name: Tests
 on: [push, pull_request]
+permissions: {}
 
 env:
   NICOTINE_NETWORK_TESTS: 1
@@ -8,14 +11,13 @@ env:
 jobs:
 
   python:
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12', '3.13',
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14-dev',
                  'pypy-3.10', 'pypy-3.11']
-        platform: ['ubuntu-24.04']
-    runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -186,6 +188,8 @@ jobs:
             msystem: clangarm64
             platform: windows-11-arm
     runs-on: ${{ matrix.platform }}
+    env:
+      ARCH: ${{ matrix.arch }}
     defaults:
       run:
         shell: msys2 {0}
@@ -213,7 +217,7 @@ jobs:
             ${{ matrix.prefix }}-webp-pixbuf-loader
 
       - name: Install additional dependencies
-        run: python3 packaging/windows/dependencies.py
+        run: python3 build-aux/windows/dependencies.py
 
       - name: PEP 8 style checks
         run: python3 -m pycodestyle
@@ -233,7 +237,7 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            platform: macos-13
+            platform: macos-15-intel
           - arch: arm64
             platform: macos-14
     runs-on: ${{ matrix.platform }}
@@ -242,9 +246,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set system language
-        run: defaults write NSGlobalDomain AppleLanguages "(en-US)"
-
       - name: Create Python virtual environment
         run: |
           brew uninstall --ignore-dependencies python@3.13
@@ -252,7 +253,7 @@ jobs:
           python3.13 -m venv venv
 
       - name: Install dependencies
-        run: venv/bin/python3 packaging/macos/dependencies.py
+        run: venv/bin/python3 build-aux/macos/dependencies.py
 
       - name: PEP 8 style checks
         run: venv/bin/python3 -m pycodestyle

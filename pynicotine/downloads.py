@@ -1,28 +1,13 @@
-# COPYRIGHT (C) 2020-2025 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2016 Mutnick <muhing@yahoo.com>
-# COPYRIGHT (C) 2013 eLvErDe <gandalf@le-vert.net>
-# COPYRIGHT (C) 2008-2012 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2009 hedonist <ak@sensi.org>
-# COPYRIGHT (C) 2006-2009 daelstorm <daelstorm@gmail.com>
-# COPYRIGHT (C) 2003-2004 Hyriand <hyriand@thegraveyard.org>
-# COPYRIGHT (C) 2001-2003 Alexander Kanavin
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-FileCopyrightText: 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
+# SPDX-FileCopyrightText: 2016 Mutnick <muhing@yahoo.com>
+# SPDX-FileCopyrightText: 2013 eLvErDe <gandalf@le-vert.net>
+# SPDX-FileCopyrightText: 2008-2012 quinox <quinox@users.sf.net>
+# SPDX-FileCopyrightText: 2009 hedonist <ak@sensi.org>
+# SPDX-FileCopyrightText: 2006-2009 daelstorm <daelstorm@gmail.com>
+# SPDX-FileCopyrightText: 2003-2004 Hyriand <hyriand@thegraveyard.org>
+# SPDX-FileCopyrightText: 2001-2003 Alexander Kanavin
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import re
@@ -511,13 +496,7 @@ class Downloads(Transfers):
         username = transfer.username
 
         log.add_transfer("Clearing download %s from user %s", (virtual_path, username))
-
-        try:
-            super()._clear_transfer(transfer, denied_message=denied_message)
-
-        except KeyError:
-            log.add("FIXME: failed to remove download %s from user %s, not present in list",
-                    (virtual_path, username))
+        super()._clear_transfer(transfer, denied_message=denied_message)
 
         events.emit("clear-download", transfer, update_parent)
 
@@ -780,7 +759,7 @@ class Downloads(Transfers):
         )
 
     def enqueue_download(self, username, virtual_path, folder_path=None, size=0, file_attributes=None,
-                         bypass_filter=False):
+                         bypass_filter=False, paused=False):
 
         transfer = self.transfers.get(username + virtual_path)
 
@@ -798,11 +777,11 @@ class Downloads(Transfers):
             # Duplicate download found, stop here
             return
 
-        transfer = Transfer(username, virtual_path, folder_path, size, file_attributes)
+        transfer = Transfer(username, virtual_path, folder_path, size, file_attributes, TransferStatus.PAUSED)
 
         self._append_transfer(transfer)
 
-        if self._enqueue_transfer(transfer, bypass_filter=bypass_filter):
+        if paused or self._enqueue_transfer(transfer, bypass_filter=bypass_filter):
             self._update_transfer(transfer)
 
     def retry_download(self, transfer, bypass_filter=False):

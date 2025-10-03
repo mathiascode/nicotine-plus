@@ -1,24 +1,9 @@
-# COPYRIGHT (C) 2020-2025 Nicotine+ Contributors
-# COPYRIGHT (C) 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
-# COPYRIGHT (C) 2016 Mutnick <muhing@yahoo.com>
-# COPYRIGHT (C) 2009-2011 quinox <quinox@users.sf.net>
-# COPYRIGHT (C) 2009 daelstorm <daelstorm@gmail.com>
-#
-# GNU GENERAL PUBLIC LICENSE
-#    Version 3, 29 June 2007
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-FileCopyrightText: 2016-2017 Michael Labouebe <gfarmerfr@free.fr>
+# SPDX-FileCopyrightText: 2016 Mutnick <muhing@yahoo.com>
+# SPDX-FileCopyrightText: 2009-2011 quinox <quinox@users.sf.net>
+# SPDX-FileCopyrightText: 2009 daelstorm <daelstorm@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import gc
 import mmap
@@ -28,7 +13,8 @@ import sys
 import time
 
 from collections import defaultdict
-from collections import deque
+from datetime import datetime
+from datetime import timedelta
 from itertools import chain
 from os import SEEK_END
 from os import SEEK_SET
@@ -53,6 +39,7 @@ from pynicotine.slskmessages import SharedFoldersFiles
 from pynicotine.utils import TRANSLATE_PUNCTUATION
 from pynicotine.utils import UINT32_LIMIT
 from pynicotine.utils import encode_path
+from pynicotine.utils import humanize
 
 
 class FileTypes:
@@ -252,17 +239,18 @@ class Scanner:
     databases and writing them to disk.
     """
 
-    __slots__ = ("queue", "share_groups", "share_dbs", "share_db_paths", "init",
+    __slots__ = ("writer", "share_groups", "share_dbs", "share_db_paths", "init",
                  "rescan", "rebuild", "reveal_buddy_shares", "reveal_trusted_shares",
                  "files", "streams", "mtimes", "word_index", "processed_share_names",
-                 "processed_share_paths", "current_file_index", "current_folder_count")
+                 "processed_share_paths", "current_file_index", "current_folder_count",
+                 "lowercase_paths")
 
     HIDDEN_FOLDER_NAMES = {"@eaDir", "#recycle", "#snapshot"}
 
-    def __init__(self, queue, share_groups, share_db_paths, init=False, rescan=True,
+    def __init__(self, writer, share_groups, share_db_paths, init=False, rescan=True,
                  rebuild=False, reveal_buddy_shares=False, reveal_trusted_shares=False):
 
-        self.queue = queue
+        self.writer = writer
         self.share_groups = share_groups
         self.share_dbs = {}
         self.share_db_paths = share_db_paths
@@ -274,6 +262,7 @@ class Scanner:
         self.files = {}
         self.streams = {}
         self.mtimes = {}
+        self.lowercase_paths = defaultdict(dict)
         self.word_index = defaultdict(list)
         self.processed_share_names = set()
         self.processed_share_paths = set()
@@ -290,15 +279,21 @@ class Scanner:
                     self.create_compressed_shares()
                     self.create_file_path_index()
 
+                    # Attempt to load remaining dbs
+                    Shares.load_shares(
+                        self.share_dbs, self.share_db_paths, destinations={"words", "lowercase_paths"}
+                    )
+                    Shares.close_shares(self.share_dbs)
+
                 except Exception:
                     # Failed to load shares or version is invalid, rebuild
                     self.rescan = self.rebuild = True
 
-                self.queue.put(ScannerState.INITIALIZED)
+                self.writer.send(ScannerState.INITIALIZED)
 
             if self.rescan:
-                self.queue.put(ScannerState.RESCANNING)
-                self.queue.put(
+                self.writer.send(ScannerState.RESCANNING)
+                self.writer.send(
                     ScannerLogMessage(_("Rebuilding shares…") if self.rebuild else _("Rescanning shares…"))
                 )
 
@@ -313,23 +308,28 @@ class Scanner:
                 ):
                     self.rescan_dirs(permission_level)
 
-                self.set_shares(word_index=self.word_index)
+                self.set_shares(word_index=self.word_index, lowercase_paths=self.lowercase_paths)
                 self.word_index.clear()
+                self.lowercase_paths.clear()
 
                 self.create_compressed_shares()
                 self.create_file_path_index()
 
-                self.queue.put(
+                self.writer.send(
                     ScannerLogMessage(
-                        _("Rescan complete: %(num)s folders found"),
-                        {"num": self.current_folder_count}
+                        ngettext(
+                            "Rescan complete: %(num)s folder found",
+                            "Rescan complete: %(num)s folders found",
+                            self.current_folder_count
+                        ),
+                        {"num": humanize(self.current_folder_count)}
                     )
                 )
 
         except Exception:
             from traceback import format_exc
 
-            self.queue.put(
+            self.writer.send(
                 ScannerLogMessage(
                     _("Serious error occurred while rescanning shares. If this problem persists, "
                       "delete %(dir)s/*.dbn and try again. If that doesn't help, please file a bug "
@@ -339,9 +339,10 @@ class Scanner:
                     }
                 )
             )
-            self.queue.put(ScannerState.FAILURE)
+            self.writer.send(ScannerState.FAILURE)
 
         finally:
+            self.writer.close()
             Shares.close_shares(self.share_dbs)
 
     def create_compressed_shares_message(self, permission_level):
@@ -365,7 +366,7 @@ class Scanner:
         compressed_shares.make_network_message()
         compressed_shares.public_shares = compressed_shares.buddy_shares = compressed_shares.trusted_shares = None
 
-        self.queue.put(compressed_shares)
+        self.writer.send(compressed_shares)
 
     def create_compressed_shares(self):
 
@@ -389,7 +390,7 @@ class Scanner:
             self.share_dbs["buddy_files"],
             self.share_dbs["trusted_files"]
         ))
-        self.queue.put(file_path_index)
+        self.writer.send(file_path_index)
 
         Shares.close_shares(self.share_dbs)
 
@@ -414,18 +415,20 @@ class Scanner:
 
         raise ValueError(f"Cannot find virtual path for {real_path}")
 
-    def set_shares(self, permission_level=None, files=None, streams=None, mtimes=None, word_index=None):
+    def set_shares(self, permission_level=None, files=None, streams=None, mtimes=None, word_index=None,
+                   lowercase_paths=None):
 
         for source, destination in (
             (files, "files"),
             (streams, "streams"),
             (mtimes, "mtimes"),
-            (word_index, "words")
+            (word_index, "words"),
+            (lowercase_paths, "lowercase_paths")
         ):
             if source is None:
                 continue
 
-            if destination != "words":
+            if destination not in {"words", "lowercase_paths"}:
                 destination = f"{permission_level}_{destination}"
 
             share_db = None
@@ -522,7 +525,7 @@ class Scanner:
     def scan_shared_folder(self, shared_folder_path, old_mtimes, old_files):
         """Scan a shared folder for all subfolders, files and their metadata."""
 
-        folder_paths = deque([shared_folder_path])
+        folder_paths = [shared_folder_path]
 
         while folder_paths:
             folder_path = folder_paths.pop()
@@ -532,23 +535,30 @@ class Scanner:
                 # Sharing a folder twice, no go
                 continue
 
+            self.writer.send(self.current_folder_count)
+
             file_list = []
+            virtual_folder_path_lower = virtual_folder_path.lower()
 
             try:
                 with os.scandir(encode_path(folder_path, prefix=False)) as entries:
                     for entry in entries:
-                        basename = entry.name.decode("utf-8", "replace")
+                        basename = basename_escaped = entry.name.decode("utf-8", "replace")
+
+                        if "\\" in basename:
+                            # Substitute backslashes with backslash sentinels in basenames. This is necessary
+                            # due to the Soulseek network using backslashes as path separators, conflicting
+                            # with non-Windows systems where backslashes are valid (but uncommon) file name
+                            # characters. We restore the original backslash later when a user downloads the file.
+                            basename_escaped = basename.replace("\\", Shares.BACKSLASH_SENTINEL)
+
                         path = os.path.join(folder_path, basename)
 
                         if entry.is_dir():
                             if self.is_hidden(path, entry=entry):
                                 continue
 
-                            self.current_folder_count += 1
                             folder_paths.append(path)
-
-                            if not self.current_folder_count % 100:
-                                self.queue.put(self.current_folder_count)
                             continue
 
                         try:
@@ -563,7 +573,7 @@ class Scanner:
                             file_stat = entry.stat()
                             file_index = self.current_file_index
                             self.mtimes[path] = file_mtime = file_stat.st_mtime
-                            virtual_file_path = f"{virtual_folder_path}\\{basename}"
+                            virtual_file_path = f"{virtual_folder_path}\\{basename_escaped}"
 
                             if not self.rebuild and file_mtime == old_mtimes.get(path) and path in old_files:
                                 full_path_file_data = old_files[path]
@@ -572,17 +582,19 @@ class Scanner:
                                 full_path_file_data = self.get_file_info(virtual_file_path, path, file_stat)
 
                             basename_file_data = full_path_file_data[:]
-                            basename_file_data[0] = basename
+                            basename_file_data[0] = basename_escaped
                             file_list.append(basename_file_data)
 
                             for k in set(virtual_file_path.lower().translate(TRANSLATE_PUNCTUATION).split()):
                                 self.word_index[k].append(file_index)
 
                             self.files[path] = full_path_file_data
+                            self.lowercase_paths[virtual_folder_path_lower][basename_escaped.lower()] = file_index
+
                             self.current_file_index += 1
 
                         except OSError as error:
-                            self.queue.put(
+                            self.writer.send(
                                 ScannerLogMessage(
                                     _("Error while scanning file %(path)s: %(error)s"),
                                     {"path": path, "error": error}
@@ -590,7 +602,7 @@ class Scanner:
                             )
 
             except OSError as error:
-                self.queue.put(
+                self.writer.send(
                     ScannerLogMessage(
                         _("Error while scanning folder %(path)s: %(error)s"),
                         {"path": folder_path, "error": error}
@@ -598,6 +610,7 @@ class Scanner:
                 )
 
             self.streams[virtual_folder_path] = self.get_folder_stream(file_list)
+            self.current_folder_count += 1
 
     def get_audio_tag(self, file_path, size):
 
@@ -628,7 +641,7 @@ class Scanner:
                 tag = self.get_audio_tag(file_path, size)
 
             except Exception as error:
-                self.queue.put(
+                self.writer.send(
                     ScannerLogMessage(
                         _("Error while scanning metadata for file %(path)s: %(error)s"),
                         {"path": file_path, "error": error}
@@ -684,7 +697,9 @@ class Scanner:
 
 class Shares:
     __slots__ = ("share_dbs", "requested_share_times", "initialized", "rescanning", "compressed_shares",
-                 "share_db_paths", "file_path_index", "_scanner_process")
+                 "share_db_paths", "file_path_index", "_scanner_process", "_rescan_daily_timer_id")
+
+    BACKSLASH_SENTINEL = "@@BACKSLASH@@"
 
     def __init__(self):
 
@@ -700,6 +715,7 @@ class Shares:
         }
         self.share_db_paths = {
             "words": os.path.join(config.data_folder_path, "words.dbn"),
+            "lowercase_paths": os.path.join(config.data_folder_path, "lowercasepaths.dbn"),
             "public_files": os.path.join(config.data_folder_path, "publicfiles.dbn"),
             "public_mtimes": os.path.join(config.data_folder_path, "publicmtimes.dbn"),
             "public_streams": os.path.join(config.data_folder_path, "publicstreams.dbn"),
@@ -713,6 +729,7 @@ class Shares:
         self.file_path_index = ()
 
         self._scanner_process = None
+        self._rescan_daily_timer_id = None
 
         for event_name, callback in (
             ("folder-contents-request", self._folder_contents_request),
@@ -767,19 +784,40 @@ class Shares:
             import shutil
             shutil.rmtree(db_path_encoded)
 
-    def virtual2real(self, virtual_path):
+    def get_lowercase_path_index(self, virtual_path):
 
-        for shares in (
-            config.sections["transfers"]["shared"],
-            config.sections["transfers"]["buddyshared"],
-            config.sections["transfers"]["trustedshared"]
-        ):
+        virtual_folder_path, basename = virtual_path.rsplit("\\", 1)
+        lowercase_paths = core.shares.share_dbs.get("lowercase_paths", {})
+        index = None
+
+        if virtual_folder_path in lowercase_paths:
+            index = lowercase_paths[virtual_folder_path].get(basename)
+
+        return index
+
+    def virtual2real(self, virtual_path, revert_backslash=False, is_lowercase_path=False):
+
+        if is_lowercase_path:
+            real_path_index = self.get_lowercase_path_index(virtual_path)
+
+            if real_path_index is not None:
+                # Mangled path from a Soulseek NS client (all lowercase)
+                return self.file_path_index[real_path_index]
+
+        share_groups = self.get_shared_folders()
+
+        for shares in share_groups:
             for virtual_name, folder_path, *_unused in shares:
                 if virtual_path == virtual_name:
                     return folder_path
 
                 if virtual_path.startswith(virtual_name + "\\"):
                     real_path = folder_path.rstrip(os.sep) + virtual_path[len(virtual_name):].replace("\\", os.sep)
+
+                    if revert_backslash and self.BACKSLASH_SENTINEL in virtual_path:
+                        # Real path contains non-separator backslashes. Revert backslash substitutions.
+                        real_path = real_path.replace(self.BACKSLASH_SENTINEL, "\\")
+
                     return real_path
 
         return "__INVALID_SHARE__" + virtual_path
@@ -1065,17 +1103,17 @@ class Shares:
         events.emit("shares-preparing")
 
         share_groups = self.get_shared_folders()
-        self._scanner_process, scanner_queue = self._build_scanner_process(share_groups, init, rescan, rebuild)
+        self._scanner_process, reader = self._build_scanner_process(share_groups, init, rescan, rebuild)
         self._scanner_process.start()
 
         if use_thread:
             Thread(
-                target=self._process_scanner, args=(scanner_queue, events.emit_main_thread),
+                target=self._process_scanner, args=(reader, events.emit_main_thread),
                 name="ProcessShareScanner", daemon=True
             ).start()
             return None
 
-        return self._process_scanner(scanner_queue)
+        return self._process_scanner(reader)
 
     def check_shares_available(self):
 
@@ -1089,14 +1127,29 @@ class Shares:
 
         return unavailable_shares
 
+    def start_rescan_daily_timer(self):
+
+        if self._rescan_daily_timer_id is not None:
+            events.cancel_scheduled(self._rescan_daily_timer_id)
+            self._rescan_daily_timer_id = None
+
+        if not config.sections["transfers"]["rescan_shares_daily"]:
+            return
+
+        timestamp_midnight = (datetime.now() + timedelta(days=1)).replace(
+            hour=0, minute=0, second=0, microsecond=0).timestamp()
+
+        self._rescan_daily_timer_id = events.schedule_at(
+            timestamp=timestamp_midnight, callback=self.rescan_shares)
+
     def _build_scanner_process(self, share_groups=None, init=False, rescan=True, rebuild=False):
 
         import multiprocessing
 
         context = multiprocessing.get_context(method="spawn")
-        scanner_queue = context.Queue()
+        reader, writer = context.Pipe(duplex=False)
         scanner_obj = Scanner(
-            scanner_queue,
+            writer,
             share_groups,
             self.share_db_paths,
             init,
@@ -1106,18 +1159,28 @@ class Shares:
             reveal_trusted_shares=config.sections["transfers"]["reveal_trusted_shares"]
         )
         scanner = context.Process(target=scanner_obj.run, daemon=True)
-        return scanner, scanner_queue
+        return scanner, reader
 
-    def _process_scanner(self, scanner_queue, emit_event=None):
+    def _process_scanner(self, reader, emit_event=None):
 
         successful = True
+        current_folder_count = None
 
-        while self._scanner_process.is_alive():
+        while self._scanner_process.is_alive() and successful:
             # Cooldown
-            time.sleep(0.05)
+            time.sleep(0.2)
 
-            while not scanner_queue.empty():
-                item = scanner_queue.get()
+            while True:
+                try:
+                    if not reader.poll():
+                        break
+                except BrokenPipeError:
+                    break
+
+                try:
+                    item = reader.recv()
+                except EOFError:
+                    break
 
                 if item == ScannerState.FAILURE:
                     successful = False
@@ -1125,7 +1188,7 @@ class Shares:
 
                 if isinstance(item, int):
                     if emit_event is not None:
-                        emit_event("shares-scanning", item)
+                        current_folder_count = item
 
                 elif isinstance(item, ScannerLogMessage):
                     log.add(item.msg, item.msg_args)
@@ -1143,6 +1206,12 @@ class Shares:
                 elif item == ScannerState.INITIALIZED:
                     self.initialized = True
 
+            if current_folder_count:
+                emit_event("shares-scanning", current_folder_count)
+                current_folder_count = None
+
+        reader.close()
+        self._scanner_process.close()
         self._scanner_process = None
 
         if emit_event is not None:
@@ -1157,14 +1226,15 @@ class Shares:
             try:
                 self.load_shares(
                     self.share_dbs, self.share_db_paths, destinations={
-                        "words", "public_files", "public_streams", "buddy_files", "buddy_streams",
-                        "trusted_files", "trusted_streams"
+                        "words", "lowercase_paths", "public_files", "public_streams", "buddy_files",
+                        "buddy_streams", "trusted_files", "trusted_streams"
                     })
 
             except Exception:
                 successful = False
 
         self.rescanning = False
+        self.start_rescan_daily_timer()
 
         if not successful:
             self.file_path_index = ()
