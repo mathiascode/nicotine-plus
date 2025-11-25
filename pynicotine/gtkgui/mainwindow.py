@@ -285,6 +285,8 @@ class MainWindow(Window):
         self.set_last_session_tab()
         self.connect_tab_signals()
 
+        log.add("Locale: %s", os.environ["LC_ALL"])
+
         # Apply UI customizations
         set_global_style(self.application.isolated_mode)
 
