@@ -618,9 +618,11 @@ class UsersMessage(SlskMessage):
         for i in range(slotslen):
             pos, users[i].slotsfull = cls.unpack_uint32(message, pos)
 
-        pos, countrylen = cls.unpack_uint32(message, pos)
+        """pos, countrylen = cls.unpack_uint32(message, pos)
         for i in range(countrylen):
-            pos, users[i].country = cls.unpack_string(message, pos)
+            pos, users[i].country = cls.unpack_string(message, pos)"""
+        print("START")
+        print(bytes(message[pos:]))
 
         return pos, users
 
@@ -666,28 +668,29 @@ class Login(ServerMessage):
         msg += self.pack_string(self.passwd)
         msg += self.pack_uint32(self.version)
 
-        payload = self.username + self.passwd
+        """payload = self.username + self.passwd
         md5hash = md5(payload.encode()).hexdigest()
         msg += self.pack_string(md5hash)
 
-        msg += self.pack_uint32(self.minorversion)
+        msg += self.pack_uint32(self.minorversion)"""
 
         return msg
 
     def parse_network_message(self, message):
-        pos, self.success = self.unpack_bool(message)
+        print(bytes(message))
+        self.success = True
 
-        if not self.success:
+        """if not self.success:
             pos, self.rejection_reason = self.unpack_string(message, pos)
 
             if message[pos:]:
                 pos, self.rejection_detail = self.unpack_string(message, pos)
-            return
+            return"""
 
-        pos, self.banner = self.unpack_string(message, pos)
-        pos, self.ip_address = self.unpack_ip(message, pos)
-        pos, _checksum = self.unpack_string(message, pos)  # MD5 hexdigest of the password you sent
-        pos, self.is_supporter = self.unpack_bool(message, pos)
+        #pos, self.banner = self.unpack_string(message, pos)
+        #pos, self.ip_address = self.unpack_ip(message, pos)
+        #pos, _checksum = self.unpack_string(message, pos)  # MD5 hexdigest of the password you sent
+        #pos, self.is_supporter = self.unpack_bool(message, pos)
 
 
 class SetWaitPort(ServerMessage):
@@ -729,8 +732,8 @@ class GetPeerAddress(ServerMessage):
         pos, self.user = self.unpack_string(message)
         pos, self.ip_address = self.unpack_ip(message, pos)
         pos, self.port = self.unpack_uint32(message, pos)
-        pos, self.unknown = self.unpack_uint32(message, pos)
-        pos, self.obfuscated_port = self.unpack_uint16(message, pos)
+        #pos, self.unknown = self.unpack_uint32(message, pos)
+        #pos, self.obfuscated_port = self.unpack_uint16(message, pos)
 
 
 class WatchUser(ServerMessage):
@@ -819,7 +822,7 @@ class GetUserStatus(ServerMessage):
     def parse_network_message(self, message):
         pos, self.user = self.unpack_string(message)
         pos, self.status = self.unpack_uint32(message, pos)
-        pos, self.privileged = self.unpack_bool(message, pos)
+        #pos, self.privileged = self.unpack_bool(message, pos)
 
 
 class IgnoreUser(ServerMessage):
@@ -838,9 +841,10 @@ class IgnoreUser(ServerMessage):
         self.user = user
 
     def make_network_message(self):
-        return self.pack_string(self.user)
+        return self.pack_string(self.user) + self.pack_string(self.user) + self.pack_string(self.user)
 
     def parse_network_message(self, message):
+        print(bytes(message))
         _pos, self.user = self.unpack_string(message)
 
 
@@ -883,13 +887,13 @@ class SayChatroom(ServerMessage):
 
     def make_network_message(self):
         msg = bytearray()
-        msg += self.pack_string(self.room)
+        msg += self.pack_uint32(self.room)
         msg += self.pack_string(self.message)
 
         return msg
 
     def parse_network_message(self, message):
-        pos, self.room = self.unpack_string(message)
+        pos, self.room = self.unpack_uint32(message)
         pos, self.user = self.unpack_string(message, pos)
         pos, self.message = self.unpack_string(message, pos)
 
@@ -929,14 +933,17 @@ class JoinRoom(ServerMessage):
 
     def make_network_message(self):
         msg = bytearray()
+        self.room = ""
         msg += self.pack_string(self.room)
         msg += self.pack_uint32(1 if self.private else 0)
 
         return msg
 
     def parse_network_message(self, message):
-        pos, self.room = self.unpack_string(message)
+        print(bytes(message))
+        pos, self.room = self.unpack_uint32(message)
         pos, self.users = UsersMessage.parse_users(message, pos)
+        print(bytes(message[pos:]))
 
         if message[pos:]:
             self.private = True
@@ -963,7 +970,7 @@ class LeaveRoom(ServerMessage):
         self.room = room
 
     def make_network_message(self):
-        return self.pack_string(self.room)
+        return self.pack_uint32(self.room)
 
     def parse_network_message(self, message):
         _pos, self.room = self.unpack_string(message)
@@ -982,18 +989,26 @@ class UserJoinedRoom(ServerMessage):
         self.userdata = None
 
     def parse_network_message(self, message):
-        pos, self.room = self.unpack_string(message)
+        pos, self.room = self.unpack_uint32(message)
 
         self.userdata = UserData()
         pos, self.userdata.username = self.unpack_string(message, pos)
+        print(self.userdata.username)
         pos, self.userdata.status = self.unpack_uint32(message, pos)
+        print(self.userdata.status)
         pos, self.userdata.avgspeed = self.unpack_uint32(message, pos)
+        print(self.userdata.avgspeed)
         pos, self.userdata.uploadnum = self.unpack_uint32(message, pos)
+        print(self.userdata.uploadnum)
         pos, self.userdata.unknown = self.unpack_uint32(message, pos)
+        print(self.userdata.unknown)
         pos, self.userdata.files = self.unpack_uint32(message, pos)
+        print(self.userdata.files)
         pos, self.userdata.dirs = self.unpack_uint32(message, pos)
+        print(self.userdata.dirs)
         pos, self.userdata.slotsfull = self.unpack_uint32(message, pos)
-        pos, self.userdata.country = self.unpack_string(message, pos)
+        print(self.userdata.slotsfull)
+        print(bytes(message[pos:]))
 
 
 class UserLeftRoom(ServerMessage):
@@ -1009,7 +1024,7 @@ class UserLeftRoom(ServerMessage):
         self.username = None
 
     def parse_network_message(self, message):
-        pos, self.room = self.unpack_string(message)
+        pos, self.room = self.unpack_uint32(message)
         pos, self.username = self.unpack_string(message, pos)
 
 
@@ -1209,7 +1224,7 @@ class SendConnectToken(ServerMessage):
 
     __slots__ = ("user", "token")
 
-    def __init__(self, user, token):
+    def __init__(self, user=None, token=None):
         self.user = user
         self.token = token
 
@@ -1311,9 +1326,12 @@ class QueuedDownloads(ServerMessage):
 
     __slots__ = ("user", "slotsfull")
 
-    def __init__(self):
+    def __init__(self, slotsfull=None):
+        self.slotsfull = slotsfull
         self.user = None
-        self.slotsfull = None
+
+    def make_network_message(self):
+        return self.pack_uint32(self.slotsfull)
 
     def parse_network_message(self, message):
         pos, self.user = self.unpack_string(message)
@@ -1393,7 +1411,7 @@ class SimilarRecommendations(ServerMessage):
 
     def parse_network_message(self, message):
         pos, self.recommendation = self.unpack_string(message)
-        pos, num = self.unpack_uint32(message)
+        pos, num = self.unpack_uint32(message, pos)
 
         for _ in range(num):
             pos, similar_recommendation = self.unpack_string(message, pos)
@@ -4027,7 +4045,7 @@ SERVER_MESSAGE_CODES = {
     WatchUser: 5,
     UnwatchUser: 6,
     GetUserStatus: 7,
-    IgnoreUser: 11,
+    IgnoreUser: 29,
     UnignoreUser: 12,
     SayChatroom: 13,
     JoinRoom: 14,

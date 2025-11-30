@@ -668,7 +668,7 @@ class NetworkThread(Thread):
         unpacked_msg = distrib_class()
         unpacked_msg.parse_network_message(memoryview(msg.distrib_message))
 
-        return unpacked_msg
+        return unpacked_msg, msg.distrib_message
 
     def _emit_network_message_event(self, msg):
 
@@ -1244,7 +1244,7 @@ class NetworkThread(Thread):
 
         if msg_class is EmbeddedMessage:
             self._distribute_embedded_message(msg)
-            msg = self._unpack_embedded_message(msg)
+            msg, msg_content = self._unpack_embedded_message(msg)
 
         elif msg_class is Login:
             if msg.success:
@@ -2132,6 +2132,18 @@ class NetworkThread(Thread):
 
         self._process_outgoing_messages(msgs)
 
+    def _send_raw_message_to_child_peers(self, msg_class, msg_content):
+
+        for conn in self._child_peers.values():
+            out_buffer = conn.out_buffer
+
+            out_buffer += msg.pack_uint32(len(msg_content) + 1)
+            out_buffer += msg.pack_uint8(DISTRIBUTED_MESSAGE_CODES[msg_class])
+            out_buffer += msg_content
+
+            conn.has_post_init_activity = True
+            self._modify_connection_events(conn, selectors.EVENT_READ | selectors.EVENT_WRITE)
+
     def _distribute_embedded_message(self, msg):
         """Distributes an embedded message from the server to our child
         peers."""
@@ -2240,16 +2252,16 @@ class NetworkThread(Thread):
             if not self._verify_parent_connection(conn, msg_class):
                 return False
 
-            self._send_message_to_child_peers(msg)
+            self._send_raw_message_to_child_peers(msg_class, in_buffer[start_offset:end_offset])
 
         elif msg_class is DistribEmbeddedMessage:
             if not self._verify_parent_connection(conn, msg_class):
                 return False
 
-            msg = self._unpack_embedded_message(msg)
+            msg, msg_content = self._unpack_embedded_message(msg)
 
             if msg is not None:
-                self._send_message_to_child_peers(msg)
+                self._send_raw_message_to_child_peers(msg_class, msg_content)
 
         elif msg_class is DistribBranchLevel:
             if msg.level < 0:

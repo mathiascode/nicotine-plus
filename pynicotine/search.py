@@ -19,9 +19,12 @@ from pynicotine.slskmessages import FileSearch
 from pynicotine.slskmessages import FileSearchResponse
 from pynicotine.slskmessages import increment_token
 from pynicotine.slskmessages import initial_token
+from pynicotine.slskmessages import RelatedSearch
 from pynicotine.slskmessages import RoomSearch
 from pynicotine.slskmessages import SEARCH_TOKENS_ALLOWED
 from pynicotine.slskmessages import UserSearch
+from pynicotine.slskmessages import SendConnectToken
+from pynicotine.slskmessages import SendDownloadSpeed, PlaceInLineResponse, QueuedDownloads, GlobalUserList, FileSearchRoom, IgnoreUser, JoinRoom, SayChatroom
 from pynicotine.slskmessages import WishlistSearch
 from pynicotine.utils import TRANSLATE_PUNCTUATION
 
@@ -370,6 +373,16 @@ class Search:
                 self._own_tokens.add(self.token)
 
             core.send_message_to_server(UserSearch(username, search.token, search.term_transmitted))
+            core.send_message_to_server(RelatedSearch(""))
+            core.send_message_to_server(SendConnectToken("username", 0))
+            core.send_message_to_server(QueuedDownloads(55))
+            core.send_message_to_server(PlaceInLineResponse("username2", 1, 123))
+            core.send_message_to_server(FileSearchRoom(0, 1, "test query"))
+            core.send_message_to_server(IgnoreUser("1"))
+            core.send_message_to_server(JoinRoom(""))
+            core.send_message_to_server(SayChatroom(1, "whwhwhwhwhw"))
+            core.send_message_to_server(SendDownloadSpeed("username", 123456))
+            #core.send_message_to_server(GlobalUserList())
 
     def _do_wishlist_search(self, search):
 

@@ -316,6 +316,8 @@ class ChatRooms:
 
         for user_data in msg.users:
             self._update_room_user(room_obj, user_data)
+            print(user_data.username)
+            print(user_data.slotsfull)
 
         core.pluginhandler.join_chatroom_notification(msg.room)
 
@@ -521,6 +523,9 @@ class ChatRooms:
         if room_obj is None:
             msg.room = None
             return
+
+        print(msg.userdata.username)
+        print(msg.userdata.slotsfull)
 
         self._update_room_user(room_obj, msg.userdata)
         core.pluginhandler.user_join_chatroom_notification(msg.room, msg.userdata.username)

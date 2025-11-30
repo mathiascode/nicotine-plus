@@ -315,7 +315,7 @@ class ChatRooms(IconNotebook):
     def join_room(self, msg):
 
         page = self.pages.get(msg.room)
-        self.join_room_combobox.append(msg.room)
+        #self.join_room_combobox.append(msg.room)
 
         if page is None:
             return

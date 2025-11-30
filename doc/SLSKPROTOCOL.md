@@ -236,6 +236,7 @@ server, but it handles the protocol well enough (and can be modified).
 | `25`   | [File Search Room](#server-code-25) `OBSOLETE`                 |
 | `26`   | [File Search](#server-code-26)                                 |
 | `28`   | [Set Online Status](#server-code-28)                           |
+| `29`   | [Room Info](#server-code-29) `OBSOLETE`                        |
 | `32`   | [Ping](#server-code-32)                                        |
 | `33`   | [Send Connect Token](#server-code-33) `OBSOLETE`               |
 | `34`   | [Send Download Speed](#server-code-34) `OBSOLETE`              |
@@ -316,6 +317,7 @@ server, but it handles the protocol well enough (and can be modified).
 | `152`  | [Global Room Message](#server-code-152)                        |
 | `153`  | [Related Searches](#server-code-153) `OBSOLETE`                |
 | `160`  | [Excluded Search Phrases](#server-code-160)                    |
+| `1000` | [Invalid Room](#server-code-1000) `OBSOLETE`                   |
 | `1001` | [Can't Connect To Peer](#server-code-1001)                     |
 | `1003` | [Can't Create Room](#server-code-1003)                         |
 
@@ -529,6 +531,9 @@ The server tells us a user is no longer ignoring us.
 
 Either we want to say something in the chatroom, or someone else did.
 
+An earlier variant of this message existed in 2001, where a numeric room ID
+(uint32) was used instead of a room name.
+
 ### Data Order
 
   - Send
@@ -564,6 +569,9 @@ Requirements include:
   - 24 characters or fewer
   - No leading or trailing spaces
   - No consecutive spaces
+
+An earlier variant of this message existed in 2001, where a numeric room ID
+(uint32) was used instead of a room name.
 
 ### Data Order
 
@@ -607,6 +615,9 @@ Requirements include:
 
 We send this to the server when we want to leave a room.
 
+An earlier variant of this message existed in 2001, where a numeric room ID
+(uint32) was used instead of a room name.
+
 ### Data Order
 
   - Send
@@ -620,6 +631,9 @@ We send this to the server when we want to leave a room.
 ### UserJoinedRoom
 
 The server tells us someone has just joined a room we're in.
+
+An earlier variant of this message existed in 2001, where a numeric room ID
+(uint32) was used instead of a room name.
 
 ### Data Order
 
@@ -644,6 +658,9 @@ The server tells us someone has just joined a room we're in.
 ### UserLeftRoom
 
 The server tells us someone has just left a room we're in.
+
+An earlier variant of this message existed in 2001, where a numeric room ID
+(uint32) was used instead of a room name.
 
 ### Data Order
 
@@ -728,6 +745,9 @@ don't send it, the server will keep sending the chat phrase to us.
 
 We send this to the server when we search for something in a room.
 
+This message was used in 2001, when the server used to store a hardcoded list
+of rooms with numerical IDs.
+
 ### Data Order
 
   - Send
@@ -781,6 +801,37 @@ message when enabling away status, but not when disabling it.
         See [User Status Codes](#user-status-codes)
   - Receive
     -   *No Message*
+
+
+## Server Code 29
+
+### RoomInfo
+
+**OBSOLETE, no longer used**
+
+We ask the server for information about a specific room. The server responds
+with information about the room if it exists.
+
+This message was used in 2001, when the server used to store a hardcoded list
+of rooms with numerical IDs. Only two rooms existed: `floating` (id `0`) and
+`Lobby` (id `1`). The server would add every user to the `Lobby` room when
+logging in.
+
+### Data Order
+
+  - Send
+    1.  **uint32** *room id*
+  - Receive
+    1.  **uint32** *room id*
+    2.  **bool** *exists*
+    3.  If *exists* is true
+        1.  **uint32** *unknown*
+        2.  **uint32** *unknown*
+        3.  **string** *room name*
+        4.  **uint32** *unknown*
+        5.  **uint32** *unknown*
+        6.  **bool** *unknown*
+        7.  **uint32** *user count*
 
 
 ## Server Code 32
@@ -2751,17 +2802,17 @@ file download.
   - Send
     1.  **uint32** *token*
     2.  **bool** *allowed*
-    3.  If allowed is true
+    3.  If *allowed* is true
         1.  **uint64** *file size*
-    4.  If allowed is false
+    4.  If *allowed* is false
         1.  **string** *reason*  
             See [Transfer Rejection Reasons](#transfer-rejection-reasons)
   - Receive
     1.  **uint32** *token*
     2.  **bool** *allowed*
-    3.  If allowed is true
+    3.  If *allowed* is true
         1.  **uint64** *file size*
-    4.  If allowed is false
+    4.  If *allowed* is false
         1.  **string** *reason*  
             See [Transfer Rejection Reasons](#transfer-rejection-reasons)
 
