@@ -997,6 +997,8 @@ class Win32Implementation(BaseImplementation):
         )
         windll.user32.PostMessageW(self._h_wnd, self.WM_NULL, 0, 0)
 
+        self._focus_notify_icon()
+
     def _populate_menu(self):
 
         from ctypes import byref, windll
