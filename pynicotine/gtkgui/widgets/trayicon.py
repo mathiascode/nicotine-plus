@@ -886,7 +886,7 @@ class Win32Implementation(BaseImplementation):
             self._h_icon = None
 
     def _update_notify_icon(self, title="", message="", icon_name=None, click_action=None,
-                            click_action_target=None, high_priority=False, focus=False):
+                            click_action_target=None, high_priority=False):
         # pylint: disable=attribute-defined-outside-init,no-member
 
         if self._h_wnd is None:
@@ -915,9 +915,6 @@ class Win32Implementation(BaseImplementation):
             )
             notify_action = self.NIM_ADD
 
-        elif focus:
-            notify_action = self.NIM_SETFOCUS
-
         if config.sections["notifications"]["notification_popup_sound"]:
             self._notify_id.dw_info_flags &= ~self.NIIF_NOSOUND
         else:
@@ -936,6 +933,10 @@ class Win32Implementation(BaseImplementation):
         self._click_action_target = GLib.Variant.new_string(click_action_target) if click_action_target else None
 
         windll.shell32.Shell_NotifyIconW(notify_action, byref(self._notify_id))
+
+    def _focus_notify_icon(self):
+        if self._notify_id:
+            windll.shell32.Shell_NotifyIconW(self.NIM_SETFOCUS, byref(self._notify_id))
 
     def _remove_notify_icon(self):
 
@@ -1043,8 +1044,8 @@ class Win32Implementation(BaseImplementation):
             elif l_param in {self.NIN_BALLOONHIDE, self.NIN_BALLOONTIMEOUT, self.NIN_BALLOONUSERCLICK}:
                 if l_param == self.NIN_BALLOONUSERCLICK and self._click_action is not None:
                     # Notification was clicked, perform action
+                    self._focus_notify_icon()
                     self.application.lookup_action(self._click_action).activate(self._click_action_target)
-                    self._update_notify_icon(focus=True)
                     self._click_action = self._click_action_target = None
 
                 if not config.sections["ui"]["trayicon"]:
