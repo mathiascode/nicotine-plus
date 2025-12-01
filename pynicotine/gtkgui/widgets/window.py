@@ -195,7 +195,25 @@ class Window:
             # Set XDG activation token if provided by tray icon
             self.widget.set_startup_id(self.activation_token)
 
-        self.widget.present()
+        # self.widget.present()
+
+        surface = self.get_surface()
+
+        if surface is None:
+            return
+
+        h_wnd = surface.get_handle()
+
+        if h_wnd is None:
+            return
+
+        from ctypes import windll
+
+        windll.user32.ShowWindow(h_wnd, 9)
+        windll.user32.SetForegroundWindow(h_wnd)
+        #windll.user32.SetActiveWindow(h_wnd)
+        windll.user32.SetFocus(h_wnd)
+        windll.user32.BringWindowToTop(h_wnd)
 
     def hide(self):
         self.widget.set_visible(False)
