@@ -650,6 +650,7 @@ class Win32Implementation(BaseImplementation):
     NIM_ADD = 0
     NIM_MODIFY = 1
     NIM_DELETE = 2
+    NIM_SETFOCUS = 3
 
     NIF_MESSAGE = 1
     NIF_ICON = 2
@@ -885,7 +886,7 @@ class Win32Implementation(BaseImplementation):
             self._h_icon = None
 
     def _update_notify_icon(self, title="", message="", icon_name=None, click_action=None,
-                            click_action_target=None, high_priority=False):
+                            click_action_target=None, high_priority=False, focus=False):
         # pylint: disable=attribute-defined-outside-init,no-member
 
         if self._h_wnd is None:
@@ -913,6 +914,9 @@ class Win32Implementation(BaseImplementation):
                 sz_tip=truncate_string_byte(pynicotine.__application_name__, byte_limit=127)
             )
             notify_action = self.NIM_ADD
+
+        elif focus:
+            notify_action = self.NIM_SETFOCUS
 
         if config.sections["notifications"]["notification_popup_sound"]:
             self._notify_id.dw_info_flags &= ~self.NIIF_NOSOUND
@@ -1040,6 +1044,7 @@ class Win32Implementation(BaseImplementation):
                 if l_param == self.NIN_BALLOONUSERCLICK and self._click_action is not None:
                     # Notification was clicked, perform action
                     self.application.lookup_action(self._click_action).activate(self._click_action_target)
+                    self._update_notify_icon(focus=True)
                     self._click_action = self._click_action_target = None
 
                 if not config.sections["ui"]["trayicon"]:
