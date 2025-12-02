@@ -172,11 +172,6 @@ class Dialog(Window):
             if self.widget.get_titlebar() is None:
                 self.widget.unrealize()
 
-            # Workaround for parent window minimizing when closing dialog
-            # https://gitlab.gnome.org/GNOME/gtk/-/issues/7313
-            if self.parent is not None and self.parent.is_visible():
-                self.parent.present()
-
         return True
 
     def _set_dialog_properties(self):
@@ -187,10 +182,6 @@ class Dialog(Window):
             self.widget.connect("delete-event", self._on_close_request)
 
         self.widget.connect("show", self._on_show)
-
-        # Make all dialogs resizable to fix positioning issue.
-        # Workaround for https://gitlab.gnome.org/GNOME/mutter/-/issues/3099
-        self.widget.set_resizable(True)
 
         if self.parent:
             self.widget.set_transient_for(self.parent.widget)
