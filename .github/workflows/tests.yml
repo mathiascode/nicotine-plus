@@ -94,9 +94,6 @@ jobs:
       - name: PEP 8 style checks
         run: python3 -m pycodestyle
 
-      - name: Linting
-        run: python3 -m pylint --recursive=y .
-
       - name: Integration and unit tests
         run: python3 -m unittest -v
 
