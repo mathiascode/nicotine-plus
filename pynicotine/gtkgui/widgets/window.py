@@ -195,7 +195,15 @@ class Window:
             # Set XDG activation token if provided by tray icon
             self.widget.set_startup_id(self.activation_token)
 
+        is_maximized = sys.platform == "win32" and self.is_maximized()
+
+        if is_maximized:
+            self.unmaximize()
+
         self.widget.present()
+
+        if is_maximized:
+            self.maximize()
 
     def hide(self):
         self.widget.set_visible(False)
