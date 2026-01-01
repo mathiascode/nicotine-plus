@@ -2524,12 +2524,13 @@ class PrivateRoomUsers(ServerMessage):
     room we are in.
     """
 
-    __slots__ = ("room", "numusers", "users")
+    __slots__ = ("room", "numusers", "users", "owner")
 
     def __init__(self):
         self.room = None
         self.numusers = None
         self.users = []
+        self.owner = None
 
     def parse_network_message(self, message):
         pos, self.room = self.unpack_string(message)
@@ -2539,6 +2540,9 @@ class PrivateRoomUsers(ServerMessage):
             pos, user = self.unpack_string(message, pos)
 
             self.users.append(user)
+
+        if message[pos:]:
+            pos, self.owner = self.unpack_string(message, pos)
 
 
 class PrivateRoomAddUser(ServerMessage):
@@ -2626,22 +2630,30 @@ class PrivateRoomDisown(ServerMessage):
         return self.pack_string(self.room)
 
 
-class PrivateRoomSomething(ServerMessage):
+class PrivateRoomTransferOwnership(ServerMessage):
     """Server code 138.
 
     OBSOLETE, no longer used
     """
 
-    __slots__ = ("room",)
+    __slots__ = ("room", "new_owner", "previous_owner")
 
-    def __init__(self, room=None):
+    def __init__(self, room=None, new_owner=None):
         self.room = room
+        self.new_owner = new_owner
+        self.previous_owner = None
 
     def make_network_message(self):
-        return self.pack_string(self.room)
+        msg = bytearray()
+        msg += self.pack_string(self.room)
+        msg += self.pack_string(self.new_owner)
+
+        return msg
 
     def parse_network_message(self, message):
-        _pos, self.room = self.unpack_string(message)
+        pos, self.room = self.unpack_string(message)
+        pos, self.previous_owner = self.unpack_string(message, pos)
+        pos, self.new_owner = self.unpack_string(message, pos)
 
 
 class PrivateRoomAdded(ServerMessage):
@@ -4052,6 +4064,7 @@ NETWORK_MESSAGE_EVENTS = {
     PrivateRoomRemoveUser: "private-room-remove-user",
     PrivateRoomRemoved: "private-room-removed",
     PrivateRoomToggle: "private-room-toggle",
+    PrivateRoomTransferOwnership: "private-room-transfer-ownership",
     PrivateRoomUsers: "private-room-users",
     PrivilegedUsers: "privileged-users",
     QueueUpload: "queue-upload",
@@ -4167,7 +4180,7 @@ SERVER_MESSAGE_CODES = {
     PrivateRoomRemoveUser: 135,
     PrivateRoomCancelMembership: 136,
     PrivateRoomDisown: 137,
-    PrivateRoomSomething: 138,    # Obsolete
+    PrivateRoomTransferOwnership: 138,
     PrivateRoomAdded: 139,
     PrivateRoomRemoved: 140,
     PrivateRoomToggle: 141,

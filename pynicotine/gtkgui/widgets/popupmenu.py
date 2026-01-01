@@ -537,6 +537,10 @@ class UserPopupMenu(PopupMenu):
                 self.add_items(
                     ("#" + _("Add as Operator of %s") % room, self.on_private_room_add_operator, room))
 
+            if is_user_operator or is_user_member:
+                self.add_items(
+                    ("#" + _("Transfer Ownership of %s") % room, self.on_private_room_transfer_ownership, room))
+
             self.add_items(("", None))
 
     def update_model(self):
@@ -575,6 +579,9 @@ class UserPopupMenu(PopupMenu):
 
     def on_private_room_remove_operator(self, _action, _parameter, room):
         core.chatrooms.remove_operator_from_private_room(room, self.username)
+
+    def on_private_room_transfer_ownership(self, _action, _parameter, room):
+        core.chatrooms.transfer_room_ownership(room, self.username)
 
     def on_add_to_list(self, action, state):
 

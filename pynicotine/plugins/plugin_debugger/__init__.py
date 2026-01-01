@@ -145,6 +145,9 @@ class Plugin(BasePlugin):
     def private_room_operator_removed_notification(self, room, user):
         self._trigger_log(f"room={room}, user={user}")
 
+    def private_room_ownership_transferred_notification(self, room, previous_owner, new_owner):
+        self._trigger_log(f"previous_owner={previous_owner}, new_owner={new_owner}")
+
     def user_stats_notification(self, user, stats):
         self._trigger_log(f"user={user}, stats={stats}")
 

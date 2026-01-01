@@ -93,6 +93,7 @@ class ChatRooms(IconNotebook):
             ("private-room-add-user", self.private_room_add_user),
             ("private-room-remove-operator", self.private_room_remove_operator),
             ("private-room-remove-user", self.private_room_remove_user),
+            ("private-room-transfer-ownership", self.private_room_transfer_ownership),
             ("quit", self.quit),
             ("remove-room", self.remove_room),
             ("room-completions", self.update_completions),
@@ -434,6 +435,13 @@ class ChatRooms(IconNotebook):
 
         if page is not None:
             page.private_room_remove_user(msg)
+
+    def private_room_transfer_ownership(self, msg):
+
+        page = self.pages.get(msg.room)
+
+        if page is not None:
+            page.private_room_transfer_ownership(msg)
 
     def ticker_add(self, msg):
 
@@ -1017,6 +1025,25 @@ class ChatRoom:
 
         self.chat_view.update_user_tag(username)
         self.update_user_count()
+
+    def private_room_transfer_ownership(self, msg):
+
+        old_iterator = self.users_list_view.iterators.get(msg.previous_owner)
+        iterator = self.users_list_view.iterators.get(msg.new_owner)
+
+        if old_iterator is not None:
+            self.users_list_view.set_row_values(
+                old_iterator,
+                column_ids=["username_weight_data", "username_underline_data"],
+                values=[Pango.Weight.NORMAL, Pango.Underline.NONE]
+            )
+
+        if iterator is not None:
+            self.users_list_view.set_row_values(
+                iterator,
+                column_ids=["username_weight_data", "username_underline_data"],
+                values=[Pango.Weight.BOLD, Pango.Underline.SINGLE]
+            )
 
     def ticker_add(self, msg):
 

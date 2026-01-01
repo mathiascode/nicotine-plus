@@ -75,6 +75,7 @@ EVENT_NAMES = {
     "private-room-remove-user",
     "private-room-removed",
     "private-room-toggle",
+    "private-room-transfer-ownership",
     "private-room-users",
     "remove-room",
     "room-completions",

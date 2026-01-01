@@ -16,6 +16,7 @@ from pynicotine.slskmessages import PrivateRoomDisown
 from pynicotine.slskmessages import PrivateRoomRemoveOperator
 from pynicotine.slskmessages import PrivateRoomRemoveUser
 from pynicotine.slskmessages import PrivateRoomToggle
+from pynicotine.slskmessages import PrivateRoomTransferOwnership
 from pynicotine.slskmessages import RoomList
 from pynicotine.slskmessages import RoomTickerSet
 from pynicotine.slskmessages import SayChatroom
@@ -73,6 +74,7 @@ class ChatRooms:
             ("private-room-remove-user", self._private_room_remove_user),
             ("private-room-removed", self._private_room_removed),
             ("private-room-toggle", self._private_room_toggle),
+            ("private-room-transfer-ownership", self._private_room_transfer_ownership),
             ("private-room-users", self._private_room_users),
             ("quit", self._quit),
             ("room-list", self._room_list),
@@ -226,6 +228,9 @@ class ChatRooms:
     def remove_operator_from_private_room(self, room, username):
         core.send_message_to_server(PrivateRoomRemoveOperator(room, username))
 
+    def transfer_room_ownership(self, room, username):
+        core.send_message_to_server(PrivateRoomTransferOwnership(room, username))
+
     def is_private_room_owned(self, room):
         private_room = self.private_rooms.get(room)
         return private_room is not None and private_room.owner == core.users.login_username
@@ -342,7 +347,7 @@ class ChatRooms:
     def _private_room_users(self, msg):
         """Server code 133."""
 
-        self._update_private_room(msg.room, members=msg.users)
+        self._update_private_room(msg.room, owner=msg.owner, members=msg.users)
 
     def _private_room_add_user(self, msg):
         """Server code 134."""
@@ -365,6 +370,23 @@ class ChatRooms:
 
         private_room.members.discard(msg.user)
         core.pluginhandler.private_room_member_removed_notification(msg.room, msg.user)
+
+    def _private_room_transfer_ownership(self, msg):
+        """Server code 138."""
+
+        private_room = self.private_rooms.get(msg.room)
+
+        if private_room is None:
+            return
+
+        previous_owner = msg.previous_owner
+        private_room.owner = new_owner = msg.new_owner
+
+        private_room.members.discard(new_owner)
+        private_room.members.add(previous_owner)
+
+        core.pluginhandler.private_room_ownership_transferred_notification(
+            msg.room, previous_owner, new_owner)
 
     def _private_room_added(self, msg):
         """Server code 139."""

@@ -193,6 +193,10 @@ class BasePlugin:
         # Override method in plugin
         pass
 
+    def private_room_ownership_transferred_notification(self, room, previous_owner, new_owner):
+        # Override method in plugin
+        pass
+
     def user_stats_notification(self, user, stats):
         # Override method in plugin
         pass
@@ -1211,6 +1215,9 @@ class PluginHandler:
 
     def private_room_operator_removed_notification(self, room, user):
         self._trigger_event("private_room_operator_removed_notification", (room, user,))
+
+    def private_room_ownership_transferred_notification(self, room, previous_owner, new_owner):
+        self._trigger_event("private_room_ownership_transferred_notification", (room, previous_owner, new_owner,))
 
     def user_stats_notification(self, user, stats):
         self._trigger_event("user_stats_notification", (user, stats))
