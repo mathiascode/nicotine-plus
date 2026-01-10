@@ -4,6 +4,7 @@
 
 import os
 import subprocess
+import sys
 
 
 def install_pacman():
@@ -19,6 +20,7 @@ def install_pacman():
                 f"{prefix}-python-build",
                 f"{prefix}-python-cx-freeze",
                 f"{prefix}-python-gobject",
+                f"{prefix}-python-pip",
                 f"{prefix}-python-pycodestyle",
                 f"{prefix}-python-pylint",
                 f"{prefix}-python-setuptools",
@@ -28,5 +30,14 @@ def install_pacman():
     subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
 
 
+def install_pypi():
+    """Install dependencies from PyPi."""
+
+    subprocess.check_call([
+        sys.executable, "-m", "pip", "install", "--break-system-packages", "python-msilib",
+    ])
+
+
 if __name__ == "__main__":
     install_pacman()
+    install_pypi()

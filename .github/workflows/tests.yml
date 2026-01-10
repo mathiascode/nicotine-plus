@@ -211,6 +211,7 @@ jobs:
             ${{ matrix.prefix }}-python-build
             ${{ matrix.prefix }}-python-cx-freeze
             ${{ matrix.prefix }}-python-gobject
+            ${{ matrix.prefix }}-python-pip
             ${{ matrix.prefix }}-python-pycodestyle
             ${{ matrix.prefix }}-python-pylint
             ${{ matrix.prefix }}-python-setuptools
