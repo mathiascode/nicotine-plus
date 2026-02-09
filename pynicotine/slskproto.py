@@ -82,7 +82,7 @@ from pynicotine.utils import human_speed
 
 class Connection:
     __slots__ = ("sock", "addr", "io_events", "is_established", "in_buffer", "out_buffer",
-                 "last_active", "recv_size")
+                 "last_active", "recv_size", "reading_large_message")
 
     def __init__(self, sock=None, addr=None, io_events=None):
 
@@ -94,6 +94,7 @@ class Connection:
         self.last_active = time.monotonic()
         self.recv_size = 51200
         self.is_established = False
+        self.reading_large_message = False
 
 
 class ServerConnection(Connection):
@@ -336,6 +337,7 @@ class NetworkThread(Thread):
     MAX_INCOMING_MESSAGE_SIZE_LARGE = 469762048  # 448 MiB, to leave headroom for large shares
     MAX_INCOMING_MESSAGE_SIZE_MEDIUM = 16777216  # 16 MiB
     MAX_INCOMING_MESSAGE_SIZE_SMALL = 16384      # 16 KiB
+    TCP_BUFFER_SIZE = 32768                      # 32 KiB, TCP backpressure to prevent message flooding
     ALLOWED_PEER_CONN_TYPES = {
         ConnectionType.PEER,
         ConnectionType.FILE,
@@ -850,6 +852,9 @@ class NetworkThread(Thread):
         username = init.target_user
         conn_type = init.conn_type
 
+        if conn_type != ConnectionType.FILE:
+            conn.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.TCP_BUFFER_SIZE)
+
         log.add_conn("Established outgoing connection of type %s with user %s. List of "
                      "outgoing messages: %s", (conn_type, username, init.outgoing_msgs))
 
@@ -1198,6 +1203,7 @@ class NetworkThread(Thread):
 
         sock.setblocking(False)
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.TCP_BUFFER_SIZE)
 
         # Detect if our connection to the server is still alive
         self._set_server_socket_keepalive(sock)
@@ -1585,6 +1591,9 @@ class NetworkThread(Thread):
             log.add_conn("Indirect connection to user %s with token %s established",
                          (init.target_user, pierce_token))
 
+            if init.conn_type != ConnectionType.FILE:
+                conn.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.TCP_BUFFER_SIZE)
+
             if previous_sock is None or is_direct_conn_in_progress:
                 init.sock = conn.sock
                 log.add_conn("Using as primary connection, since no direct connection is established")
@@ -1608,6 +1617,9 @@ class NetworkThread(Thread):
             if conn_type not in self.ALLOWED_PEER_CONN_TYPES:
                 log.add_conn("Unknown connection type %s", conn_type)
                 return None
+
+            if conn_type != ConnectionType.FILE:
+                conn.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.TCP_BUFFER_SIZE)
 
             init = msg
             self._replace_existing_connection(init)
@@ -1785,6 +1797,10 @@ class NetworkThread(Thread):
             if msg_class is SharedFileListResponse or msg_class is UserInfoResponse:
                 max_msg_size = self.MAX_INCOMING_MESSAGE_SIZE_LARGE
 
+                if not conn.reading_large_message and msg_size_total > self.TCP_BUFFER_SIZE:
+                    conn.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, -1)
+                    conn.reading_large_message = True
+
             if msg_size > max_msg_size:
                 log.add_conn("Received message larger than maximum size %s from user %s. "
                              "Closing connection.", (max_msg_size, conn.init.target_user))
@@ -1803,6 +1819,10 @@ class NetworkThread(Thread):
             if msg_size_total > buffer_len:
                 # Buffer is being filled
                 break
+
+            if conn.reading_large_message:
+                conn.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.TCP_BUFFER_SIZE)
+                conn.reading_large_message = False
 
             # Unpack peer messages
             if msg_class:
