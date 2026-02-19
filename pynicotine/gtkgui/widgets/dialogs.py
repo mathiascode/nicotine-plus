@@ -19,15 +19,16 @@ from pynicotine.gtkgui.widgets.window import Window
 
 class Dialog(Window):
 
-    def __init__(self, parent=None, content_box=None, buttons_start=(), buttons_end=(),
+    def __init__(self, application, content_box=None, buttons_start=(), buttons_end=(),
                  default_button=None, show_callback=None, close_callback=None, title="", width=0, height=0,
-                 modal=True, show_title=True, show_title_buttons=True):
+                 modal=True, resizable=True, show_title=True, show_title_buttons=True):
 
-        self.parent = parent
+        self.application = application
         self.modal = modal
         self.default_width = width
         self.default_height = height
         self.default_button = default_button
+        self.parent = None
 
         self.show_callback = show_callback
         self.close_callback = close_callback
@@ -37,6 +38,7 @@ class Dialog(Window):
             destroy_with_parent=True,
             default_width=width,
             default_height=height,
+            resizable=resizable,
             child=container
         )
         super().__init__(widget)
@@ -147,6 +149,8 @@ class Dialog(Window):
 
     def _on_show(self, *_args):
 
+        self.application.add_window(self.widget)
+
         self._unselect_focus_label()
         self._focus_default_button()
 
@@ -159,6 +163,7 @@ class Dialog(Window):
             return False
 
         Window.active_dialogs.remove(self)
+        self.application.remove_window(self.widget)
 
         if self.close_callback is not None:
             self.close_callback(self)
@@ -187,13 +192,6 @@ class Dialog(Window):
             self.widget.connect("delete-event", self._on_close_request)
 
         self.widget.connect("show", self._on_show)
-
-        # Make all dialogs resizable to fix positioning issue.
-        # Workaround for https://gitlab.gnome.org/GNOME/mutter/-/issues/3099
-        self.widget.set_resizable(True)
-
-        if self.parent:
-            self.widget.set_transient_for(self.parent.widget)
 
     def _resize_dialog(self):
 
@@ -254,10 +252,19 @@ class Dialog(Window):
 
     def present(self):
 
+        self.parent = self.application.window
+
+        for active_dialog in reversed(Window.active_dialogs):
+            if isinstance(active_dialog, Dialog):
+                self.parent = active_dialog
+                break
+
+        self.widget.set_transient_for(self.parent.widget)
+
         if self not in Window.active_dialogs:
             Window.active_dialogs.append(self)
 
-        # Shrink the dialog if it's larger than the main window
+        # Shrink the dialog if it's larger than the parent window
         self._resize_dialog()
 
         # Show dialog after slight delay to work around issue where dialogs don't
@@ -275,20 +282,15 @@ class MessageDialog(Window):
                 self.set_css_name("messagedialog")
                 super().__init__(*args, **kwargs)
 
-    def __init__(self, parent, title, message, callback=None, callback_data=None, long_message=None,
+    def __init__(self, application, title, message, callback=None, callback_data=None, long_message=None,
                  buttons=None, destructive_response_id=None, selectable=False):
 
-        # Prioritize non-message dialogs as parent
-        for active_dialog in reversed(Window.active_dialogs):
-            if isinstance(active_dialog, Dialog):
-                parent = active_dialog
-                break
-
-        self.parent = parent
+        self.application = application
         self.callback = callback
         self.callback_data = callback_data
         self.destructive_response_id = destructive_response_id
         self.container = Gtk.Box(hexpand=True, orientation=Gtk.Orientation.VERTICAL, spacing=6, visible=False)
+        self.parent = None
         self.message_label = None
         self.default_focus_widget = None
 
@@ -315,7 +317,6 @@ class MessageDialog(Window):
 
         widget = window_class(
             destroy_with_parent=True,
-            transient_for=self.parent.widget if self.parent else None,
             title=title,
             resizable=False,
             child=window_child
@@ -454,6 +455,15 @@ class MessageDialog(Window):
 
     def present(self):
 
+        self.parent = self.application.window
+
+        for active_dialog in reversed(Window.active_dialogs):
+            if isinstance(active_dialog, Dialog):
+                self.parent = active_dialog
+                break
+
+        self.widget.set_transient_for(self.parent.widget)
+
         if self not in Window.active_dialogs:
             Window.active_dialogs.append(self)
 
@@ -505,9 +515,10 @@ class OptionDialog(MessageDialog):
 
 class EntryDialog(OptionDialog):
 
-    def __init__(self, *args, default="", use_second_entry=False, second_entry_editable=True,
+    def __init__(self, *args, default="", use_second_entry=False, entry_editable=True, second_entry_editable=True,
                  second_default="", action_button_label=_("_OK"), droplist=None, second_droplist=None,
-                 visibility=True, show_emoji_icon=False, **kwargs):
+                 visibility=True, second_visibility=True, max_length=0, second_max_length=0,
+                 multiline=False, show_emoji_icon=False, **kwargs):
 
         super().__init__(*args, buttons=[
             ("cancel", _("_Cancel")),
@@ -519,23 +530,25 @@ class EntryDialog(OptionDialog):
         self.second_entry_combobox = None
 
         self.entry_combobox = self.default_focus_widget = self._add_entry_combobox(
-            default, activates_default=not use_second_entry, visibility=visibility,
-            show_emoji_icon=show_emoji_icon, droplist=droplist
+            default, has_entry=entry_editable, visibility=visibility,
+            max_length=max_length, multiline=multiline, show_emoji_icon=show_emoji_icon, droplist=droplist
         )
 
         if use_second_entry:
             self.second_entry_combobox = self._add_entry_combobox(
-                second_default, has_entry=second_entry_editable, activates_default=False, visibility=visibility,
-                show_emoji_icon=show_emoji_icon, droplist=second_droplist
+                second_default, has_entry=second_entry_editable,
+                visibility=second_visibility, max_length=second_max_length, show_emoji_icon=show_emoji_icon,
+                multiline=multiline, droplist=second_droplist
             )
 
-    def _add_combobox(self, items, has_entry=True, visibility=True, activates_default=True):
+    def _add_combobox(self, items, has_entry=True, max_length=0, visibility=True):
 
         combobox = ComboBox(container=self.entry_container, has_entry=has_entry, items=items)
 
         if has_entry:
             entry = combobox.entry
-            entry.set_activates_default(activates_default)
+            entry.set_activates_default(True)
+            entry.set_max_length(max_length)
             entry.set_width_chars(45)
             entry.set_visibility(visibility)
 
@@ -545,33 +558,48 @@ class EntryDialog(OptionDialog):
         self.container.set_visible(True)
         return combobox
 
-    def _add_entry(self, visibility=True, show_emoji_icon=False, activates_default=True):
+    def _add_entry(self, visibility=True, max_length=0, multiline=False, show_emoji_icon=False):
 
         if GTK_API_VERSION >= 4 and not visibility:
-            entry = Gtk.PasswordEntry(
-                activates_default=activates_default, show_peek_icon=True,
-                width_chars=50, visible=True
+            entry = child = mnemonic_widget = Gtk.PasswordEntry(
+                activates_default=True, show_peek_icon=True, width_chars=50, visible=True
             )
             text_widget = next(iter(entry))
             text_widget.set_truncate_multiline(True)
+
+        elif multiline:
+            box = Gtk.Box(visible=True)
+            child = Gtk.Frame(child=box, visible=True)
+            scrolled_window = Gtk.ScrolledWindow(hexpand=True, height_request=100, width_request=450, visible=True)
+
+            if GTK_API_VERSION >= 4:
+                box.append(scrolled_window)  # pylint: disable=no-member
+            else:
+                box.add(scrolled_window)     # pylint: disable=no-member
+
+            entry = TextView(scrolled_window)
+            mnemonic_widget = entry.widget
+
+            Accelerator("Return", entry.widget, self.on_activate_default_accelerator)
+
         else:
-            entry = Gtk.Entry(
-                activates_default=activates_default, visibility=visibility, show_emoji_icon=show_emoji_icon,
-                truncate_multiline=(not visibility), width_chars=50, visible=True)
+            entry = child = mnemonic_widget = Gtk.Entry(
+                activates_default=True, visibility=visibility, show_emoji_icon=show_emoji_icon,
+                truncate_multiline=(not visibility), max_length=max_length, width_chars=50, visible=True)
 
         if GTK_API_VERSION >= 4:
-            self.entry_container.append(entry)  # pylint: disable=no-member
+            self.entry_container.append(child)  # pylint: disable=no-member
         else:
-            self.entry_container.add(entry)     # pylint: disable=no-member
+            self.entry_container.add(child)     # pylint: disable=no-member
 
         if self.entry_combobox is None:
-            self.message_label.set_mnemonic_widget(entry)
+            self.message_label.set_mnemonic_widget(mnemonic_widget)
 
         self.container.set_visible(True)
         return entry
 
-    def _add_entry_combobox(self, default, activates_default=True, has_entry=True, visibility=True,
-                            show_emoji_icon=False, droplist=None):
+    def _add_entry_combobox(self, default, has_entry=True, visibility=True,
+                            max_length=0, multiline=False, show_emoji_icon=False, droplist=None):
 
         if self.entry_container is None:
             self.entry_container = Gtk.Box(hexpand=True, orientation=Gtk.Orientation.VERTICAL, spacing=12, visible=True)
@@ -584,12 +612,13 @@ class EntryDialog(OptionDialog):
 
         if not has_entry or droplist:
             entry_combobox = self._add_combobox(
-                droplist, has_entry=has_entry, activates_default=activates_default, visibility=visibility)
+                droplist, has_entry=has_entry, max_length=max_length, visibility=visibility)
         else:
             entry_combobox = self._add_entry(
-                activates_default=activates_default, visibility=visibility, show_emoji_icon=show_emoji_icon)
+                visibility=visibility, max_length=max_length, multiline=multiline, show_emoji_icon=show_emoji_icon)
 
         entry_combobox.set_text(default)
+
         return entry_combobox
 
     def get_entry_value(self):
@@ -597,7 +626,14 @@ class EntryDialog(OptionDialog):
 
     def get_second_entry_value(self):
 
-        if self.second_entry_combobox is not None:
-            return self.second_entry_combobox.get_text()
+        if self.second_entry_combobox is None:
+            return None
 
-        return None
+        return self.second_entry_combobox.get_text()
+
+    def on_activate_default_accelerator(self, *_args):
+        """Enter - activate default widget."""
+
+        widget = self.widget.get_default_widget()
+        widget.activate()
+        return True

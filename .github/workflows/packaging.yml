@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install dependencies
         run: |
@@ -32,7 +32,7 @@ jobs:
           cp -Lr ../nicotine_* build/package/
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: debian-package
           path: build/package/
@@ -53,7 +53,7 @@ jobs:
       options: --privileged
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Validate manifest
         run: flatpak-builder-lint --exceptions manifest build-aux/flatpak/org.nicotine_plus.Nicotine.json
@@ -72,7 +72,7 @@ jobs:
           verbose: true
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: flatpak-${{ matrix.arch }}-package
           path: org.nicotine_plus.Nicotine-${{ matrix.arch }}.flatpak
@@ -89,7 +89,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Snap package
         uses: snapcore/action-build@v1
@@ -99,7 +99,7 @@ jobs:
         run: sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: snap-${{ matrix.arch }}-package
           path: ${{ steps.build-snap.outputs.snap }}
@@ -125,7 +125,7 @@ jobs:
         shell: msys2 {0}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup msys2
         uses: msys2/setup-msys2@v2
@@ -152,16 +152,21 @@ jobs:
       - name: Freeze application
         run: python3 build-aux/windows/setup.py bdist_msi
 
+      - name: Make package portable
+        run: |
+          mkdir build-aux/windows/build/package/Nicotine+/portable/
+          cp build-aux/windows/readme-portable.txt build-aux/windows/build/package/Nicotine+/portable/README.txt
+
       - name: Archive installer artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-${{ matrix.arch }}-installer
           path: build-aux/windows/build/*.msi
 
-      - name: Archive package artifacts
-        uses: actions/upload-artifact@v4
+      - name: Archive portable artifacts
+        uses: actions/upload-artifact@v6
         with:
-          name: windows-${{ matrix.arch }}-package
+          name: windows-${{ matrix.arch }}-portable
           path: build-aux/windows/build/package
 
   macos:
@@ -176,7 +181,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Create Python virtual environment
         run: |
@@ -191,7 +196,7 @@ jobs:
         run: venv/bin/python3 build-aux/macos/setup.py bdist_dmg
 
       - name: Archive installer artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: macos-${{ matrix.arch }}-installer
           path: build-aux/macos/build/*.dmg

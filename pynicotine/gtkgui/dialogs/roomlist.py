@@ -12,6 +12,8 @@ from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.dialogs import Dialog
+from pynicotine.gtkgui.widgets.dialogs import EntryDialog
+from pynicotine.gtkgui.widgets.dialogs import OptionDialog
 from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.treeview import TreeView
 from pynicotine.utils import humanize
@@ -25,21 +27,21 @@ class RoomList(Dialog):
 
         (
             self.container,
+            self.create_room_button,
             self.list_container,
-            self.private_room_toggle,
             self.public_feed_toggle,
-            self.refresh_button,
+            self.room_invitations_toggle,
             self.search_entry
         ) = ui.load(scope=self, path="dialogs/roomlist.ui")
 
         super().__init__(
-            parent=application.window,
+            application=application,
             content_box=self.container,
             title=_("All Rooms"),
             width=500,
-            height=625
+            height=625,
+            resizable=False
         )
-        application.add_window(self.widget)
 
         self.list_view = TreeView(
             application.window, parent=self.list_container,
@@ -52,7 +54,8 @@ class RoomList(Dialog):
                     "width": 260,
                     "expand_column": True,
                     "text_underline_column": "room_underline_data",
-                    "text_weight_column": "room_weight_data"
+                    "text_weight_column": "room_weight_data",
+                    "tooltip_callback": self.on_room_tooltip
                 },
                 "users": {
                     "column_type": "number",
@@ -72,14 +75,14 @@ class RoomList(Dialog):
         self.popup_room = None
         self.popup_menu = PopupMenu(application, self.list_view.widget, self.on_popup_menu)
         self.popup_menu.add_items(
-            ("=" + _("Join Room"), self.on_popup_join),
-            ("=" + _("Leave Room"), self.on_popup_leave),
+            ("=" + _("_Join Room"), self.on_popup_join),
+            ("=" + _("_Leave Room"), self.on_popup_leave),
             ("", None),
-            ("=" + _("Disown Private Room"), self.on_popup_private_room_disown),
-            ("=" + _("Cancel Room Membership"), self.on_popup_private_room_cancel_membership)
+            ("=" + _("Delete Private Room…"), self.on_popup_delete_private_room),
+            ("=" + _("Cancel Room Membership"), self.on_popup_cancel_room_membership)
         )
 
-        for toggle in (self.public_feed_toggle, self.private_room_toggle):
+        for toggle in (self.public_feed_toggle, self.room_invitations_toggle):
             parent = next(iter(toggle.get_parent()))
 
             if GTK_API_VERSION >= 4:
@@ -91,17 +94,20 @@ class RoomList(Dialog):
 
             parent.gesture_click.connect("released", self.on_toggle_label_pressed, toggle)
 
-        self.private_room_toggle.set_active(config.sections["server"]["private_chatrooms"])
-        self.private_room_toggle.connect("notify::active", self.on_toggle_accept_private_room)
+        self.room_invitations_toggle.set_active(config.sections["server"]["private_chatrooms"])
+        self.room_invitations_toggle.connect("notify::active", self.on_toggle_room_invitations)
 
         Accelerator("<Primary>f", self.widget, self.on_search_accelerator)
+        Accelerator("Down", self.search_entry, self.on_focus_list_view_accelerator)
 
         for event_name, callback in (
             ("join-room", self.join_room),
-            ("private-room-added", self.private_room_added),
+            ("room-membership-granted", self.room_membership_granted),
+            ("room-membership-revoked", self.room_membership_revoked),
             ("remove-room", self.remove_room),
             ("room-list", self.room_list),
-            ("server-disconnect", self.clear),
+            ("server-disconnect", self.server_disconnect),
+            ("server-login", self.server_login),
             ("show-room", self.show_room),
             ("user-joined-room", self.user_joined_room),
             ("user-left-room", self.user_left_room)
@@ -110,8 +116,8 @@ class RoomList(Dialog):
 
     def destroy(self):
 
-        self.list_view.destroy()
         self.popup_menu.destroy()
+        self.list_view.destroy()
 
         super().destroy()
 
@@ -122,10 +128,10 @@ class RoomList(Dialog):
 
         return None
 
-    def toggle_accept_private_room(self, active):
-        self.private_room_toggle.set_active(active)
+    def toggle_room_invitations(self, active):
+        self.room_invitations_toggle.set_active(active)
 
-    def add_room(self, room, user_count=0, is_private=False, is_owned=False):
+    def add_room(self, room, user_count=0, is_private=False, is_owner=False):
 
         h_user_count = humanize(user_count)
 
@@ -134,7 +140,7 @@ class RoomList(Dialog):
             user_count += self.PRIVATE_USERS_OFFSET
 
         text_weight = Pango.Weight.BOLD if is_private else Pango.Weight.NORMAL
-        text_underline = Pango.Underline.SINGLE if is_owned else Pango.Underline.NONE
+        text_underline = Pango.Underline.SINGLE if is_owner else Pango.Underline.NONE
 
         self.list_view.add_row([
             room,
@@ -182,8 +188,15 @@ class RoomList(Dialog):
         self.list_view.clear()
         self.list_container.set_visible(False)
 
-    def private_room_added(self, msg):
+    def room_membership_granted(self, msg):
         self.add_room(msg.room, is_private=True)
+
+    def room_membership_revoked(self, msg):
+
+        iterator = self.list_view.iterators.get(msg.room)
+
+        if iterator is not None:
+            self.list_view.remove_row(iterator)
 
     def join_room(self, msg):
 
@@ -197,7 +210,7 @@ class RoomList(Dialog):
         if room not in self.list_view.iterators:
             self.add_room(
                 room, user_count, is_private=msg.private,
-                is_owned=(msg.owner == core.users.login_username)
+                is_owner=(msg.owner == core.users.login_username)
             )
 
         self.update_room_user_count(room, user_count=user_count)
@@ -226,16 +239,38 @@ class RoomList(Dialog):
         self.list_view.freeze()
         self.clear()
 
-        for room, user_count in msg.ownedprivaterooms:
-            self.add_room(room, user_count, is_private=True, is_owned=True)
+        for room, user_count in msg.rooms_owner:
+            self.add_room(room, user_count, is_private=True, is_owner=True)
 
-        for room, user_count in msg.otherprivaterooms:
+        for room, user_count in msg.rooms_member:
             self.add_room(room, user_count, is_private=True)
 
         for room, user_count in msg.rooms:
             self.add_room(room, user_count)
 
         self.list_view.unfreeze()
+
+    def server_login(self, *_args):
+        self.create_room_button.set_sensitive(True)
+
+    def server_disconnect(self, *_args):
+        self.create_room_button.set_sensitive(False)
+        self.clear()
+
+    def on_room_tooltip(self, treeview, iterator):
+
+        room = treeview.get_row_value(iterator, "room")
+        room_underline = treeview.get_row_value(iterator, "room_underline_data")
+
+        if room_underline != Pango.Underline.NONE:
+            return _("%(room)s (%(role)s)") % {"room": room, "role": _("Room Owner")}
+
+        room_weight = treeview.get_row_value(iterator, "room_weight_data")
+
+        if room_weight != Pango.Weight.NORMAL:
+            return _("%(room)s (%(role)s)") % {"room": room, "role": _("Room Member")}
+
+        return room
 
     def on_row_activated(self, *_args):
 
@@ -250,14 +285,14 @@ class RoomList(Dialog):
         room = self.get_selected_room()
         self.popup_room = room
 
-        is_private_room_owned = core.chatrooms.is_private_room_owned(room)
-        is_private_room_member = core.chatrooms.is_private_room_member(room)
+        is_owner = core.chatrooms.is_room_owner(room)
+        is_member = core.chatrooms.is_room_member(room)
 
-        menu.actions[_("Join Room")].set_enabled(room not in core.chatrooms.joined_rooms)
-        menu.actions[_("Leave Room")].set_enabled(room in core.chatrooms.joined_rooms)
+        menu.actions[_("_Join Room")].set_enabled(room not in core.chatrooms.joined_rooms)
+        menu.actions[_("_Leave Room")].set_enabled(room in core.chatrooms.joined_rooms)
 
-        menu.actions[_("Disown Private Room")].set_enabled(is_private_room_owned)
-        menu.actions[_("Cancel Room Membership")].set_enabled(is_private_room_member and not is_private_room_owned)
+        menu.actions[_("Delete Private Room…")].set_enabled(is_owner)
+        menu.actions[_("Cancel Room Membership")].set_enabled(is_member and not is_owner)
 
     def on_popup_join(self, *_args):
         core.chatrooms.show_room(self.popup_room)
@@ -279,24 +314,95 @@ class RoomList(Dialog):
 
         core.chatrooms.remove_room(global_room_name)
 
-    def on_popup_private_room_disown(self, *_args):
-        core.chatrooms.request_private_room_disown(self.popup_room)
+    def on_popup_delete_private_room_response(self, _dialog, _response_id, room):
+        core.chatrooms.request_cancel_room_ownership(room)
 
-    def on_popup_private_room_cancel_membership(self, *_args):
-        core.chatrooms.request_private_room_cancel_membership(self.popup_room)
+    def on_popup_delete_private_room(self, *_args):
+
+        OptionDialog(
+            application=self.application,
+            title=_("Delete Private Room?"),
+            message=_("Do you really want to permanently delete your private room %s?") % self.popup_room,
+            buttons=[
+                ("cancel", _("_Cancel")),
+                ("ok", _("Delete"))
+            ],
+            destructive_response_id="ok",
+            callback=self.on_popup_delete_private_room_response,
+            callback_data=self.popup_room
+        ).present()
+
+    def on_popup_cancel_room_membership(self, *_args):
+        core.chatrooms.request_cancel_room_membership(self.popup_room)
 
     def on_popup_leave(self, *_args):
         core.chatrooms.remove_room(self.popup_room)
 
+    def on_create_room_response(self, dialog, _response_id, _data):
+
+        room = dialog.get_entry_value().strip()
+        private = dialog.get_option_value()
+
+        if not room:
+            return
+
+        if core.chatrooms.sanitize_room_name(room) != room:
+            self.on_create_room(
+                room=room, private=private,
+                error=_("Room names can only contain letters (A-Z), numbers, and a single "
+                        "space between characters.")
+            )
+            return
+
+        if private and room not in core.chatrooms.private_rooms and room in core.chatrooms.server_rooms:
+            self.on_create_room(
+                room=room, private=private,
+                error=_("Room %s is already registered as public.") % room
+            )
+            return
+
+        core.chatrooms.show_room(room, private)
+        self.close()
+
+    def on_create_room(self, *_args, room="", private=False, error=None):
+
+        message = ""
+
+        if error:
+            message += error + "\n\n"
+
+        message += _("Enter the name of the chat room you want to create:")
+
+        EntryDialog(
+            application=self.application,
+            title=_("Create New Room"),
+            message=message,
+            default=room,
+            max_length=core.chatrooms.ROOM_NAME_MAX_LENGTH,
+            action_button_label=_("Cre_ate"),
+            option_label=_("Make room private"),
+            option_value=private,
+            callback=self.on_create_room_response
+        ).present()
+
     def on_refresh(self, *_args):
         core.chatrooms.request_room_list()
 
-    def on_toggle_accept_private_room(self, *_args):
-        active = config.sections["server"]["private_chatrooms"] = self.private_room_toggle.get_active()
-        core.chatrooms.request_private_room_toggle(active)
+    def on_toggle_room_invitations(self, *_args):
+        active = config.sections["server"]["private_chatrooms"] = self.room_invitations_toggle.get_active()
+        core.chatrooms.request_enable_room_invitations(active)
 
     def on_search_accelerator(self, *_args):
         """Ctrl+F - Search rooms."""
 
         self.search_entry.grab_focus()
+        return True
+
+    def on_focus_list_view_accelerator(self, *_args):
+        """Down - Focus list view."""
+
+        if not self.list_container.get_visible():
+            return False
+
+        self.list_view.grab_focus()
         return True

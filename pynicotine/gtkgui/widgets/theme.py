@@ -28,11 +28,13 @@ from pynicotine.utils import encode_path
 
 CUSTOM_CSS_PROVIDER = Gtk.CssProvider()
 GTK_SETTINGS = Gtk.Settings.get_default()
-USE_COLOR_SCHEME_PORTAL = (sys.platform not in {"win32", "darwin"} and not LIBADWAITA_API_VERSION)
+use_color_scheme_portal = (  # pylint: disable=invalid-name
+    sys.platform not in {"win32", "darwin"} and not LIBADWAITA_API_VERSION
+)
 
-if USE_COLOR_SCHEME_PORTAL:
+if use_color_scheme_portal:
     # GNOME 42+ system-wide dark mode for GTK without libadwaita
-    SETTINGS_PORTAL = None
+    settings_portal = None  # pylint: disable=invalid-name
 
     class ColorScheme:
         NO_PREFERENCE = 0
@@ -44,7 +46,7 @@ if USE_COLOR_SCHEME_PORTAL:
         color_scheme = None
 
         try:
-            result = SETTINGS_PORTAL.call_sync(
+            result = settings_portal.call_sync(
                 method_name="Read",
                 parameters=GLib.Variant.new_tuple(
                     GLib.Variant.new_string("org.freedesktop.appearance"),
@@ -75,7 +77,7 @@ if USE_COLOR_SCHEME_PORTAL:
         set_dark_mode(color_scheme == ColorScheme.PREFER_DARK)
 
     try:
-        SETTINGS_PORTAL = Gio.DBusProxy.new_for_bus_sync(
+        settings_portal = Gio.DBusProxy.new_for_bus_sync(
             bus_type=Gio.BusType.SESSION,
             flags=0,
             info=None,
@@ -84,24 +86,45 @@ if USE_COLOR_SCHEME_PORTAL:
             interface_name="org.freedesktop.portal.Settings",
             cancellable=None
         )
-        SETTINGS_PORTAL.connect("g-signal", on_color_scheme_changed)
+        settings_portal.connect("g-signal", on_color_scheme_changed)
 
     except Exception as portal_error:
         log.add_debug("Cannot start color scheme settings portal, falling back to GTK theme preference: %s",
                       portal_error)
-        USE_COLOR_SCHEME_PORTAL = False
+        use_color_scheme_portal = False  # pylint: disable=invalid-name
+else:
+    def read_color_scheme():
+        return None
+
+if LIBADWAITA_API_VERSION:
+    from gi.repository import Adw  # pylint: disable=no-name-in-module,ungrouped-imports
+
+    if sys.platform == "win32":
+        def on_dark_mode_win32(style_manager, *_args):
+
+            from ctypes import windll
+
+            default = 0
+            force_dark = 2
+
+            windll.uxtheme.SetPreferredAppMode = windll.uxtheme[135]
+            windll.uxtheme.FlushMenuThemes = windll.uxtheme[136]
+
+            # Make tray icon and window titlebar menus follow dark mode
+            windll.uxtheme.SetPreferredAppMode(force_dark if style_manager.get_dark() else default)
+            windll.uxtheme.FlushMenuThemes()
+
+        Adw.StyleManager.get_default().connect("notify::dark", on_dark_mode_win32)
 
 
 def set_dark_mode(enabled):
 
     if LIBADWAITA_API_VERSION:
-        from gi.repository import Adw  # pylint: disable=no-name-in-module
-
         color_scheme = Adw.ColorScheme.FORCE_DARK if enabled else Adw.ColorScheme.DEFAULT
         Adw.StyleManager.get_default().set_color_scheme(color_scheme)
         return
 
-    if USE_COLOR_SCHEME_PORTAL and not enabled:
+    if use_color_scheme_portal and not enabled:
         color_scheme = read_color_scheme()
 
         if color_scheme is not None:
@@ -224,6 +247,10 @@ else:
     ICON_THEME = Gtk.IconTheme.get_default()  # pylint: disable=no-member
 
 CUSTOM_ICON_THEME_NAME = ".nicotine-icon-theme"
+FILE_STATUS_ICON_LABELS = {
+    "changes-prevent-symbolic": _("Private"),
+    "folder-download-symbolic": _("Downloading")
+}
 FILE_TYPE_ICON_LABELS = {
     "application-x-executable-symbolic": _("Executable"),
     "folder-music-symbolic": _("Audio"),
@@ -234,8 +261,12 @@ FILE_TYPE_ICON_LABELS = {
     "x-office-document-symbolic": _("Document"),
     "emblem-documents-symbolic": _("Text")
 }
-PRIVATE_ICON_LABELS = {
-    "changes-prevent-symbolic": _("Private")
+SHARED_FOLDER_ICON_LABELS = {
+    "dialog-warning-symbolic": _("Unreadable Folder")
+}
+FILTERED_ICON_LABELS = {
+    "reserved": _("Default Filters Active"),
+    "edit-find-replace-symbolic": _("Custom Filters Active")
 }
 USER_STATUS_ICON_LABELS = {
     "nplus-status-available": _("Online"),

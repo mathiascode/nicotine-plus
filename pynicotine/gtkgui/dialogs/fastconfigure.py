@@ -8,12 +8,14 @@ from gi.repository import Gtk
 import pynicotine
 from pynicotine.config import config
 from pynicotine.core import core
+from pynicotine.events import events
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.filechooser import FileChooserButton
 from pynicotine.gtkgui.widgets.filechooser import FolderChooser
 from pynicotine.gtkgui.widgets.dialogs import Dialog
 from pynicotine.gtkgui.widgets.dialogs import EntryDialog
+from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.treeview import TreeView
 from pynicotine.slskmessages import UserStatus
 
@@ -23,13 +25,14 @@ class FastConfigure(Dialog):
     def __init__(self, application):
 
         self.invalid_password = False
+        self.invalid_username = False
         self.rescan_required = False
         self.finished = False
 
         (
             self.account_page,
             self.download_folder_container,
-            self.invalid_password_label,
+            self.invalid_username_password_label,
             self.listen_port_entry,
             self.main_icon,
             self.next_button,
@@ -50,7 +53,7 @@ class FastConfigure(Dialog):
         self.pages = [self.welcome_page, self.account_page, self.port_page, self.share_page, self.summary_page]
 
         super().__init__(
-            parent=application.window,
+            application=application,
             content_box=self.stack,
             buttons_start=(self.previous_button,),
             buttons_end=(self.next_button,),
@@ -60,6 +63,7 @@ class FastConfigure(Dialog):
             title=_("Setup Assistant"),
             width=720,
             height=450,
+            resizable=False,
             show_title=False
         )
 
@@ -70,7 +74,7 @@ class FastConfigure(Dialog):
         self.username_entry.set_max_length(core.users.USERNAME_MAX_LENGTH)
 
         self.download_folder_button = FileChooserButton(
-            self.download_folder_container, window=self, chooser_type="folder",
+            self.download_folder_container, application=self.application, chooser_type="folder",
             selected_function=self.on_download_folder_selected,
             show_open_external_button=not application.isolated_mode
         )
@@ -96,10 +100,20 @@ class FastConfigure(Dialog):
             }
         )
 
+        self.shares_popup_menu = PopupMenu(application, self.shares_list_view.widget)
+        self.shares_popup_menu.add_items(
+            ("#" + _("_Edit…"), self.on_edit_shared_folder),
+            ("", None),
+            ("#" + _("Remove"), self.on_remove_shared_folder)
+        )
+
         self.reset_completeness()
+
+        events.connect("shares-ready", self._shares_ready)
 
     def destroy(self):
 
+        self.shares_popup_menu.destroy()
         self.download_folder_button.destroy()
         self.shares_list_view.destroy()
 
@@ -114,8 +128,9 @@ class FastConfigure(Dialog):
             or (page == self.account_page and self.username_entry.get_text() and self.password_entry.get_text())
             or (page == self.share_page and self.download_folder_button.get_path())
         )
-        self.finished = (page == self.account_page if self.invalid_password else page == self.summary_page)
-        previous_label = _("_Cancel") if self.invalid_password else _("_Previous")
+        change_account = self.invalid_password or self.invalid_username
+        self.finished = (page == self.account_page if change_account else page == self.summary_page)
+        previous_label = _("_Cancel") if change_account else _("_Previous")
         next_label = _("_Finish") if self.finished else _("_Next")
         show_buttons = (page != self.welcome_page)
 
@@ -161,7 +176,7 @@ class FastConfigure(Dialog):
     def on_add_shared_folder(self, *_args):
 
         FolderChooser(
-            parent=self,
+            application=self.application,
             title=_("Add a Shared Folder"),
             callback=self.on_add_shared_folder_selected,
             select_multiple=True
@@ -194,7 +209,7 @@ class FastConfigure(Dialog):
             folder_path = self.shares_list_view.get_row_value(iterator, "folder")
 
             EntryDialog(
-                parent=self,
+                application=self.application,
                 title=_("Edit Shared Folder"),
                 message=_("Enter new virtual name for '%(dir)s':") % {"dir": folder_path},
                 default=virtual_name,
@@ -243,7 +258,7 @@ class FastConfigure(Dialog):
 
     def on_previous(self, *_args):
 
-        if self.invalid_password:
+        if self.invalid_password or self.invalid_username:
             self.close()
             return
 
@@ -265,37 +280,45 @@ class FastConfigure(Dialog):
         config.sections["server"]["portrange"] = (listen_port, listen_port)
 
         # account_page
-        if self.invalid_password or config.need_config():
-            config.sections["server"]["login"] = self.username_entry.get_text()
-            config.sections["server"]["passw"] = self.password_entry.get_text()
+        if self.invalid_password or self.invalid_username or config.need_config():
+            core.users.log_in_as(self.username_entry.get_text(), self.password_entry.get_text())
 
-        if core.users.login_status == UserStatus.OFFLINE:
+        elif core.users.login_status == UserStatus.OFFLINE:
             core.connect()
 
         self.close()
 
     def on_close(self, *_args):
         self.invalid_password = False
-        self.rescan_required = False
+        self.invalid_username = False
+
+    def _shares_ready(self, successful):
+        self.rescan_required = (not successful)
 
     def on_show(self, *_args):
 
         transition_type = self.stack.get_transition_type()
         self.stack.set_transition_type(Gtk.StackTransitionType.NONE)
 
-        self.account_page.set_visible(self.invalid_password or config.need_config())
-        self.stack.set_visible_child(self.account_page if self.invalid_password else self.welcome_page)
+        change_account = self.invalid_password or self.invalid_username
+        self.account_page.set_visible(change_account or config.need_config())
+        self.stack.set_visible_child(self.account_page if change_account else self.welcome_page)
 
         self.stack.set_transition_type(transition_type)
         self.on_page_change()
 
         # account_page
         if self.invalid_password:
-            self.invalid_password_label.set_label(
-                _("User %s already exists, and the password you entered is invalid. Please choose another username "
-                  "if this is your first time logging in.") % config.sections["server"]["login"])
+            self.invalid_username_password_label.set_label(
+                _("User %s already exists, and the password you entered is invalid. Please choose a different "
+                  "username if this is your first time logging in.") % config.sections["server"]["login"])
 
-        self.invalid_password_label.set_visible(self.invalid_password)
+        elif self.invalid_username:
+            self.invalid_username_password_label.set_label(
+                _("Username %s is invalid, please choose a different one. Usernames can only contain letters "
+                  "(A-Z), numbers and spaces.") % config.sections["server"]["login"])
+
+        self.invalid_username_password_label.set_visible(change_account)
 
         self.username_entry.set_text(config.sections["server"]["login"])
         self.password_entry.set_text(config.sections["server"]["passw"])

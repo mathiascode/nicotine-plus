@@ -1,11 +1,11 @@
-# SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
+# SPDX-FileCopyrightText: 2020-2026 Nicotine+ Contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 __application_name__ = "Nicotine+"
 __application_id__ = "org.nicotine_plus.Nicotine"
 __version__ = "3.4.0.dev1"
 __author__ = "Nicotine+ Team"
-__copyright__ = """© 2004–2025 Nicotine+ Contributors
+__copyright__ = """© 2004–2026 Nicotine+ Contributors
 © 2003–2004 Nicotine Contributors
 © 2001–2003 PySoulSeek Contributors"""
 __website_url__ = "https://nicotine-plus.org"
@@ -45,8 +45,8 @@ def check_arguments():
         help=_("use non-default configuration file")
     )
     parser.add_argument(
-        "-u", "--user-data", metavar=_("dir"),
-        help=_("alternative directory for user data and plugins")
+        "-u", "--user-data", metavar=_("folder"),
+        help=_("alternative folder for user data and plugins")
     )
     parser.add_argument(
         "-s", "--hidden", action="store_true",
@@ -93,6 +93,7 @@ def check_arguments():
 
     core.cli_interface_address = args.bindip
     core.cli_listen_port = args.port
+    core.cli_rescanning = args.rescan
 
     return args.headless, args.hidden, args.ci_mode, args.isolated, args.rescan, multi_instance
 
@@ -171,6 +172,7 @@ def rename_process(new_name, debug_info=False):
 def rescan_shares():
 
     exit_code = 0
+    core.start()
 
     if not core.shares.rescan_shares(use_thread=False):
         log.add("--------------------------------------------------")
@@ -196,7 +198,7 @@ def run():
         return 1
 
     core.init_components(
-        enabled_components={"cli", "shares"} if rescan else None,
+        enabled_components={"signal_handler", "cli", "shares"} if rescan else None,
         isolated_mode=isolated_mode
     )
 

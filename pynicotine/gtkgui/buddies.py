@@ -80,7 +80,8 @@ class Buddies:
                     "column_type": "number",
                     "title": _("Files"),
                     "width": 150,
-                    "sort_column": "files_data"
+                    "sort_column": "files_data",
+                    "tooltip_callback": self.on_files_tooltip
                 },
                 "trusted": {
                     "column_type": "toggle",
@@ -103,8 +104,9 @@ class Buddies:
                 "last_seen": {
                     "column_type": "text",
                     "title": _("Last Seen"),
-                    "width": 225,
-                    "sort_column": "last_seen_data"
+                    "width": 240,
+                    "sort_column": "last_seen_data",
+                    "tabular": True
                 },
                 "comments": {
                     "column_type": "text",
@@ -115,6 +117,7 @@ class Buddies:
                 # Hidden data columns
                 "speed_data": {"data_type": GObject.TYPE_UINT},
                 "files_data": {"data_type": GObject.TYPE_UINT},
+                "folders_data": {"data_type": GObject.TYPE_UINT},
                 "last_seen_data": {"data_type": GObject.TYPE_UINT64}
             }
         )
@@ -257,6 +260,16 @@ class Buddies:
 
         return None
 
+    def on_files_tooltip(self, treeview, iterator):
+
+        num_files = treeview.get_row_value(iterator, "files_data")
+        num_folders = treeview.get_row_value(iterator, "folders_data")
+
+        return (
+            _("Files: %(num_files)s") % {"num_files": humanize(num_files)} + "\n"
+            + _("Folders: %(num_folders)s") % {"num_folders": humanize(num_folders)}
+        )
+
     def on_row_activated(self, _list_view, _iterator, column_id):
 
         user = self.get_selected_username()
@@ -298,6 +311,7 @@ class Buddies:
 
         speed = msg.avgspeed or 0
         num_files = msg.files or 0
+        num_folders = msg.dirs or 0
         h_num_files = humanize(num_files)
         column_ids = []
         column_values = []
@@ -311,6 +325,10 @@ class Buddies:
         if h_num_files != self.list_view.get_row_value(iterator, "files"):
             column_ids.extend(("files", "files_data"))
             column_values.extend((h_num_files, num_files))
+
+        if num_folders != self.list_view.get_row_value(iterator, "folders_data"):
+            column_ids.append("folders_data")
+            column_values.append(num_folders)
 
         if column_ids:
             self.list_view.set_row_values(iterator, column_ids, column_values)
@@ -328,9 +346,11 @@ class Buddies:
         if stats is not None:
             speed = stats.upload_speed or 0
             files = stats.files
+            folders = stats.folders
         else:
             speed = 0
             files = None
+            folders = None
 
         h_speed = human_speed(speed) if speed > 0 else ""
         h_files = humanize(files) if files is not None else ""
@@ -360,6 +380,7 @@ class Buddies:
             str(user_data.note),
             speed,
             files or 0,
+            folders or 0,
             last_seen
         ], select_row=select_row)
 
@@ -491,7 +512,7 @@ class Buddies:
         if iterator is None:
             return
 
-        note = dialog.get_entry_value()
+        note = dialog.get_entry_value().strip()
 
         if note is None:
             return
@@ -509,7 +530,7 @@ class Buddies:
         note = self.list_view.get_row_value(iterator, "comments") or ""
 
         EntryDialog(
-            parent=self.window,
+            application=self.window.application,
             title=_("Add User Note"),
             message=_("Add a note about user %s:") % user,
             action_button_label=_("_Add"),

@@ -11,7 +11,11 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
 from pynicotine.logfacility import log
-from pynicotine.slskmessages import CloseConnection
+from pynicotine.slskmessages import AddAllowedResponse
+from pynicotine.slskmessages import ConnectionType
+from pynicotine.slskmessages import FileAttribute
+from pynicotine.slskmessages import FileAttributes
+from pynicotine.slskmessages import RemoveAllowedResponse
 from pynicotine.slskmessages import SharedFileListRequest
 from pynicotine.slskmessages import SharedFileListResponse
 from pynicotine.slskmessages import UploadQueueNotification
@@ -49,9 +53,10 @@ class UserBrowse:
         self.users = {}
 
         for event_name, callback in (
+            ("peer-connection-closed", self._peer_connection_error),
+            ("peer-connection-error", self._peer_connection_error),
             ("quit", self._quit),
             ("server-login", self._server_login),
-            ("shared-file-list-progress", self._shared_file_list_progress),
             ("shared-file-list-response", self._shared_file_list_response)
         ):
             events.connect(event_name, callback)
@@ -86,6 +91,7 @@ class UserBrowse:
     def remove_user(self, username):
 
         del self.users[username]
+        core.send_message_to_network_thread(RemoveAllowedResponse(SharedFileListResponse, username))
         core.users.unwatch_user(username, context="userbrowse")
         events.emit("user-browse-remove-user", username)
 
@@ -121,14 +127,13 @@ class UserBrowse:
                 current_permission_level = permission_level
 
             msg = core.shares.compressed_shares.get(current_permission_level)
-            Thread(
-                target=self._parse_local_shares, args=(username, msg), name="LocalShareParser", daemon=True
-            ).start()
+            Thread(target=self._parse_local_shares, args=(username, msg), name="LocalShareParser").start()
 
         self._show_user(username, path=path, new_request=new_request, switch_page=switch_page)
         core.users.watch_user(username, context="userbrowse")
 
     def request_user_shares(self, username):
+        core.send_message_to_network_thread(AddAllowedResponse(SharedFileListResponse, username))
         core.send_message_to_peer(username, SharedFileListRequest())
 
     def browse_user(self, username, path=None, new_request=False, switch_page=True):
@@ -166,8 +171,8 @@ class UserBrowse:
                 os.makedirs(shares_folder_encoded)
 
         except Exception as error:
-            log.add(_("Can't create directory '%(folder)s', reported error: %(error)s"),
-                    {"folder": shares_folder, "error": error})
+            log.add(_("Cannot create folder %(path)s: %(error)s"),
+                    {"path": shares_folder, "error": error})
             return None
 
         return shares_folder
@@ -204,7 +209,12 @@ class UserBrowse:
                 with open(file_path_encoded, encoding="utf-8") as file_handle:
                     shares_list = json.load(file_handle)
 
-            ext = ""
+            bitrate_key = str(FileAttribute.BITRATE)
+            length_key = str(FileAttribute.LENGTH)
+            vbr_key = str(FileAttribute.VBR)
+            sample_rate_key = str(FileAttribute.SAMPLE_RATE)
+            bit_depth_key = str(FileAttribute.BIT_DEPTH)
+            ext = None
 
             for _folder_path, files in shares_list:
                 # Sanitization
@@ -215,15 +225,48 @@ class UserBrowse:
                     if not isinstance(file_info[2], int):
                         raise TypeError("Invalid file size")
 
-                    attrs = file_info[4]
+                    attributes = file_info[4]
 
-                    if isinstance(attrs, dict):
-                        # JSON stores file attribute types as strings, convert them back to integers
-                        attrs = {int(k): v for k, v in attrs.items()}
+                    if isinstance(attributes, dict):
+                        bitrate = attributes.get(bitrate_key)
+                        length = attributes.get(length_key)
+                        vbr = attributes.get(vbr_key)
+                        sample_rate = attributes.get(sample_rate_key)
+                        bit_depth = attributes.get(bit_depth_key)
                     else:
-                        attrs = list(attrs)
+                        # Legacy attribute list format used for shares lists saved in Nicotine+ 3.2.2 and earlier
+                        bitrate = length = vbr = sample_rate = bit_depth = None
+
+                        if len(attributes) == 3:
+                            attribute1, attribute2, attribute3 = attributes
+
+                            if attribute3 in {0, 1}:
+                                bitrate = attribute1
+                                length = attribute2
+                                vbr = attribute3
+
+                            elif attribute3 > 1:
+                                length = attribute1
+                                sample_rate = attribute2
+                                bit_depth = attribute3
+
+                        elif len(attributes) == 2:
+                            attribute1, attribute2 = attributes
+
+                            if attribute2 in {0, 1}:
+                                bitrate = attribute1
+                                vbr = attribute2
+
+                            elif attribute1 >= 8000 and attribute2 <= 64:
+                                sample_rate = attribute1
+                                bit_depth = attribute2
+
+                            else:
+                                bitrate = attribute1
+                                length = attribute2
 
                     file_info[3] = ext
+                    file_info[4] = FileAttributes(bitrate, length, vbr, sample_rate, bit_depth)
 
         except Exception as error:
             log.add(_("Loading Shares from disk failed: %(error)s"), {"error": error})
@@ -256,7 +299,9 @@ class UserBrowse:
 
             with open(encode_path(file_path), "w", encoding="utf-8") as file_handle:
                 # Dump every folder to the file individually to avoid large memory usage
-                json_encoder = json.JSONEncoder(check_circular=False, ensure_ascii=False)
+                json_encoder = json.JSONEncoder(
+                    check_circular=False, ensure_ascii=False, default=lambda attributes: attributes.as_dict()
+                )
                 is_first_item = True
 
                 file_handle.write("[")
@@ -276,7 +321,7 @@ class UserBrowse:
                     {"user": username, "dir": folder_path})
 
         except Exception as error:
-            log.add(_("Can't save shares, '%(user)s', reported error: %(error)s"), {"user": username, "error": error})
+            log.add(_("Cannot save shares for user %(user)s: %(error)s"), {"user": username, "error": error})
 
     def download_file(self, username, folder_path, file_data, download_folder_path=None):
 
@@ -377,12 +422,20 @@ class UserBrowse:
 
         self.browse_user(username, path=file_path)
 
-    def _shared_file_list_progress(self, username, sock, _buffer_len, _msg_size_total):
+    def _peer_connection_error(self, username, conn_type, msgs, **_unused):
 
-        if username not in self.users:
-            # We've removed the user. Close the connection to stop the user from
-            # sending their response and wasting bandwidth.
-            core.send_message_to_network_thread(CloseConnection(sock))
+        if not msgs:
+            return
+
+        if conn_type != ConnectionType.PEER:
+            return
+
+        failed_msg_types = {SharedFileListRequest, SharedFileListResponse}
+
+        for msg in msgs:
+            if msg.__class__ in failed_msg_types:
+                core.send_message_to_network_thread(RemoveAllowedResponse(SharedFileListResponse, username))
+                break
 
     def _shared_file_list_response(self, msg):
 
@@ -404,6 +457,8 @@ class UserBrowse:
             browsed_user.num_folders = num_folders
             browsed_user.num_files = num_files
             browsed_user.shared_size = shared_size
+
+        core.send_message_to_network_thread(RemoveAllowedResponse(SharedFileListResponse, username))
 
         core.pluginhandler.user_stats_notification(username, stats={
             "avgspeed": None,

@@ -185,29 +185,32 @@
  - Maite Guix (2022)
 
 ### Chinese (Simplified)
+ - Poesty Li (2026)
  - Ys413 (2024)
  - Bonislaw (2023)
  - hylau (2023)
  - hadwin (2022)
 
 ### Czech
- - slrslr (2024–2025)
+ - slrslr (2024–2026)
  - burnmail123 (2021–2023)
 
 ### Danish
+ - Denisa Alicia Rissa (2026)
  - mathsped (2003–2004)
 
 ### Dutch
- - Toine Rademacher (toineenzo) (2023–2024)
- - Han Boetes (hboetes) (2021–2024)
+ - Han Boetes (hboetes) (2021–2026)
+ - Toine Rademacher (toineenzo) (2023–2025)
+ - Jan Wesselink (wesselaar) (2025)
  - Kenny Verstraete (2009)
  - nince78 (2007)
  - Ingmar K. Steen (Hyriand) (2003–2004)
 
 ### English
- - slook (2021–2024)
- - Han Boetes (hboetes) (2021–2024)
- - Mat (mathiascode) (2020–2024)
+ - Mat (mathiascode) (2020–2026)
+ - Han Boetes (hboetes) (2021–2026)
+ - slook (2021–2026)
  - Michael Labouebe (gfarmerfr) (2016)
  - daelstorm (2004–2009)
  - Ingmar K. Steen (Hyriand) (2003–2004)
@@ -216,7 +219,7 @@
  - phlostically (2021)
 
 ### Estonian
- - rimasx (2024)
+ - rimasx (2024-2026)
  - PriitUring (2023)
 
 ### Euskara
@@ -226,11 +229,11 @@
  - Kari Viittanen (Kalevi) (2006–2007)
 
 ### French
+ - Mohamed El Morabity (melmorabity) (2021–2024)
  - Saumon (2023)
  - subu_versus (2023)
  - zniavre (2007–2023)
  - Maxime Leroy (Lisapple) (2021–2022)
- - Mohamed El Morabity (melmorabity) (2021–2024)
  - m-balthazar (2020)
  - Michael Labouebe (gfarmerfr) (2016–2017)
  - Monsieur Poisson (2009–2010)
@@ -239,7 +242,8 @@
  - Julien Wajsberg (flashfr) (2003–2004)
 
 ### German
- - Han Boetes (hboetes) (2021–2024)
+ - Felix Hansen (Felix00xileF) (2025-2026)
+ - Han Boetes (hboetes) (2021–2026)
  - phelissimo_ (2023)
  - Meokater (2007)
  - (._.) (2007)
@@ -247,9 +251,12 @@
  - Ingmar K. Steen (Hyriand) (2003–2004)
 
 ### Hungarian
- - Szia Tomi (2022–2024)
+ - Szia Tomi (2022–2026)
  - Nils (2009)
  - David Balazs (djbaloo) (2006–2020)
+
+### Indonesian
+ - Delly Store (dellystore.07) (2025)
 
 ### Italian
  - Gabriele (Gabboxl) (2022–2023)
@@ -259,7 +266,7 @@
  - dbazza (2003–2004)
 
 ### Latvian
- - Pagal3 (2022–2025)
+ - Pagal3 (2022–2026)
 
 ### Lithuanian
  - mantas (2020)
@@ -269,13 +276,14 @@
  - Allan Nordhøy (comradekingu) (2021)
 
 ### Polish
+ - Matthaiks (Kityn) (2025-2026)
  - Mariusz (mariachini) (2017–2024)
  - Amun-Ra (2007)
  - thine (2007)
  - Wojciech Owczarek (owczi) (2003–2004)
 
 ### Portuguese (Brazil)
- - Havokdan (2022–2024)
+ - Havokdan (2022–2026)
  - Guilherme Santos (2022)
  - b1llso (2022)
  - Nicolas Abril (2021)
@@ -290,7 +298,7 @@
  - Slendi (xslendix) (2023)
 
 ### Russian
- - Kirill Feoktistov (SnIPeRSnIPeR) (2022–2024)
+ - Kirill Feoktistov (SnIPeRSnIPeR) (2022–2026)
  - Mehavoid (2021–2023)
  - AHOHNMYC (2022)
 
@@ -298,16 +306,17 @@
  - Jozef Říha (2006–2008)
 
 ### Spanish (Chile)
- - MELERIX (2021–2023)
+ - MELERIX (2021–2025)
  - tagomago (2021–2022)
  - Strange (2021)
  - Silvio Orta (2007)
  - Dreslo (2003–2004)
 
 ### Spanish (Spain)
+ - Lucas Vieites (2026)
+ - tagomago (2021–2025)
  - gallegonovato (2023–2024)
  - MELERIX (2021–2023)
- - tagomago (2021–2022)
  - Strange (2021)
  - Silvio Orta (2007)
  - Dreslo (2003–2004)
@@ -317,13 +326,16 @@
  - Markus Magnuson (alimony) (2003–2004)
 
 ### Tamil
- - தமிழ்நேரம் (2025)
+ - தமிழ்நேரம் (2025-2025)
+
+### Toki Pona
+ - Hannah Nosurname (jmejuniper) (2025)
 
 ### Turkish
- - Oğuz Ersen (2021–2024)
+ - Oğuz Ersen (2021–2026)
 
 ### Ukrainian
- - Oleg Gritsun (2024–2025)
+ - Олег Грицун (oleg.gritsun) (2024–2025)
  - uniss2209 (2022)
 
 
@@ -367,11 +379,14 @@
  - daelstorm
  - David Balazs
  - dbazza
+ - Delly Store
+ - Denisa Alicia Rissa
  - Dreslo
  - dtalens
  - Elias Groß
  - Emily
  - Enr1X
+ - Eric Zhang
  - Eryk Michalak
  - Everly
  - Felipe Nogaroto Gonzalez
@@ -388,10 +403,12 @@
  - Gustavo J. A. M. Carneiro
  - hadwin
  - Han Boetes
+ - Hannah Nosurname
  - Havokdan
  - hednod
  - Héliaz
  - homedirectory
+ - HUMET
  - hylau
  - ian andrew remsen
  - Ilya
@@ -400,6 +417,7 @@
  - INMCM
  - Inso-m-niaC
  - Jackson Baber
+ - Jan Wesselink
  - Jason Green
  - jat
  - Jean-Baptiste ALLAIN
@@ -458,6 +476,7 @@
  - ms-afk
  - Mutnick
  - mzf-guest
+ - n6id
  - Nachtalb
  - Nguyen Tuan Khoi
  - nicola

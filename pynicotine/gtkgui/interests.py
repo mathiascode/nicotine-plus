@@ -140,12 +140,14 @@ class Interests:
                     "column_type": "number",
                     "title": _("Files"),
                     "sort_column": "files_data",
-                    "expand_column": True
+                    "expand_column": True,
+                    "tooltip_callback": self.on_files_tooltip
                 },
 
                 # Hidden data columns
                 "speed_data": {"data_type": GObject.TYPE_UINT},
                 "files_data": {"data_type": GObject.TYPE_UINT},
+                "folders_data": {"data_type": GObject.TYPE_UINT},
                 "rating_data": {
                     "data_type": GObject.TYPE_UINT,
                     "default_sort_type": "descending"
@@ -282,12 +284,13 @@ class Interests:
 
     def show_recommendations(self, always_global=False):
 
-        self.recommendations_label.set_label(_("Recommendations"))
         self.similar_users_label.set_label(_("Similar Users"))
 
         if always_global or (not self.likes_list_view.iterators and not self.dislikes_list_view.iterators):
+            self.recommendations_label.set_label(_("Popular Interests"))
             core.interests.request_global_recommendations()
         else:
+            self.recommendations_label.set_label(_("Recommendations"))
             core.interests.request_recommendations()
 
         core.interests.request_similar_users()
@@ -422,10 +425,14 @@ class Interests:
     def on_refresh_recommendations(self, *_args):
         self.show_recommendations()
 
-    def set_recommendations(self, recommendations, unrecommendations, item=None):
+    def set_recommendations(self, recommendations, unrecommendations, item=None, is_global=False):
 
-        if item:
-            self.recommendations_label.set_label(_("Recommendations (%s)") % item)
+        if is_global:
+            self.recommendations_label.set_label(_("Popular Interests"))
+
+        elif item:
+            self.recommendations_label.set_label(_("Recommendations for %(item)s") % {"item": item})
+
         else:
             self.recommendations_label.set_label(_("Recommendations"))
 
@@ -451,7 +458,7 @@ class Interests:
             widget.unfreeze()
 
     def global_recommendations(self, msg):
-        self.set_recommendations(msg.recommendations, msg.unrecommendations)
+        self.set_recommendations(msg.recommendations, msg.unrecommendations, is_global=True)
 
     def recommendations(self, msg):
 
@@ -468,25 +475,28 @@ class Interests:
     def set_similar_users(self, users, item=None):
 
         if item:
-            self.similar_users_label.set_label(_("Similar Users (%s)") % item)
+            self.similar_users_label.set_label(_("Users who like %(item)s") % {"item": item})
         else:
             self.similar_users_label.set_label(_("Similar Users"))
 
         self.similar_users_list_view.clear()
         self.similar_users_list_view.freeze()
 
-        for index, (user, rating) in enumerate(reversed(list(users.items()))):
-            status = core.users.statuses.get(user, UserStatus.OFFLINE)
-            country_code = core.users.countries.get(user, "")
-            stats = core.users.watched.get(user)
-            rating = index + (1000 * rating)  # Preserve default sort order
+        for index, similar_user in enumerate(reversed(users)):
+            username = similar_user.username
+            status = core.users.statuses.get(username, UserStatus.OFFLINE)
+            country_code = core.users.countries.get(username, "")
+            stats = core.users.watched.get(username)
+            rating = index + (1000 * (similar_user.rating or 0))  # Preserve default sort order
 
             if stats is not None:
                 speed = stats.upload_speed or 0
                 files = stats.files or 0
+                folders = stats.folders or 0
             else:
                 speed = 0
                 files = 0
+                folders = 0
 
             h_speed = human_speed(speed) if speed > 0 else ""
             h_files = humanize(files)
@@ -494,11 +504,12 @@ class Interests:
             self.similar_users_list_view.add_row([
                 USER_STATUS_ICON_NAMES[status],
                 get_flag_icon_name(country_code),
-                user,
+                username,
                 h_speed,
                 h_files,
                 speed,
                 files,
+                folders,
                 rating
             ], select_row=False)
 
@@ -508,8 +519,7 @@ class Interests:
         self.set_similar_users(msg.users)
 
     def item_similar_users(self, msg):
-        rating = 0
-        self.set_similar_users({user: rating for user in msg.users}, msg.thing)
+        self.set_similar_users(msg.users, msg.thing)
 
     def user_country(self, user, country_code):
 
@@ -544,6 +554,7 @@ class Interests:
 
         speed = msg.avgspeed or 0
         num_files = msg.files or 0
+        num_folders = msg.dirs or 0
         column_ids = []
         column_values = []
 
@@ -558,6 +569,10 @@ class Interests:
 
             column_ids.extend(("files", "files_data"))
             column_values.extend((h_num_files, num_files))
+
+        if num_folders != self.similar_users_list_view.get_row_value(iterator, "folders_data"):
+            column_ids.append("folders_data")
+            column_values.append(num_folders)
 
         if column_ids:
             self.similar_users_list_view.set_row_values(iterator, column_ids, column_values)
@@ -581,6 +596,16 @@ class Interests:
 
     def on_r_row_activated(self, *_args):
         self.show_item_recommendations(self.recommendations_list_view, column_id="item")
+
+    def on_files_tooltip(self, treeview, iterator):
+
+        num_files = treeview.get_row_value(iterator, "files_data")
+        num_folders = treeview.get_row_value(iterator, "folders_data")
+
+        return (
+            _("Files: %(num_files)s") % {"num_files": humanize(num_files)} + "\n"
+            + _("Folders: %(num_folders)s") % {"num_folders": humanize(num_folders)}
+        )
 
     def on_popup_ru_menu(self, menu, *_args):
 

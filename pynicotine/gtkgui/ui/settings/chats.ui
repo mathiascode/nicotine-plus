@@ -22,6 +22,476 @@
     <property name="step-increment">1</property>
     <property name="upper">10</property>
   </object>
+  <object class="GtkBox" id="mentions_page">
+    <property name="orientation">vertical</property>
+    <property name="spacing">12</property>
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkBox">
+        <property name="margin-start">3</property>
+        <property name="spacing">12</property>
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="height-request">24</property>
+            <property name="hexpand">True</property>
+            <property name="label" translatable="yes">Watch for keyword mentions in messages</property>
+            <property name="mnemonic-widget">watch_keywords_toggle</property>
+            <property name="visible">True</property>
+            <property name="wrap">True</property>
+            <property name="wrap-mode">word-char</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSwitch" id="watch_keywords_toggle">
+            <property name="valign">center</property>
+            <property name="visible">True</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkFrame">
+        <property name="margin-top">6</property>
+        <property name="vexpand">True</property>
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="sensitive" bind-source="watch_keywords_toggle" bind-property="active" bind-flags="bidirectional|sync-create"/>
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkScrolledWindow" id="keyword_list_container">
+                <property name="height-request">300</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="visible">True</property>
+                <style>
+                  <class name="border-bottom"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="margin-bottom">6</property>
+                <property name="margin-end">6</property>
+                <property name="margin-start">6</property>
+                <property name="margin-top">6</property>
+                <property name="spacing">6</property>
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkButton" id="_add_keyword_button">
+                    <property name="tooltip-text" translatable="yes">Add…</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_add_keyword"/>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">list-add-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label" translatable="yes">_Add…</property>
+                            <property name="mnemonic-widget">_add_keyword_button</property>
+                            <property name="use-underline">True</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="_edit_keyword_button">
+                    <property name="tooltip-text" translatable="yes">Edit…</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_edit_keyword"/>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">document-edit-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label" translatable="yes">_Edit…</property>
+                            <property name="mnemonic-widget">_edit_keyword_button</property>
+                            <property name="use-underline">True</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="_remove_keyword_button">
+                    <property name="tooltip-text" translatable="yes">Remove</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_remove_keyword"/>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">list-remove-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label" translatable="yes">Remove</property>
+                            <property name="mnemonic-widget">_remove_keyword_button</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkBox" id="auto_replace_page">
+    <property name="orientation">vertical</property>
+    <property name="spacing">12</property>
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkBox">
+        <property name="margin-start">3</property>
+        <property name="spacing">12</property>
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="height-request">24</property>
+            <property name="hexpand">True</property>
+            <property name="label" translatable="yes">Substitute text patterns when sending messages</property>
+            <property name="mnemonic-widget">auto_replace_words_toggle</property>
+            <property name="visible">True</property>
+            <property name="wrap">True</property>
+            <property name="wrap-mode">word-char</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSwitch" id="auto_replace_words_toggle">
+            <property name="valign">center</property>
+            <property name="visible">True</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkFrame">
+        <property name="margin-top">6</property>
+        <property name="vexpand">True</property>
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="sensitive" bind-source="auto_replace_words_toggle" bind-property="active" bind-flags="bidirectional|sync-create"/>
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkScrolledWindow" id="replacement_list_container">
+                <property name="height-request">300</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="visible">True</property>
+                <style>
+                  <class name="border-bottom"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="margin-bottom">6</property>
+                <property name="margin-end">6</property>
+                <property name="margin-start">6</property>
+                <property name="margin-top">6</property>
+                <property name="spacing">6</property>
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkButton" id="_add_replacement_button">
+                    <property name="tooltip-text" translatable="yes">Add…</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_add_replacement"/>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">list-add-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label" translatable="yes">_Add…</property>
+                            <property name="mnemonic-widget">_add_replacement_button</property>
+                            <property name="use-underline">True</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="_edit_replacement_button">
+                    <property name="tooltip-text" translatable="yes">Edit…</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_edit_replacement"/>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">document-edit-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label" translatable="yes">_Edit…</property>
+                            <property name="mnemonic-widget">_edit_replacement_button</property>
+                            <property name="use-underline">True</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="_remove_replacement_button">
+                    <property name="tooltip-text" translatable="yes">Remove</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_remove_replacement"/>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">list-remove-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label" translatable="yes">Remove</property>
+                            <property name="mnemonic-widget">_remove_replacement_button</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkBox" id="censor_page">
+    <property name="orientation">vertical</property>
+    <property name="spacing">12</property>
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkBox">
+        <property name="margin-start">3</property>
+        <property name="spacing">12</property>
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="height-request">24</property>
+            <property name="hexpand">True</property>
+            <property name="label" translatable="yes">Censor text patterns in incoming messages</property>
+            <property name="mnemonic-widget">censor_text_patterns_toggle</property>
+            <property name="visible">True</property>
+            <property name="wrap">True</property>
+            <property name="wrap-mode">word-char</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSwitch" id="censor_text_patterns_toggle">
+            <property name="valign">center</property>
+            <property name="visible">True</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkFrame">
+        <property name="margin-top">6</property>
+        <property name="vexpand">True</property>
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="sensitive" bind-source="censor_text_patterns_toggle" bind-property="active" bind-flags="bidirectional|sync-create"/>
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkScrolledWindow" id="censor_list_container">
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="visible">True</property>
+                <style>
+                  <class name="border-bottom"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="margin-bottom">6</property>
+                <property name="margin-end">6</property>
+                <property name="margin-start">6</property>
+                <property name="margin-top">6</property>
+                <property name="spacing">6</property>
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkButton" id="_add_censored_button">
+                    <property name="tooltip-text" translatable="yes">Add…</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_add_censored"/>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">list-add-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label" translatable="yes">_Add…</property>
+                            <property name="mnemonic-widget">_add_censored_button</property>
+                            <property name="use-underline">True</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="_edit_censored_button">
+                    <property name="tooltip-text" translatable="yes">_Edit…</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_edit_censored"/>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">document-edit-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label" translatable="yes">Edit…</property>
+                            <property name="mnemonic-widget">_edit_censored_button</property>
+                            <property name="use-underline">True</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="_remove_censored_button">
+                    <property name="tooltip-text" translatable="yes">Remove</property>
+                    <property name="visible">True</property>
+                    <signal name="clicked" handler="on_remove_censored"/>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">list-remove-symbolic</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="ellipsize">end</property>
+                            <property name="label" translatable="yes">Remove</property>
+                            <property name="mnemonic-widget">_remove_censored_button</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkBox" id="container">
     <property name="orientation">vertical</property>
     <property name="spacing">6</property>
@@ -52,9 +522,8 @@
               <object class="GtkLabel">
                 <property name="height-request">24</property>
                 <property name="hexpand">True</property>
-                <property name="label" translatable="yes">_Accept private room invitations</property>
-                <property name="mnemonic-widget">private_room_toggle</property>
-                <property name="use-underline">True</property>
+                <property name="label" translatable="yes">Accept private room invitations</property>
+                <property name="mnemonic-widget">room_invitations_toggle</property>
                 <property name="visible">True</property>
                 <property name="wrap">True</property>
                 <property name="wrap-mode">word-char</property>
@@ -62,7 +531,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkSwitch" id="private_room_toggle">
+              <object class="GtkSwitch" id="room_invitations_toggle">
                 <property name="valign">center</property>
                 <property name="visible">True</property>
               </object>
@@ -481,380 +950,30 @@
       </object>
     </child>
     <child>
-      <object class="GtkFlowBox">
-        <property name="column-spacing">18</property>
-        <property name="homogeneous">True</property>
-        <property name="margin-top">24</property>
-        <property name="max-children-per-line">2</property>
-        <property name="row-spacing">24</property>
-        <property name="selection-mode">none</property>
-        <property name="vexpand">True</property>
+      <object class="GtkBox">
+        <property name="margin-top">6</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">14</property>
         <property name="visible">True</property>
         <child>
-          <object class="GtkFlowBoxChild">
-            <property name="can-focus">False</property>
+          <object class="GtkScrolledWindow">
             <property name="visible">True</property>
+            <property name="vscrollbar-policy">never</property>
             <child>
-              <object class="GtkBox">
-                <property name="orientation">vertical</property>
-                <property name="spacing">12</property>
+              <object class="GtkStackSwitcher">
+                <property name="halign">start</property>
+                <property name="stack">stack</property>
                 <property name="visible">True</property>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">vertical</property>
-                    <property name="spacing">12</property>
-                    <property name="visible">True</property>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="halign">start</property>
-                        <property name="label" translatable="yes">Censor</property>
-                        <property name="selectable">True</property>
-                        <property name="visible">True</property>
-                        <property name="wrap">True</property>
-                        <property name="xalign">0</property>
-                        <style>
-                          <class name="heading"/>
-                        </style>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="spacing">12</property>
-                        <property name="visible">True</property>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="height-request">24</property>
-                            <property name="hexpand">True</property>
-                            <property name="label" translatable="yes">Enable censoring of text patterns</property>
-                            <property name="mnemonic-widget">censor_text_patterns_toggle</property>
-                            <property name="visible">True</property>
-                            <property name="wrap">True</property>
-                            <property name="wrap-mode">word-char</property>
-                            <property name="xalign">0</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkSwitch" id="censor_text_patterns_toggle">
-                            <property name="valign">center</property>
-                            <property name="visible">True</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkFrame">
-                    <property name="margin-top">6</property>
-                    <property name="vexpand">True</property>
-                    <property name="visible">True</property>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="orientation">vertical</property>
-                        <property name="visible">True</property>
-                        <child>
-                          <object class="GtkScrolledWindow" id="censor_list_container">
-                            <property name="hexpand">True</property>
-                            <property name="vexpand">True</property>
-                            <property name="visible">True</property>
-                            <style>
-                              <class name="border-bottom"/>
-                            </style>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkBox">
-                            <property name="margin-bottom">6</property>
-                            <property name="margin-end">6</property>
-                            <property name="margin-start">6</property>
-                            <property name="margin-top">6</property>
-                            <property name="spacing">6</property>
-                            <property name="visible">True</property>
-                            <child>
-                              <object class="GtkButton" id="_add_censored_button">
-                                <property name="tooltip-text" translatable="yes">Add…</property>
-                                <property name="visible">True</property>
-                                <signal name="clicked" handler="on_add_censored"/>
-                                <child>
-                                  <object class="GtkBox">
-                                    <property name="spacing">6</property>
-                                    <property name="visible">True</property>
-                                    <child>
-                                      <object class="GtkImage">
-                                        <property name="icon-name">list-add-symbolic</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="ellipsize">end</property>
-                                        <property name="label" translatable="yes">Add…</property>
-                                        <property name="mnemonic-widget">_add_censored_button</property>
-                                        <property name="use-underline">True</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <style>
-                                  <class name="flat"/>
-                                </style>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="_edit_censored_button">
-                                <property name="tooltip-text" translatable="yes">Edit…</property>
-                                <property name="visible">True</property>
-                                <signal name="clicked" handler="on_edit_censored"/>
-                                <child>
-                                  <object class="GtkBox">
-                                    <property name="spacing">6</property>
-                                    <property name="visible">True</property>
-                                    <child>
-                                      <object class="GtkImage">
-                                        <property name="icon-name">document-edit-symbolic</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="ellipsize">end</property>
-                                        <property name="label" translatable="yes">Edit…</property>
-                                        <property name="mnemonic-widget">_edit_censored_button</property>
-                                        <property name="use-underline">True</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <style>
-                                  <class name="flat"/>
-                                </style>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="_remove_censored_button">
-                                <property name="tooltip-text" translatable="yes">Remove</property>
-                                <property name="visible">True</property>
-                                <signal name="clicked" handler="on_remove_censored"/>
-                                <child>
-                                  <object class="GtkBox">
-                                    <property name="spacing">6</property>
-                                    <property name="visible">True</property>
-                                    <child>
-                                      <object class="GtkImage">
-                                        <property name="icon-name">list-remove-symbolic</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="ellipsize">end</property>
-                                        <property name="label" translatable="yes">Remove</property>
-                                        <property name="mnemonic-widget">_remove_censored_button</property>
-                                        <property name="use-underline">True</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <style>
-                                  <class name="flat"/>
-                                </style>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
+                <style>
+                  <class name="heading"/>
+                </style>
               </object>
             </child>
           </object>
         </child>
         <child>
-          <object class="GtkFlowBoxChild">
-            <property name="can-focus">False</property>
+          <object class="GtkStack" id="stack">
             <property name="visible">True</property>
-            <child>
-              <object class="GtkBox">
-                <property name="orientation">vertical</property>
-                <property name="spacing">12</property>
-                <property name="visible">True</property>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">vertical</property>
-                    <property name="spacing">12</property>
-                    <property name="visible">True</property>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="halign">start</property>
-                        <property name="label" translatable="yes">Auto-Replace</property>
-                        <property name="selectable">True</property>
-                        <property name="visible">True</property>
-                        <property name="wrap">True</property>
-                        <property name="xalign">0</property>
-                        <style>
-                          <class name="heading"/>
-                        </style>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="spacing">12</property>
-                        <property name="visible">True</property>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="height-request">24</property>
-                            <property name="hexpand">True</property>
-                            <property name="label" translatable="yes">Enable automatic replacement of words</property>
-                            <property name="mnemonic-widget">auto_replace_words_toggle</property>
-                            <property name="visible">True</property>
-                            <property name="wrap">True</property>
-                            <property name="wrap-mode">word-char</property>
-                            <property name="xalign">0</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkSwitch" id="auto_replace_words_toggle">
-                            <property name="valign">center</property>
-                            <property name="visible">True</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkFrame">
-                    <property name="margin-top">6</property>
-                    <property name="vexpand">True</property>
-                    <property name="visible">True</property>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="orientation">vertical</property>
-                        <property name="visible">True</property>
-                        <child>
-                          <object class="GtkScrolledWindow" id="replacement_list_container">
-                            <property name="height-request">300</property>
-                            <property name="hexpand">True</property>
-                            <property name="vexpand">True</property>
-                            <property name="visible">True</property>
-                            <style>
-                              <class name="border-bottom"/>
-                            </style>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkBox">
-                            <property name="margin-bottom">6</property>
-                            <property name="margin-end">6</property>
-                            <property name="margin-start">6</property>
-                            <property name="margin-top">6</property>
-                            <property name="spacing">6</property>
-                            <property name="visible">True</property>
-                            <child>
-                              <object class="GtkButton" id="_add_replacement_button">
-                                <property name="tooltip-text" translatable="yes">Add…</property>
-                                <property name="visible">True</property>
-                                <signal name="clicked" handler="on_add_replacement"/>
-                                <child>
-                                  <object class="GtkBox">
-                                    <property name="spacing">6</property>
-                                    <property name="visible">True</property>
-                                    <child>
-                                      <object class="GtkImage">
-                                        <property name="icon-name">list-add-symbolic</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="ellipsize">end</property>
-                                        <property name="label" translatable="yes">Add…</property>
-                                        <property name="mnemonic-widget">_add_replacement_button</property>
-                                        <property name="use-underline">True</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <style>
-                                  <class name="flat"/>
-                                </style>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="_edit_replacement_button">
-                                <property name="tooltip-text" translatable="yes">Edit…</property>
-                                <property name="visible">True</property>
-                                <signal name="clicked" handler="on_edit_replacement"/>
-                                <child>
-                                  <object class="GtkBox">
-                                    <property name="spacing">6</property>
-                                    <property name="visible">True</property>
-                                    <child>
-                                      <object class="GtkImage">
-                                        <property name="icon-name">document-edit-symbolic</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="ellipsize">end</property>
-                                        <property name="label" translatable="yes">Edit…</property>
-                                        <property name="mnemonic-widget">_edit_replacement_button</property>
-                                        <property name="use-underline">True</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <style>
-                                  <class name="flat"/>
-                                </style>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="_remove_replacement_button">
-                                <property name="tooltip-text" translatable="yes">Remove</property>
-                                <property name="visible">True</property>
-                                <signal name="clicked" handler="on_remove_replacement"/>
-                                <child>
-                                  <object class="GtkBox">
-                                    <property name="spacing">6</property>
-                                    <property name="visible">True</property>
-                                    <child>
-                                      <object class="GtkImage">
-                                        <property name="icon-name">list-remove-symbolic</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="ellipsize">end</property>
-                                        <property name="label" translatable="yes">Remove</property>
-                                        <property name="mnemonic-widget">_remove_replacement_button</property>
-                                        <property name="use-underline">True</property>
-                                        <property name="visible">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <style>
-                                  <class name="flat"/>
-                                </style>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
           </object>
         </child>
       </object>

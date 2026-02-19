@@ -14,6 +14,9 @@ from pynicotine.events import events
 from pynicotine.gtkgui.widgets import ui
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
 from pynicotine.gtkgui.widgets.dialogs import Dialog
+from pynicotine.gtkgui.widgets.dialogs import EntryDialog
+from pynicotine.gtkgui.widgets.dialogs import OptionDialog
+from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.theme import USER_STATUS_ICON_NAMES
 from pynicotine.gtkgui.widgets.treeview import TreeView
 from pynicotine.logfacility import log
@@ -32,8 +35,9 @@ class ChatHistory(Dialog):
         ) = ui.load(scope=self, path="dialogs/chathistory.ui")
 
         super().__init__(
-            parent=application.window,
+            application=application,
             content_box=self.container,
+            show_callback=self.on_show,
             title=_("Chat History"),
             width=960,
             height=700
@@ -59,7 +63,8 @@ class ChatHistory(Dialog):
                     "column_type": "text",
                     "title": _("Latest Message"),
                     "sort_column": "timestamp_data",
-                    "default_sort_type": "descending"
+                    "default_sort_type": "descending",
+                    "tabular": True
                 },
 
                 # Hidden data columns
@@ -67,7 +72,15 @@ class ChatHistory(Dialog):
             }
         )
 
+        self.popup_menu = PopupMenu(application, self.list_view.widget)
+        self.popup_menu.add_items(
+            ("#" + _("_Open Chat"), self.on_show_user),
+            ("", None),
+            ("#" + _("Delete Chat Log…"), self.on_delete_chat_log)
+        )
+
         Accelerator("<Primary>f", self.widget, self.on_search_accelerator)
+        Accelerator("Down", self.search_entry, self.on_focus_list_view_accelerator)
 
         self.load_users()
 
@@ -79,21 +92,19 @@ class ChatHistory(Dialog):
             events.connect(event_name, callback)
 
     def destroy(self):
+
+        self.popup_menu.destroy()
         self.list_view.destroy()
+
         super().destroy()
 
     def server_login(self, msg):
-
-        if not msg.success:
-            return
-
-        for iterator in self.list_view.iterators.values():
-            username = self.list_view.get_row_value(iterator, "user")
-            core.users.watch_user(username, context="chathistory")
+        if msg.success and self.is_visible():
+            self.update_user_statuses()
 
     def server_disconnect(self, *_args):
-        for iterator in self.list_view.iterators.values():
-            self.list_view.set_row_value(iterator, "status", USER_STATUS_ICON_NAMES[UserStatus.OFFLINE])
+        if self.is_visible():
+            self.update_user_statuses()
 
     @staticmethod
     def load_user(file_path):
@@ -193,7 +204,6 @@ class ChatHistory(Dialog):
     def update_user(self, username, message, timestamp=None):
 
         self.remove_user(username)
-        core.users.watch_user(username, context="chathistory")
 
         if not timestamp:
             timestamp_format = config.sections["logging"]["log_timestamp"]
@@ -201,29 +211,46 @@ class ChatHistory(Dialog):
             h_timestamp = time.strftime(timestamp_format)
             message = f"{h_timestamp} [{username}] {message}"
 
-        status = core.users.statuses.get(username, UserStatus.OFFLINE)
-
-        self.list_view.add_row([
-            USER_STATUS_ICON_NAMES[status],
+        iterator = self.list_view.add_row([
+            "",
             username,
             message,
             int(timestamp)
         ], select_row=False)
 
+        if self.is_visible():
+            self.set_user_status_icon(username, iterator)
+
         if not self.list_container.get_visible():
             self.list_container.set_visible(True)
 
+    def set_user_status_icon(self, username, iterator):
+
+        # We don't watch all historic users for status updates due to
+        # the amount of server traffic a large history would generate
+        if username in core.privatechat.users:
+            status_icon_name = USER_STATUS_ICON_NAMES[core.users.statuses.get(username, UserStatus.OFFLINE)]
+        else:
+            status_icon_name = ""  # Blank icon to indicate chat tab closed
+
+        if status_icon_name != self.list_view.get_row_value(iterator, "status"):
+            self.list_view.set_row_value(iterator, "status", status_icon_name)
+
+    def update_user_statuses(self):
+
+        for iterator in self.list_view.iterators.values():
+            username = self.list_view.get_row_value(iterator, "user")
+            self.set_user_status_icon(username, iterator)
+
     def user_status(self, msg):
 
-        iterator = self.list_view.iterators.get(msg.user)
+        username = msg.user
+        iterator = self.list_view.iterators.get(username)
 
         if iterator is None:
             return
 
-        status_icon_name = USER_STATUS_ICON_NAMES.get(msg.status)
-
-        if status_icon_name and status_icon_name != self.list_view.get_row_value(iterator, "status"):
-            self.list_view.set_row_value(iterator, "status", status_icon_name)
+        self.set_user_status_icon(username, iterator)
 
     def on_show_user(self, *_args):
 
@@ -234,8 +261,64 @@ class ChatHistory(Dialog):
             self.close()
             return
 
+    def on_message_user_response(self, dialog, _response_id, _data):
+
+        username = dialog.get_entry_value().strip()
+
+        if not username:
+            return
+
+        core.privatechat.show_user(username)
+        self.close()
+
+    def on_message_user(self, *_args):
+
+        EntryDialog(
+            application=self.application,
+            title=_("Message User"),
+            message=_("Enter the name of the user you want to message:"),
+            action_button_label=_("_Add"),
+            callback=self.on_message_user_response,
+            droplist=sorted(core.buddies.users)
+        ).present()
+
+    def on_delete_chat_log_response(self, _dialog, _response_id, username):
+        log.delete_log(log.private_chat_folder_path, username)
+        self.remove_user(username)
+
+    def on_delete_chat_log(self, *_args):
+
+        for iterator in self.list_view.get_selected_rows():
+            username = self.list_view.get_row_value(iterator, "user")
+
+            OptionDialog(
+                application=self.application,
+                title=_("Delete Logged Messages?"),
+                message=_("Do you really want to permanently delete all logged messages for this user?"),
+                buttons=[
+                    ("cancel", _("_Cancel")),
+                    ("ok", _("Delete"))
+                ],
+                destructive_response_id="ok",
+                callback=self.on_delete_chat_log_response,
+                callback_data=username
+            ).present()
+            return
+
     def on_search_accelerator(self, *_args):
         """Ctrl+F - Search users."""
 
         self.search_entry.grab_focus()
         return True
+
+    def on_focus_list_view_accelerator(self, *_args):
+        """Down - Focus list view."""
+
+        if not self.list_container.get_visible():
+            return False
+
+        self.list_view.grab_focus()
+        return True
+
+    def on_show(self, *_args):
+        self.update_user_statuses()

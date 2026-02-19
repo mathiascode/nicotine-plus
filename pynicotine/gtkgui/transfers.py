@@ -30,7 +30,6 @@ from pynicotine.gtkgui.widgets.theme import get_file_type_icon_name
 from pynicotine.gtkgui.widgets.theme import remove_css_class
 from pynicotine.gtkgui.widgets.treeview import TreeView
 from pynicotine.gtkgui.widgets.treeview import create_grouping_menu
-from pynicotine.slskmessages import FileListMessage
 from pynicotine.slskmessages import TransferRejectReason
 from pynicotine.transfers import Transfer
 from pynicotine.transfers import TransferStatus
@@ -88,7 +87,7 @@ class Transfers:
     PENDING_ITERATORS = {PENDING_ITERATOR_REBUILD, PENDING_ITERATOR_ADD}
     UNKNOWN_STATUS_PRIORITY = 1000
 
-    path_separator = path_label = retry_label = abort_label = None
+    retry_label = abort_label = None
     transfer_page = user_counter = file_counter = expand_button = expand_icon = grouping_button = status_label = None
 
     def __init__(self, window, transfer_type):
@@ -138,7 +137,7 @@ class Transfers:
                 },
                 "path": {
                     "column_type": "text",
-                    "title": self.path_label,
+                    "title": _("Folder"),
                     "width": 200,
                     "expand_column": True,
                     "tooltip_callback": self.on_file_path_tooltip,
@@ -214,7 +213,7 @@ class Transfers:
                 "time_elapsed_data": {"data_type": GObject.TYPE_INT},
                 "time_left_data": {"data_type": GObject.TYPE_UINT64},
                 "is_sensitive_data": {"data_type": GObject.TYPE_BOOLEAN},
-                "username_underline_data": {"data_type": Pango.Weight},
+                "username_underline_data": {"data_type": Pango.Underline},
                 "transfer_data": {"data_type": GObject.TYPE_PYOBJECT},
                 "id_data": {
                     "data_type": GObject.TYPE_INT,
@@ -228,8 +227,14 @@ class Transfers:
         Accelerator("<Primary>s", self.tree_view.widget, self.on_retry_transfers_accelerator)
         Accelerator("<Alt>Return", self.tree_view.widget, self.on_file_properties_accelerator)
 
+        self.expanding = False
+        self.expand_mode = config.sections["transfers"][f"expand_{transfer_type}s"]
+        self.expand_button.set_active(self.expand_mode != "none")
+        self.expand_button.connect("toggled", self.on_toggle_expand_all)
+        self.update_expand_state()
+
         menu = create_grouping_menu(
-            window, config.sections["transfers"][f"group{transfer_type}s"], self.on_toggle_tree)
+            window, config.sections["transfers"][f"group{transfer_type}s"], self.on_toggle_grouping)
         self.grouping_button.set_menu_model(menu)
 
         if GTK_API_VERSION >= 4:
@@ -240,9 +245,6 @@ class Transfers:
             if os.environ.get("GDK_BACKEND") == "broadway":
                 popover = list(self.grouping_button)[-1]
                 popover.set_has_arrow(False)
-
-        self.expand_button.connect("toggled", self.on_expand_tree)
-        self.expand_button.set_active(config.sections["transfers"][f"{transfer_type}sexpanded"])
 
         self.popup_menu_users = UserPopupMenu(window.application, tab_name="transfers")
         self.popup_menu_clear = PopupMenu(window.application)
@@ -451,7 +453,7 @@ class Transfers:
             self.tree_view.unfreeze()
 
         if not self.initialized:
-            self.on_expand_tree()
+            self.update_expand_state()
             self.initialized = True
 
         self.tree_view.redraw()
@@ -728,9 +730,9 @@ class Transfers:
         username_underline_data = Pango.Underline.SINGLE if user in core.buddies.users else Pango.Underline.NONE
 
         if use_reverse_file_path:
-            parts = folder_path.split(self.path_separator)
+            parts = folder_path.split("\\")
             parts.reverse()
-            folder_path = self.path_separator.join(parts)
+            folder_path = "\\".join(parts)
 
         if not self.tree_view.iterators:
             # Hide tab description
@@ -771,7 +773,7 @@ class Transfers:
                 )
 
                 if expand_allowed:
-                    expand_user = self.grouping_mode == "folder_grouping" or self.expand_button.get_active()
+                    expand_user = self.grouping_mode == "folder_grouping" or self.expand_mode != "none"
 
                 self.row_id += 1
                 self.users[user] = (iterator, [])
@@ -818,7 +820,7 @@ class Transfers:
                         ], select_row=False, parent_iterator=user_iterator
                     )
                     user_child_transfers.append(path_transfer)
-                    expand_folder = expand_allowed and self.expand_button.get_active()
+                    expand_folder = expand_allowed and self.expand_mode == "all"
                     self.row_id += 1
                     self.paths[user_folder_path] = (iterator, [])
 
@@ -898,9 +900,15 @@ class Transfers:
         for transfer in self.transfer_list:
             transfer.iterator = self.PENDING_ITERATOR_REBUILD
 
-    def get_transfer_folder_path(self, _transfer):
-        # Implemented in subclasses
-        raise NotImplementedError
+    def get_transfer_folder_path(self, transfer):
+
+        virtual_path = transfer.virtual_path
+
+        if virtual_path:
+            folder_path, _separator, _basename = virtual_path.rpartition("\\")
+            return folder_path
+
+        return transfer.folder_path
 
     def retry_selected_transfers(self):
         # Implemented in subclasses
@@ -1016,33 +1024,61 @@ class Transfers:
         self.popup_menu_users.setup_user_menu(user)
         self.add_popup_menu_user(self.popup_menu_users, user)
 
-    def on_expand_tree(self, *_args):
+    def update_expand_state(self):
 
         if not self.expand_button.get_visible():
             return
 
-        expanded = self.expand_button.get_active()
+        self.expanding = True
 
-        if expanded:
+        if self.expand_mode == "all":
             icon_name = "view-restore-symbolic"
             tooltip_text = _("Collapse All")
+
+            self.expand_button.set_active(True)
             self.tree_view.expand_all_rows()
+
+        elif self.expand_mode == "partial" and self.grouping_mode == "folder_grouping":
+            icon_name = "view-fullscreen-symbolic"
+            tooltip_text = _("Expand All")
+
+            self.expand_button.set_active(True)
+            self.tree_view.collapse_all_rows()
+            self.tree_view.expand_root_rows()
+
         else:
             icon_name = "view-fullscreen-symbolic"
             tooltip_text = _("Expand All")
-            self.tree_view.collapse_all_rows()
 
-            if self.grouping_mode == "folder_grouping":
-                self.tree_view.expand_root_rows()
+            self.expand_button.set_active(False)
+            self.tree_view.collapse_all_rows()
 
         icon_args = (Gtk.IconSize.BUTTON,) if GTK_API_VERSION == 3 else ()  # pylint: disable=no-member
         self.expand_icon.set_from_icon_name(icon_name, *icon_args)
         self.expand_button.set_tooltip_text(tooltip_text)
 
-        config.sections["transfers"][f"{self.type}sexpanded"] = expanded
+        self.expanding = False
+
+    def on_toggle_expand_all(self, *_args):
+
+        if self.expanding or not self.expand_button.get_visible():
+            return
+
+        if self.expand_mode == "none":
+            self.expand_mode = "all" if self.grouping_mode == "user_grouping" else "partial"
+
+        elif self.expand_mode == "partial":
+            self.expand_mode = "all"
+
+        elif self.expand_mode == "all":
+            self.expand_mode = "none"
+
+        self.update_expand_state()
+
+        config.sections["transfers"][f"expand_{self.type}s"] = self.expand_mode
         config.write_configuration()
 
-    def on_toggle_tree(self, action, state):
+    def on_toggle_grouping(self, action, state):
 
         mode = state.get_string()
         active = mode != "ungrouped"
@@ -1077,11 +1113,14 @@ class Transfers:
 
         num_files = len(self.selected_transfers)
         menu.set_num_selected_files(num_files)
-        menu.update_item_label("open_file", _("_Open File") if num_files == 1 else _("_Open Files"))
+
+        if not self.window.application.isolated_mode:
+            menu.update_item_label("open_file", _("_Open File") if num_files == 1 else _("_Open Files"))
 
         self.populate_popup_menu_users()
 
     def on_username_tooltip(self, treeview, iterator):
+
         username = treeview.get_row_value(iterator, "user")
         username_underline = treeview.get_row_value(iterator, "username_underline_data")
 
@@ -1206,11 +1245,10 @@ class Transfers:
             file_path = transfer.virtual_path
             file_size = transfer.size
             file_attributes = transfer.file_attributes
-            _bitrate, length, *_unused = FileListMessage.parse_file_attributes(file_attributes)
             selected_size += file_size
 
-            if length:
-                selected_length += length
+            if file_attributes.length:
+                selected_length += file_attributes.length
 
             folder_path, _separator, basename = file_path.rpartition("\\")
 

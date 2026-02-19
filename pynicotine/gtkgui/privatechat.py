@@ -56,7 +56,7 @@ class PrivateChats(IconNotebook):
             entry=window.private_entry, visible=True
         )
         self.command_help = None
-        self.highlighted_users = []
+        self.highlighted_users = {}
 
         for event_name, callback in (
             ("clear-private-messages", self.clear_messages),
@@ -229,12 +229,12 @@ class PrivateChats(IconNotebook):
 
         self.chat_entry.clear_unsent_message(user)
 
-    def highlight_user(self, user):
+    def highlight_user(self, user, mention_type, mention_keyword):
 
-        if not user or user in self.highlighted_users:
+        if not user:
             return
 
-        self.highlighted_users.append(user)
+        self.highlighted_users[user] = (mention_type, mention_keyword)
         self.window.update_title()
         self.window.application.tray_icon.update()
 
@@ -243,7 +243,7 @@ class PrivateChats(IconNotebook):
         if user not in self.highlighted_users:
             return
 
-        self.highlighted_users.remove(user)
+        del self.highlighted_users[user]
         self.window.update_title()
         self.window.application.tray_icon.update()
 
@@ -458,6 +458,10 @@ class PrivateChat:
 
     def on_delete_chat_log_response(self, *_args):
 
+        if not self.__dict__:
+            # Tab was closed
+            return
+
         log.delete_log(log.private_chat_folder_path, self.user)
         self.chats.window.application.chat_history.remove_user(self.user)
         self.chats.username_combobox.remove_id(self.user)
@@ -466,18 +470,31 @@ class PrivateChat:
     def on_delete_chat_log(self, *_args):
 
         OptionDialog(
-            parent=self.window,
+            application=self.window.application,
             title=_("Delete Logged Messages?"),
             message=_("Do you really want to permanently delete all logged messages for this user?"),
+            buttons=[
+                ("cancel", _("_Cancel")),
+                ("ok", _("Delete"))
+            ],
             destructive_response_id="ok",
             callback=self.on_delete_chat_log_response
         ).present()
 
-    def _show_notification(self, text, is_mentioned=False):
+    def _show_notification(self, text, mention_type, mention_keyword):
 
         is_buddy = (self.user in core.buddies.users)
 
-        self.chats.request_tab_changed(self.container, is_important=is_buddy or is_mentioned)
+        self.chats.request_tab_changed(self.container, is_important=is_buddy or mention_type is not None)
+
+        if mention_type == "self":
+            log.add(_("%(user)s mentioned you in a private message") % {"user": self.user})
+
+        elif mention_type == "keyword":
+            log.add(_("Keyword %(keyword)s mentioned by %(user)s in private") % {
+                "keyword": mention_keyword,
+                "user": self.user
+            })
 
         if (self.chats.get_current_page() == self.container
                 and self.window.current_page_id == self.window.private_page.id and self.window.is_active()):
@@ -485,7 +502,25 @@ class PrivateChat:
             return
 
         # Update tray icon and show urgency hint
-        self.chats.highlight_user(self.user)
+        self.chats.highlight_user(self.user, mention_type, mention_keyword)
+
+        if config.sections["notifications"]["notification_popup_private_mention"]:
+            if mention_type == "self":
+                core.notifications.show_private_chat_notification(
+                    self.user, text,
+                    title=_("Mentioned by %(user)s in Private") % {"user": self.user}
+                )
+                return
+
+            if mention_type == "keyword":
+                core.notifications.show_private_chat_notification(
+                    self.user, text,
+                    title=_("Keyword %(keyword)s Mentioned by %(user)s in Private") % {
+                        "keyword": mention_keyword,
+                        "user": self.user
+                    }
+                )
+                return
 
         if config.sections["notifications"]["notification_popup_private_message"]:
             core.notifications.show_private_chat_notification(
@@ -498,6 +533,8 @@ class PrivateChat:
         is_outgoing_message = (msg.message_id is None)
         is_new_message = msg.is_new_message
         message_type = msg.message_type
+        mention_type = msg.mention_type
+        mention_keyword = msg.mention_keyword
 
         username = msg.user
         tag_username = (core.users.login_username if is_outgoing_message else username)
@@ -507,7 +544,7 @@ class PrivateChat:
         message = msg.message
 
         if not is_outgoing_message:
-            self._show_notification(message, is_mentioned=(message_type == "hilite"))
+            self._show_notification(message, mention_type, mention_keyword)
 
         if not is_outgoing_message and not is_new_message:
             if not self.offline_message:
@@ -519,6 +556,9 @@ class PrivateChat:
 
         else:
             self.offline_message = False
+
+        if mention_type is not None:
+            message_type = "hilite"
 
         self.chat_view.add_line(
             message, message_type=message_type, timestamp=timestamp, timestamp_format=timestamp_format,

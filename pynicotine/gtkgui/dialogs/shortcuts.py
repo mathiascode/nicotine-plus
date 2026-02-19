@@ -12,7 +12,6 @@ class Shortcuts(Dialog):
 
     def __init__(self, application):
 
-        self.application = application
         self.scrollable = Gtk.ScrolledWindow(
             hscrollbar_policy=Gtk.PolicyType.NEVER, propagate_natural_height=True, propagate_natural_width=True,
             width_request=360, visible=True
@@ -23,11 +22,12 @@ class Shortcuts(Dialog):
         )
 
         super().__init__(
-            parent=application.window,
+            application=application,
             content_box=self.scrollable,
             title=_("Keyboard Shortcuts"),
             width=800,
-            height=600
+            height=600,
+            resizable=False
         )
 
         shortcut_groups = {
@@ -47,6 +47,7 @@ class Shortcuts(Dialog):
                 _("Main Menu"): "win.main-menu",
                 _("Context Menu"): "win.context-menu",
                 _("Change Main Tab"): ("accel.change-main-tab-start", "accel.change-main-tab-end"),
+                _("Focus Top Bar"): "win.focus-top-bar",
                 _("Focus Next View"): "win.change-focus-view",
                 _("Show Log Pane"): "win.show-log-pane"
             },

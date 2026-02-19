@@ -18,6 +18,7 @@ from pynicotine.core import core
 from pynicotine.gtkgui.application import GTK_API_VERSION
 from pynicotine.gtkgui.widgets import clipboard
 from pynicotine.gtkgui.widgets.accelerator import Accelerator
+from pynicotine.gtkgui.widgets.dialogs import OptionDialog
 from pynicotine.utils import TRANSLATE_PUNCTUATION
 from pynicotine.utils import humanize
 
@@ -505,11 +506,13 @@ class UserPopupMenu(PopupMenu):
 
         self.clear()
 
-        for room, data in core.chatrooms.private_rooms.items():
-            is_owned = core.chatrooms.is_private_room_owned(room)
-            is_operator = core.chatrooms.is_private_room_operator(room)
+        _reserved = _("Make Owner of %s")
 
-            if not is_owned and not is_operator:
+        for room, data in core.chatrooms.private_rooms.items():
+            is_owner = core.chatrooms.is_room_owner(room)
+            is_operator = core.chatrooms.is_room_operator(room)
+
+            if not is_owner and not is_operator:
                 continue
 
             if self.username == data.owner:
@@ -521,21 +524,21 @@ class UserPopupMenu(PopupMenu):
             if not is_user_operator:
                 if is_user_member:
                     self.add_items(
-                        ("#" + _("Remove from Private Room %s") % room, self.on_private_room_remove_user, room))
+                        ("#" + _("Remove from Private Room %s") % room, self.on_remove_room_member, room))
                 else:
                     self.add_items(
-                        ("#" + _("Add to Private Room %s") % room, self.on_private_room_add_user, room))
+                        ("#" + _("Add to Private Room %s") % room, self.on_add_room_member, room))
 
-            if not is_owned:
+            if not is_owner:
                 continue
 
             if is_user_operator:
                 self.add_items(
-                    ("#" + _("Remove as Operator of %s") % room, self.on_private_room_remove_operator, room))
+                    ("#" + _("Remove as Operator of %s") % room, self.on_remove_room_operator, room))
 
             elif is_user_member:
                 self.add_items(
-                    ("#" + _("Add as Operator of %s") % room, self.on_private_room_add_operator, room))
+                    ("#" + _("Add as Operator of %s") % room, self.on_add_room_operator, room))
 
             self.add_items(("", None))
 
@@ -544,13 +547,6 @@ class UserPopupMenu(PopupMenu):
         self.update_username_item()
 
     # Events #
-
-    def on_search_user(self, *_args):
-
-        self.application.window.lookup_action("search-mode").change_state(GLib.Variant.new_string("user"))
-        self.application.window.user_search_entry.set_text(self.username)
-        self.application.window.change_main_page(self.application.window.search_page)
-        GLib.idle_add(lambda: self.application.window.search_entry.grab_focus() == -1, priority=GLib.PRIORITY_HIGH_IDLE)
 
     def on_send_message(self, *_args):
         core.privatechat.show_user(self.username)
@@ -564,17 +560,34 @@ class UserPopupMenu(PopupMenu):
     def on_browse_user(self, *_args):
         core.userbrowse.browse_user(self.username)
 
-    def on_private_room_add_user(self, _action, _parameter, room):
-        core.chatrooms.add_user_to_private_room(room, self.username)
+    def on_add_room_member(self, _action, _parameter, room):
+        core.chatrooms.request_add_room_member(room, self.username)
 
-    def on_private_room_remove_user(self, _action, _parameter, room):
-        core.chatrooms.remove_user_from_private_room(room, self.username)
+    def on_remove_room_member(self, _action, _parameter, room):
+        core.chatrooms.request_remove_room_member(room, self.username)
 
-    def on_private_room_add_operator(self, _action, _parameter, room):
-        core.chatrooms.add_operator_to_private_room(room, self.username)
+    def on_add_room_operator(self, _action, _parameter, room):
+        core.chatrooms.request_add_room_operator(room, self.username)
 
-    def on_private_room_remove_operator(self, _action, _parameter, room):
-        core.chatrooms.remove_operator_from_private_room(room, self.username)
+    def on_remove_room_operator(self, _action, _parameter, room):
+        core.chatrooms.request_remove_room_operator(room, self.username)
+
+    def on_change_room_owner(self, _action, _parameter, room):
+        """Reserved for the future. Not implemented in the server yet."""
+
+        OptionDialog(
+            application=self.application,
+            title=_("Change Room Owner?"),
+            message=_("Do you really want to make %(user)s the new owner of your private room %(room)s?") % {
+                "user": self.username,
+                "room": room
+            },
+            buttons=[
+                ("cancel", _("_Cancel")),
+                ("ok", _("Ch_ange"))
+            ],
+            callback=None
+        ).present()
 
     def on_add_to_list(self, action, state):
 

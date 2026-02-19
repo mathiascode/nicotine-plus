@@ -75,6 +75,20 @@ class Users:
         ):
             events.connect(event_name, callback)
 
+    def log_in_as(self, username, password):
+
+        config.sections["server"]["login"] = username
+        config.sections["server"]["passw"] = password
+        config.write_configuration()
+
+        log.add_conn("Configured new log in as user %s", username)
+
+        if self.login_status != UserStatus.OFFLINE:
+            core.reconnect()
+            return
+
+        core.connect()
+
     def set_away_mode(self, is_away, save_state=False):
 
         if save_state:

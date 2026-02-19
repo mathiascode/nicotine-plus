@@ -20,7 +20,7 @@ class Core:
                  "uploads", "interests", "userbrowse", "userinfo", "buddies", "privatechat",
                  "chatrooms", "pluginhandler", "now_playing", "portmapper", "notifications",
                  "port_checker", "update_checker", "_network_thread", "cli_interface_address",
-                 "cli_listen_port", "enabled_components")
+                 "cli_listen_port", "cli_rescanning", "enabled_components")
 
     def __init__(self):
 
@@ -47,6 +47,7 @@ class Core:
 
         self.cli_interface_address = None
         self.cli_listen_port = None
+        self.cli_rescanning = None
 
         self.enabled_components = set()
 
@@ -290,10 +291,10 @@ class UpdateChecker:
 
     def check(self):
 
-        if self._thread and self._thread.is_alive():
+        if self._thread is not None and self._thread.is_alive():
             return
 
-        self._thread = threading.Thread(target=self._check, name="UpdateChecker", daemon=True)
+        self._thread = threading.Thread(target=self._check, name="UpdateChecker")
         self._thread.start()
 
     def _check(self):

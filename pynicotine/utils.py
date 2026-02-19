@@ -213,14 +213,15 @@ def human_duration_approx(seconds):
 
 
 def human_length(seconds):
-    """Returns a string for exact ISO 8601 timestamp for track playing length"""
+    """Returns a string for exact ISO 8601 timestamp for track playing length
+    when appropriate, approximate length otherwise."""
+
+    # Use approximate length for days
+    if seconds >= 86400:
+        return human_duration_approx(seconds)
 
     minutes, seconds = divmod(int(seconds), 60)
     hours, minutes = divmod(minutes, 60)
-    days, hours = divmod(hours, 24)
-
-    if days > 0:
-        return f"{days}:{hours:02d}:{minutes:02d}:{seconds:02d}"
 
     if hours > 0:
         return f"{hours}:{minutes:02d}:{seconds:02d}"
@@ -353,8 +354,24 @@ def find_whole_word(word, text):
 def censor_text(text, censored_patterns, filler="*"):
 
     for word in censored_patterns:
-        word = str(word)
-        text = text.replace(word, filler * len(word))
+        word = str(word).strip().lower()
+        word_position = find_whole_word(word, text.lower())
+
+        if word_position != -1:
+            word_length = len(word)
+            text = text[:word_position] + (filler * word_length) + text[word_position + word_length:]
+
+    return text
+
+
+def replace_text(text, replacements):
+
+    for word, replacement in replacements.items():
+        word = str(word).strip()
+        word_position = find_whole_word(word, text)
+
+        if word_position != -1:
+            text = text[:word_position] + replacement + text[word_position + len(word):]
 
     return text
 

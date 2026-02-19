@@ -57,16 +57,22 @@ class Config:
         - the data folder
         """
 
-        if sys.platform == "win32":
-            try:
-                data_folder_path = os.path.join(os.path.normpath(os.environ["APPDATA"]), "nicotine")
-            except KeyError:
-                data_folder_path = os.path.dirname(sys.argv[0])
+        script_folder_path = os.path.dirname(sys.argv[0])
+        portable_folder_path = os.path.join(script_folder_path, "portable")
 
+        if os.path.isdir(portable_folder_path):
+            data_folder_path = os.path.join(portable_folder_path, "data")
             config_folder_path = os.path.join(data_folder_path, "config")
             return config_folder_path, data_folder_path
 
         home = os.path.expanduser("~")
+
+        if sys.platform == "win32":
+            appdata_folder_path = os.environ.get("APPDATA", os.path.join(home, "AppData", "Roaming"))
+            data_folder_path = os.path.join(os.path.normpath(appdata_folder_path), "nicotine")
+            config_folder_path = os.path.join(data_folder_path, "config")
+            return config_folder_path, data_folder_path
+
         legacy_folder_path = os.path.join(home, ".nicotine")
 
         if os.path.isdir(encode_path(legacy_folder_path)):
@@ -108,7 +114,7 @@ class Config:
         except OSError as error:
             from pynicotine.logfacility import log
 
-            log.add(_("Can't create directory '%(path)s', reported error: %(error)s"),
+            log.add(_("Cannot create folder %(path)s: %(error)s"),
                     {"path": folder_path, "error": error})
             return False
 
@@ -127,7 +133,7 @@ class Config:
         except OSError as error:
             from pynicotine.logfacility import log
 
-            log.add(_("Can't create directory '%(path)s', reported error: %(error)s"),
+            log.add(_("Cannot create folder %(path)s: %(error)s"),
                     {"path": self.data_folder_path, "error": error})
 
     def load_config(self, isolated_mode=False):
@@ -178,6 +184,15 @@ class Config:
                 "shared": [],
                 "buddyshared": [],
                 "trustedshared": [],
+                "share_filters": [
+                    ".*",
+                    ".*\\",
+                    "@eaDir\\",
+                    "#recycle\\",
+                    "#snapshot\\",
+                    "desktop.ini",
+                    "Thumbs.db"
+                ],
                 "uploadbandwidth": 50,
                 "use_upload_speed_limit": "unlimited",
                 "uploadlimit": 1000,
@@ -211,6 +226,7 @@ class Config:
                 "autoclear_uploads": False,
                 "rescanonstartup": True,
                 "rescan_shares_daily": True,
+                "rescan_shares_hour": 0,
                 "enablefilters": False,
                 "downloadregexp": "",
                 "downloadfilters": [
@@ -222,15 +238,16 @@ class Config:
                 ],
                 "download_doubleclick": transfer_double_click_action,
                 "upload_doubleclick": transfer_double_click_action,
-                "downloadsexpanded": True,
-                "uploadsexpanded": True
+                "expand_downloads": "all",
+                "expand_uploads": "all"
             },
             "userbrowse": {
                 "expand_folders": True
             },
             "userinfo": {
                 "descr": "''",
-                "pic": ""
+                "pic": "",
+                "picture_visible": True
             },
             "words": {
                 "censored": [],
@@ -243,8 +260,10 @@ class Config:
                     "thier": "their",
                     "tihs": "this"
                 },
+                "keywords": [],
                 "censorwords": False,
                 "replacewords": False,
+                "watch_keywords": False,
                 "tab": True,
                 "dropdown": False,
                 "characters": 3,
@@ -289,7 +308,7 @@ class Config:
                 "chat_room": {}
             },
             "searches": {
-                "expand_searches": True,
+                "expand_results": "all",
                 "group_searches": "folder_grouping",
                 "maxresults": 300,
                 "enable_history": True,
@@ -407,6 +426,7 @@ class Config:
                 "notification_popup_folder": True,
                 "notification_popup_queued_upload": True,
                 "notification_popup_private_message": True,
+                "notification_popup_private_mention": True,
                 "notification_popup_chatroom": False,
                 "notification_popup_chatroom_mention": True,
                 "notification_popup_wish": True
@@ -443,7 +463,9 @@ class Config:
                 "uploadsinsubdirs",
                 "reverseorder",
                 "lock",
-                "buddysharestrustedonly"
+                "buddysharestrustedonly",
+                "downloadsexpanded",
+                "uploadsexpanded"
             ),
             "server": (
                 "lastportstatuscheck",
@@ -517,7 +539,8 @@ class Config:
                 "reopen_tabs",
                 "max_stored_results",
                 "re_filter",
-                "remove_special_chars"
+                "remove_special_chars",
+                "expand_searches"
             ),
             "userinfo": (
                 "descrutf8",
@@ -652,6 +675,20 @@ class Config:
         # Enable previously disabled header bar on macOS (3.3.0)
         if sys.platform == "darwin" and old_default_player is not None:
             self.sections["ui"]["header_bar"] = True
+
+        # Migrate row expansion state (3.4.0)
+        expand_downloads = self.sections["transfers"].get("downloadsexpanded", None)
+        expand_uploads = self.sections["transfers"].get("uploadsexpanded", None)
+        expand_searches = self.sections["searches"].get("expand_searches", None)
+
+        if expand_downloads is not None:
+            self.sections["transfers"]["expand_downloads"] = "all" if expand_downloads else "none"
+
+        if expand_uploads is not None:
+            self.sections["transfers"]["expand_uploads"] = "all" if expand_uploads else "none"
+
+        if expand_searches is not None:
+            self.sections["searches"]["expand_results"] = "all" if expand_searches else "none"
 
     def _set_config(self):
         """Set config values parsed from file earlier."""

@@ -403,14 +403,41 @@ class MainWindow(Window):
 
         elif self.privatechat.highlighted_users:
             # Private Chats have a higher priority
-            user = self.privatechat.highlighted_users[-1]
-            notification_text = _("Private Message from %(user)s") % {"user": user}
+            user, (mention_type, mention_keyword) = list(self.privatechat.highlighted_users.items())[-1]
+
+            if mention_type == "self":
+                notification_text = _("Mentioned by %(user)s in Private") % {"user": user}
+
+            elif mention_type == "keyword":
+                notification_text = _("Keyword %(keyword)s Mentioned by %(user)s in Private") % {
+                    "keyword": mention_keyword,
+                    "user": user
+                }
+            else:
+                notification_text = _("Private Message from %(user)s") % {"user": user}
+
             self.set_urgency_hint(True)
 
         elif self.chatrooms.highlighted_rooms:
             # Allow for the possibility the username is not available
-            room, user = list(self.chatrooms.highlighted_rooms.items())[-1]
-            notification_text = _("Mentioned by %(user)s in Room %(room)s") % {"user": user, "room": room}
+            room, (user, mention_type, mention_keyword) = list(self.chatrooms.highlighted_rooms.items())[-1]
+
+            if mention_type == "self":
+                notification_text = _("Mentioned by %(user)s in Room %(room)s") % {"user": user, "room": room}
+
+            elif mention_type == "keyword":
+                notification_text = _("Keyword %(keyword)s Mentioned by %(user)s in Room %(room)s") % {
+                    "keyword": mention_keyword,
+                    "user": user,
+                    "room": room
+                }
+
+            elif mention_type == "username":
+                notification_text = _("Message by Watched User %(user)s in Room %(room)s") % {
+                    "user": mention_keyword,
+                    "room": room
+                }
+
             self.set_urgency_hint(True)
 
         elif any(is_important for is_important in self.search.unread_pages.values()):
@@ -476,6 +503,10 @@ class MainWindow(Window):
             action = Gio.SimpleAction(name="main-menu")
             action.connect("activate", self.on_menu)
             self.add_action(action)
+
+        action = Gio.SimpleAction(name="focus-top-bar")
+        action.connect("activate", self.on_focus_top_bar)
+        self.add_action(action)
 
         action = Gio.SimpleAction(name="change-focus-view")
         action.connect("activate", self.on_change_focus_view)
@@ -702,6 +733,14 @@ class MainWindow(Window):
 
         self.hide_current_toolbar()
         self.show_header_bar(self.current_page_id, leaving_fullscreen=True)
+
+    def on_focus_top_bar(self, *_args):
+        """Ctrl+L - focus top bar."""
+
+        tab = self.tabs[self.current_page_id]
+
+        if tab.toolbar_default_widget is not None:
+            tab.toolbar_default_widget.grab_focus()
 
     def on_change_focus_view(self, *_args):
         """F6 - move focus between header bar/toolbar and main content."""
@@ -1096,9 +1135,9 @@ class MainWindow(Window):
             ("$" + _("Search"), "app.log-searches"),
             ("$" + _("Chat"), "app.log-chat"),
             ("", None),
-            ("$" + _("[Debug] Connections"), "app.log-connections"),
-            ("$" + _("[Debug] Messages"), "app.log-messages"),
-            ("$" + _("[Debug] Transfers"), "app.log-transfers"),
+            ("$" + _("[Debug] [SLOW] Connections"), "app.log-connections"),
+            ("$" + _("[Debug] [SLOW] Messages"), "app.log-messages"),
+            ("$" + _("[Debug] [SLOW] Transfers"), "app.log-transfers"),
             ("$" + _("[Debug] Miscellaneous"), "app.log-miscellaneous"),
         )
 
@@ -1128,7 +1167,7 @@ class MainWindow(Window):
     def update_log(self, timestamp_format, msg, title, level):
 
         if title:
-            MessageDialog(parent=self, title=title, message=msg, selectable=True).present()
+            MessageDialog(application=self.application, title=title, message=msg, selectable=True).present()
 
         # Keep verbose debug messages out of statusbar to make it more useful
         if level not in {"transfer", "connection", "message", "miscellaneous"}:

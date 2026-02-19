@@ -87,6 +87,7 @@ class ComboBox:
   </object>
 </interface>""", -1)
         self.dropdown = self._button = builder.get_object("dropdown")
+        self.dropdown.set_valign(Gtk.Align.CENTER)
         self.dropdown.set_model(self._model)
 
         list_factory = self.dropdown.get_factory()
@@ -438,7 +439,11 @@ class ComboBox:
             self._button.set_sensitive(False)
 
     def grab_focus(self):
-        self.entry.grab_focus()
+
+        if self.entry is not None:
+            self.entry.grab_focus()
+
+        self.widget.grab_focus()
 
     def set_completion_popup_enabled(self, enabled):
 

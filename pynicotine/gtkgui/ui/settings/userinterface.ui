@@ -214,7 +214,7 @@
               <object class="GtkLabel">
                 <property name="height-request">24</property>
                 <property name="hexpand">True</property>
-                <property name="label" translatable="yes">Enable sound for notifications</property>
+                <property name="label" translatable="yes">Enable sound for popup notifications</property>
                 <property name="mnemonic-widget">notification_sounds_toggle</property>
                 <property name="visible">True</property>
                 <property name="wrap">True</property>
@@ -238,7 +238,7 @@
               <object class="GtkLabel">
                 <property name="height-request">24</property>
                 <property name="hexpand">True</property>
-                <property name="label" translatable="yes">Show notification for private chats and mentions in the window title</property>
+                <property name="label" translatable="yes">Show window notification for private messages and mentions</property>
                 <property name="mnemonic-widget">notification_window_title_toggle</property>
                 <property name="visible">True</property>
                 <property name="wrap">True</property>
@@ -270,7 +270,7 @@
                 <property name="visible">True</property>
                 <child>
                   <object class="GtkLabel">
-                    <property name="label" translatable="yes">Show notifications for:</property>
+                    <property name="label" translatable="yes">Show popup notifications for:</property>
                     <property name="mnemonic-widget">notification_file_download_toggle</property>
                     <property name="opacity">0.6</property>
                     <property name="visible">True</property>
@@ -346,6 +346,18 @@
                         <child>
                           <object class="GtkCheckButton" id="notification_private_message_toggle">
                             <property name="label" translatable="yes">Private messages</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkFlowBoxChild">
+                        <property name="can-focus">False</property>
+                        <property name="visible">True</property>
+                        <child>
+                          <object class="GtkCheckButton" id="notification_private_mention_toggle">
+                            <property name="label" translatable="yes">Private message mentions</property>
                             <property name="visible">True</property>
                           </object>
                         </child>

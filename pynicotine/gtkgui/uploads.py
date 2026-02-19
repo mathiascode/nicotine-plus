@@ -29,8 +29,6 @@ class Uploads(Transfers):
 
     def __init__(self, window):
 
-        self.path_separator = "\\"
-        self.path_label = _("Folder")
         self.retry_label = _("_Retry")
         self.abort_label = _("_Abort")
 
@@ -94,16 +92,6 @@ class Uploads(Transfers):
         self.upload_speeds.destroy()
         super().destroy()
 
-    def get_transfer_folder_path(self, transfer):
-
-        virtual_path = transfer.virtual_path
-
-        if virtual_path:
-            folder_path, _separator, _basename = virtual_path.rpartition("\\")
-            return folder_path
-
-        return transfer.folder_path
-
     def retry_selected_transfers(self):
         core.uploads.retry_uploads(self.selected_transfers)
 
@@ -152,9 +140,13 @@ class Uploads(Transfers):
     def on_try_clear_queued(self, *_args):
 
         OptionDialog(
-            parent=self.window,
+            application=self.window.application,
             title=_("Clear Queued Uploads"),
             message=_("Do you really want to clear all queued uploads?"),
+            buttons=[
+                ("cancel", _("_Cancel")),
+                ("ok", _("Clear All"))
+            ],
             destructive_response_id="ok",
             callback=self.on_clear_queued
         ).present()
@@ -165,9 +157,13 @@ class Uploads(Transfers):
     def on_try_clear_all(self, *_args):
 
         OptionDialog(
-            parent=self.window,
+            application=self.window.application,
             title=_("Clear All Uploads"),
             message=_("Do you really want to clear all uploads?"),
+            buttons=[
+                ("cancel", _("_Cancel")),
+                ("ok", _("Clear All"))
+            ],
             destructive_response_id="ok",
             callback=self.on_clear_all_response
         ).present()

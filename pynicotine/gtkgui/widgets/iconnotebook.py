@@ -254,15 +254,18 @@ class IconNotebook:
     - Dropdown menu for unread tabs
     """
 
-    def __init__(self, window, parent, parent_page=None, switch_page_callback=None, reorder_page_callback=None):
+    def __init__(self, window, parent, parent_page=None, switch_page_callback=None, reorder_page_callback=None,
+                 read_changed_page_callback=None):
 
         self.window = window
         self.parent = parent
         self.parent_page = parent_page
         self.switch_page_callback = switch_page_callback
         self.reorder_page_callback = reorder_page_callback
+        self.read_changed_page_callback = read_changed_page_callback
         self.switch_page_handler = None
         self.reorder_page_handler = None
+        self.switch_page_delay_timer = None
 
         self.pages = {}
         self.tab_labels = {}
@@ -443,9 +446,13 @@ class IconNotebook:
     def remove_all_pages(self, *_args):
 
         OptionDialog(
-            parent=self.window,
+            application=self.window.application,
             title=_("Close All Tabs?"),
             message=_("Do you really want to close all tabs?"),
+            buttons=[
+                ("cancel", _("_Cancel")),
+                ("ok", _("Close All"))
+            ],
             destructive_response_id="ok",
             callback=self._on_remove_all_pages
         ).present()
@@ -455,7 +462,7 @@ class IconNotebook:
         tab_pos = self.get_tab_pos()
 
         if self.unread_pages:
-            icon_name = "emblem-important-symbolic"
+            icon_name = "notifications-symbolic"
             num_pages = len(self.unread_pages)
             tooltip_text = ngettext("%s Unread Tab", "%s Unread Tabs", num_pages) % humanize(num_pages)
         else:
@@ -464,6 +471,14 @@ class IconNotebook:
 
         self.pages_button.set_direction(
             Gtk.ArrowType.DOWN if tab_pos == Gtk.PositionType.TOP else Gtk.ArrowType.UP)
+
+        if self.pages_button.get_tooltip_text() == tooltip_text:
+            return
+
+        # Hide widget to keep tooltips for other widgets visible
+        self.pages_button.set_visible(False)
+        self.pages_button.set_tooltip_text(tooltip_text)
+        self.pages_button.set_visible(True)
 
         if self.pages_button.icon_name == icon_name:
             return
@@ -474,11 +489,6 @@ class IconNotebook:
             self.pages_button.set_icon_name(icon_name)                   # pylint: disable=no-member
         else:
             self.pages_button.set_image(Gtk.Image(icon_name=icon_name))  # pylint: disable=no-member
-
-        # Hide widget to keep tooltips for other widgets visible
-        self.pages_button.set_visible(False)
-        self.pages_button.set_tooltip_text(tooltip_text)
-        self.pages_button.set_visible(True)
 
     def get_current_page(self):
         return self.get_nth_page(self.widget.get_current_page())
@@ -590,6 +600,9 @@ class IconNotebook:
         important_page_removed = self.unread_pages.pop(page)
         self.update_pages_menu_button()
 
+        if self.read_changed_page_callback is not None:
+            self.read_changed_page_callback(self, page)
+
         if self.parent_page is None:
             return
 
@@ -668,6 +681,10 @@ class IconNotebook:
 
     def on_switch_page(self, _notebook, new_page, page_num):
 
+        if self.switch_page_delay_timer is not None:
+            GLib.source_remove(self.switch_page_delay_timer)
+            self.switch_page_delay_timer = None
+
         if self.switch_page_callback is not None:
             self.switch_page_callback(self, new_page, page_num)
 
@@ -683,8 +700,16 @@ class IconNotebook:
         if self.parent_page is None or self.window.current_page_id == self.parent_page.id:
             GLib.idle_add(self.on_focus_page, new_page, priority=GLib.PRIORITY_HIGH_IDLE)
 
-        # Dismiss tab highlight
+        # Dismiss tab highlight after short delay to allow transient switching
         if self.parent_page is not None:
+            self.switch_page_delay_timer = GLib.timeout_add(250, self.on_remove_tab_changed, new_page)
+
+    def on_remove_tab_changed(self, new_page):
+
+        self.switch_page_delay_timer = None
+
+        # Check if tab was removed before timer expired
+        if self.page_num(new_page) != -1:
             self.remove_tab_changed(new_page)
 
     def on_reorder_page(self, _notebook, page, page_num):
@@ -701,8 +726,21 @@ class IconNotebook:
 
         self.popup_menu_pages.clear()
 
+        # Important pages (most recently changed first)
+        for page, is_important in reversed(self.unread_pages.items()):
+            if not is_important:
+                continue
+
+            tab_label = self.get_tab_label(page)
+            self.popup_menu_pages.add_items(
+                ("#**  " + tab_label.get_text(), self.on_show_page, page)
+            )
+
         # Unread pages (most recently changed first)
-        for page in reversed(list(self.unread_pages)):
+        for page, is_important in reversed(self.unread_pages.items()):
+            if is_important:
+                continue
+
             tab_label = self.get_tab_label(page)
             self.popup_menu_pages.add_items(
                 ("#*  " + tab_label.get_text(), self.on_show_page, page)

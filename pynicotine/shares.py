@@ -8,6 +8,7 @@
 import gc
 import mmap
 import os
+import re
 import stat
 import sys
 import time
@@ -243,12 +244,11 @@ class Scanner:
                  "rescan", "rebuild", "reveal_buddy_shares", "reveal_trusted_shares",
                  "files", "streams", "mtimes", "word_index", "processed_share_names",
                  "processed_share_paths", "current_file_index", "current_folder_count",
-                 "lowercase_paths")
-
-    HIDDEN_FOLDER_NAMES = {"@eaDir", "#recycle", "#snapshot"}
+                 "lowercase_paths", "share_filters", "file_filter_regex", "folder_filter_regex")
 
     def __init__(self, writer, share_groups, share_db_paths, init=False, rescan=True,
-                 rebuild=False, reveal_buddy_shares=False, reveal_trusted_shares=False):
+                 rebuild=False, reveal_buddy_shares=False, reveal_trusted_shares=False,
+                 share_filters=None):
 
         self.writer = writer
         self.share_groups = share_groups
@@ -259,6 +259,7 @@ class Scanner:
         self.rebuild = rebuild
         self.reveal_buddy_shares = reveal_buddy_shares
         self.reveal_trusted_shares = reveal_trusted_shares
+        self.share_filters = share_filters
         self.files = {}
         self.streams = {}
         self.mtimes = {}
@@ -268,6 +269,8 @@ class Scanner:
         self.processed_share_paths = set()
         self.current_file_index = 0
         self.current_folder_count = 0
+        self.file_filter_regex = None
+        self.folder_filter_regex = None
 
     def run(self):
 
@@ -296,6 +299,7 @@ class Scanner:
                 self.writer.send(
                     ScannerLogMessage(_("Rebuilding shares…") if self.rebuild else _("Rescanning shares…"))
                 )
+                self.load_filters()
 
                 # Clear previous word index to prevent inconsistent state if the scanner fails
                 self.set_shares(word_index={})
@@ -344,6 +348,29 @@ class Scanner:
         finally:
             self.writer.close()
             Shares.close_shares(self.share_dbs)
+
+    def load_filters(self):
+
+        if not self.share_filters:
+            return
+
+        file_filters = []
+        folder_filters = []
+
+        for sfilter in sorted(self.share_filters):
+            escaped_filter = re.escape(sfilter).replace("\\*", ".*")
+
+            if escaped_filter.endswith(("\\", "\\.*")):
+                folder_filters.append(escaped_filter)
+                continue
+
+            file_filters.append(escaped_filter)
+
+        if file_filters:
+            self.file_filter_regex = re.compile("(\\\\(" + "|".join(file_filters) + ")$)", flags=re.IGNORECASE)
+
+        if folder_filters:
+            self.folder_filter_regex = re.compile("(\\\\(" + "|".join(folder_filters) + ")$)", flags=re.IGNORECASE)
 
     def create_compressed_shares_message(self, permission_level):
         """Create a message that will later contain a compressed list of our
@@ -492,17 +519,7 @@ class Scanner:
 
     @classmethod
     def is_hidden(cls, folder, filename=None, entry=None):
-        """Stop sharing any dot/hidden folders/files."""
-
-        if filename is None:
-            last_folder = os.path.basename(folder)
-
-            if last_folder.startswith(".") or last_folder in cls.HIDDEN_FOLDER_NAMES:
-                return True
-
-        # If we're asked to check a file, we exclude it if it starts with a dot
-        if filename is not None and filename.startswith("."):
-            return True
+        """Stop sharing any hidden folders/files."""
 
         # Check if file is marked as hidden on Windows
         if sys.platform == "win32":
@@ -535,10 +552,15 @@ class Scanner:
                 # Sharing a folder twice, no go
                 continue
 
+            if self.folder_filter_regex and self.folder_filter_regex.search(f"\\{virtual_folder_path}\\") is not None:
+                continue
+
             self.writer.send(self.current_folder_count)
 
             file_list = []
+            has_filtered_files = False
             virtual_folder_path_lower = virtual_folder_path.lower()
+            virtual_folder_words = virtual_folder_path_lower.translate(TRANSLATE_PUNCTUATION).split()
 
             try:
                 with os.scandir(encode_path(folder_path, prefix=False)) as entries:
@@ -570,10 +592,15 @@ class Scanner:
                             if self.is_hidden(folder_path, basename, entry):
                                 continue
 
-                            file_stat = entry.stat()
-                            file_index = self.current_file_index
-                            self.mtimes[path] = file_mtime = file_stat.st_mtime
                             virtual_file_path = f"{virtual_folder_path}\\{basename_escaped}"
+
+                            if (self.file_filter_regex
+                                    and self.file_filter_regex.search("\\" + virtual_file_path) is not None):
+                                has_filtered_files = True
+                                continue
+
+                            file_stat = entry.stat()
+                            self.mtimes[path] = file_mtime = file_stat.st_mtime
 
                             if not self.rebuild and file_mtime == old_mtimes.get(path) and path in old_files:
                                 full_path_file_data = old_files[path]
@@ -585,11 +612,16 @@ class Scanner:
                             basename_file_data[0] = basename_escaped
                             file_list.append(basename_file_data)
 
-                            for k in set(virtual_file_path.lower().translate(TRANSLATE_PUNCTUATION).split()):
+                            file_index = self.current_file_index
+                            basename_escaped_lower = basename_escaped.lower()
+
+                            for k in set(
+                                virtual_folder_words + basename_escaped_lower.translate(TRANSLATE_PUNCTUATION).split()
+                            ):
                                 self.word_index[k].append(file_index)
 
                             self.files[path] = full_path_file_data
-                            self.lowercase_paths[virtual_folder_path_lower][basename_escaped.lower()] = file_index
+                            self.lowercase_paths[virtual_folder_path_lower][basename_escaped_lower] = file_index
 
                             self.current_file_index += 1
 
@@ -609,7 +641,9 @@ class Scanner:
                     )
                 )
 
-            self.streams[virtual_folder_path] = self.get_folder_stream(file_list)
+            if not has_filtered_files or file_list:
+                self.streams[virtual_folder_path] = self.get_folder_stream(file_list)
+
             self.current_folder_count += 1
 
     def get_audio_tag(self, file_path, size):
@@ -744,6 +778,10 @@ class Shares:
 
     def _start(self):
 
+        if core.cli_rescanning:
+            # CLI rescan is performed elsewhere
+            return
+
         rescan_startup = (config.sections["transfers"]["rescanonstartup"]
                           and not config.need_config())
 
@@ -786,7 +824,7 @@ class Shares:
 
     def get_lowercase_path_index(self, virtual_path):
 
-        virtual_folder_path, basename = virtual_path.rsplit("\\", 1)
+        virtual_folder_path, _separator, basename = virtual_path.rpartition("\\")
         lowercase_paths = core.shares.share_dbs.get("lowercase_paths", {})
         index = None
 
@@ -927,13 +965,19 @@ class Shares:
 
             return PermissionLevel.BANNED, ""
 
-        user_data = core.buddies.users.get(username)
+        # Since username spoofing can't be fully prevented in the Soulseek protocol, only give
+        # our own username a 'public' permission level, regardless of buddy status. It's quite
+        # common for users to add themselves to their buddy list, making their own username the
+        # easiest/most obvious choice for someone to spoof.
 
-        if user_data:
-            if user_data.is_trusted:
-                return PermissionLevel.TRUSTED, ""
+        if username != core.users.login_username:
+            user_data = core.buddies.users.get(username)
 
-            return PermissionLevel.BUDDY, ""
+            if user_data:
+                if user_data.is_trusted:
+                    return PermissionLevel.TRUSTED, ""
+
+                return PermissionLevel.BUDDY, ""
 
         if ip_address is None or not config.sections["transfers"]["geoblock"]:
             return PermissionLevel.PUBLIC, ""
@@ -996,7 +1040,7 @@ class Shares:
 
         public_shares, buddy_shares, trusted_shares = share_groups
         virtual_name = core.shares.get_normalized_virtual_name(
-            virtual_name or os.path.basename(folder_path),
+            virtual_name or folder_path.rstrip(os.sep).rpartition(os.sep)[-1],
             shared_folders=(public_shares + buddy_shares + trusted_shares)
         )
         permission_level_shares = {
@@ -1109,7 +1153,7 @@ class Shares:
         if use_thread:
             Thread(
                 target=self._process_scanner, args=(reader, events.emit_main_thread),
-                name="ProcessShareScanner", daemon=True
+                name="ProcessShareScanner"
             ).start()
             return None
 
@@ -1136,11 +1180,15 @@ class Shares:
         if not config.sections["transfers"]["rescan_shares_daily"]:
             return
 
-        timestamp_midnight = (datetime.now() + timedelta(days=1)).replace(
-            hour=0, minute=0, second=0, microsecond=0).timestamp()
+        current_time = datetime.now()
+        target_time = current_time.replace(
+            hour=config.sections["transfers"]["rescan_shares_hour"], minute=0, second=0, microsecond=0)
+
+        if target_time <= current_time:
+            target_time += timedelta(days=1)
 
         self._rescan_daily_timer_id = events.schedule_at(
-            timestamp=timestamp_midnight, callback=self.rescan_shares)
+            timestamp=target_time.timestamp(), callback=self.rescan_shares)
 
     def _build_scanner_process(self, share_groups=None, init=False, rescan=True, rebuild=False):
 
@@ -1156,7 +1204,8 @@ class Shares:
             rescan,
             rebuild,
             reveal_buddy_shares=config.sections["transfers"]["reveal_buddy_shares"],
-            reveal_trusted_shares=config.sections["transfers"]["reveal_trusted_shares"]
+            reveal_trusted_shares=config.sections["transfers"]["reveal_trusted_shares"],
+            share_filters=config.sections["transfers"]["share_filters"]
         )
         scanner = context.Process(target=scanner_obj.run, daemon=True)
         return scanner, reader

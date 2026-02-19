@@ -11,6 +11,7 @@ from pynicotine.gtkgui.widgets.combobox import ComboBox
 from pynicotine.gtkgui.widgets.dialogs import Dialog
 from pynicotine.gtkgui.widgets.dialogs import EntryDialog
 from pynicotine.gtkgui.widgets.filechooser import FileChooserButton
+from pynicotine.gtkgui.widgets.popupmenu import PopupMenu
 from pynicotine.gtkgui.widgets.textview import TextView
 from pynicotine.gtkgui.widgets.theme import add_css_class
 
@@ -19,7 +20,6 @@ class PluginSettings(Dialog):
 
     def __init__(self, application):
 
-        self.application = application
         self.plugin_name = None
         self.plugin_metasettings = None
         self.option_widgets = {}
@@ -41,7 +41,7 @@ class PluginSettings(Dialog):
         )
 
         super().__init__(
-            parent=application.preferences,
+            application=application,
             content_box=self.scrolled_window,
             buttons_start=(cancel_button,),
             buttons_end=(ok_button,),
@@ -53,6 +53,14 @@ class PluginSettings(Dialog):
         )
 
     def destroy(self):
+
+        from pynicotine.gtkgui.widgets.treeview import TreeView
+
+        for widget in self.option_widgets.values():
+            if isinstance(widget, TreeView):
+                widget.popup_menu.destroy()
+                widget.destroy()
+
         self.__dict__.clear()
 
     @staticmethod
@@ -203,18 +211,28 @@ class PluginSettings(Dialog):
         treeview.row_id = len(rows)
         self.application.preferences.set_widget(treeview, rows)
 
+        treeview.popup_menu = PopupMenu(self.application, treeview.widget)
+        treeview.popup_menu.add_items(
+            ("#" + _("_Edit…"), self.on_edit, treeview),
+            ("", None),
+            ("#" + _("Remove"), self.on_remove, treeview)
+        )
+
         button_container = Gtk.Box(margin_end=6, margin_bottom=6, margin_start=6, margin_top=6,
                                    spacing=6, visible=True)
 
-        for icon_name, label_text, callback in (
-            ("list-add-symbolic", _("Add…"), self.on_add),
-            ("document-edit-symbolic", _("Edit…"), self.on_edit),
-            ("list-remove-symbolic", _("Remove"), self.on_remove)
+        for icon_name, label_text, tooltip_text, callback in (
+            ("list-add-symbolic", _("_Add…"), _("_Add…"), self.on_add),
+            ("document-edit-symbolic", _("_Edit…"), _("Edit…"), self.on_edit),
+            ("list-remove-symbolic", _("Remove"), _("Remove"), self.on_remove)
         ):
             button = Gtk.Button(visible=True)
             label_container = Gtk.Box(spacing=6, visible=True)
             icon = Gtk.Image(icon_name=icon_name, visible=True)
-            label = Gtk.Label(label=label_text, mnemonic_widget=button, visible=True)
+            label = Gtk.Label(
+                label=label_text, mnemonic_widget=button, tooltip_text=tooltip_text,
+                use_underline=True, visible=True
+            )
 
             button.connect("clicked", callback, treeview)
             add_css_class(button, "flat")
@@ -247,7 +265,7 @@ class PluginSettings(Dialog):
         label = self._generate_widget_container(description, container, homogeneous=True)
 
         self.option_widgets[option_name] = FileChooserButton(
-            container, window=self, label=label, chooser_type=file_chooser_type,
+            container, application=self.application, label=label, chooser_type=file_chooser_type,
             show_open_external_button=not self.application.isolated_mode
         )
         self.application.preferences.set_widget(self.option_widgets[option_name], option_value)
@@ -364,10 +382,12 @@ class PluginSettings(Dialog):
         treeview.row_id += 1
         treeview.add_row([value, treeview.row_id])
 
-    def on_add(self, _button, treeview):
+    def on_add(self, *args):
+
+        treeview = args[-1]
 
         EntryDialog(
-            parent=self,
+            application=self.application,
             title=_("Add Item"),
             message=treeview.description,
             action_button_label=_("_Add"),
@@ -388,14 +408,16 @@ class PluginSettings(Dialog):
         treeview.remove_row(iterator)
         treeview.add_row([value, row_id])
 
-    def on_edit(self, _button=None, treeview=None):
+    def on_edit(self, *args):
+
+        treeview = args[-1]
 
         for iterator in treeview.get_selected_rows():
             value = treeview.get_row_value(iterator, "description") or ""
             row_id = treeview.get_row_value(iterator, "id_data")
 
             EntryDialog(
-                parent=self,
+                application=self.application,
                 title=_("Edit Item"),
                 message=treeview.description,
                 action_button_label=_("_Edit"),
@@ -405,7 +427,10 @@ class PluginSettings(Dialog):
             ).present()
             return
 
-    def on_remove(self, _button=None, treeview=None):
+    def on_remove(self, *args):
+
+        treeview = args[-1]
+
         for iterator in reversed(list(treeview.get_selected_rows())):
             row_id = treeview.get_row_value(iterator, "id_data")
             orig_iterator = treeview.iterators[row_id]
@@ -413,10 +438,10 @@ class PluginSettings(Dialog):
             treeview.remove_row(orig_iterator)
 
     def on_row_activated(self, treeview, *_args):
-        self.on_edit(treeview=treeview)
+        self.on_edit(treeview)
 
     def on_delete_accelerator(self, treeview):
-        self.on_remove(treeview=treeview)
+        self.on_remove(treeview)
 
     def on_cancel(self, *_args):
         self.close()

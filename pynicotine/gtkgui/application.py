@@ -25,7 +25,7 @@ GTK_API_VERSION = Gtk.get_major_version()
 GTK_MINOR_VERSION = Gtk.get_minor_version()
 GTK_MICRO_VERSION = Gtk.get_micro_version()
 GTK_GUI_FOLDER_PATH = os.path.normpath(os.path.dirname(os.path.realpath(__file__)))
-LIBADWAITA_API_VERSION = 0
+LIBADWAITA_API_VERSION = 0  # pylint: disable=invalid-name
 
 if GTK_API_VERSION >= 4:
     try:
@@ -45,8 +45,8 @@ if GTK_API_VERSION >= 4:
         if os.environ.get("NICOTINE_LIBADWAITA") == "1":
             gi.require_version("Adw", "1")
 
-            from gi.repository import Adw  # pylint: disable=ungrouped-imports
-            LIBADWAITA_API_VERSION = Adw.MAJOR_VERSION
+            from gi.repository import Adw               # pylint: disable=ungrouped-imports
+            LIBADWAITA_API_VERSION = Adw.MAJOR_VERSION  # pylint: disable=invalid-name
 
     except (ImportError, ValueError):
         pass
@@ -80,6 +80,9 @@ class Application:
         self.tray_icon = None
         self.spell_checker = None
 
+        self.previous_download_folder = None
+        self.previous_file_download_folder = None
+
         # Show errors in the GUI from here on
         sys.excepthook = self.on_critical_error
 
@@ -93,7 +96,7 @@ class Application:
         for event_name, callback in (
             ("confirm-quit", self.on_confirm_quit),
             ("invalid-password", self.on_invalid_password),
-            ("invalid-username", self.on_invalid_password),
+            ("invalid-username", self.on_invalid_username),
             ("quit", self._instance.quit),
             ("server-login", self._update_user_status),
             ("server-disconnect", self._update_user_status),
@@ -123,6 +126,9 @@ class Application:
 
     def add_window(self, window):
         self._instance.add_window(window)
+
+    def remove_window(self, window):
+        self._instance.remove_window(window)
 
     def get_accels_for_action(self, action_name):
         return self._instance.get_accels_for_action(action_name)
@@ -240,8 +246,9 @@ class Application:
             # Window accelerators
             ("win.main-menu", ["F10"]),
             ("win.context-menu", ["<Shift>F10"]),
+            ("win.focus-top-bar", ["<Primary>l"]),
             ("win.change-focus-view", ["F6"]),
-            ("win.show-log-pane", ["<Primary>l"]),
+            ("win.show-log-pane", ["F9"]),
             ("win.reopen-closed-tab", ["<Primary><Shift>t"]),
             ("win.close-tab", ["<Primary>w", "<Primary>F4"]),
             ("win.cycle-tabs", ["<Control>Tab", "<Control>Page_Down"]),
@@ -467,9 +474,6 @@ class Application:
             high_priority=high_priority
         )
 
-        if high_priority:
-            self.window.set_urgency_hint(True)
-
     def _show_download_notification(self, message, title=None, high_priority=False):
 
         self._show_notification(
@@ -483,7 +487,6 @@ class Application:
             message, title, action="app.private-chat-notification-activated", action_target=user,
             high_priority=True
         )
-        self.window.set_urgency_hint(True)
 
     def _show_search_notification(self, search_token, message, title=None):
 
@@ -538,7 +541,7 @@ class Application:
         ]
 
         OptionDialog(
-            parent=self.window,
+            application=self,
             title=_("Quit Nicotine+"),
             message=message,
             buttons=buttons,
@@ -559,7 +562,7 @@ class Application:
             shares_list_message += f'• "{virtual_name}" {folder_path}\n'
 
         OptionDialog(
-            parent=self.window,
+            application=self,
             title=_("Shares Not Available"),
             message=_("Verify that external disks are mounted and folder permissions are correct."),
             long_message=shares_list_message,
@@ -574,6 +577,9 @@ class Application:
 
     def on_invalid_password(self, *_args):
         self.on_fast_configure(invalid_password=True)
+
+    def on_invalid_username(self, *_args):
+        self.on_fast_configure(invalid_username=True)
 
     def on_user_status(self, msg):
         if msg.user == core.users.login_username:
@@ -635,16 +641,24 @@ class Application:
     def on_debug_miscellaneous(self, action, state):
         self.on_set_debug_level(action, state, "miscellaneous")
 
-    def on_fast_configure(self, *_args, invalid_password=False):
+    def on_fast_configure(self, *_args, invalid_password=False, invalid_username=False):
 
         if self.fast_configure is None:
             from pynicotine.gtkgui.dialogs.fastconfigure import FastConfigure
             self.fast_configure = FastConfigure(self)
 
-        if invalid_password and self.fast_configure.is_visible():
+        change_account = invalid_password or invalid_username
+        preferences_visible = self.preferences is not None and self.preferences.is_visible()
+
+        if change_account and self.fast_configure.is_visible():
             self.fast_configure.hide()
 
+        if not change_account and preferences_visible:
+            return
+
         self.fast_configure.invalid_password = invalid_password
+        self.fast_configure.invalid_username = invalid_username
+
         self.fast_configure.present()
 
     def on_keyboard_shortcuts(self, *_args):
@@ -736,7 +750,7 @@ class Application:
 
     def on_message_users_response(self, dialog, _response_id, target):
 
-        message = dialog.get_entry_value()
+        message = dialog.get_entry_value().strip()
 
         if message:
             core.privatechat.send_message_users(target, message)
@@ -746,10 +760,10 @@ class Application:
         from pynicotine.gtkgui.widgets.dialogs import EntryDialog
 
         EntryDialog(
-            parent=self.window,
+            application=self,
             title=_("Message Downloading Users"),
             message=_("Send private message to all users who are downloading from you:"),
-            action_button_label=_("_Send Message"),
+            action_button_label=_("_Send"),
             callback=self.on_message_users_response,
             callback_data="downloading",
             show_emoji_icon=True
@@ -760,10 +774,10 @@ class Application:
         from pynicotine.gtkgui.widgets.dialogs import EntryDialog
 
         EntryDialog(
-            parent=self.window,
+            application=self,
             title=_("Message Buddies"),
             message=_("Send private message to all online buddies:"),
-            action_button_label=_("_Send Message"),
+            action_button_label=_("_Send"),
             callback=self.on_message_users_response,
             callback_data="buddies",
             show_emoji_icon=True
@@ -790,7 +804,7 @@ class Application:
         from pynicotine.gtkgui.widgets.filechooser import FileChooser
 
         FileChooser(
-            parent=self.window,
+            application=self,
             title=_("Select a Saved Shares List File"),
             callback=self.on_load_shares_from_disk_selected,
             initial_folder=core.userbrowse.create_user_shares_folder(),
@@ -831,11 +845,6 @@ class Application:
             return
 
         self.window.present()
-
-        # Workaround for broken window size when restoring maximized window from tray icon
-        if sys.platform == "win32" and self.window.is_maximized():
-            self.window.unmaximize()
-            self.window.maximize()
 
     def on_away_accelerator(self, action, *_args):
         """Ctrl+H: Away/Online toggle."""
@@ -881,7 +890,7 @@ class Application:
         from pynicotine.gtkgui.widgets.dialogs import OptionDialog
 
         OptionDialog(
-            parent=self.window,
+            application=self,
             title=_("Critical Error"),
             message=_("Nicotine+ has encountered a critical error and needs to exit. "
                       "Please copy the following message and include it in a bug report:"),
@@ -965,10 +974,6 @@ class Application:
         from pynicotine.gtkgui.widgets.theme import load_icons
         from pynicotine.gtkgui.widgets.trayicon import TrayIcon
 
-        # Process thread events 10 times per second.
-        # High priority to ensure there are no delays.
-        GLib.timeout_add(100, self.on_process_thread_events, priority=GLib.PRIORITY_HIGH_IDLE)
-
         load_icons()
 
         self._set_up_actions()
@@ -981,6 +986,10 @@ class Application:
         self.room_list = RoomList(self)
 
         core.start()
+
+        # Process thread events 10 times per second.
+        # High priority to ensure there are no delays.
+        GLib.timeout_add(100, self.on_process_thread_events, priority=GLib.PRIORITY_HIGH_IDLE)
 
         gtk_version = f"{Gtk.get_major_version()}.{Gtk.get_minor_version()}.{Gtk.get_micro_version()}"
         log.add(_("Loaded %(program)s %(version)s"), {"program": "GTK", "version": gtk_version})
