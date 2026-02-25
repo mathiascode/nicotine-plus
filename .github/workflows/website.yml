@@ -24,7 +24,7 @@ concurrency:
 jobs:
   build:
     if: github.repository == 'nicotine-plus/nicotine-plus'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 15
     env:
       WEBSITE_ROOT: .github/website
@@ -61,7 +61,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 15
     needs: build
     steps:
