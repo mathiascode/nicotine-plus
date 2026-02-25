@@ -48,8 +48,10 @@ sys.path.insert(0, PROJECT_PATH)
 
 import pynicotine  # noqa: E402  # pylint: disable=import-error,wrong-import-position
 
+PACKAGE_NAME = "nicotine-plus"
 SCRIPT_NAME = "nicotine"
 MODULE_NAME = "pynicotine"
+FULL_NAME = f"{pynicotine.__application_name__}-{pynicotine.__version__}-{platform.machine().lower()}"
 MANIFEST_NAME = os.path.join(CURRENT_PATH, f"{SCRIPT_NAME}.manifest") if sys.platform == "win32" else None
 
 # Include (almost) all standard library modules for plugins
@@ -253,7 +255,7 @@ add_translations()
 
 # Setup
 setup(
-    name=pynicotine.__application_name__,
+    name=PACKAGE_NAME,
     description=pynicotine.__application_name__,
     author=pynicotine.__author__,
     version=pynicotine.__version__,
@@ -271,6 +273,8 @@ setup(
             "optimize": 2
         },
         "bdist_msi": {
+            "product_name": pynicotine.__application_name__,
+            "output_name": FULL_NAME + ".msi",
             "all_users": True,
             "launch_on_finish": True,
             "dist_dir": BUILD_PATH,
@@ -298,6 +302,7 @@ setup(
             "codesign_verify": True
         },
         "bdist_dmg": {
+            "volume_label": FULL_NAME,
             "applications_shortcut": True
         }
     },
