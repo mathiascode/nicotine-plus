@@ -734,9 +734,6 @@ class UserInfo:
     def on_popup_dislikes_menu(self, menu, *_args):
         self.window.interests.toggle_menu_items(menu, self.dislikes_list_view, column_id="dislikes")
 
-    def on_edit_profile(self, *_args):
-        self.window.application.on_preferences(page_id="user-profile")
-
     def on_edit_interests(self, *_args):
         self.window.change_main_page(self.window.interests_page)
 

@@ -29,6 +29,7 @@ class Dialog(Window):
         self.default_height = height
         self.default_button = default_button
         self.parent = None
+        self.escape_accelerator = None
 
         self.show_callback = show_callback
         self.close_callback = close_callback
@@ -42,7 +43,6 @@ class Dialog(Window):
             child=container
         )
         super().__init__(widget)
-        Accelerator("Escape", widget, self.close)
 
         if GTK_API_VERSION == 3:
             if os.environ.get("GDK_BACKEND") == "broadway":
@@ -148,6 +148,10 @@ class Dialog(Window):
                 action_area_end.add(button)           # pylint: disable=no-member
 
     def _on_show(self, *_args):
+
+        if self.escape_accelerator is None:
+            # Create Escape accelerator here to allow dialogs to override it
+            self.escape_accelerator = Accelerator("Escape", self.widget, self.close)
 
         self.application.add_window(self.widget)
 

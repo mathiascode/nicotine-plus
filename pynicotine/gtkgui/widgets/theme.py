@@ -264,10 +264,6 @@ FILE_TYPE_ICON_LABELS = {
 SHARED_FOLDER_ICON_LABELS = {
     "dialog-warning-symbolic": _("Unreadable Folder")
 }
-FILTERED_ICON_LABELS = {
-    "reserved": _("Default Filters Active"),
-    "edit-find-replace-symbolic": _("Custom Filters Active")
-}
 USER_STATUS_ICON_LABELS = {
     "nplus-status-available": _("Online"),
     "nplus-status-away": _("Away"),

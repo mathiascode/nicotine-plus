@@ -93,6 +93,10 @@ class DatabaseError(Exception):
     pass
 
 
+class DatabaseVersionError(DatabaseError):
+    pass
+
+
 class Database:
     """Custom key-value database format for Nicotine+ shares."""
 
@@ -136,7 +140,7 @@ class Database:
             raise DatabaseError("Not a database file")
 
         if content[file_signature_length:file_signature_length + 1][0] != self.VERSION:
-            raise DatabaseError("Incompatible version")
+            raise DatabaseVersionError("Incompatible version")
 
         current_offset = (file_signature_length + 1)
 
@@ -288,9 +292,13 @@ class Scanner:
                     )
                     Shares.close_shares(self.share_dbs)
 
-                except Exception:
-                    # Failed to load shares or version is invalid, rebuild
+                except DatabaseVersionError:
+                    # Database version mismatch, rebuild
                     self.rescan = self.rebuild = True
+
+                except Exception:
+                    # Failed to load shares, rescan
+                    self.rescan = True
 
                 self.writer.send(ScannerState.INITIALIZED)
 
@@ -488,8 +496,8 @@ class Scanner:
                 destinations={f"{permission_level}_files", f"{permission_level}_mtimes"})
 
         except Exception:
-            # No previous share databases, rebuild
-            self.rebuild = True
+            # No previous share databases, create them later
+            pass
 
         old_files = self.share_dbs.get(f"{permission_level}_files")
         old_mtimes = self.share_dbs.get(f"{permission_level}_mtimes")

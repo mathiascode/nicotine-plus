@@ -84,6 +84,16 @@ class WishSearchRequest(SearchRequest):
         if ignored_users is None:
             self.ignored_users = set()
 
+    @property
+    def num_active_filters(self):
+
+        num_filters = 0
+
+        if self.filter_mode == ResultFilterMode.CUSTOM:
+            num_filters = sum(1 for filter in self.custom_filters if filter)
+
+        return num_filters
+
     def as_dict(self):
 
         return {
