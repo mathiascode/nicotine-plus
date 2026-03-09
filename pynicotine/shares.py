@@ -788,6 +788,8 @@ class Shares:
 
     def _start(self):
 
+        print("START")
+
         if core.cli_rescanning:
             # CLI rescan is performed elsewhere
             return
@@ -1131,6 +1133,7 @@ class Shares:
 
     def rescan_shares(self, init=False, rescan=True, rebuild=False, use_thread=True, force=False):
 
+        print("start_rescan")
         self.stop_scanner()
 
         if rescan and not force:
@@ -1147,6 +1150,7 @@ class Shares:
                     return None
 
         # Hand over database control to the scanner process
+        print("handover")
         share_groups = self.get_shared_folders()
         self._scanner_process, reader, writer = self._build_scanner_process(share_groups, init, rescan, rebuild)
 
@@ -1159,6 +1163,7 @@ class Shares:
         # Ensure only the scanner process owns a handle, in order to promptly exit the
         # message reader thread after the scanner process is terminated
         writer.close()
+        print("after_writer_close")
 
         if use_thread:
             Thread(
@@ -1167,6 +1172,7 @@ class Shares:
             ).start()
             return None
 
+        print("before_process")
         return self._process_scanner(self._scanner_process, reader)
 
     @property
@@ -1178,7 +1184,7 @@ class Shares:
         if self._scanner_process is None:
             return
 
-        self._scanner_process.terminate()
+        self._scanner_process.kill()
         self._scanner_process = None
 
     def check_shares_available(self):
@@ -1234,13 +1240,17 @@ class Shares:
 
     def _process_scanner(self, process, reader, emit_event=None):
 
+        print("processing")
         successful = False
         current_folder_count = None
         last_count_update = time.monotonic()
 
         while True:
             try:
+                print("before_recv")
                 item = reader.recv()
+                print(item)
+                print("after_recv")
             except (EOFError, OSError):
                 # Connection was closed
                 break
@@ -1271,6 +1281,7 @@ class Shares:
                 current_folder_count = None
                 last_count_update = current_time
 
+        print("end")
         reader.close()
         process.join()
 
@@ -1280,6 +1291,7 @@ class Shares:
         elif process == self._scanner_process:
             self._scanner_process = None
 
+        print("final")
         return successful
 
     def _shares_ready(self, successful):
