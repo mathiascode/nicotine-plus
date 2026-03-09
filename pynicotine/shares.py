@@ -357,8 +357,8 @@ class Scanner:
             )
 
         finally:
-            self.writer.close()
             Shares.close_shares(self.share_dbs)
+            self.writer.close()
 
     def load_filters(self):
 
@@ -1158,8 +1158,9 @@ class Shares:
         events.emit("shares-scanning")
 
         share_groups = self.get_shared_folders()
-        self._scanner_process, reader = self._build_scanner_process(share_groups, init, rescan, rebuild)
+        self._scanner_process, reader, writer = self._build_scanner_process(share_groups, init, rescan, rebuild)
         self._scanner_process.start()
+        writer.close()
 
         if use_thread:
             Thread(
@@ -1219,7 +1220,7 @@ class Shares:
             share_filters=config.sections["transfers"]["share_filters"]
         )
         scanner = context.Process(target=scanner_obj.run, daemon=True)
-        return scanner, reader
+        return scanner, reader, writer
 
     def _process_scanner(self, reader, emit_event=None):
 
@@ -1230,7 +1231,7 @@ class Shares:
         while True:
             try:
                 item = reader.recv()
-            except EOFError:
+            except (EOFError, OSError):
                 # Connection was closed
                 break
 
