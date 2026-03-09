@@ -1256,6 +1256,7 @@ class Shares:
 
             elif item == ScannerState.SUCCESS:
                 successful = True
+                break
 
             current_time = time.monotonic()
 
