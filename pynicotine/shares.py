@@ -1230,6 +1230,12 @@ class Shares:
 
         while True:
             try:
+                if not reader.poll(None):
+                    break
+            except BrokenPipeError:
+                break
+
+            try:
                 item = reader.recv()
             except (EOFError, OSError):
                 # Connection was closed
