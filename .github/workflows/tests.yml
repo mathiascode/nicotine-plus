@@ -171,6 +171,69 @@ jobs:
       - name: Build without isolation
         run: python3 -m build --no-isolation
 
+  freebsd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build
+        uses: cross-platform-actions/action@v0.32.0
+        with:
+          operating_system: freebsd
+          version: '15.0'
+          run: |
+            sudo pkg install -y gtk4 dejavu gettext python3 devel/pylint devel/py-build \
+              devel/py-pycodestyle devel/py-pygobject devel/py-setuptools devel/py-wheel
+            python3 -m pycodestyle
+            python3 -m pylint --recursive=y .
+            python3 -m unittest -v
+            python3 -m build
+            python3 -m build --no-isolation
+
+  openbsd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build
+        uses: cross-platform-actions/action@v0.32.0
+        with:
+          operating_system: openbsd
+          version: '7.8'
+          run: |
+            sudo pkg_add gtk+4 gettext-tools pylint3 py3-build \
+              py3-codestyle py3-gobject3 py3-setuptools py3-wheel
+
+            export DISPLAY=:99
+            Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+            python3 -m pycodestyle
+            python3 -m pylint --recursive=y .
+            python3 -m unittest -v
+            python3 -m build
+            python3 -m build --no-isolation
+
+  haiku:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build
+        uses: cross-platform-actions/action@v0.32.0
+        with:
+          operating_system: haiku
+          version: 'r1beta5'
+          run: |
+            pkgman install -y gtk4 harfbuzz_glib gettext build_python310 pygobject_python310 \
+              setuptools_python310 wheel_python310
+            python3.10 -m unittest -v
+            python3.10 -m build --no-isolation
+
   windows:
     timeout-minutes: 15
     strategy:
