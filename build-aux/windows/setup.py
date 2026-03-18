@@ -29,12 +29,14 @@ if sys.platform == "win32":
     UNAVAILABLE_MODULES = [
         "fcntl", "grp", "nis", "ossaudiodev", "posix", "pwd", "readline", "resource", "spwd", "syslog", "termios"
     ]
+    BIN_EXCLUDES = ["libappstream*.dll"]
     ICON_NAME = "icon.ico"
 
 elif sys.platform == "darwin":
-    SYS_BASE_PATH = "/opt/homebrew" if platform.machine() == "arm64" else "/usr/local"
+    SYS_BASE_PATH = sys.prefix
     LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
     UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]
+    BIN_EXCLUDES = ["libappstream*.dylib"]
     ICON_NAME = "icon.icns"
 
 else:
@@ -102,10 +104,14 @@ def add_pixbuf_loaders():
 
     pixbuf_loaders_path = os.path.join(SYS_BASE_PATH, "lib/gdk-pixbuf-2.0/2.10.0/loaders")
     loader_extension = "dll" if sys.platform == "win32" else "so"
+    image_formats = ["bmp", "gif"]
+
+    if sys.platform == "win32":
+        image_formats += ["webp"]
 
     add_file(file_path=os.path.join(CURRENT_PATH, "pixbuf-loaders.cache"), output_path="lib/pixbuf-loaders.cache")
 
-    for image_format in ("bmp", "gif", "webp"):
+    for image_format in image_formats:
         basename = f"libpixbufloader-{image_format}"
         add_file(
             file_path=os.path.realpath(os.path.join(pixbuf_loaders_path, f"{basename}.{loader_extension}")),
@@ -132,8 +138,14 @@ def _add_typelibs_callback(full_path, short_path, _callback_data=None):
             paths = []
 
             for path in namespace.attrib["shared-library"].split(","):
-                updated_path = os.path.join("@loader_path", os.path.basename(path))
+                basename = os.path.basename(path)
+                updated_path = os.path.join("@loader_path", basename) if sys.platform == "darwin" else path
                 paths.append(updated_path)
+
+                add_file(
+                    file_path=os.path.join(LIB_PATH, basename),
+                    output_path=os.path.join("lib", basename)
+                )
 
             namespace.attrib["shared-library"] = ",".join(paths)
 
@@ -168,46 +180,25 @@ def add_typelibs():
         required_typelibs.append("win32-")
 
     required_typelibs = tuple(required_typelibs)
-    folder_path = os.path.join(SYS_BASE_PATH, "lib/girepository-1.0")
 
-    if sys.platform == "darwin":
-        # Remove absolute paths added by Homebrew (macOS)
-        process_files(
-            folder_path=os.path.join(SYS_BASE_PATH, "share/gir-1.0"),
-            callback=_add_typelibs_callback, starts_with=required_typelibs, ends_with=".gir"
-        )
-        folder_path = TEMP_PATH
-
+    process_files(
+        folder_path=os.path.join(SYS_BASE_PATH, "share/gir-1.0"),
+        callback=_add_typelibs_callback, starts_with=required_typelibs, ends_with=".gir"
+    )
     add_files(
-        folder_path=folder_path, output_path="lib/typelibs",
+        folder_path=TEMP_PATH, output_path="lib/typelibs",
         starts_with=required_typelibs, ends_with=".typelib"
     )
 
 
 def add_gtk():
 
-    # Libraries
-    if sys.platform == "win32":
-        add_file(
-            file_path=os.path.join(LIB_PATH, "libgtk-4-1.dll"),
-            output_path="lib/libgtk-4-1.dll"
-        )
-        add_file(
-            file_path=os.path.join(LIB_PATH, "libadwaita-1-0.dll"),
-            output_path="lib/libadwaita-1-0.dll"
-        )
-        # gdbus required for single-instance application (Windows)
-        add_file(file_path=os.path.join(LIB_PATH, "gdbus.exe"), output_path="lib/gdbus.exe")
+    # Typelibs
+    add_typelibs()
 
-    elif sys.platform == "darwin":
-        add_file(
-            file_path=os.path.join(LIB_PATH, "libgtk-4.1.dylib"),
-            output_path="lib/libgtk-4.1.dylib"
-        )
-        add_file(
-            file_path=os.path.join(LIB_PATH, "libadwaita-1.0.dylib"),
-            output_path="lib/libadwaita-1.0.dylib"
-        )
+    # gdbus required for single-instance application (Windows)
+    if sys.platform == "win32":
+        add_file(file_path=os.path.join(LIB_PATH, "gdbus.exe"), output_path="lib/gdbus.exe")
 
     # Schemas
     add_file(
@@ -217,9 +208,6 @@ def add_gtk():
 
     # Pixbuf loaders
     add_pixbuf_loaders()
-
-    # Typelibs
-    add_typelibs()
 
 
 def add_translations():
@@ -254,6 +242,7 @@ setup(
             "packages": INCLUDED_MODULES,
             "excludes": EXCLUDED_MODULES,
             "include_files": include_files,
+            "bin_excludes": BIN_EXCLUDES,
             "zip_include_packages": ["*"],
             "zip_exclude_packages": [MODULE_NAME],
             "optimize": 2
