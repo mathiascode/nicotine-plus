@@ -7,40 +7,24 @@ import subprocess
 import sys
 
 
-def install_brew():
-    """Install dependencies from the main Homebrew repos."""
+def install_conda_forge():
+    """Install dependencies from the main conda-forge repos."""
 
-    # Workaround for https://github.com/Homebrew/homebrew-core/issues/139497
-    os.environ["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
+    pre_packages = ["icu==67.1",
+                    "libsqlite"]
 
-    packages = ["gettext",
+    subprocess.check_call(["conda", "install", "-y"] + pre_packages)
+
+    packages = ["icu",
+                "cx_freeze",
                 "gobject-introspection",
                 "gtk4",
                 "libadwaita",
-                "webp-pixbuf-loader"]
+                "pygobject",
+                "python-build"]
 
-    subprocess.check_call(["brew", "install", "--quiet"] + packages)
-
-
-def install_pypi():
-    """Install dependencies from PyPi."""
-
-    subprocess.check_call([
-        sys.executable, "-m", "pip", "install",
-
-        # For consistency, avoid including pre-built binaries from PyPI
-        # in the application.
-        "--no-binary", "cx_Freeze",
-        "--no-binary", "PyGObject",
-        "--no-binary", "pycairo",
-
-        "-e", ".[packaging,tests]",
-        "build",
-        "setuptools",
-        "wheel"
-    ])
+    subprocess.check_call(["conda", "install", "-y"] + packages)
 
 
 if __name__ == "__main__":
-    install_brew()
-    install_pypi()
+    install_conda_forge()
