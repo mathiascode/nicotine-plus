@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Nicotine+ Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+package:
+  name: noicu
+  version: 1.0
+
+build:
+  number: 0
+  noarch: generic
+
+requirements:
+  run_constraints:
+    - icu <0.a0

@@ -2,45 +2,40 @@
 # SPDX-FileCopyrightText: 2020-2025 Nicotine+ Contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import glob
 import os
 import subprocess
 import sys
 
+CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+NOICU_PATH = os.path.join(CURRENT_PATH, "noicu.yaml")
 
-def install_brew():
-    """Install dependencies from the main Homebrew repos."""
 
-    # Workaround for https://github.com/Homebrew/homebrew-core/issues/139497
-    os.environ["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
+def install_conda_forge():
+    """Install dependencies from the main conda-forge repos."""
 
-    packages = ["gettext",
+    subprocess.check_call(["conda", "install", "-y", "rattler-build"])
+    subprocess.check_call(["rattler-build", "build", "--recipe", NOICU_PATH])
+
+    for file_path in glob.glob(os.path.join("output", "**", "noicu*.conda"), recursive=True):
+        subprocess.check_call(["conda", "install", "-y", file_path])
+
+    pre_packages = ["libsqlite",
+                    "libxml2"]
+
+    subprocess.check_call(["conda", "install", "-y"] + pre_packages)
+    subprocess.check_call(["conda", "install", "-y", "--no-deps", "harfbuzz"])
+
+    packages = ["cx_freeze",
                 "gobject-introspection",
                 "gtk4",
                 "libadwaita",
-                "webp-pixbuf-loader"]
+                "pygobject",
+                "python-build"]
 
-    subprocess.check_call(["brew", "install", "--quiet"] + packages)
-
-
-def install_pypi():
-    """Install dependencies from PyPi."""
-
-    subprocess.check_call([
-        sys.executable, "-m", "pip", "install",
-
-        # For consistency, avoid including pre-built binaries from PyPI
-        # in the application.
-        "--no-binary", "cx_Freeze",
-        "--no-binary", "PyGObject",
-        "--no-binary", "pycairo",
-
-        "-e", ".[packaging,tests]",
-        "build",
-        "setuptools",
-        "wheel"
-    ])
+    subprocess.check_call(["conda", "install", "-y", "--freeze-installed"] + packages)
+    subprocess.check_call(["conda", "remove", "-y", "noicu"])
 
 
 if __name__ == "__main__":
-    install_brew()
-    install_pypi()
+    install_conda_forge()
