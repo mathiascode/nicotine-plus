@@ -27,7 +27,7 @@ if sys.platform == "win32":
     SYS_BASE_PATH = sys.prefix
     LIB_PATH = os.path.join(SYS_BASE_PATH, "bin")
     UNAVAILABLE_MODULES = [
-        "fcntl", "grp", "nis", "ossaudiodev", "posix", "pwd", "readline", "resource", "spwd", "syslog", "termios"
+        "fcntl", "grp", "posix", "pwd", "readline", "resource", "syslog", "termios"
     ]
     BIN_EXCLUDES = []
     ICON_NAME = "icon.ico"
@@ -35,7 +35,7 @@ if sys.platform == "win32":
 elif sys.platform == "darwin":
     SYS_BASE_PATH = sys.prefix
     LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
-    UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]
+    UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "winreg", "winsound"]
     BIN_EXCLUDES = ["libicu*.dylib"]
     ICON_NAME = "icon.icns"
 
@@ -59,8 +59,8 @@ MANIFEST_NAME = os.path.join(CURRENT_PATH, f"{SCRIPT_NAME}.manifest") if sys.pla
 # Include (almost) all standard library modules for plugins
 EXCLUDED_MODULES = UNAVAILABLE_MODULES + [
     f"{MODULE_NAME}.plugins.examplars", f"{MODULE_NAME}.tests",
-    "ctypes.test", "distutils", "ensurepip", "idlelib", "lib2to3", "msilib", "pip", "pydoc", "pydoc_data",
-    "pygtkcompat", "tkinter", "turtle", "turtledemo", "unittest.test", "venv", "zoneinfo"
+    "ctypes.test", "ensurepip", "idlelib", "pip", "pydoc", "pydoc_data",
+    "tkinter", "turtle", "turtledemo", "unittest.test", "venv", "zoneinfo"
 ]
 INCLUDED_MODULES = [MODULE_NAME, "gi"] + list(
     # pylint: disable=no-member
