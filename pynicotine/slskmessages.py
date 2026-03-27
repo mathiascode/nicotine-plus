@@ -201,26 +201,26 @@ class EmitNetworkMessageEvents(InternalMessage):
 class DownloadFile(InternalMessage):
     """Sent to the networking thread to pass the file object to write."""
 
-    __slots__ = ("sock", "token", "file", "leftbytes", "speed")
+    __slots__ = ("sock", "token", "file", "size", "offset", "speed")
 
-    def __init__(self, sock=None, token=None, file=None, leftbytes=None):
-        self.sock = sock
-        self.token = token
-        self.file = file
-        self.leftbytes = leftbytes
-        self.speed = 0
-
-
-class UploadFile(InternalMessage):
-    __slots__ = ("sock", "token", "file", "size", "sentbytes", "offset", "speed")
-
-    def __init__(self, sock=None, token=None, file=None, size=None, sentbytes=0, offset=None):
+    def __init__(self, sock=None, token=None, file=None, size=None, offset=None):
         self.sock = sock
         self.token = token
         self.file = file
         self.size = size
-        self.sentbytes = sentbytes
         self.offset = offset
+        self.speed = 0
+
+
+class UploadFile(InternalMessage):
+    __slots__ = ("sock", "token", "file", "size", "offset", "speed")
+
+    def __init__(self, sock=None, token=None, file=None, size=None):
+        self.sock = sock
+        self.token = token
+        self.file = file
+        self.size = size
+        self.offset = None
         self.speed = 0
 
 

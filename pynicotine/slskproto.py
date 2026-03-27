@@ -1088,7 +1088,7 @@ class NetworkThread(Thread):
                 events.emit_main_thread(
                     "file-download-progress",
                     username=conn.init.target_user, token=file_download.token,
-                    bytes_left=file_download.leftbytes, speed=file_download.speed
+                    offset=file_download.offset, speed=file_download.speed
                 )
                 file_download.speed = 0
 
@@ -1098,8 +1098,7 @@ class NetworkThread(Thread):
                 events.emit_main_thread(
                     "file-upload-progress",
                     username=conn.init.target_user, token=file_upload.token,
-                    offset=file_upload.offset, bytes_sent=file_upload.sentbytes,
-                    speed=file_upload.speed
+                    offset=file_upload.offset, speed=file_upload.speed
                 )
                 file_upload.speed = 0
 
@@ -1996,7 +1995,7 @@ class NetworkThread(Thread):
         events.emit_main_thread(
             "file-upload-progress",
             username=conn.init.target_user, token=file_upload.token,
-            offset=file_upload.offset, bytes_sent=file_upload.sentbytes
+            offset=file_upload.offset
         )
 
         try:
@@ -2022,12 +2021,12 @@ class NetworkThread(Thread):
         self._total_download_bandwidth += data_len
 
         file_download.file.write(data)
-        file_download.leftbytes -= data_len
+        file_download.offset += data_len
 
     def _process_download(self, conn, data, data_len):
 
         file_download = self._file_download_msgs[conn]
-        idx = file_download.leftbytes
+        idx = (file_download.size - file_download.offset)
 
         try:
             if data_len > idx:
@@ -2043,11 +2042,10 @@ class NetworkThread(Thread):
             return False  # Close the connection
 
         # Download finished
-        if file_download.leftbytes <= 0:
+        if file_download.offset == file_download.size:
             events.emit_main_thread(
                 "file-download-progress",
-                username=conn.init.target_user, token=file_download.token,
-                bytes_left=file_download.leftbytes
+                username=conn.init.target_user, token=file_download.token, offset=file_download.offset
             )
             return False  # Close the connection
 
@@ -2062,8 +2060,8 @@ class NetworkThread(Thread):
 
         out_buffer = conn.out_buffer
         out_buffer_len = len(out_buffer)
-        file_upload.sentbytes += num_sent_bytes
-        total_read_bytes = file_upload.offset + file_upload.sentbytes + out_buffer_len
+        file_upload.offset += num_sent_bytes
+        total_read_bytes = file_upload.offset + out_buffer_len
         size = file_upload.size
 
         try:
@@ -2087,11 +2085,11 @@ class NetworkThread(Thread):
         self._total_upload_bandwidth += num_sent_bytes
 
         # Upload finished
-        if file_upload.offset + file_upload.sentbytes == size:
+        if file_upload.offset == size:
             events.emit_main_thread(
                 "file-upload-progress",
                 username=conn.init.target_user, token=file_upload.token,
-                offset=file_upload.offset, bytes_sent=file_upload.sentbytes
+                offset=file_upload.offset
             )
         return True
 

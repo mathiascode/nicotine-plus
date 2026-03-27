@@ -1207,7 +1207,7 @@ class Downloads(Transfers):
             if download.size > offset:
                 download.status = TransferStatus.TRANSFERRING
                 core.send_message_to_network_thread(DownloadFile(
-                    sock=sock, token=token, file=file_handle, leftbytes=(download.size - offset)
+                    sock=sock, token=token, file=file_handle, size=download.size, offset=offset
                 ))
                 core.send_message_to_peer(username, FileOffset(sock, offset))
 
@@ -1307,7 +1307,7 @@ class Downloads(Transfers):
         log.add_transfer("Upload attempt by user %s for file %s failed. Reason: %s",
                          (virtual_path, username, download.status))
 
-    def _file_download_progress(self, username, token, bytes_left, speed=None):
+    def _file_download_progress(self, username, token, offset, speed=None):
         """A file download is in progress."""
 
         download = self.active_users.get(username, {}).get(token)
@@ -1320,8 +1320,7 @@ class Downloads(Transfers):
             download.request_timer_id = None
 
         self._update_transfer_progress(
-            download, stat_id="downloaded_size",
-            current_byte_offset=(download.size - bytes_left), speed=speed
+            download, stat_id="downloaded_size", current_byte_offset=offset, speed=speed
         )
         self._update_transfer(download)
 
