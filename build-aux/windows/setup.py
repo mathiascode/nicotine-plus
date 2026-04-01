@@ -28,7 +28,7 @@ if sys.platform == "win32":
     UNAVAILABLE_MODULES = [
         "fcntl", "grp", "posix", "pwd", "readline", "resource", "syslog", "termios"
     ]
-    BIN_EXCLUDES = []
+    BIN_EXCLUDES = ["libgtk*.dll"]
     ICON_NAME = "icon.ico"
 
 elif sys.platform == "darwin":
@@ -174,6 +174,8 @@ def add_typelibs():
     if sys.platform == "win32":
         required_typelibs.append("GdkWin32-4")
         required_typelibs.append("win32-")
+    else:
+        required_typelibs.append("GioUnix-")
 
     required_typelibs = tuple(required_typelibs)
 
@@ -282,7 +284,7 @@ setup(
     executables=[
         Executable(
             script=os.path.join(PROJECT_PATH, SCRIPT_NAME),
-            base="gui",
+            base="console",
             target_name=pynicotine.__application_name__,
             icon=os.path.join(CURRENT_PATH, ICON_NAME),
             manifest=MANIFEST_NAME,

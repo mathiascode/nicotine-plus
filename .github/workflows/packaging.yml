@@ -156,6 +156,17 @@ jobs:
           mkdir build-aux/windows/build/package/Nicotine+/portable/
           cp build-aux/windows/readme-portable.txt build-aux/windows/build/package/Nicotine+/portable/README.txt
 
+      - name: Run package
+        shell: pwsh
+        run: |
+          Start-Process "build-aux\windows\build\package\Nicotine+\Nicotine+.exe" -ArgumentList "--ci-mode"
+          Start-Sleep -Seconds 10
+          if (-not (Get-Process -Name "Nicotine+" -ErrorAction SilentlyContinue)) {
+            Write-Error "Process not running"
+            exit 1
+          }
+          Write-Output "Success, program still running"
+
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -197,6 +208,19 @@ jobs:
 
       - name: Freeze application
         run: python3 build-aux/macos/setup.py bdist_dmg
+
+      - name: Run package
+        run: |
+          build-aux/macos/build/dist/Nicotine+.app/Contents/MacOS/Nicotine+ --ci-mode &
+          APP_PID=$!
+
+          sleep 10
+
+          if ! kill -0 $APP_PID 2>/dev/null; then
+            echo "Process not running"
+            exit 1
+          fi
+          echo "Success, program still running"
 
       - name: Archive installer artifacts
         uses: actions/upload-artifact@v7
