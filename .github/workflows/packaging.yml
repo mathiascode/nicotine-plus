@@ -114,6 +114,48 @@ jobs:
           name: snap-${{ matrix.arch }}-package
           path: nicotine-plus_*.snap
 
+  appimage:
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            platform: ubuntu-latest
+    runs-on: ${{ matrix.platform }}
+    container:
+      image: condaforge/miniforge3
+      options: --cap-add SYS_ADMIN --device /dev/fuse --security-opt apparmor=unconfined
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up environment
+        run: |
+          apt update
+          apt -y install --no-install-recommends cage file fuse
+
+          mamba create -n nicotine-plus
+          mamba create -n startup-test
+          mamba run -n nicotine-plus python3 build-aux/appimage/dependencies.py
+
+      - name: Freeze application
+        run: mamba run -n nicotine-plus python3 build-aux/appimage/setup.py bdist_appimage
+
+      - name: Test application startup
+        run: |
+          export WLR_BACKENDS=headless
+          export XDG_RUNTIME_DIR=/tmp
+          export GDK_BACKEND=wayland
+          export DBUS_SESSION_BUS_ADDRESS=
+
+          mamba run -n startup-test cage python3 build-aux/appimage/testrun.py
+
+      - name: Archive installer artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: appimage-${{ matrix.arch }}-package
+          path: build-aux/appimage/build/*.AppImage
+
   windows:
     timeout-minutes: 15
     strategy:
