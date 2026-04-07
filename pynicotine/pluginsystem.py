@@ -18,6 +18,7 @@ from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
 from pynicotine.logfacility import log
+from pynicotine.utils import decode_path
 from pynicotine.utils import encode_path
 
 
@@ -567,7 +568,7 @@ class PluginHandler:
         for folder_path in self.plugin_folders:
             try:
                 for entry in os.scandir(encode_path(folder_path)):
-                    file_path = entry.name.decode("utf-8", "replace")
+                    file_path = decode_path(entry.name)
 
                     if file_path == "core_commands":
                         continue

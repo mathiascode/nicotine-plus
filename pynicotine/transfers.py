@@ -25,6 +25,7 @@ from pynicotine.slskmessages import CloseConnection
 from pynicotine.slskmessages import FileAttribute
 from pynicotine.slskmessages import FileAttributes
 from pynicotine.slskmessages import UploadDenied
+from pynicotine.utils import decode_path
 from pynicotine.utils import encode_path
 from pynicotine.utils import load_file
 from pynicotine.utils import write_file_and_backup
@@ -360,7 +361,7 @@ class Transfers:
             file_handle.close()
 
         except Exception as error:
-            file_path = file_handle.name.decode("utf-8", "replace")
+            file_path = decode_path(file_handle.name)
             log.add_transfer("Failed to close file %s: %s", (file_path, error))
 
     # User Actions #

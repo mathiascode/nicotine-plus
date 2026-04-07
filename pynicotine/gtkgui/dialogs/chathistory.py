@@ -21,6 +21,7 @@ from pynicotine.gtkgui.widgets.theme import USER_STATUS_ICON_NAMES
 from pynicotine.gtkgui.widgets.treeview import TreeView
 from pynicotine.logfacility import log
 from pynicotine.slskmessages import UserStatus
+from pynicotine.utils import decode_path
 from pynicotine.utils import encode_path
 
 
@@ -116,7 +117,7 @@ class ChatHistory(Dialog):
         characters are substituted with underscores.
         """
 
-        username = os.path.basename(file_path[:-4]).decode("utf-8", "replace")
+        username = decode_path(os.path.basename(file_path[:-4]))
         is_safe_username = ("_" not in username)
         login_username = config.sections["server"]["login"]
         timestamp = os.path.getmtime(file_path)

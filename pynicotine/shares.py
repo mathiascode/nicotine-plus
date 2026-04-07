@@ -39,6 +39,7 @@ from pynicotine.slskmessages import SharedFileListResponse
 from pynicotine.slskmessages import SharedFoldersFiles
 from pynicotine.utils import TRANSLATE_PUNCTUATION
 from pynicotine.utils import UINT32_LIMIT
+from pynicotine.utils import decode_path
 from pynicotine.utils import encode_path
 from pynicotine.utils import humanize
 
@@ -576,7 +577,7 @@ class Scanner:
             try:
                 with os.scandir(encode_path(folder_path, prefix=False)) as entries:
                     for entry in entries:
-                        basename = basename_escaped = entry.name.decode("utf-8", "replace")
+                        basename = basename_escaped = decode_path(entry.name)
 
                         if "\\" in basename:
                             # Substitute backslashes with backslash sentinels in basenames. This is necessary

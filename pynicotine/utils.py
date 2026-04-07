@@ -9,6 +9,8 @@
 import os
 import sys
 
+from unicodedata import normalize
+
 UINT32_LIMIT = 4294967295
 UINT64_LIMIT = 18446744073709551615
 FILE_SIZE_SUFFIXES = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
@@ -186,6 +188,14 @@ def encode_path(path, prefix=True):
         path = LONG_PATH_PREFIX + path
 
     return path.encode("utf-8")
+
+
+def decode_path(path):
+    """Converts a file path in bytes to a string, and applies NFC normalization
+    (mainly required on macOS).
+    """
+
+    return normalize("NFC", path.decode("utf-8", "replace"))
 
 
 def human_duration_approx(seconds):

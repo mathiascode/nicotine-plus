@@ -49,6 +49,7 @@ from pynicotine.transfers import TransferStatus
 from pynicotine.utils import execute_command
 from pynicotine.utils import clean_file
 from pynicotine.utils import clean_path
+from pynicotine.utils import decode_path
 from pynicotine.utils import encode_path
 from pynicotine.utils import truncate_string_byte
 
@@ -428,7 +429,7 @@ class Downloads(Transfers):
         except OSError as error:
             log.add(
                 _("Couldn't move '%(tempfile)s' to '%(file)s': %(error)s"), {
-                    "tempfile": incomplete_file_path.decode("utf-8", "replace"),
+                    "tempfile": decode_path(incomplete_file_path),
                     "file": download_file_path,
                     "error": error
                 }
@@ -1200,7 +1201,7 @@ class Downloads(Transfers):
             log.add_download(
                 _("Download started: user %(user)s, file %(file)s"), {
                     "user": username,
-                    "file": file_handle.name.decode("utf-8", "replace")
+                    "file": decode_path(file_handle.name)
                 }
             )
 
