@@ -168,8 +168,8 @@ jobs:
           version: '15.0'
           run: |
             sudo pkg install -y dejavu gettext gtk4 python3 devel/py-build devel/py-pygobject \
-              devel/py-setuptools devel/py-wheel
-            python3 -m unittest -v
+              devel/py-setuptools devel/py-wheel x11/xwayland-run
+            xwfb-run -- python3 -m unittest -v
             python3 -m build
             python3 -m build --no-isolation
 
