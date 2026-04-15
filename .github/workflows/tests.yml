@@ -168,7 +168,13 @@ jobs:
           version: '15.0'
           run: |
             sudo pkg install -y dejavu gettext gtk4 python3 devel/py-build devel/py-pygobject \
-              devel/py-setuptools devel/py-wheel
+              devel/py-setuptools devel/py-wheel weston
+
+            export XDG_RUNTIME_DIR=/tmp
+            # Xvfb :99 > /dev/null 2>&1 &
+            weston --no-config --socket=wayland-vfb --backend=headless-backend.so --xwayland &
+            export DISPLAY=:0
+
             python3 -m unittest -v
             python3 -m build
             python3 -m build --no-isolation
