@@ -167,8 +167,19 @@ jobs:
           operating_system: freebsd
           version: '15.0'
           run: |
-            sudo pkg install -y dejavu gettext gtk4 python3 devel/py-build devel/py-pygobject \
+            sudo pkg install -y dejavu gettext gtk4 labwc python3 devel/py-build devel/py-pygobject \
               devel/py-setuptools devel/py-wheel
+
+            export WLR_BACKENDS=headless
+            export GDK_BACKEND=wayland
+            export GSK_RENDERER=cairo
+            export DBUS_SESSION_BUS_ADDRESS=
+            export WAYLAND_DISPLAY=wayland-0
+            export XDG_RUNTIME_DIR=/tmp
+
+            labwc &
+            trap 'kill $!' EXIT
+
             python3 -m unittest -v
             python3 -m build
             python3 -m build --no-isolation
