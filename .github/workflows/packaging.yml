@@ -49,7 +49,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
-      options: --privileged
+      options: --cap-add CAP_SYS_ADMIN --security-opt apparmor=unconfined
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
