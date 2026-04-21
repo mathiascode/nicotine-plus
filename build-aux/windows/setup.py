@@ -42,7 +42,7 @@ else:
     SYS_BASE_PATH = sys.prefix
     LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
     UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "winreg", "winsound"]
-    ZIP_INCLUDE_PACKAGES = []
+    ZIP_INCLUDE_PACKAGES = ["*"]
     ICON_NAME = "icon.svg"
 
 TEMP_PATH = tempfile.mkdtemp()
