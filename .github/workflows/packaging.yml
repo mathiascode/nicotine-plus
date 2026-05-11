@@ -2,7 +2,23 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 name: Packaging
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        type: boolean
+        default: false
+
+      tag:
+        description: Release Tag
+        required: false
+
+      release_notes:
+        description: Release Notes
+        required: false
+
 permissions: {}
 
 jobs:
@@ -266,3 +282,25 @@ jobs:
         with:
           name: macos-${{ matrix.arch }}-installer
           path: build-aux/macos/build/*.dmg
+
+  release:
+    needs: [debian, appimage, windows, macos]
+    if: inputs.create_release == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist/
+          skip-decompress: true
+
+      - name: Create release
+        run: gh release create "${{ inputs.tag }}" --title "${{ inputs.tag }}" --notes "${{ inputs.release_notes }}" dist/**/*.zip
