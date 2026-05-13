@@ -266,3 +266,24 @@ jobs:
         with:
           name: macos-${{ matrix.arch }}-installer
           path: build-aux/macos/build/*.dmg
+
+  attestation:
+    if: github.event_name == 'push'
+    needs: [debian, flatpak, snap, appimage, windows, macos]
+    runs-on: ubuntu-slim
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist/
+          skip-decompress: true
+
+      - name: Attest
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/
