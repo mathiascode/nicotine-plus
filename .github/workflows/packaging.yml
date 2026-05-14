@@ -255,7 +255,7 @@ jobs:
           cp build-aux/windows/readme-portable.txt build-aux/windows/build/package/Nicotine+/portable/README.txt
 
       - name: Test application startup
-        shell: cmd  # Exclude msys2 dependencies
+        shell: bash  # Exclude msys2 dependencies
         run: python3 build-aux/windows/testrun.py
 
       - name: Archive installer artifacts
