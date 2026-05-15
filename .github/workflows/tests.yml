@@ -178,6 +178,7 @@ jobs:
           operating_system: freebsd
           version: '15.0'
           run: |
+            sudo pkg upgrade -y
             sudo pkg install -y cage dejavu gettext gtk4 py311-build py311-pygobject \
               py311-setuptools py311-wheel
 
@@ -205,6 +206,7 @@ jobs:
           operating_system: openbsd
           version: '7.8'
           run: |
+            sudo pkg_add -u
             sudo pkg_add gettext-tools gtk+4 py3-build py3-gobject3 py3-setuptools py3-wheel
 
             export DISPLAY=:99
@@ -229,6 +231,8 @@ jobs:
           operating_system: netbsd
           version: '10.1'
           run: |
+            sudo pkgin -y update
+            sudo pkgin -y upgrade
             sudo pkgin -y install python314
 
             export NICOTINE_GUI_TESTS=0
@@ -249,6 +253,7 @@ jobs:
           operating_system: dragonflybsd
           version: '6.4.2'
           run: |
+            sudo pkg upgrade -y
             sudo pkg install -y dejavu gettext gtk4 python311 py311-build py311-pygobject \
               py311-setuptools py311-wheel
 
@@ -294,6 +299,7 @@ jobs:
           operating_system: haiku
           version: 'r1beta5'
           run: |
+            pkgman refresh
             pkgman install -y harfbuzz_glib gettext gtk4 build_python310 pygobject_python310 \
               setuptools_python310 wheel_python310
             python3.10 -m unittest -v
