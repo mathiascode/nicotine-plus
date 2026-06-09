@@ -345,6 +345,7 @@ class Scanner:
         except Exception:
             from traceback import format_exc
 
+            print(format_exc())
             self.writer.send(
                 ScannerLogMessage(
                     _("Serious error occurred while rescanning shares. If this problem persists, "
