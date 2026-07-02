@@ -280,8 +280,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo pkg install -y dejavu gettext gtk4 python311 py311-build py311-pygobject \
+          sudo ktrace pkg install -y dejavu gettext gtk4 python311 py311-build py311-pygobject \
             py311-setuptools py311-wheel
+          sudo kdump
 
       - name: Integration and unit tests
         run: python3.11 -m unittest -v
