@@ -345,16 +345,21 @@ class Scanner:
         except Exception:
             from traceback import format_exc
 
-            self.writer.send(
-                ScannerLogMessage(
-                    _("Serious error occurred while rescanning shares. If this problem persists, "
-                      "delete %(dir)s/*.dbn and try again. If that doesn't help, please file a bug "
-                      "report with this stack trace included: %(trace)s"), {
-                        "dir": os.path.dirname(next(iter(self.share_db_paths.values()))),
-                        "trace": "\n" + format_exc()
-                    }
-                )
+            message = ScannerLogMessage(
+                _("Serious error occurred while rescanning shares. If this problem persists, "
+                  "delete %(dir)s/*.dbn and try again. If that doesn't help, please file a bug "
+                  "report with this stack trace included: %(trace)s"), {
+                    "dir": os.path.dirname(next(iter(self.share_db_paths.values()))),
+                    "trace": "\n" + format_exc()
+                }
             )
+
+            try:
+                self.writer.send(message)
+
+            except BrokenPipeError:
+                # Receiving end was closed
+                print("END")
 
         finally:
             Shares.close_shares(self.share_dbs)
