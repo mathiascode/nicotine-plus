@@ -280,8 +280,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo pkg install -y dejavu gettext gtk4 python311 py311-build py311-pygobject \
-            py311-setuptools py311-wheel
+          # Retry due to occasional error: "pkg: An error occurred while fetching package: No error"
+          for i in 1 2 3; do
+            sudo pkg install -y dejavu gettext gtk4 python311 py311-build py311-pygobject \
+              py311-setuptools py311-wheel && break
+            status=$?; [ "$i" -eq 3 ] && exit "$status"
+            sleep 60
+          done
 
       - name: Integration and unit tests
         run: python3.11 -m unittest -v
@@ -345,8 +350,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pkgman install -y harfbuzz_glib gettext gtk4 build_python310 pygobject_python310 \
-            setuptools_python310 wheel_python310
+          # Retry due to occasional error: "Failed to download package x: Interrupted system call"
+          for i in 1 2 3; do
+            pkgman install -y harfbuzz_glib gettext gtk4 build_python310 pygobject_python310 \
+              setuptools_python310 wheel_python310 && break
+            status=$?; [ "$i" -eq 3 ] && exit "$status"
+            sleep 5
+          done
 
       - name: Integration and unit tests
         run: python3.10 -m unittest -v
