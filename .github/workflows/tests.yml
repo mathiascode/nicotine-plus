@@ -279,12 +279,15 @@ jobs:
           version: '6.4.2'
 
       - name: Install dependencies
+        continue-on-error: true
         run: |
           sudo pkg install -y dejavu gettext gtk4 python311 py311-build py311-pygobject \
             py311-setuptools py311-wheel
 
       - name: Integration and unit tests
-        run: python3.11 -m unittest -v
+        run: |
+          ping -c 5 google.com
+          python3.11 -m unittest -v
 
       - name: Build
         run: python3.11 -m build
