@@ -184,7 +184,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo pkg install -y cage dejavu gettext gtk4 py311-build py311-pygobject \
+          sudo pkg install -y cage dejavu gettext-tools gtk4 py311-build py311-pygobject \
             py311-setuptools py311-wheel
 
       - name: Integration and unit tests
@@ -284,8 +284,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo pkg install -y dejavu gettext gtk4 python311 py311-build py311-pygobject \
-            py311-setuptools py311-wheel
+          sudo pkg install -y dejavu gettext-tools gtk4 python311 py311-build \
+            py311-pygobject py311-setuptools py311-wheel
 
       - name: Integration and unit tests
         run: python3.11 -m unittest -v
@@ -318,8 +318,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo mport index
-          sudo mport install dejavu gettext gtk4 python311 py311-build py311-pygobject \
-            py311-setuptools py311-wheel || true
+          sudo mport install dejavu gettext-tools gtk4 python311 py311-build \
+            py311-pygobject py311-setuptools py311-wheel || true
 
       - name: Integration and unit tests
         run: python3.11 -m unittest -v
