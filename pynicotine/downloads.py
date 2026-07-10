@@ -657,6 +657,8 @@ class Downloads(Transfers):
             except (AttributeError, OSError):
                 pass
 
+            print(max_bytes)
+
             if not max_bytes:
                 # f_namemax doesn't exist, or might be zero in some cases (observed on DragonFlyBSD)
                 max_bytes = 255
