@@ -3464,6 +3464,14 @@ class PluginsPage:
 
             self.plugin_list_view.add_row([enabled, plugin_human_name, plugin_name, failed], select_row=False)
 
+        # Add removed plugins that are still enabled in config
+        for plugin_name in config.sections["plugins"]["enabled"]:
+            if plugin_name in self.plugin_list_view.iterators:
+                continue
+
+            enabled = failed = True
+            self.plugin_list_view.add_row([enabled, plugin_name, plugin_name, failed], select_row=False)
+
         self.plugin_list_view.unfreeze()
 
     def get_settings(self):
