@@ -3459,8 +3459,8 @@ class PluginsPage:
                 continue
 
             plugin_human_name = info.get("Name", plugin_name)
-            enabled = (plugin_name in config.sections["plugins"]["enabled"])
-            failed = (plugins_active and enabled and plugin_name not in core.pluginhandler.enabled_plugins)
+            enabled = plugin_name in config.sections["plugins"]["enabled"]
+            failed = plugin_name in core.pluginhandler.failed_plugins
 
             self.plugin_list_view.add_row([enabled, plugin_human_name, plugin_name, failed], select_row=False)
 
@@ -3479,7 +3479,7 @@ class PluginsPage:
 
     def on_failed_tooltip(self, treeview, iterator):
         failed = treeview.get_row_value(iterator, "inconsistent_data")
-        return _("Failed") if failed else ""
+        return _("Error while Loading Plugin") if failed else ""
 
     def on_plugin_popup_menu(self, menu, _widget):
 
@@ -3532,9 +3532,14 @@ class PluginsPage:
     def on_toggle_plugin(self, list_view, iterator):
 
         plugin_name = list_view.get_row_value(iterator, "name_data")
-        was_loaded = (plugin_name in core.pluginhandler.enabled_plugins)
-        enabled = core.pluginhandler.toggle_plugin(plugin_name)
-        failed = (not was_loaded and not enabled)
+        enabled = not list_view.get_row_value(iterator, "enabled")
+
+        if enabled:
+            core.pluginhandler.enable_plugin(plugin_name)
+        else:
+            core.pluginhandler.disable_plugin(plugin_name)
+
+        failed = plugin_name in core.pluginhandler.failed_plugins
 
         list_view.set_row_value(iterator, "enabled", enabled)
         list_view.set_row_value(iterator, "inconsistent_data", failed)

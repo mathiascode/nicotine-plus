@@ -394,13 +394,14 @@ class InstallException(Exception):
 
 
 class PluginHandler:
-    __slots__ = ("plugin_folders", "enabled_plugins", "command_source", "commands",
+    __slots__ = ("plugin_folders", "enabled_plugins", "failed_plugins", "command_source", "commands",
                  "internal_plugin_folder", "user_plugin_folder", "_load_now_playing_sender")
 
     def __init__(self, isolated_mode=False):
 
         self.plugin_folders = []
         self.enabled_plugins = {}
+        self.failed_plugins = set()
         self.command_source = None
         self.commands = {
             "chatroom": {},
@@ -652,6 +653,8 @@ class PluginHandler:
 
     def enable_plugin(self, plugin_name):
 
+        self.failed_plugins.discard(plugin_name)
+
         # Our config file doesn't play nicely with some characters
         if "=" in plugin_name:
             log.add(
@@ -659,15 +662,20 @@ class PluginHandler:
                     "name": plugin_name,
                     "characters": "="
                 })
+            self.failed_plugins.add(plugin_name)
             return False
 
         if plugin_name in self.enabled_plugins:
             return False
 
+        if plugin_name not in config.sections["plugins"]["enabled"]:
+            config.sections["plugins"]["enabled"].append(plugin_name)
+
         try:
             plugin = self._import_plugin_instance(plugin_name)
 
             if plugin is None:
+                self.failed_plugins.add(plugin_name)
                 return False
 
             plugin.init()
@@ -708,9 +716,6 @@ class PluginHandler:
 
             self.update_completions(plugin)
 
-            if plugin_name not in config.sections["plugins"]["enabled"]:
-                config.sections["plugins"]["enabled"].append(plugin_name)
-
             self.enabled_plugins[plugin_name] = plugin
             plugin.loaded_notification()
 
@@ -720,14 +725,20 @@ class PluginHandler:
             from traceback import format_exc
             log.add(_("Unable to load plugin %(module)s\n%(exc_trace)s"),
                     {"module": plugin_name, "exc_trace": format_exc()})
+            self.failed_plugins.add(plugin_name)
             return False
 
         return True
 
     def disable_plugin(self, plugin_name, is_permanent=True):
 
+        self.failed_plugins.discard(plugin_name)
+
         if plugin_name == "core_commands":
             return False
+
+        if is_permanent and plugin_name in config.sections["plugins"]["enabled"]:
+            config.sections["plugins"]["enabled"].remove(plugin_name)
 
         if plugin_name not in self.enabled_plugins:
             return False
@@ -800,9 +811,6 @@ class PluginHandler:
                 if function.__module__ is not None and function.__module__.split(".", 1)[0] == plugin_name:
                     events.cancel_scheduled(event_id)
 
-            if is_permanent and plugin_name in config.sections["plugins"]["enabled"]:
-                config.sections["plugins"]["enabled"].remove(plugin_name)
-
             del self.enabled_plugins[plugin_name]
             del plugin
 
@@ -813,7 +821,7 @@ class PluginHandler:
         enabled = plugin_name in self.enabled_plugins
 
         if enabled:
-            # Return False is plugin is unloaded
+            # Return False if plugin is unloaded
             return not self.disable_plugin(plugin_name)
 
         return self.enable_plugin(plugin_name)
