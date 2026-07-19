@@ -163,19 +163,83 @@ class PrivateChat:
     def _redirect_server_message(self, message):
         """Redirect specific server messages to a chat room."""
 
-        first_paragraph = message.split("\n", 1)[0]
+        first_paragraph, _sep, remaining_message = message.partition("\n")
+        room_create_str = "Could not create room. Reason: "
+        room = None
+        translated_message = None
 
-        for start_str, end_str in (
-            ("The room you are trying to enter (", ") is registered as private."),
-            ("The room you are trying to enter (", (") is moderated. Please contact one of these moderators "
-                                                    "if you are interested in being added to the room's "
-                                                    "member list:")),
-            ("Room (", ") is registered as public.")
-        ):
-            if first_paragraph.startswith(start_str) and first_paragraph.endswith(end_str):
-                room = first_paragraph[len(start_str):first_paragraph.rfind(end_str)]
+        if first_paragraph.startswith(room_create_str):
+            reason = first_paragraph[len(room_create_str):]
+            translated_message = _("Could not create room. Reason: %s")
+
+            if reason == "Room name empty.":
+                room = ""
+                translated_message = translated_message % _("Room name empty.")
+            else:
+                for start_str, end_str, translated_str in (
+                    (
+                        "Room name ", " contains leading or trailing spaces.",
+                        _("Room name %s contains leading or trailing spaces.")
+                    ),
+                    (
+                        "Room name ", " contains invalid characters.",
+                        _("Room name %s contains invalid characters.")
+                    ),
+                    (
+                        "Room name ", " contains multiple following spaces.",
+                        _("Room name %s contains multiple following spaces.")
+                    )
+                ):
+                    if first_paragraph.startswith(start_str) and first_paragraph.endswith(end_str):
+                        room = first_paragraph[len(start_str):first_paragraph.rfind(end_str)]
+                        translated_message = translated_message % (translated_str % room)
+                        break
+
+        if room is None:
+            for start_str, end_str, translated_str in (
+                (
+                    "The room you are trying to enter (", ") is registered as private.",
+                    _("The room you are trying to enter (%s) is registered as private.")
+                ),
+                (
+                    "The room you are trying to enter (", (") is moderated. Please contact one of these moderators "
+                                                           "if you are interested in being added to the room's "
+                                                           "member list:"),
+                    _("The room you are trying to enter (%s) is moderated. Please contact one of these moderators "
+                      "if you are interested in being added to the room's member list:")
+                ),
+                (
+                    "Room (", ") is registered as public.",
+                    _("Room (%s) is registered as public.")
+                )
+            ):
+                if first_paragraph.startswith(start_str) and first_paragraph.endswith(end_str):
+                    room = first_paragraph[len(start_str):first_paragraph.rfind(end_str)]
+                    translated_message = translated_str % room
+
+        if room is not None and translated_message is not None:
+            if remaining_message:
+                translated_message += "\n" + remaining_message
+
+            msg = SayChatroom(room=room, message=translated_message, user=self.SERVER_USERNAME)
+            events.emit("say-chat-room", msg)
+            return True
+
+        """start_str = "Could not create room. Reason: Room name "
+
+        if first_paragraph.startswith(start_str):
+            room, sep, _end = first_paragraph[len(start_str):].partition(" longer than ")
+            if sep:
                 events.emit("say-chat-room", SayChatroom(room=room, message=message, user=self.SERVER_USERNAME))
-                return True
+                return True"""
+
+        start_str = "user "
+        end_str = " is not logged in."
+
+        if first_paragraph.startswith(start_str) and first_paragraph.endswith(end_str):
+            username = first_paragraph[len(start_str):first_paragraph.rfind(end_str)]
+            log.add(_("User %s must be logged in first"), username, title=_("User Unavailable"))
+            return True
 
         return False
 
