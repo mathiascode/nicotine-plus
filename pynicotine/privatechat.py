@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2020-2026 Nicotine+ Contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import re
 import time
 
 import pynicotine
@@ -160,88 +161,148 @@ class PrivateChat:
         else:
             self._private_message_queue[username].append(msg)
 
-    def _redirect_server_message(self, message):
-        """Redirect specific server messages to a chat room."""
+    def _process_server_message(self, message):
 
         first_paragraph, _sep, remaining_message = message.partition("\n")
         room_create_str = "Could not create room. Reason: "
-        room = None
+        redirect_room = None
         translated_message = None
 
         if first_paragraph.startswith(room_create_str):
             reason = first_paragraph[len(room_create_str):]
-            translated_message = _("Could not create room. Reason: %s")
+            template = _("Could not create room. Reason: %s")
 
             if reason == "Room name empty.":
-                room = ""
-                translated_message = translated_message % _("Room name empty.")
+                redirect_room = ""
+                translated_message = template % _("Room name empty.")
             else:
-                for start_str, end_str, translated_str in (
+                for pattern, translated_str in (
                     (
-                        "Room name ", " contains leading or trailing spaces.",
+                        r"^Room name (.*?) contains leading or trailing spaces\.$",
                         _("Room name %s contains leading or trailing spaces.")
                     ),
                     (
-                        "Room name ", " contains invalid characters.",
+                        r"^Room name (.*?) contains invalid characters\.$",
                         _("Room name %s contains invalid characters.")
                     ),
                     (
-                        "Room name ", " contains multiple following spaces.",
+                        r"^Room name (.*?) contains multiple following spaces\.$",
                         _("Room name %s contains multiple following spaces.")
                     )
                 ):
-                    if first_paragraph.startswith(start_str) and first_paragraph.endswith(end_str):
-                        room = first_paragraph[len(start_str):first_paragraph.rfind(end_str)]
-                        translated_message = translated_message % (translated_str % room)
+                    match = re.match(pattern, reason)
+                    if match:
+                        redirect_room = match.groups()[0]
+                        translated_message = template % (translated_str % redirect_room)
                         break
 
-        if room is None:
-            for start_str, end_str, translated_str in (
+                if translated_message is None:
+                    pattern = r"^Room name (.*?) longer than (\d+) characters\.$"
+                    match = re.match(pattern, reason)
+                    if match:
+                        redirect_room, num_chars = match.groups()
+                        translated_message = template % (
+                            _("Room name %(name)s longer than %(chars)s characters.") % {
+                                "name": redirect_room,
+                                "chars": num_chars
+                            }
+                        )
+
+        pattern = r"^user (.*?) is not logged in\.$"
+        match = re.match(pattern, first_paragraph)
+        if match:
+            username = match.groups()[0]
+            events.emit("user-login-required", username)
+            return None
+
+        pattern = (r"^user (.*?) hasn't enabled private room add. please message them and ask them to do so "
+                   r"before trying to add them again\.$")
+        match = re.match(pattern, first_paragraph)
+        if match:
+            username = match.groups()[0]
+            events.emit("room-invitation-rejected", username)
+            return None
+
+        if translated_message is None:
+            for pattern, translated_str in (
                 (
-                    "The room you are trying to enter (", ") is registered as private.",
+                    r"^The room you are trying to enter \((.*?)\) is registered as private\.$",
                     _("The room you are trying to enter (%s) is registered as private.")
                 ),
                 (
-                    "The room you are trying to enter (", (") is moderated. Please contact one of these moderators "
-                                                           "if you are interested in being added to the room's "
-                                                           "member list:"),
+                    r"^The room you are trying to enter \((.*?)\) is moderated\. Please contact one of these "
+                    r"moderators if you are interested in being added to the room's member list:$",
                     _("The room you are trying to enter (%s) is moderated. Please contact one of these moderators "
                       "if you are interested in being added to the room's member list:")
                 ),
                 (
-                    "Room (", ") is registered as public.",
+                    r"^Room \((.*?)\) is registered as public\.$",
                     _("Room (%s) is registered as public.")
                 )
             ):
-                if first_paragraph.startswith(start_str) and first_paragraph.endswith(end_str):
-                    room = first_paragraph[len(start_str):first_paragraph.rfind(end_str)]
-                    translated_message = translated_str % room
+                match = re.match(pattern, first_paragraph)
+                if match:
+                    redirect_room = match.groups()[0]
+                    translated_message = translated_str % redirect_room
+                    break
 
-        if room is not None and translated_message is not None:
+        if translated_message is None:
+            for pattern, translated_str in (
+                (
+                    r"^User (.*?) is now a member of room (.*?)",
+                    _("User %(user)s is now a member of room %(room)s")
+                ),
+                (
+                    r"^User (.*?) is no longer a member of room (.*?)",
+                    _("User %(user)s is no longer a member of room %(room)s")
+                ),
+                (
+                    r"^User (.*?) is now an operator of room (.*?)",
+                    _("User %(user)s is now an operator of room %(room)s")
+                ),
+                (
+                    r"^User (.*?) is no longer an operator of room (.*?)",
+                    _("User %(user)s is no longer an operator of room %(room)s")
+                )
+            ):
+                match = re.match(pattern, first_paragraph)
+                if match:
+                    username, room = match.groups()
+                    translated_message = translated_str % {
+                        "user": username,
+                        "room": room
+                    }
+                    break
+
+        if translated_message is None:
+            for pattern, translated_str in (
+                (
+                    r"^User [(.*?)] was added as a member of room [(.*?)] by operator [(.*?)]",
+                    _("User [%(user)s] was added as a member of room [%(room)s] by operator [%(operator)s]")
+                )
+            ):
+                match = re.match(pattern, first_paragraph)
+                if match:
+                    username, room, operator = match.groups()
+                    translated_message = translated_str % {
+                        "user": username,
+                        "room": room,
+                        "operator": operator
+                    }
+                    break
+
+        if translated_message is not None:
             if remaining_message:
                 translated_message += "\n" + remaining_message
 
-            msg = SayChatroom(room=room, message=translated_message, user=self.SERVER_USERNAME)
-            events.emit("say-chat-room", msg)
-            return True
+            if redirect_room is not None:
+                msg = SayChatroom(room=redirect_room, message=translated_message, user=self.SERVER_USERNAME)
+                events.emit("say-chat-room", msg)
+                return None
 
-        """start_str = "Could not create room. Reason: Room name "
+            return translated_message
 
-        if first_paragraph.startswith(start_str):
-            room, sep, _end = first_paragraph[len(start_str):].partition(" longer than ")
-            if sep:
-                events.emit("say-chat-room", SayChatroom(room=room, message=message, user=self.SERVER_USERNAME))
-                return True"""
-
-        start_str = "user "
-        end_str = " is not logged in."
-
-        if first_paragraph.startswith(start_str) and first_paragraph.endswith(end_str):
-            username = first_paragraph[len(start_str):first_paragraph.rfind(end_str)]
-            log.add(_("User %s must be logged in first"), username, title=_("User Unavailable"))
-            return True
-
-        return False
+        return message
 
     def _process_ctcp_query(self, username, query):
 
@@ -341,7 +402,12 @@ class PrivateChat:
 
                 core.send_message_to_server(MessageAcked(msg.message_id))
 
-            if username != self.SERVER_USERNAME:
+            if username == self.SERVER_USERNAME:
+                message = self._process_server_message(message)
+                if message is None:
+                    msg.user = None
+                    return
+            else:
                 # Check ignore status for all other users except "server"
                 if core.network_filter.is_user_ignored(username):
                     msg.user = None
@@ -362,10 +428,6 @@ class PrivateChat:
                     self._private_message_queue_add(msg)
                     msg.user = None
                     return
-
-            elif self._redirect_server_message(message):
-                msg.user = None
-                return
 
             user_text = core.pluginhandler.incoming_private_chat_event(username, message)
             if user_text is None:
