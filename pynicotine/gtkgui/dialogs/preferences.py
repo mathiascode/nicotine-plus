@@ -51,6 +51,7 @@ from pynicotine.gtkgui.widgets.theme import update_custom_css
 from pynicotine.gtkgui.widgets.treeview import TreeView
 from pynicotine.i18n import LANGUAGES
 from pynicotine.logfacility import log
+from pynicotine.pluginsystem import PluginStatus
 from pynicotine.shares import PermissionLevel
 from pynicotine.slskmessages import UserStatus
 from pynicotine.slskproto import NetworkInterfaces
@@ -3465,8 +3466,9 @@ class PluginsPage:
                 continue
 
             plugin_human_name = info.get("Name", plugin_name)
-            enabled = plugin_name in config.sections["plugins"]["enabled"]
-            failed = core.pluginhandler.is_plugin_failed(plugin_name)
+            status = core.pluginhandler.get_plugin_status(plugin_name)
+            enabled = (status != PluginStatus.DISABLED)
+            failed = (status == PluginStatus.FAILED)
 
             self.plugin_list_view.add_row([enabled, plugin_human_name, plugin_name, failed], select_row=False)
 
@@ -3481,8 +3483,8 @@ class PluginsPage:
     def update_failed_plugin_states(self):
 
         for plugin_name, iterator in self.plugin_list_view.iterators.items():
-            failed = core.pluginhandler.is_plugin_failed(plugin_name)
-            self.plugin_list_view.set_row_value(iterator, "inconsistent_data", failed)
+            status = core.pluginhandler.get_plugin_status(plugin_name)
+            self.plugin_list_view.set_row_value(iterator, "inconsistent_data", status == PluginStatus.FAILED)
 
     def on_failed_tooltip(self, treeview, iterator):
 
@@ -3542,18 +3544,17 @@ class PluginsPage:
     def on_toggle_plugin(self, list_view, iterator):
 
         plugin_name = list_view.get_row_value(iterator, "name_data")
-        enabled = not list_view.get_row_value(iterator, "enabled")
+        enabled = list_view.get_row_value(iterator, "enabled")
 
-        if not enabled:
+        if enabled:
             core.pluginhandler.disable_plugin(plugin_name)
+        else:
+            core.pluginhandler.enable_plugin(plugin_name)
 
-        elif not core.pluginhandler.enable_plugin(plugin_name):
-            return
+        status = core.pluginhandler.get_plugin_status(plugin_name)
 
-        failed = core.pluginhandler.is_plugin_failed(plugin_name)
-
-        list_view.set_row_value(iterator, "enabled", enabled)
-        list_view.set_row_value(iterator, "inconsistent_data", failed)
+        list_view.set_row_value(iterator, "enabled", status != PluginStatus.DISABLED)
+        list_view.set_row_value(iterator, "inconsistent_data", status == PluginStatus.FAILED)
 
         self.check_plugin_settings_button(plugin_name)
 

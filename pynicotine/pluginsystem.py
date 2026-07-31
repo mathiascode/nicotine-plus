@@ -393,6 +393,13 @@ class InstallException(Exception):
     pass
 
 
+class PluginStatus:
+    DISABLED = 0
+    PENDING = 1
+    LOADED = 2
+    FAILED = 3
+
+
 class PluginHandler:
     __slots__ = ("plugin_folders", "loaded_plugins", "command_source", "commands",
                  "internal_plugin_folder", "user_plugin_folder", "_load_now_playing_sender")
@@ -520,7 +527,7 @@ class PluginHandler:
                 "error": error
             })
 
-        if self.is_plugin_loaded(plugin_name):
+        if self.get_plugin_status(plugin_name) == PluginStatus.LOADED:
             self.reload_plugin(plugin_name)
 
         return plugin_name
@@ -659,10 +666,10 @@ class PluginHandler:
                     "name": plugin_name,
                     "error": _("Plugin folder name contains invalid character '%(char)s'") % {"char": "="}
                 })
-            return False
+            return
 
-        if self.is_plugin_loaded(plugin_name):
-            return False
+        if self.get_plugin_status(plugin_name) == PluginStatus.LOADED:
+            return
 
         if plugin_name not in config.sections["plugins"]["enabled"]:
             config.sections["plugins"]["enabled"].append(plugin_name)
@@ -675,7 +682,7 @@ class PluginHandler:
                 if plugin_name in config.sections["plugins"]["enabled"]:
                     config.sections["plugins"]["enabled"].remove(plugin_name)
 
-                return False
+                return
 
             plugin.init()
 
@@ -725,18 +732,16 @@ class PluginHandler:
             log.add(_("Failed to load plugin %(name)s") + "\n%(trace)s",
                     {"name": plugin_name, "trace": format_exc()})
 
-        return True
-
     def disable_plugin(self, plugin_name, is_permanent=True):
 
         if plugin_name == "core_commands":
-            return False
+            return
 
         if is_permanent and plugin_name in config.sections["plugins"]["enabled"]:
             config.sections["plugins"]["enabled"].remove(plugin_name)
 
-        if not self.is_plugin_loaded(plugin_name):
-            return False
+        if self.get_plugin_status(plugin_name) != PluginStatus.LOADED:
+            return
 
         plugin = self.loaded_plugins[plugin_name]
         plugin_path = None
@@ -808,38 +813,34 @@ class PluginHandler:
             del self.loaded_plugins[plugin_name]
             del plugin
 
-        return True
-
     def toggle_plugin(self, plugin_name):
 
-        enabled = self.is_plugin_loaded(plugin_name)
+        if self.get_plugin_status(plugin_name) == PluginStatus.LOADED:
+            self.disable_plugin(plugin_name)
+            return
 
-        if enabled:
-            # Return False if plugin is unloaded
-            return not self.disable_plugin(plugin_name)
-
-        return self.enable_plugin(plugin_name)
+        self.enable_plugin(plugin_name)
 
     def reload_plugin(self, plugin_name):
         self.disable_plugin(plugin_name)
         self.enable_plugin(plugin_name)
 
-    def is_plugin_loaded(self, plugin_name):
-        return plugin_name in self.loaded_plugins
+    def get_plugin_status(self, plugin_name):
 
-    def is_plugin_failed(self, plugin_name):
+        if plugin_name in self.loaded_plugins:
+            return PluginStatus.LOADED
+
+        if plugin_name not in config.sections["plugins"]["enabled"]:
+            return PluginStatus.DISABLED
 
         if not config.sections["plugins"]["enable"]:
-            return False
+            return PluginStatus.PENDING
 
-        return (
-            plugin_name in config.sections["plugins"]["enabled"]
-            and not self.is_plugin_loaded(plugin_name)
-        )
+        return PluginStatus.FAILED
 
     def get_plugin_metasettings(self, plugin_name):
 
-        if self.is_plugin_loaded(plugin_name):
+        if self.get_plugin_status(plugin_name) == PluginStatus.LOADED:
             plugin = self.loaded_plugins[plugin_name]
 
             if plugin.metasettings:
@@ -927,7 +928,7 @@ class PluginHandler:
             del config.sections["plugins"][plugin_name]
             config.write_configuration()
 
-        if self.is_plugin_loaded(plugin_name):
+        if self.get_plugin_status(plugin_name) == PluginStatus.LOADED:
             self.reload_plugin(plugin_name)
 
         log.add(_("Restored default settings for plugin %s"), plugin_human_name)

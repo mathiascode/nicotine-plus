@@ -274,9 +274,11 @@ class Events:
 
             except Exception as error:
                 from pynicotine import core
+                from pynicotine.pluginsystem import PluginStatus
                 module_name = function.__module__.split(".", 1)[0]
 
-                if core.pluginhandler is None or not core.pluginhandler.is_plugin_loaded(module_name):
+                if (core.pluginhandler is None
+                        or core.pluginhandler.get_plugin_status(module_name) != PluginStatus.LOADED):
                     core.quit()
                     raise error
 
