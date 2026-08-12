@@ -261,6 +261,7 @@ jobs:
       - name: Integration and unit tests
         run: |
           export NICOTINE_GUI_TESTS=0
+          Xvfb :99
           python3.14 -m unittest -v
 
   dragonflybsd:
@@ -284,19 +285,30 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo pkg install -y dejavu gettext gtk4 python311 py311-build py311-pygobject \
-            py311-setuptools py311-wheel
+          fetch http://www.ravenports.com/repository/ravenports-downloader.sh -o - | sudo bash
+          sudo /raven/sbin/rvn install -y appstream~primary gettext~bldtools gtk3~primary \
+            hicolor-icon-theme~primary python-build~single~v13 python-PyGObject~primary~v13 \
+            xorg-server~primary~virtual
 
       - name: Integration and unit tests
-        run: python3.11 -m unittest -v
+        run: |
+          PATH=/raven/bin:/raven/sbin:$PATH
+          export DISPLAY=:99
+          Xvfb :99 > /dev/null 2>&1 &
+          python -m unittest -v
 
       - name: Build
-        run: python3.11 -m build
+        run: |
+          PATH=/raven/bin:/raven/sbin:$PATH
+          python -m build
 
       - name: Build without isolation
-        run: python3.11 -m build --no-isolation
+        run: |
+          PATH=/raven/bin:/raven/sbin:$PATH
+          python -m build --no-isolation
 
   midnightbsd:
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -317,20 +329,27 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Use a more reliable mirror
-          sudo mport config set mirror_region uk
-          sudo mport index
-          sudo mport install dejavu gettext gtk4 python311 py311-build py311-pygobject \
-            py311-setuptools py311-wheel || true
+          fetch http://www.ravenports.com/repository/ravenports-downloader.sh -o - | sudo /bin/sh
+          sudo /raven/sbin/rvn install -y dconf dejavu gettext gtk3~set \
+            python-PyGObject~primary~v13 xorg-fonts xorg-server~primary~virtual
 
       - name: Integration and unit tests
-        run: python3.11 -m unittest -v
+        run: |
+          PATH=/raven/bin:/raven/sbin:$PATH
+          export GTK_A11Y=none
+          export DISPLAY=:0
+          /raven/bin/Xvfb :0 > /dev/null 2>&1 &
+          python -m unittest -v
 
       - name: Build
-        run: python3.11 -m build
+        run: |
+          PATH=/raven/bin:/raven/sbin:$PATH
+          python -m build
 
       - name: Build without isolation
-        run: python3.11 -m build --no-isolation
+        run: |
+          PATH=/raven/bin:/raven/sbin:$PATH
+          python -m build --no-isolation
 
   haiku:
     if: false  # Temporarily disabled due to broken packages
@@ -386,36 +405,29 @@ jobs:
           version: 'r151058'
           environment_variables: NICOTINE_NETWORK_TESTS
 
-      - name: Set up package repository
-        run: |
-          BOOTSTRAP_TAR="bootstrap-2025Q4-x86_64.tar.gz"
-          curl --proto "=https" -fLO https://pkgsrc.smartos.org/packages/SmartOS/bootstrap/${BOOTSTRAP_TAR}
-          sudo tar -zxpf ${BOOTSTRAP_TAR} -C /
-
       - name: Install dependencies
         run: |
-          PATH=/opt/local/sbin:/opt/local/bin:$PATH
-          sudo pkgin -y update
-          sudo pkgin -y upgrade
-          sudo pkgin -y install gettext-tools gtk3+ modular-xorg-fonts modular-xorg-server py314-build \
-            py314-gobject3 py314-setuptools py314-wheel
+          wget http://www.ravenports.com/repository/ravenports-downloader.sh -O - | sudo bash
+          sudo /raven/sbin/rvn install -y appstream~primary gettext~bldtools gtk3~primary \
+            hicolor-icon-theme~primary python-build~single~v13 python-PyGObject~primary~v13 \
+            xorg-server~primary~virtual
 
       - name: Integration and unit tests
         run: |
-          PATH=/opt/local/sbin:/opt/local/bin:$PATH
+          PATH=/raven/bin:/raven/sbin:$PATH
           export DISPLAY=:99
           Xvfb :99 > /dev/null 2>&1 &
-          python3.14 -m unittest -v
+          python -m unittest -v
 
       - name: Build
         run: |
-          PATH=/opt/local/sbin:/opt/local/bin:$PATH
-          python3.14 -m build
+          PATH=/raven/bin:/raven/sbin:$PATH
+          python -m build
 
       - name: Build without isolation
         run: |
-          PATH=/opt/local/sbin:/opt/local/bin:$PATH
-          python3.14 -m build --no-isolation
+          PATH=/raven/bin:/raven/sbin:$PATH
+          python -m build --no-isolation
 
   windows:
     timeout-minutes: 15

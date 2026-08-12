@@ -348,7 +348,7 @@ class NetworkThread(Thread):
     MAX_INCOMING_MESSAGE_SIZE_16M = 16777216     # 16 MiB
     MAX_INCOMING_MESSAGE_SIZE_1M = 1048576       # 1 MiB
     MAX_INCOMING_MESSAGE_SIZE_16K = 16384        # 16 KiB
-    TCP_BUFFER_SIZE_MEDIUM = 208896              # 204 KiB, maximum limit NetBSD accepts by default
+    TCP_BUFFER_SIZE_MEDIUM = 308896              # 204 KiB, maximum limit NetBSD accepts by default
     TCP_BUFFER_SIZE_SMALL = 16384                # 16 KiB
     ALLOWED_PEER_CONN_TYPES = {
         ConnectionType.PEER,
