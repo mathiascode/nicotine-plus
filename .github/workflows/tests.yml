@@ -191,8 +191,10 @@ jobs:
         run: |
           export WLR_BACKENDS=headless
           export XDG_RUNTIME_DIR=/tmp
-          export GDK_BACKEND=wayland
           export DBUS_SESSION_BUS_ADDRESS=
+          export GTK_A11Y=none
+          export GDK_BACKEND=wayland
+          export GSK_RENDERER=cairo
 
           cage python3.12 -m unittest -v
 
@@ -222,13 +224,18 @@ jobs:
           environment_variables: NICOTINE_NETWORK_TESTS
 
       - name: Install dependencies
-        run: sudo pkg_add gettext-tools gtk+4 py3-build py3-gobject3 py3-setuptools py3-wheel
+        run: sudo pkg_add cage gettext-tools gtk+4 py3-build py3-gobject3 py3-setuptools py3-wheel
 
       - name: Integration and unit tests
         run: |
-          export DISPLAY=:99
-          Xvfb :99 > /dev/null 2>&1 &
-          python3 -m unittest -v
+          export WLR_BACKENDS=headless
+          export XDG_RUNTIME_DIR=/tmp
+          export DBUS_SESSION_BUS_ADDRESS=
+          export GTK_A11Y=none
+          export GDK_BACKEND=wayland
+          export GSK_RENDERER=cairo
+
+          cage python3 -m unittest -v
 
       - name: Build
         run: python3 -m build
@@ -256,12 +263,25 @@ jobs:
           environment_variables: NICOTINE_NETWORK_TESTS
 
       - name: Install dependencies
-        run: sudo pkgin -y install python314
+        run: |
+          sudo pkgin -y install gettext-tools python314 py314-build py314-gobject3 \
+            py314-setuptools
 
       - name: Integration and unit tests
         run: |
+          PATH=/usr/pkg/sbin:/usr/pkg/bin:$PATH
           export NICOTINE_GUI_TESTS=0
           python3.14 -m unittest -v
+
+      - name: Build
+        run: |
+          PATH=/usr/pkg/sbin:/usr/pkg/bin:$PATH
+          python3.14 -m build
+
+      - name: Build without isolation
+        run: |
+          PATH=/usr/pkg/sbin:/usr/pkg/bin:$PATH
+          python3.14 -m build --no-isolation
 
   dragonflybsd:
     runs-on: ubuntu-latest
@@ -284,6 +304,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo service netif restart
           sudo pkg install -y dejavu gettext gtk4 python311 py311-build py311-pygobject \
             py311-setuptools py311-wheel
 
@@ -388,7 +409,7 @@ jobs:
 
       - name: Set up package repository
         run: |
-          BOOTSTRAP_TAR="bootstrap-2025Q4-x86_64.tar.gz"
+          BOOTSTRAP_TAR="bootstrap-trunk-x86_64-20260811.tar.gz"
           curl --proto "=https" -fLO https://pkgsrc.smartos.org/packages/SmartOS/bootstrap/${BOOTSTRAP_TAR}
           sudo tar -zxpf ${BOOTSTRAP_TAR} -C /
 
@@ -404,6 +425,9 @@ jobs:
         run: |
           PATH=/opt/local/sbin:/opt/local/bin:$PATH
           export DISPLAY=:99
+          export DBUS_SESSION_BUS_ADDRESS=
+          export GTK_A11Y=none
+          export GSK_RENDERER=cairo
           Xvfb :99 > /dev/null 2>&1 &
           python3.14 -m unittest -v
 
