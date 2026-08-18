@@ -410,16 +410,16 @@ jobs:
 
       - name: Set up package repository
         run: |
-          BOOTSTRAP_TAR="bootstrap-2025Q4-x86_64.tar.gz"
+          BOOTSTRAP_TAR="bootstrap-trunk-x86_64-20260811.tar.gz"
           curl --proto "=https" -fLO https://pkgsrc.smartos.org/packages/SmartOS/bootstrap/${BOOTSTRAP_TAR}
           sudo tar -zxpf ${BOOTSTRAP_TAR} -C /
 
       - name: Install dependencies
         run: |
-          PATH=/opt/local/sbin:/opt/local/bin:$PATH
+          PATH=/opt/local/sbin:/opt/local/bin
           sudo pkgin -y update
           sudo pkgin -y upgrade
-          sudo pkgin -y install gettext-tools gtk3+ modular-xorg-fonts modular-xorg-server py314-build \
+          sudo pkgin -y install gettext-tools gtk4 modular-xorg-fonts modular-xorg-server py314-build \
             py314-gobject3 py314-setuptools py314-wheel
 
       - name: Integration and unit tests
