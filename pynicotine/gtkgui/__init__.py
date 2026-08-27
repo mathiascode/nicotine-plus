@@ -117,6 +117,7 @@ def run(hidden, ci_mode, isolated_mode, multi_instance):
         os.environ["GSETTINGS_SCHEMA_DIR"] = os.path.join(executable_folder, "lib", "schemas")
         os.environ["FONTCONFIG_FILE"] = os.path.join(executable_folder, "share", "fonts", "fonts.conf")
         os.environ["FONTCONFIG_PATH"] = os.path.join(executable_folder, "share", "fonts")
+        os.environ["TEXTDOMAINDIR"] = os.path.join(executable_folder, "share", "locale")
         os.environ["XKB_CONFIG_EXTRA_PATH"] = os.path.join(executable_folder, "share", "xkb")
 
         if sys.platform == "win32":
