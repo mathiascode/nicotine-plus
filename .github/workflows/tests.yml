@@ -356,7 +356,6 @@ jobs:
         run: python3.11 -m build --no-isolation
 
   haiku:
-    if: false  # Temporarily disabled due to broken packages
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -374,6 +373,19 @@ jobs:
           operating_system: haiku
           version: 'r1beta5'
           environment_variables: NICOTINE_NETWORK_TESTS
+
+      - name: Update system
+        run: |
+          pkgman list-repos
+          yes yes | pkgman add-repo https://eu.hpkg.haiku-os.org/haiku/master/$(getarch)/current
+          yes yes | pkgman add-repo https://eu.hpkg.haiku-os.org/haikuports/master/$(getarch)/current
+          pkgman list-repos
+          pkgman refresh
+          pkgman full-sync -y
+
+      - name: Reboot VM
+        shell: cpa.sh {0} --reboot
+        run: true
 
       - name: Install dependencies
         run: |
