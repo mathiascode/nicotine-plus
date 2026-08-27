@@ -333,10 +333,16 @@ class IconNotebook:
         self.pages_button_gesture_click.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         self.pages_button_gesture_click.connect("released", self.on_pages_button_pressed)
 
+        self.pages_button.connect("notify::active", self.on_act)
+
         self.popup_menu_pages = PopupMenu(self.window.application)
         self.update_pages_menu_button()
 
         self.popup_menu_pages.set_menu_button(self.pages_button)
+
+    def on_act(self, *_args):
+        if not self.pages_button.get_active():
+            self.popup_menu_pages.clear()
 
     def destroy(self):
 
@@ -425,7 +431,6 @@ class IconNotebook:
 
         self.widget.remove_page(self.page_num(page))
         self._remove_unread_page(page)
-        self.popup_menu_pages.clear()
 
         if hasattr(page, "focus_callback"):
             del page.focus_callback
