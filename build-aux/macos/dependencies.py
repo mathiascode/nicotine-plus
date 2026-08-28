@@ -16,6 +16,7 @@ def install_conda_forge():
 
     packages = ["icu",
                 "cx_freeze",
+                "freeze-core==0.7.2",
                 "gettext-tools",
                 "gobject-introspection",
                 "gtk4",
