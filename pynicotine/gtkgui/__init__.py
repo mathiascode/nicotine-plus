@@ -81,7 +81,12 @@ def check_gtk_version(gtk_api_version, is_fallback=False):
 
         return _("Cannot find %s, please install it") % f"GTK >={gtk_api_version}"
 
+    import locale
     from gi.repository import Gtk  # pylint:disable=unused-import
+
+    if getattr(sys, "frozen", False):
+        executable_folder = os.path.dirname(sys.executable)
+        locale.bindtextdomain(f"gtk{gtk_api_version}0", os.path.join(executable_folder, "share", "locale"))
 
     if sys.platform == "win32":
         # Ensure all Windows-specific APIs are available
