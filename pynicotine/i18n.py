@@ -99,7 +99,18 @@ def bindtextdomain_c(domain, locale_path, set_current=False):
 
     if libintl_path is not None:
         import ctypes
-        libintl = ctypes.cdll.LoadLibrary(libintl_path)
+
+        if getattr(sys, 'frozen', False):
+            # Use absolute path in frozen binaries (cx_Freeze)
+            libintl_path = os.path.join(os.path.dirname(sys.executable), "lib", libintl_path)
+
+        try:
+            libintl = ctypes.cdll.LoadLibrary(libintl_path)
+
+        except OSError as error:
+            print(error)
+            return
+
         libintl.bindtextdomain(domain.encode(), locale_path.encode())
         libintl.bind_textdomain_codeset(domain.encode(), codeset.encode())
 
@@ -107,11 +118,15 @@ def bindtextdomain_c(domain, locale_path, set_current=False):
             libintl.textdomain(domain.encode())
         return
 
-    locale.bindtextdomain(domain, locale_path)
-    locale.bind_textdomain_codeset(domain, codeset)
+    try:
+        locale.bindtextdomain(domain, locale_path)
+        locale.bind_textdomain_codeset(domain, codeset)
 
-    if set_current:
-        locale.textdomain(domain)
+        if set_current:
+            locale.textdomain(domain)
+
+    except AttributeError as error:
+        print(error)
 
 
 def apply_translations(language=None):
