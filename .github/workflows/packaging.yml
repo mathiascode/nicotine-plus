@@ -191,6 +191,9 @@ jobs:
           mamba create -n startup-test
           mamba run -n nicotine-plus python3 build-aux/appimage/dependencies.py
 
+      - run: conda list
+      - run: conda info
+
       - name: Freeze application
         run: mamba run -n nicotine-plus python3 build-aux/appimage/setup.py bdist_appimage
 
