@@ -5,6 +5,7 @@ import pynicotine
 from pynicotine.config import config
 from pynicotine.core import core
 from pynicotine.events import events
+from pynicotine.events import StopPropagation
 from pynicotine.logfacility import log
 from pynicotine.slskmessages import ChangePassword
 from pynicotine.slskmessages import CheckPrivileges
@@ -358,8 +359,7 @@ class Users:
         # Ignore invalid status updates for our own username in case we've already
         # changed our status again by the time they arrive from the server
         if username == self.login_username and status != self.login_status:
-            msg.user = None
-            return
+            raise StopPropagation()
 
         is_watched = (username in self.watched)
 
