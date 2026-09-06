@@ -131,6 +131,8 @@ def bindtextdomain_c(domain, locale_path, set_current=False):
 
 def apply_translations(language=None):
 
+    print("translate")
+
     # Use the same language as the rest of the system
     _set_system_language(language)
 

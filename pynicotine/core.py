@@ -89,6 +89,7 @@ class Core:
     def init_components(
         self, enabled_components: set[str] | None = None, isolated_mode: bool = False
     ):
+        print("init")
         # Enable all components by default
         if enabled_components is None:
             enabled_components = {
