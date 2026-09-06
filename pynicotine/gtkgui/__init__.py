@@ -83,18 +83,18 @@ def check_gtk_version(gtk_api_version, is_fallback=False):
 
     from gi.repository import Gtk  # pylint:disable=unused-import
 
-    if getattr(sys, "frozen", False):
+    if sys.platform == "win32":
+        # Ensure all Windows-specific APIs are available
+        gi.require_version("GdkWin32", f"{gtk_api_version}.0")
+        from gi.repository import GdkWin32  # noqa: F401  # pylint:disable=no-name-in-module,unused-import
+
+    elif getattr(sys, "frozen", False):
         # Override path to GTK translations in frozen binaries (cx_Freeze)
         from pynicotine.i18n import bindtextdomain_c
         bindtextdomain_c(
             domain=f"gtk{gtk_api_version}0",
             locale_path=os.path.join(os.path.dirname(sys.executable), "share", "locale")
         )
-
-    if sys.platform == "win32":
-        # Ensure all Windows-specific APIs are available
-        gi.require_version("GdkWin32", f"{gtk_api_version}.0")
-        from gi.repository import GdkWin32  # noqa: F401  # pylint:disable=no-name-in-module,unused-import
 
     if hasattr(gi, "_ossighelper"):
         # PyGObject sets up a signal helper that wakes up the GLib mainloop when the application
