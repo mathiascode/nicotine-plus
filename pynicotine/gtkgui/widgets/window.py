@@ -44,8 +44,9 @@ class Window:
                 )
 
         elif sys.platform == "darwin":
-            # Workaround for GTK 4 bug where tooltips restore minimized window on hover
+            # Workaround for GTK 4 bug where tooltips restore minimized/closed window on hover
             self.widget.connect("notify::suspended", self._on_suspended_darwin)
+            self.widget.connect("notify::visible", self._on_visible_darwin)
 
         elif os.environ.get("GDK_BACKEND") == "broadway":
             # Workaround for GTK 4 bug where broadwayd uses a lot of CPU after hiding window
@@ -120,6 +121,9 @@ class Window:
 
     def _on_suspended_darwin(self, *_args):
         self.widget.set_can_target(not self.widget.is_suspended())
+
+    def _on_visible_darwin(self, *_args):
+        self.widget.set_can_target(not self.widget.is_visible())
 
     def _on_hide_broadway(self, *_args):
         self.widget.unrealize()
