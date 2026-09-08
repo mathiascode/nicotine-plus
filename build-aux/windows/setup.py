@@ -25,7 +25,7 @@ import sys
 import tempfile
 
 from cx_Freeze import Executable, setup     # pylint: disable=import-error
-from cx_Freeze.hooks import _gi_ as gi      # pylint: disable=import-error,import-private-name
+from cx_Freeze.hooks import _gi_ as gi      # pylint: disable=import-private-name
 
 # pylint: disable=duplicate-code
 
@@ -41,18 +41,24 @@ if sys.platform == "win32":
     SYS_BASE_PATH = sys.prefix
     LIB_PATH = os.path.join(SYS_BASE_PATH, "bin")
     UNAVAILABLE_MODULES = [
-        "fcntl", "grp", "nis", "ossaudiodev", "posix", "pwd", "readline", "resource", "spwd", "syslog", "termios"
+        "fcntl", "grp", "posix", "pwd", "readline", "resource", "syslog", "termios"
     ]
+    ZIP_INCLUDE_PACKAGES = ["*"]
     ICON_NAME = "icon.ico"
 
 elif sys.platform == "darwin":
     SYS_BASE_PATH = sys.prefix
     LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
-    UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "ossaudiodev", "spwd", "winreg", "winsound"]
+    UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "winreg", "winsound"]
+    ZIP_INCLUDE_PACKAGES = ["*"]
     ICON_NAME = "icon.icns"
 
 else:
-    raise RuntimeError("Only Windows and macOS are supported")
+    SYS_BASE_PATH = sys.prefix
+    LIB_PATH = os.path.join(SYS_BASE_PATH, "lib")
+    UNAVAILABLE_MODULES = ["msvcrt", "nt", "nturl2path", "winreg", "winsound"]
+    ZIP_INCLUDE_PACKAGES = []
+    ICON_NAME = "icon.svg"
 
 TEMP_PATH = tempfile.mkdtemp()
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -71,8 +77,8 @@ MANIFEST_NAME = os.path.join(CURRENT_PATH, f"{SCRIPT_NAME}.manifest") if sys.pla
 # Include (almost) all standard library modules for plugins
 EXCLUDED_MODULES = UNAVAILABLE_MODULES + [
     f"{MODULE_NAME}.plugins.examplars", f"{MODULE_NAME}.tests",
-    "ctypes.test", "distutils", "ensurepip", "idlelib", "lib2to3", "msilib", "pip", "pydoc", "pydoc_data",
-    "pygtkcompat", "tkinter", "turtle", "turtledemo", "unittest.test", "venv", "zoneinfo"
+    "ctypes.test", "ensurepip", "idlelib", "pip", "pydoc", "pydoc_data",
+    "tkinter", "turtle", "turtledemo", "unittest.test", "venv", "zoneinfo"
 ]
 INCLUDED_MODULES = [MODULE_NAME, "gi"] + list(
     # pylint: disable=no-member
@@ -121,13 +127,18 @@ def add_pixbuf_loaders():
     if sys.platform == "win32":
         image_formats += ["webp"]
 
-    add_file(file_path=os.path.join(CURRENT_PATH, "pixbuf-loaders.cache"), output_path="lib/pixbuf-loaders.cache")
-
     for image_format in image_formats:
         basename = f"libpixbufloader-{image_format}"
+        output_name = f"libpixbufloader-{image_format}.{loader_extension}"
+
+        if sys.platform in {"darwin", "win32"}:
+            output_path = os.path.join("lib", output_name)
+        else:
+            output_path = os.path.join("lib", "gi", output_name)
+
         add_file(
             file_path=os.path.realpath(os.path.join(pixbuf_loaders_path, f"{basename}.{loader_extension}")),
-            output_path=f"lib/libpixbufloader-{image_format}.{loader_extension}"
+            output_path=output_path
         )
 
 
@@ -151,10 +162,22 @@ def _add_typelibs_callback(full_path, short_path, _callback_data=None):
 
             for path in namespace.attrib["shared-library"].split(","):
                 basename = os.path.basename(path)
-                updated_path = os.path.join("@loader_path", basename) if sys.platform == "darwin" else path
-                paths.append(updated_path)
 
-                add_file(file_path=os.path.join(LIB_PATH, basename), output_path=os.path.join("lib", basename))
+                if sys.platform == "darwin":
+                    updated_path = os.path.join("@executable_path", "lib", basename)
+                    add_file(file_path=os.path.join(LIB_PATH, basename), output_path=os.path.join("lib", basename))
+
+                elif sys.platform == "win32":
+                    updated_path = path
+                    add_file(file_path=os.path.join(LIB_PATH, basename), output_path=os.path.join("lib", basename))
+
+                else:
+                    updated_path = path
+                    add_file(
+                        file_path=os.path.join(LIB_PATH, basename), output_path=os.path.join("lib", "gi", basename)
+                    )
+
+                paths.append(updated_path)
 
             namespace.attrib["shared-library"] = ",".join(paths)
 
@@ -280,7 +303,7 @@ setup(
             "packages": INCLUDED_MODULES,
             "excludes": EXCLUDED_MODULES,
             "include_files": include_files,
-            "zip_include_packages": ["*"],
+            "zip_include_packages": ZIP_INCLUDE_PACKAGES,
             "zip_exclude_packages": [MODULE_NAME],
             "optimize": 2
         },
@@ -316,7 +339,11 @@ setup(
         "bdist_dmg": {
             "volume_label": FULL_NAME,
             "applications_shortcut": True
-        }
+        },
+        "bdist_appimage": {
+            "target_name": FULL_NAME + ".AppImage",
+            "dist_dir": BUILD_PATH
+        },
     },
     data_files=[],
     packages=[],

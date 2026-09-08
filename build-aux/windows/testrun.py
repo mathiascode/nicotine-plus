@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import glob
 import os
 import subprocess
 import sys
@@ -33,7 +34,7 @@ elif sys.platform == "darwin":
         CURRENT_PATH, "build", "dist", "Nicotine+.app", "Contents", "MacOS", "Nicotine+-debug"
     )
 else:
-    EXECUTABLE_PATH = None
+    EXECUTABLE_PATH = next(glob.iglob(os.path.join(CURRENT_PATH, "build", "*.AppImage")))
 
 
 def verify_min_macos_version():
