@@ -259,6 +259,9 @@ def add_translations():
     )
 
 
+if sys.platform == "win32":
+    add_file(file_path=os.path.join(LIB_PATH, "libwinpthread-1.dll"), output_path="libwinpthread-1.dll")
+
 # GTK
 add_gtk()
 
