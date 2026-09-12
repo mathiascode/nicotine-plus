@@ -19,6 +19,7 @@
 import os
 import sys
 
+from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -787,6 +788,13 @@ class Win32Implementation(BaseImplementation):
         self._wm_taskbarcreated = windll.user32.RegisterWindowMessageW("TaskbarCreated")
         self._click_action = None
         self._click_action_target = None
+        self._gsk_renderer = None
+
+        if GTK_API_VERSION >= 4:
+            from gi.repository import Gsk
+            display = Gdk.Display.get_default()
+            surface = Gdk.Surface.new_toplevel(display)
+            self._gsk_renderer = Gsk.Renderer.new_for_surface(surface)
 
         self._register_class()
         self._create_window()
@@ -849,16 +857,18 @@ class Win32Implementation(BaseImplementation):
 
     def _load_png_buffer(self, icon_name, icon_size):
 
-        if not ICON_THEME.has_icon(icon_name):
-            return b""
+        png_buffer = b""
 
-        if GTK_API_VERSION >= 4:
+        if not ICON_THEME.has_icon(icon_name):
+            return png_buffer
+
+        if self._gsk_renderer is not None:
             snapshot = Gtk.Snapshot()
             icon = ICON_THEME.lookup_icon(icon_name, fallbacks=None, size=icon_size, scale=1, direction=0, flags=0)
             icon.snapshot(snapshot, icon_size, icon_size)
 
             node = snapshot.to_node()
-            texture = node.get_texture()
+            texture = self._gsk_renderer.render_texture(node, None)
             png_buffer = texture.save_to_png_bytes().get_data()
         else:
             icon = ICON_THEME.lookup_icon(icon_name, size=icon_size, flags=0)
