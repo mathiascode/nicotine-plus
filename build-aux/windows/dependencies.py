@@ -13,10 +13,8 @@ def install_pacman():
 
     if arch == "arm64":
         prefix = "mingw-w64-clang-aarch64"
-        mingw_type = "clangarm64"
     else:
         prefix = "mingw-w64-ucrt-x86_64"
-        mingw_type = "ucrt64"
 
     packages = [f"{prefix}-ca-certificates",
                 f"{prefix}-gettext-tools",
@@ -33,14 +31,6 @@ def install_pacman():
                 f"{prefix}-webp-pixbuf-loader"]
 
     subprocess.check_call(["pacman", "--noconfirm", "-S", "--needed"] + packages)
-
-    downgrade_packages = [f"{prefix}-python-cx-freeze-8.6.4-1-any.pkg.tar.zst",
-                          f"{prefix}-python-freeze-core-0.6.1-1-any.pkg.tar.zst"]
-
-    for package in downgrade_packages:
-        subprocess.check_call(["curl", "-O", f"https://repo.msys2.org/mingw/{mingw_type}/{package}"])
-
-    subprocess.check_call(["pacman", "--noconfirm", "-U"] + downgrade_packages)
 
 
 if __name__ == "__main__":
