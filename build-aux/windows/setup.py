@@ -67,7 +67,7 @@ MANIFEST_NAME = os.path.join(CURRENT_PATH, f"{SCRIPT_NAME}.manifest") if sys.pla
 # Include (almost) all standard library modules for plugins
 EXCLUDED_MODULES = UNAVAILABLE_MODULES + [
     f"{MODULE_NAME}.plugins.examplars", f"{MODULE_NAME}.tests",
-    "ctypes.test", "ensurepip", "idlelib", "pip", "pydoc", "pydoc_data",
+    "ctypes.test", "ensurepip", "idlelib", "_overlapped", "pip", "pydoc", "pydoc_data",
     "tkinter", "turtle", "turtledemo", "unittest.test", "venv", "zoneinfo"
 ]
 INCLUDED_MODULES = [MODULE_NAME, "gi"] + list(
