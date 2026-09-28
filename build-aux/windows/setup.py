@@ -340,12 +340,21 @@ setup(
             "plist_items": [
                 ("CFBundleName", pynicotine.__application_name__),
                 ("CFBundleIdentifier", pynicotine.__application_id__),
+                ("CFBundleIconFile", ICON_NAME),
                 ("CFBundleShortVersionString", pynicotine.__version__),
                 ("CFBundleVersion", pynicotine.__version__),
+                ("CFBundleExecutable", pynicotine.__application_name__),
+                ("CFBundlePackageType", "APPL"),
+                ("CFBundleDevelopmentRegion", "en"),
+                ("CFBundleAllowMixedLocalizations", True),
                 ("CFBundleInfoDictionaryVersion", "6.0"),
+                ("LSMinimumSystemVersion", "11.0"),
                 ("NSHumanReadableCopyright", pynicotine.__copyright__),
-                ("NSSupportsAutomaticGraphicsSwitching", True)  # Prefer integrated GPU
+                ("NSHighResolutionCapable", True),
+                ("NSSupportsAutomaticGraphicsSwitching", True),  # Prefer integrated GPU
+                ("NSAutoFillRequiresTextContentTypeForOneTimeCodeOnMac", True)
             ],
+            "custom_info_plist": os.path.join(CURRENT_PATH, "Info.plist"),
             "codesign_identity": "-",
             "codesign_deep": True,
             "codesign_entitlements": os.path.join(CURRENT_PATH, "codesign-entitlements.plist"),
