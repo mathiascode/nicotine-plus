@@ -226,6 +226,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     env:
       ARCH: ${{ matrix.arch }}
+      CORE_FROZEN_MODULES: off
     defaults:
       run:
         shell: msys2 {0}
@@ -247,8 +248,8 @@ jobs:
             ${{ matrix.prefix }}-gtk4
             ${{ matrix.prefix }}-libadwaita
             ${{ matrix.prefix }}-python-build
-            ${{ matrix.prefix }}-python-cx-freeze
             ${{ matrix.prefix }}-python-gobject
+            ${{ matrix.prefix }}-python-pip
             ${{ matrix.prefix }}-python-pycodestyle
             ${{ matrix.prefix }}-python-pylint
             ${{ matrix.prefix }}-python-setuptools
