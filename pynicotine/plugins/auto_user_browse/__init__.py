@@ -23,24 +23,24 @@ class Plugin(BasePlugin):
         }
         self.processed_users = set()
 
-    def browse_user(self, user):
-        if user in self.processed_users:
-            self.core.userbrowse.browse_user(user, switch_page=False)
+    def browse_user(self, username):
+        if username in self.processed_users:
+            self.core.userbrowse.browse_user(username, switch_page=False)
 
-    def user_status_notification(self, user, status, _privileged):
+    def user_status_notification(self, username, status, _privileged):
 
         if status == UserStatus.OFFLINE:
-            self.processed_users.discard(user)
+            self.processed_users.discard(username)
             return
 
-        if user not in self.settings["users"]:
+        if username not in self.settings["users"]:
             return
 
-        if user not in self.processed_users:
+        if username not in self.processed_users:
             # Wait 30 seconds before browsing shares to ensure they are ready
             # and the server doesn't send an invalid port for the user
-            self.processed_users.add(user)
-            events.schedule(delay=30, callback=self.browse_user, callback_args=(user,))
+            self.processed_users.add(username)
+            events.schedule(delay=30, callback=self.browse_user, callback_args=(username,))
 
     def server_disconnect_notification(self, userchoice):
         self.processed_users.clear()

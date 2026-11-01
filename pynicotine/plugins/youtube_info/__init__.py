@@ -44,13 +44,13 @@ class Plugin(BasePlugin):
             "public": {}
         }
 
-    def incoming_public_chat_notification(self, room, user, line):
+    def incoming_public_chat_notification(self, room_name, username, message):
 
-        if (self.core.network_filter.is_user_ignored(user)
-                or self.core.network_filter.is_user_ip_ignored(user)):
+        if (self.core.network_filter.is_user_ignored(username)
+                or self.core.network_filter.is_user_ip_ignored(username)):
             return
 
-        video_id = self.get_video_id("public", room, line)
+        video_id = self.get_video_id("public", room_name, message)
         if not video_id:
             return
 
@@ -59,15 +59,15 @@ class Plugin(BasePlugin):
             return
 
         for msg in self.settings["format"]:
-            self.echo_public(room, self.str_replace(msg, parsed), self.settings["color"].lower())
+            self.echo_public(room_name, self.str_replace(msg, parsed), self.settings["color"].lower())
 
-    def incoming_private_chat_notification(self, user, line):
+    def incoming_private_chat_notification(self, username, message):
 
-        if (self.core.network_filter.is_user_ignored(user)
-                or self.core.network_filter.is_user_ip_ignored(user)):
+        if (self.core.network_filter.is_user_ignored(username)
+                or self.core.network_filter.is_user_ip_ignored(username)):
             return
 
-        video_id = self.get_video_id("private", user, line)
+        video_id = self.get_video_id("private", username, message)
         if not video_id:
             return
 
@@ -76,12 +76,12 @@ class Plugin(BasePlugin):
             return
 
         for msg in self.settings["format"]:
-            self.echo_private(user, self.str_replace(msg, parsed), self.settings["color"].lower())
+            self.echo_private(username, self.str_replace(msg, parsed), self.settings["color"].lower())
 
-    def get_video_id(self, mode, source, line):
+    def get_video_id(self, mode, source, message):
 
         match = re.search(r"(https?://((m|music)\.)?|www\.)youtu(\.be/|be\.com/(shorts/|live/|watch\S+v=))"
-                          r"(?P<video_id>[-\w]{11})", line)
+                          r"(?P<video_id>[-\w]{11})", message)
         if not match:
             return None
 

@@ -37,37 +37,38 @@ class Plugin(BasePlugin):
             }
         }
         self.throttle = ResponseThrottle(self.core, self.human_name)
-        self.checkroom = "nicotine"
+        self.check_room_name = "nicotine"
 
-    def incoming_public_chat_notification(self, room, user, line):
+    def incoming_public_chat_notification(self, room_name, username, message):
 
-        if room != self.checkroom or not self.settings["keyword_enabled"] or self.core.users.login_username == user:
+        if (room_name != self.check_room_name or not self.settings["keyword_enabled"]
+                or self.core.users.login_username == username):
             return
 
-        if not self.throttle.ok_to_respond(room, user, line, 10):
+        if not self.throttle.ok_to_respond(room_name, username, message, 10):
             return
 
-        if "portscan" in line.lower():
-            self.log("%s requested a port scan", user)
-            self.resolve(user, True)
+        if "portscan" in message.lower():
+            self.log("%s requested a port scan", username)
+            self.resolve(username, announce=True)
 
-    def resolve(self, user, announce):
+    def resolve(self, username, announce=False):
 
-        user_address = self.core.users.addresses.get(user)
+        user_address = self.core.users.addresses.get(username)
 
         if user_address is not None:
             ip_address, port = user_address
-            threading.Thread(target=self.check_port, args=(user, ip_address, port, announce)).start()
+            threading.Thread(target=self.check_port, args=(username, ip_address, port, announce)).start()
 
-    def check_port(self, user, ip_address, port, announce):
+    def check_port(self, username, ip_address, port, announce):
 
         status = self._check_port(ip_address, port)
 
         if announce and status in {"open", "closed"}:
             self.throttle.responded()
-            self.send_public(self.checkroom, f"{user}: Your port is {status}")
+            self.send_public(self.check_room_name, f"{username}: Your port is {status}")
 
-        self.log("User %s on %s:%s port is %s.", (user, ip_address, port, status))
+        self.log("User %s on %s:%s port is %s.", (username, ip_address, port, status))
 
     def _check_port(self, ip_address, port):
 
@@ -93,4 +94,4 @@ class Plugin(BasePlugin):
         if args:
             user = args
 
-        self.resolve(user, False)
+        self.resolve(user)

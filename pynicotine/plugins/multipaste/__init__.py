@@ -28,9 +28,9 @@ class Plugin(BasePlugin):
             }
         }
 
-    def outgoing_private_chat_event(self, user, line):
+    def outgoing_private_chat_event(self, username, message):
 
-        lines = [x for x in line.splitlines() if x]
+        lines = [x for x in message.splitlines() if x]
 
         if len(lines) > 1:
             if len(lines) > self.settings["maxprivatelines"]:
@@ -38,15 +38,15 @@ class Plugin(BasePlugin):
             else:
                 self.log("Splitting lines.")
             for split_line in lines[:self.settings["maxprivatelines"]]:
-                self.send_private(user, split_line)
+                self.send_private(username, split_line)
 
             return returncode["zap"]
 
         return None
 
-    def outgoing_public_chat_event(self, room, line):
+    def outgoing_public_chat_event(self, room_name, message):
 
-        lines = [x for x in line.splitlines() if x]
+        lines = [x for x in message.splitlines() if x]
 
         if len(lines) > 1:
             if len(lines) > self.settings["maxpubliclines"]:
@@ -54,7 +54,7 @@ class Plugin(BasePlugin):
             else:
                 self.log("Splitting lines.")
             for split_line in lines[:self.settings["maxpubliclines"]]:
-                self.send_public(room, split_line)
+                self.send_public(room_name, split_line)
 
             return returncode["zap"]
 

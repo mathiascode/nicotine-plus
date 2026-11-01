@@ -31,18 +31,18 @@ class Plugin(BasePlugin):
             }
         }
 
-    def private_room_member_added_notification(self, room, user):
+    def private_room_member_added_notification(self, room_name, username):
 
-        if user == self.core.users.login_username:
+        if username == self.core.users.login_username:
             return
 
-        if not self.settings["watch_all_rooms"] and room not in self.settings["rooms"]:
+        if not self.settings["watch_all_rooms"] and room_name not in self.settings["rooms"]:
             return
 
-        self.core.buddies.add_buddy(user)
+        self.core.buddies.add_buddy(username)
 
-        if not self.core.buddies.users[user].note:
-            self.core.buddies.set_buddy_note(user, f"Auto-Buddy member in private room {room}")
+        if not self.core.buddies.users[username].note:
+            self.core.buddies.set_buddy_note(username, f"Auto-Buddy member in private room {room_name}")
 
         if self.settings["prioritize_buddies"]:
-            self.core.buddies.set_buddy_prioritized(user, True)
+            self.core.buddies.set_buddy_prioritized(username, True)

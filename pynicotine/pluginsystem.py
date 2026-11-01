@@ -69,71 +69,71 @@ class BasePlugin:
         # Application is shutting down
         pass
 
-    def public_room_message_notification(self, room, user, line):
+    def public_room_message_notification(self, room_name, username, message):
         # Override method in plugin
         pass
 
-    def search_request_notification(self, searchterm, user, token):
+    def search_request_notification(self, search_term, username, token):
         # Override method in plugin
         pass
 
-    def distrib_search_notification(self, searchterm, user, token):
+    def distrib_search_notification(self, search_term, username, token):
         # Override method in plugin
         pass
 
-    def incoming_private_chat_event(self, user, line):
+    def incoming_private_chat_event(self, username, message):
         # Override method in plugin
         pass
 
-    def incoming_private_chat_notification(self, user, line):
+    def incoming_private_chat_notification(self, username, message):
         # Override method in plugin
         pass
 
-    def incoming_public_chat_event(self, room, user, line):
+    def incoming_public_chat_event(self, room_name, username, message):
         # Override method in plugin
         pass
 
-    def incoming_public_chat_notification(self, room, user, line):
+    def incoming_public_chat_notification(self, room_name, username, message):
         # Override method in plugin
         pass
 
-    def outgoing_private_chat_event(self, user, line):
+    def outgoing_private_chat_event(self, username, message):
         # Override method in plugin
         pass
 
-    def outgoing_private_chat_notification(self, user, line):
+    def outgoing_private_chat_notification(self, username, message):
         # Override method in plugin
         pass
 
-    def outgoing_public_chat_event(self, room, line):
+    def outgoing_public_chat_event(self, room_name, message):
         # Override method in plugin
         pass
 
-    def outgoing_public_chat_notification(self, room, line):
+    def outgoing_public_chat_notification(self, room_name, message):
         # Override method in plugin
         pass
 
-    def outgoing_global_search_event(self, text):
+    def outgoing_global_search_event(self, search_term):
         # Override method in plugin
         pass
 
-    def outgoing_room_search_event(self, rooms, text):
+    def outgoing_room_search_event(self, room_name, search_term):
         # Override method in plugin
         pass
 
-    def outgoing_buddy_search_event(self, text):
+    def outgoing_buddy_search_event(self, search_term):
         # Override method in plugin
         pass
 
-    def outgoing_user_search_event(self, users, text):
+    def outgoing_user_search_event(self, users, search_term):
         # Override method in plugin
         pass
 
-    def outgoing_wishlist_search_event(self, text):
+    def outgoing_wishlist_search_event(self, search_term):
         # Override method in plugin
         pass
 
-    def user_resolve_notification(self, user, ip_address, port, country):
+    def user_resolve_notification(self, username, ip_address, port, country_code):
         # Override method in plugin
         pass
 
@@ -145,79 +145,79 @@ class BasePlugin:
         # Override method in plugin
         pass
 
-    def join_chatroom_notification(self, room):
+    def join_chatroom_notification(self, room_name):
         # Override method in plugin
         pass
 
-    def leave_chatroom_notification(self, room):
+    def leave_chatroom_notification(self, room_name):
         # Override method in plugin
         pass
 
-    def user_join_chatroom_notification(self, room, user):
+    def user_join_chatroom_notification(self, room_name, username):
         # Override method in plugin
         pass
 
-    def user_leave_chatroom_notification(self, room, user):
+    def user_leave_chatroom_notification(self, room_name, username):
         # Override method in plugin
         pass
 
-    def private_room_membership_granted_notification(self, room):
+    def private_room_membership_granted_notification(self, room_name):
         # Override method in plugin
         pass
 
-    def private_room_membership_revoked_notification(self, room):
+    def private_room_membership_revoked_notification(self, room_name):
         # Override method in plugin
         pass
 
-    def private_room_member_added_notification(self, room, user):
+    def private_room_member_added_notification(self, room_name, username):
         # Override method in plugin
         pass
 
-    def private_room_member_removed_notification(self, room, user):
+    def private_room_member_removed_notification(self, room_name, username):
         # Override method in plugin
         pass
 
-    def private_room_operatorship_granted_notification(self, room):
+    def private_room_operatorship_granted_notification(self, room_name):
         # Override method in plugin
         pass
 
-    def private_room_operatorship_revoked_notification(self, room):
+    def private_room_operatorship_revoked_notification(self, room_name):
         # Override method in plugin
         pass
 
-    def private_room_operator_added_notification(self, room, user):
+    def private_room_operator_added_notification(self, room_name, username):
         # Override method in plugin
         pass
 
-    def private_room_operator_removed_notification(self, room, user):
+    def private_room_operator_removed_notification(self, room_name, username):
         # Override method in plugin
         pass
 
-    def user_stats_notification(self, user, stats):
+    def user_stats_notification(self, username, stats):
         # Override method in plugin
         pass
 
-    def user_status_notification(self, user, status, privileged):
+    def user_status_notification(self, username, status, privileged):
         # Override method in plugin
         pass
 
-    def upload_queued_notification(self, user, virtual_path, real_path):
+    def upload_queued_notification(self, username, virtual_path, real_path):
         # Override method in plugin
         pass
 
-    def upload_started_notification(self, user, virtual_path, real_path):
+    def upload_started_notification(self, username, virtual_path, real_path):
         # Override method in plugin
         pass
 
-    def upload_finished_notification(self, user, virtual_path, real_path):
+    def upload_finished_notification(self, username, virtual_path, real_path):
         # Override method in plugin
         pass
 
-    def download_started_notification(self, user, virtual_path, real_path):
+    def download_started_notification(self, username, virtual_path, real_path):
         # Override method in plugin
         pass
 
-    def download_finished_notification(self, user, virtual_path, real_path):
+    def download_finished_notification(self, username, virtual_path, real_path):
         # Override method in plugin
         pass
 
@@ -227,12 +227,12 @@ class BasePlugin:
     def log(self, msg, msg_args=None):
         log.add(f"{self.human_name}: {msg}", msg_args)
 
-    def send_public(self, room, text):
+    def send_public(self, room_name, message):
         """Send chat message to a room, must already be joined."""
 
-        core.chatrooms.send_message(room, text)
+        core.chatrooms.send_message(room_name, message)
 
-    def send_private(self, user, text, show_ui=True, switch_page=True):
+    def send_private(self, username, message, show_ui=True, switch_page=True):
         """Send user message in private.
 
         show_ui controls if the UI opens a private chat view for the
@@ -241,30 +241,30 @@ class BasePlugin:
         """
 
         if show_ui:
-            core.privatechat.show_user(user, switch_page)
+            core.privatechat.show_user(username, switch_page)
 
-        core.privatechat.send_message(user, text)
+        core.privatechat.send_message(username, message)
 
-    def echo_public(self, room, text, message_type="local"):
+    def echo_public(self, room_name, message, message_type="local"):
         """Display a raw message in chat rooms (not sent to others).
 
         message_type changes the type (and color) of the message in the UI.
         available message_type values: action, remote, local, hilite
         """
 
-        core.chatrooms.echo_message(room, text, message_type)
+        core.chatrooms.echo_message(room_name, message, message_type)
 
-    def echo_private(self, user, text, message_type="local"):
+    def echo_private(self, username, message, message_type="local"):
         """Display a raw message in private (not sent to others).
 
         message_type changes the type (and color) of the message in the UI.
         available message_type values: action, remote, local, hilite
         """
 
-        core.privatechat.show_user(user)
-        core.privatechat.echo_message(user, text, message_type)
+        core.privatechat.show_user(username)
+        core.privatechat.echo_message(username, message, message_type)
 
-    def send_message(self, text):
+    def send_message(self, message):
         """Convenience function to send a message to the same user/room a
         plugin command runs for."""
 
@@ -278,9 +278,9 @@ class BasePlugin:
             return
 
         func = self.send_public if command_interface == "chatroom" else self.send_private
-        func(source, text)
+        func(source, message)
 
-    def echo_message(self, text, message_type="local"):
+    def echo_message(self, message, message_type="local"):
         """Convenience function to display a raw message the same window a
         plugin command runs from."""
 
@@ -291,14 +291,14 @@ class BasePlugin:
         command_interface, source = self.parent.command_source
 
         if command_interface == "cli":
-            log.add_command(text)
+            log.add_command(message)
             return
 
         func = self.echo_public if command_interface == "chatroom" else self.echo_private
-        func(source, text, message_type)
+        func(source, message, message_type)
 
-    def output(self, text):
-        self.echo_message(text, message_type="command")
+    def output(self, message):
+        self.echo_message(message, message_type="command")
 
 
 class ResponseThrottle:
@@ -321,13 +321,13 @@ class ResponseThrottle:
         self.logging = logging
         self.plugin_usage = {}
 
-        self.room = None
+        self.room_name = None
         self.nick = None
         self.request = None
 
-    def ok_to_respond(self, room, nick, request, seconds_limit_min=30):
+    def ok_to_respond(self, room_name, nick, request, seconds_limit_min=30):
 
-        self.room = room
+        self.room_name = room_name
         self.nick = nick
         self.request = request
 
@@ -335,12 +335,12 @@ class ResponseThrottle:
         reason = None
         current_time = time.monotonic()
 
-        if room not in self.plugin_usage:
-            self.plugin_usage[room] = {"last_time": 0, "last_request": "", "last_nick": ""}
+        if room_name not in self.plugin_usage:
+            self.plugin_usage[room_name] = {"last_time": 0, "last_request": "", "last_nick": ""}
 
-        last_time = self.plugin_usage[room]["last_time"]
-        last_nick = self.plugin_usage[room]["last_nick"]
-        last_request = self.plugin_usage[room]["last_request"]
+        last_time = self.plugin_usage[room_name]["last_time"]
+        last_nick = self.plugin_usage[room_name]["last_nick"]
+        last_request = self.plugin_usage[room_name]["last_request"]
 
         try:
             _ip_address, port = self.core.users.addresses[nick]
@@ -367,11 +367,11 @@ class ResponseThrottle:
         else:
             recent_responses = 0
 
-            for responded_room, room_dict in self.plugin_usage.items():
+            for responded_room_name, room_dict in self.plugin_usage.items():
                 if (current_time - room_dict["last_time"]) < seconds_limit_min:
                     recent_responses += 1
 
-                    if responded_room == room:
+                    if responded_room_name == room_name:
                         willing_to_respond, reason = False, "Responded in specified room too recently"
                         break
 
@@ -380,12 +380,12 @@ class ResponseThrottle:
 
         if self.logging and not willing_to_respond:
             log.add_debug("%s plugin request rejected - room '%s', nick '%s' - %s",
-                          (self.plugin_name, room, nick, reason))
+                          (self.plugin_name, room_name, nick, reason))
 
         return willing_to_respond
 
     def responded(self):
-        self.plugin_usage[self.room] = {
+        self.plugin_usage[self.room_name] = {
             "last_time": time.monotonic(), "last_request": self.request, "last_nick": self.nick}
 
 
@@ -983,16 +983,16 @@ class PluginHandler:
 
         return command_groups
 
-    def trigger_chatroom_command_event(self, room, command, args):
-        return self._trigger_command(command, args, room=room)
+    def trigger_chatroom_command_event(self, room_name, command, args):
+        return self._trigger_command(command, args, room_name=room_name)
 
-    def trigger_private_chat_command_event(self, user, command, args):
-        return self._trigger_command(command, args, user=user)
+    def trigger_private_chat_command_event(self, username, command, args):
+        return self._trigger_command(command, args, username=username)
 
     def trigger_cli_command_event(self, command, args):
         return self._trigger_command(command, args)
 
-    def _trigger_command(self, command, args, user=None, room=None):
+    def _trigger_command(self, command, args, username=None, room_name=None):
 
         plugin = None
         command_found = False
@@ -1002,12 +1002,12 @@ class PluginHandler:
             if plugin is None:
                 continue
 
-            if room is not None:
-                self.command_source = ("chatroom", room)
+            if room_name is not None:
+                self.command_source = ("chatroom", room_name)
                 legacy_commands = plugin.__publiccommands__
 
-            elif user is not None:
-                self.command_source = ("private_chat", user)
+            elif username is not None:
+                self.command_source = ("private_chat", username)
                 legacy_commands = plugin.__privatecommands__
 
             else:
@@ -1061,11 +1061,11 @@ class PluginHandler:
 
                     callback = data.get(f"callback_{command_interface}", data.get("callback"))
 
-                    if room is not None:
-                        is_successful = callback(args, room=room)
+                    if room_name is not None:
+                        is_successful = callback(args, room=room_name)
 
-                    elif user is not None:
-                        is_successful = callback(args, user=user)
+                    elif username is not None:
+                        is_successful = callback(args, user=username)
 
                     else:
                         is_successful = callback(args)
@@ -1137,61 +1137,61 @@ class PluginHandler:
 
         return args
 
-    def search_request_notification(self, searchterm, user, token):
-        self._trigger_event("search_request_notification", (searchterm, user, token))
+    def search_request_notification(self, search_term, username, token):
+        self._trigger_event("search_request_notification", (search_term, username, token))
 
-    def distrib_search_notification(self, searchterm, user, token):
-        self._trigger_event("distrib_search_notification", (searchterm, user, token))
+    def distrib_search_notification(self, search_term, username, token):
+        self._trigger_event("distrib_search_notification", (search_term, username, token))
 
-    def public_room_message_notification(self, room, user, line):
-        self._trigger_event("public_room_message_notification", (room, user, line))
+    def public_room_message_notification(self, room_name, username, message):
+        self._trigger_event("public_room_message_notification", (room_name, username, message))
 
-    def incoming_private_chat_event(self, user, line):
-        return self._trigger_event("incoming_private_chat_event", (user, line))
+    def incoming_private_chat_event(self, username, message):
+        return self._trigger_event("incoming_private_chat_event", (username, message))
 
-    def incoming_private_chat_notification(self, user, line):
-        self._trigger_event("incoming_private_chat_notification", (user, line))
+    def incoming_private_chat_notification(self, username, message):
+        self._trigger_event("incoming_private_chat_notification", (username, message))
 
-    def incoming_public_chat_event(self, room, user, line):
-        return self._trigger_event("incoming_public_chat_event", (room, user, line))
+    def incoming_public_chat_event(self, room_name, username, message):
+        return self._trigger_event("incoming_public_chat_event", (room_name, username, message))
 
-    def incoming_public_chat_notification(self, room, user, line):
-        self._trigger_event("incoming_public_chat_notification", (room, user, line))
+    def incoming_public_chat_notification(self, room_name, username, message):
+        self._trigger_event("incoming_public_chat_notification", (room_name, username, message))
 
-    def outgoing_private_chat_event(self, user, line):
-        return self._trigger_event("outgoing_private_chat_event", (user, line))
+    def outgoing_private_chat_event(self, username, message):
+        return self._trigger_event("outgoing_private_chat_event", (username, message))
 
-    def outgoing_private_chat_notification(self, user, line):
-        self._trigger_event("outgoing_private_chat_notification", (user, line))
+    def outgoing_private_chat_notification(self, username, message):
+        self._trigger_event("outgoing_private_chat_notification", (username, message))
 
-    def outgoing_public_chat_event(self, room, line):
-        return self._trigger_event("outgoing_public_chat_event", (room, line))
+    def outgoing_public_chat_event(self, room_name, message):
+        return self._trigger_event("outgoing_public_chat_event", (room_name, message))
 
-    def outgoing_public_chat_notification(self, room, line):
-        self._trigger_event("outgoing_public_chat_notification", (room, line))
+    def outgoing_public_chat_notification(self, room_name, message):
+        self._trigger_event("outgoing_public_chat_notification", (room_name, message))
 
-    def outgoing_global_search_event(self, text):
-        return self._trigger_event("outgoing_global_search_event", (text,))
+    def outgoing_global_search_event(self, search_term):
+        return self._trigger_event("outgoing_global_search_event", (search_term,))
 
-    def outgoing_room_search_event(self, rooms, text):
-        return self._trigger_event("outgoing_room_search_event", (rooms, text))
+    def outgoing_room_search_event(self, room_name, search_term):
+        return self._trigger_event("outgoing_room_search_event", (room_name, search_term))
 
-    def outgoing_buddy_search_event(self, text):
-        return self._trigger_event("outgoing_buddy_search_event", (text,))
+    def outgoing_buddy_search_event(self, search_term):
+        return self._trigger_event("outgoing_buddy_search_event", (search_term,))
 
-    def outgoing_user_search_event(self, users, text):
-        return self._trigger_event("outgoing_user_search_event", (users, text))
+    def outgoing_user_search_event(self, users, search_term):
+        return self._trigger_event("outgoing_user_search_event", (users, search_term))
 
-    def outgoing_wishlist_search_event(self, text):
-        return self._trigger_event("outgoing_wishlist_search_event", (text,))
+    def outgoing_wishlist_search_event(self, search_term):
+        return self._trigger_event("outgoing_wishlist_search_event", (search_term,))
 
-    def user_resolve_notification(self, user, ip_address, port, country=None):
+    def user_resolve_notification(self, username, ip_address, port, country_code=None):
         """Notification for user IP:Port resolving.
 
         Note that country is only set when the user requested the
         resolving
         """
-        self._trigger_event("user_resolve_notification", (user, ip_address, port, country))
+        self._trigger_event("user_resolve_notification", (username, ip_address, port, country_code))
 
     def server_connect_notification(self):
         self._trigger_event("server_connect_notification", (),)
@@ -1199,62 +1199,62 @@ class PluginHandler:
     def server_disconnect_notification(self, userchoice):
         self._trigger_event("server_disconnect_notification", (userchoice, ))
 
-    def join_chatroom_notification(self, room):
-        self._trigger_event("join_chatroom_notification", (room,))
+    def join_chatroom_notification(self, room_name):
+        self._trigger_event("join_chatroom_notification", (room_name,))
 
-    def leave_chatroom_notification(self, room):
-        self._trigger_event("leave_chatroom_notification", (room,))
+    def leave_chatroom_notification(self, room_name):
+        self._trigger_event("leave_chatroom_notification", (room_name,))
 
-    def user_join_chatroom_notification(self, room, user):
-        self._trigger_event("user_join_chatroom_notification", (room, user,))
+    def user_join_chatroom_notification(self, room_name, username):
+        self._trigger_event("user_join_chatroom_notification", (room_name, username,))
 
-    def user_leave_chatroom_notification(self, room, user):
-        self._trigger_event("user_leave_chatroom_notification", (room, user,))
+    def user_leave_chatroom_notification(self, room_name, username):
+        self._trigger_event("user_leave_chatroom_notification", (room_name, username,))
 
-    def private_room_membership_granted_notification(self, room):
-        self._trigger_event("private_room_membership_granted_notification", (room,))
+    def private_room_membership_granted_notification(self, room_name):
+        self._trigger_event("private_room_membership_granted_notification", (room_name,))
 
-    def private_room_membership_revoked_notification(self, room):
-        self._trigger_event("private_room_membership_revoked_notification", (room,))
+    def private_room_membership_revoked_notification(self, room_name):
+        self._trigger_event("private_room_membership_revoked_notification", (room_name,))
 
-    def private_room_member_added_notification(self, room, user):
-        self._trigger_event("private_room_member_added_notification", (room, user,))
+    def private_room_member_added_notification(self, room_name, username):
+        self._trigger_event("private_room_member_added_notification", (room_name, username,))
 
-    def private_room_member_removed_notification(self, room, user):
-        self._trigger_event("private_room_member_removed_notification", (room, user,))
+    def private_room_member_removed_notification(self, room_name, username):
+        self._trigger_event("private_room_member_removed_notification", (room_name, username,))
 
-    def private_room_operatorship_granted_notification(self, room):
-        self._trigger_event("private_room_operatorship_granted_notification", (room,))
+    def private_room_operatorship_granted_notification(self, room_name):
+        self._trigger_event("private_room_operatorship_granted_notification", (room_name,))
 
-    def private_room_operatorship_revoked_notification(self, room):
-        self._trigger_event("private_room_operatorship_revoked_notification", (room,))
+    def private_room_operatorship_revoked_notification(self, room_name):
+        self._trigger_event("private_room_operatorship_revoked_notification", (room_name,))
 
-    def private_room_operator_added_notification(self, room, user):
-        self._trigger_event("private_room_operator_added_notification", (room, user,))
+    def private_room_operator_added_notification(self, room_name, username):
+        self._trigger_event("private_room_operator_added_notification", (room_name, username,))
 
-    def private_room_operator_removed_notification(self, room, user):
-        self._trigger_event("private_room_operator_removed_notification", (room, user,))
+    def private_room_operator_removed_notification(self, room_name, username):
+        self._trigger_event("private_room_operator_removed_notification", (room_name, username,))
 
-    def user_stats_notification(self, user, stats):
-        self._trigger_event("user_stats_notification", (user, stats))
+    def user_stats_notification(self, username, stats):
+        self._trigger_event("user_stats_notification", (username, stats))
 
-    def user_status_notification(self, user, status, privileged):
-        self._trigger_event("user_status_notification", (user, status, privileged))
+    def user_status_notification(self, username, status, privileged):
+        self._trigger_event("user_status_notification", (username, status, privileged))
 
-    def upload_queued_notification(self, user, virtual_path, real_path):
-        self._trigger_event("upload_queued_notification", (user, virtual_path, real_path))
+    def upload_queued_notification(self, username, virtual_path, real_path):
+        self._trigger_event("upload_queued_notification", (username, virtual_path, real_path))
 
-    def upload_started_notification(self, user, virtual_path, real_path):
-        self._trigger_event("upload_started_notification", (user, virtual_path, real_path))
+    def upload_started_notification(self, username, virtual_path, real_path):
+        self._trigger_event("upload_started_notification", (username, virtual_path, real_path))
 
-    def upload_finished_notification(self, user, virtual_path, real_path):
-        self._trigger_event("upload_finished_notification", (user, virtual_path, real_path))
+    def upload_finished_notification(self, username, virtual_path, real_path):
+        self._trigger_event("upload_finished_notification", (username, virtual_path, real_path))
 
-    def download_started_notification(self, user, virtual_path, real_path):
-        self._trigger_event("download_started_notification", (user, virtual_path, real_path))
+    def download_started_notification(self, username, virtual_path, real_path):
+        self._trigger_event("download_started_notification", (username, virtual_path, real_path))
 
-    def download_finished_notification(self, user, virtual_path, real_path):
-        self._trigger_event("download_finished_notification", (user, virtual_path, real_path))
+    def download_finished_notification(self, username, virtual_path, real_path):
+        self._trigger_event("download_finished_notification", (username, virtual_path, real_path))
 
     def shutdown_notification(self):
         self._trigger_event("shutdown_notification", (),)
