@@ -18,6 +18,7 @@ import time
 from ast import literal_eval
 from collections import defaultdict
 from dataclasses import dataclass, field
+from enum import StrEnum
 from socket import socket
 from typing import BinaryIO
 
@@ -40,7 +41,7 @@ from pynicotine.utils import (
 )
 
 
-class TransferStatus:
+class TransferStatus(StrEnum):
     QUEUED = "Queued"
     QUEUED_PRIORITIZED = "Queued (prioritized)"
     QUEUED_PRIVILEGED = "Queued (privileged)"
