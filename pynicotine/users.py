@@ -12,6 +12,7 @@ from pynicotine.core import core
 from pynicotine.events import events
 from pynicotine.events import StopEventPropagation
 from pynicotine.logfacility import log
+from pynicotine.slskmessages import Address
 from pynicotine.slskmessages import ChangePassword
 from pynicotine.slskmessages import CheckPrivileges
 from pynicotine.slskmessages import GetPeerAddress
@@ -301,7 +302,7 @@ class Users:
             # address.
 
             if username != self.login_username:
-                self.addresses[username] = (ip_address, msg.port)
+                self.addresses[username] = Address(ip_address, msg.port)
 
             self.countries[username] = country_code
             events.emit("user-country", username, country_code)

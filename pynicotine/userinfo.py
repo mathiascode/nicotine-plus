@@ -190,7 +190,7 @@ class UserInfo:
             raise StopEventPropagation()
 
         self._requested_info_times[username] = request_time
-        msg = self._get_user_info_response(username, msg.ip_address)
+        msg = self._get_user_info_response(username, msg.addr.ip)
 
         log.add(_("User %(user)s is viewing your profile"), {"user": username})
         core.send_message_to_peer(username, msg)

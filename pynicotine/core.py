@@ -281,10 +281,12 @@ class Core:
             self.setup()
             return
 
+        server_hostname, server_port = config.sections["server"]["server"]
         events.emit("enable-message-queue")
 
         self.send_message_to_network_thread(ServerConnect(
-            addr=config.sections["server"]["server"],
+            server_hostname=server_hostname,
+            server_port=server_port,
             username=config.sections["server"]["login"],
             password=config.sections["server"]["passw"],
             interface_name=config.sections["server"]["interface"],

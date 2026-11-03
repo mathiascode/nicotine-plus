@@ -918,7 +918,7 @@ class Uploads(Transfers):
 
         username = msg.username
         virtual_path = msg.file_path
-        allowed, reason, real_path, size = self._check_queue_upload_allowed(username, msg.ip_address, virtual_path, msg)
+        allowed, reason, real_path, size = self._check_queue_upload_allowed(username, msg.addr.ip, virtual_path, msg)
         is_backslash_path = False
         is_lowercase_path = False
 
@@ -1019,7 +1019,7 @@ class Uploads(Transfers):
                          (token, virtual_path, username))
 
         # Is user allowed to download?
-        allowed, reason, real_path, size = self._check_queue_upload_allowed(username, msg.ip_address, virtual_path, msg)
+        allowed, reason, real_path, size = self._check_queue_upload_allowed(username, msg.addr.ip, virtual_path, msg)
 
         if reason == TransferRejectReason.FILE_NOT_SHARED:
             # Possibly a file path with a backslash sentinel that should be substituted

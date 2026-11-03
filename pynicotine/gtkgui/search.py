@@ -925,7 +925,7 @@ class Search:
         self.initialized = True
 
         country_code = (
-            core.network_filter.get_country_code(msg.ip_address)
+            core.network_filter.get_country_code(msg.addr.ip)
             or core.users.countries.get(username)
         )
 

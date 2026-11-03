@@ -94,7 +94,9 @@ class SoulseekNetworkTest(TestCase):
     def test_server_conn(self, _mock_socket):
 
         core.send_message_to_network_thread(
-            ServerConnect(addr=("0.0.0.0", 0), username="dummy", password="dummy", listen_port=65525)
+            ServerConnect(
+                server_hostname="0.0.0.0", server_port=0, username="dummy", password="dummy", listen_port=65525
+            )
         )
         sleep(SLSKPROTO_RUN_TIME)
 
@@ -121,7 +123,9 @@ class SoulseekNetworkTest(TestCase):
     def test_login(self):
 
         core.send_message_to_network_thread(
-            ServerConnect(addr=("0.0.0.0", 0), username="dummy", password="dummy", listen_port=65525)
+            ServerConnect(
+                server_hostname="0.0.0.0", server_port=0, username="dummy", password="dummy", listen_port=65525
+            )
         )
         sleep(SLSKPROTO_RUN_TIME / 2)
 

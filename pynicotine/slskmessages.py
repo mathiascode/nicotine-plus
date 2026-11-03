@@ -20,6 +20,7 @@ from socket import inet_aton
 from socket import inet_ntoa
 from socket import socket
 from struct import Struct
+from typing import NamedTuple
 
 from pynicotine.logfacility import log
 from pynicotine.utils import UINT32_LIMIT
@@ -141,7 +142,12 @@ class ParentStatus:
     REJECTED = 2
 
 
-# Data Classes #
+# Structures #
+
+
+class Address(NamedTuple):
+    ip: str
+    port: int
 
 
 @dataclass(slots=True, eq=False)
@@ -195,8 +201,7 @@ class FileAttributes:
 @dataclass(slots=True, eq=False)
 class ParentCandidate:
     username: str
-    ip_address: str
-    port: int
+    addr: Address
     sock: socket | None = None
     branch_root: str | None = None
     branch_level: int | None = None
@@ -226,13 +231,14 @@ class CloseConnection(InternalMessage):
 class ServerConnect(InternalMessage):
     """Sent to the networking thread to establish a server connection."""
 
-    __slots__ = ("addr", "username", "password", "interface_name", "interface_address", "listen_port",
-                 "portmapper")
+    __slots__ = ("server_hostname", "server_port", "username", "password", "interface_name", "interface_address",
+                 "listen_port", "portmapper")
     HIDDEN_FIELDS = {"username", "password"}
 
-    def __init__(self, addr=None, username=None, password=None, interface_name=None, interface_address=None,
-                 listen_port=None, portmapper=None):
-        self.addr = addr
+    def __init__(self, server_hostname=None, server_port=None, username=None, password=None, interface_name=None,
+                 interface_address=None, listen_port=None, portmapper=None):
+        self.server_hostname = server_hostname
+        self.server_port = server_port
         self.username = username
         self.password = password
         self.interface_name = interface_name
@@ -2239,10 +2245,14 @@ class PossibleParents(ServerMessage):
 
         for _ in range(num_candidates):
             username = self.unpack_string()
-            ip_address = self.unpack_ip()
-            port = self.unpack_uint32()
 
-            self.candidates[username] = ParentCandidate(username, ip_address, port)
+            self.candidates[username] = ParentCandidate(
+                username=username,
+                addr=Address(
+                    ip=self.unpack_ip(),
+                    port=self.unpack_uint32()
+                )
+            )
 
 
 class WishlistSearch(ServerMessage):
@@ -3344,15 +3354,14 @@ class PeerInit(PeerInitMessage):
 
 class PeerMessage(SlskMessage):
 
-    __slots__ = ("username", "sock", "ip_address", "port", "allowed_responses")
+    __slots__ = ("username", "sock", "addr", "allowed_responses")
     TYPE = MessageType.PEER
 
     def __init__(self, msg_content=None):
         SlskMessage.__init__(self, msg_content)
         self.username = None
         self.sock = None
-        self.ip_address = None
-        self.port = None
+        self.addr = None
         self.allowed_responses = set()
 
     def unpack_file_size(self):

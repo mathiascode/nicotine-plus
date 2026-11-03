@@ -31,6 +31,7 @@ from pynicotine.slskmessages import DOUBLE_UINT32_UNPACK
 from pynicotine.slskmessages import UINT32_UNPACK
 from pynicotine.slskmessages import AcceptChildren
 from pynicotine.slskmessages import AddAllowedResponse
+from pynicotine.slskmessages import Address
 from pynicotine.slskmessages import BranchLevel
 from pynicotine.slskmessages import BranchRoot
 from pynicotine.slskmessages import CantConnectToPeer
@@ -84,7 +85,7 @@ from pynicotine.utils import human_speed
 @dataclass(slots=True, eq=False)
 class Connection:
     sock: socket
-    addr: tuple[str, int]
+    addr: Address
     io_events: int
     recv_size: int = 51200
     is_established: bool = False
@@ -108,7 +109,7 @@ class PeerConnection(Connection):
 
 @dataclass(slots=True, eq=False)
 class UserAddress:
-    addr: tuple[str, int]
+    addr: Address
     last_update: float = field(default_factory=time.monotonic)
 
 
@@ -698,7 +699,7 @@ class NetworkThread(Thread):
                 msg.sock = sock
 
             if addr is not None:
-                msg.ip_address, msg.port = addr
+                msg.addr = addr
 
             if username is not None:
                 msg.username = username
@@ -830,9 +831,8 @@ class NetworkThread(Thread):
 
             if user_address is not None:
                 addr = user_address.addr
-                _ip_address, port = addr
 
-                if not port:
+                if not addr.port:
                     # Port 0 likely means the server hasn't received the user's port yet.
                     # Ask the server for a new address.
                     addr = None
@@ -1254,17 +1254,17 @@ class NetworkThread(Thread):
         self._manual_server_reconnect = False
         self._server_timeout_time = None
 
-        ip_address, port = msg.addr
-        log.add(_("Connecting to %(host)s:%(port)s"), {"host": ip_address, "port": port})
+        log.add(_("Connecting to %(host)s:%(port)s"), {"host": msg.server_hostname, "port": msg.server_port})
 
         self._init_server_conn(msg)
 
     def _init_server_conn(self, msg):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        addr = Address(msg.server_hostname, msg.server_port)
         io_events = selectors.EVENT_READ | selectors.EVENT_WRITE
         conn = ServerConnection(
-            sock=sock, addr=msg.addr, io_events=io_events, username=msg.username,
+            sock=sock, addr=addr, io_events=io_events, username=msg.username,
             password=msg.password
         )
 
@@ -1277,7 +1277,7 @@ class NetworkThread(Thread):
 
         try:
             self._bind_socket_interface(sock)
-            sock.connect_ex(msg.addr)
+            sock.connect_ex(addr)
 
         except OSError as error:
             self._connect_error(error, conn)
@@ -1305,7 +1305,9 @@ class NetworkThread(Thread):
         password = conn.password
         conn.username = conn.password = None
 
-        self._user_addresses[username] = UserAddress((self._local_ip_address, self._listen_port))
+        self._user_addresses[username] = UserAddress(
+            Address(self._local_ip_address, self._listen_port)
+        )
         self._server_address = conn.addr
         self._login_username = self._branch_root = username
         self._server_timeout_value = -1
@@ -1392,7 +1394,7 @@ class NetworkThread(Thread):
 
         elif isinstance(msg, ConnectToPeer):
             username = msg.username
-            addr = (msg.ip_address, msg.port)
+            addr = Address(msg.ip_address, msg.port)
             conn_type = msg.conn_type
             pierce_token = msg.token
 
@@ -1424,7 +1426,7 @@ class NetworkThread(Thread):
             if not msg.port:
                 log.add_conn("Server reported port 0 for user %s", username)
 
-            addr = (msg.ip_address, msg.port)
+            addr = Address(msg.ip_address, msg.port)
             user_offline = (msg.ip_address == "0.0.0.0")
 
             for init in pending_init_msgs:
@@ -1815,7 +1817,7 @@ class NetworkThread(Thread):
             io_events = selectors.EVENT_READ
 
             conn = self._conns[incoming_sock] = PeerConnection(
-                sock=incoming_sock, addr=incoming_addr, io_events=io_events
+                sock=incoming_sock, addr=Address(*incoming_addr), io_events=io_events
             )
             self._num_sockets += 1
 
@@ -1833,7 +1835,6 @@ class NetworkThread(Thread):
             self._pending_peer_conns[init] = (addr, pierce_token)
             return
 
-        _ip_address, port = addr
         self._pending_peer_conns.pop(init, None)
 
         if pierce_token is None:
@@ -1849,7 +1850,7 @@ class NetworkThread(Thread):
 
             self._connect_to_peer_indirect(init)
 
-        if port <= 0 or port > 65535:
+        if addr.port <= 0 or addr.port > 65535:
             log.add_conn("Skipping direct connection attempt of type %s to user %s "
                          "due to invalid address %s", (init.conn_type, init.target_username, addr))
             return
