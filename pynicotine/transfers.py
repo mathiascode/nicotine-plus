@@ -620,7 +620,7 @@ class Transfers:
 
         # Dump every transfer to the file individually to avoid large memory usage
         json_encoder = json.JSONEncoder(
-            check_circular=False, ensure_ascii=False, default=lambda attributes: attributes.as_dict()
+            check_circular=False, ensure_ascii=False, default=lambda attributes: attributes.serialize()
         )
         is_first_item = True
 
