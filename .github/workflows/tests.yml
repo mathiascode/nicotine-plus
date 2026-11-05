@@ -337,17 +337,17 @@ jobs:
           # Use a more reliable mirror
           sudo mport config set mirror_region uk
           sudo mport index
-          sudo mport install dejavu gettext gtk4 python311 py311-build py311-pygobject \
-            py311-setuptools py311-wheel || true
+          sudo mport install dejavu gettext gtk4 python313 py313-build py313-pygobject \
+            py313-setuptools py313-wheel || true
 
       - name: Integration and unit tests
-        run: python3.11 -m unittest -v
+        run: python3.13 -m unittest -v
 
       - name: Build
-        run: python3.11 -m build
+        run: python3.13 -m build
 
       - name: Build without isolation
-        run: python3.11 -m build --no-isolation
+        run: python3.13 -m build --no-isolation
 
   haiku:
     runs-on: ubuntu-26.04
