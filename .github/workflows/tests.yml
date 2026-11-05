@@ -257,6 +257,7 @@ jobs:
         with:
           operating_system: netbsd
           version: '11.0'
+          variant: microvm
           environment_variables: NICOTINE_NETWORK_TESTS
 
       - name: Install dependencies
