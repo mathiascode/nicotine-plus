@@ -579,6 +579,8 @@ class NetworkThread(Thread):
         conn_type = init.conn_type
         token = init.indirect_token
 
+        init.indirect_token = None
+
         log.add_conn("Indirect connect request of type %s to user %s with "
                      "token %s failed", (conn_type, username, token))
 
@@ -943,15 +945,22 @@ class NetworkThread(Thread):
 
         prev_init = self._username_init_msgs.pop(username + conn_type, None)
 
-        if prev_init is None or prev_init.sock is None:
+        if prev_init is None:
             return
 
-        log.add_conn("Discarding existing connection of type %s to user %s", (init.conn_type, username))
+        log.add_conn("Discarding existing connection of type %s to user %s", (conn_type, username))
 
+        sock = prev_init.sock
+        indirect_token = prev_init.indirect_token
         init.outgoing_msgs = prev_init.outgoing_msgs
+
+        prev_init.indirect_token = None
         prev_init.outgoing_msgs = []
 
-        self._close_connection(self._conns[prev_init.sock])
+        if sock is not None:
+            self._close_connection(self._conns[sock])
+
+        self._indirect_token_init_msgs.pop(indirect_token, None)
 
     @staticmethod
     def _close_socket(sock):
@@ -1670,6 +1679,8 @@ class NetworkThread(Thread):
             is_direct_conn_in_progress = (
                 previous_sock is not None and not self._conns[previous_sock].is_established
             )
+
+            init.indirect_token = None
 
             log.add_conn("Indirect connection to user %s with token %s established",
                          (init.target_username, pierce_token))
