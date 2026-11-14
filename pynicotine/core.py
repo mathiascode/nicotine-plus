@@ -286,9 +286,9 @@ class Core:
             addr=config.sections["server"]["server"],
             username=config.sections["server"]["login"],
             password=config.sections["server"]["passw"],
+            listen_port=self.cli_listen_port or config.sections["server"]["portrange"][0],
             interface_name=config.sections["server"]["interface"],
             interface_address=self.cli_interface_address,
-            listen_port=self.cli_listen_port or config.sections["server"]["portrange"][0],
             portmapper=self.portmapper
         ))
 

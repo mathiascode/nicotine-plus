@@ -40,7 +40,6 @@ from pynicotine.events import StopEventPropagation, events
 from pynicotine.external.tinytag import TinyTag, UnsupportedFormatError
 from pynicotine.logfacility import log
 from pynicotine.slskmessages import (
-    FileListMessage,
     FolderContentsRequest,
     FolderContentsResponse,
     GetUserStats,
@@ -49,7 +48,9 @@ from pynicotine.slskmessages import (
     SharedFileListRequest,
     SharedFileListResponse,
     SharedFoldersFiles,
-    UserStats
+    UserStats,
+    pack_file_info,
+    pack_uint32
 )
 from pynicotine.utils import (
     TRANSLATE_PUNCTUATION,
@@ -57,6 +58,9 @@ from pynicotine.utils import (
     encode_path,
     humanize
 )
+
+
+FileInfo = list[str, int, tuple[int, int, int, int], int]
 
 
 class FileTypes:
@@ -428,7 +432,7 @@ class Scanner:
             public_shares=public_streams, buddy_shares=buddy_streams, trusted_shares=trusted_streams,
             permission_level=permission_level
         )
-        compressed_shares.make_network_message()
+        compressed_shares.pack()
         compressed_shares.public_shares = compressed_shares.buddy_shares = compressed_shares.trusted_shares = None
 
         self.writer.send(compressed_shares)
@@ -739,10 +743,10 @@ class Scanner:
         """Pack all files and metadata in folder."""
 
         stream = bytearray()
-        stream += FileListMessage.pack_uint32(len(file_list))
+        stream += pack_uint32(len(file_list))
 
         for fileinfo in file_list:
-            stream += FileListMessage.pack_file_info(fileinfo)
+            stream += pack_file_info(fileinfo)
 
         return bytes(stream)
 
@@ -1398,20 +1402,23 @@ class Shares:
         username = msg.username
         folder_path = msg.folder_path
         permission_level, _reject_reason = self.check_user_permission(username, ip_address)
-        folder_data = None
+        folder_stream = None
 
         if permission_level != PermissionLevel.BANNED:
-            folder_data = self.share_dbs.get("public_streams", {}).get(folder_path)
+            folder_stream = self.share_dbs.get("public_streams", {}).get(folder_path)
 
-            if (folder_data is None
+            if (folder_stream is None
                     and (config.sections["transfers"]["reveal_buddy_shares"]
                          or permission_level in {PermissionLevel.BUDDY, PermissionLevel.TRUSTED})):
-                folder_data = self.share_dbs.get("buddy_streams", {}).get(folder_path)
+                folder_stream = self.share_dbs.get("buddy_streams", {}).get(folder_path)
 
-            if (folder_data is None
+            if (folder_stream is None
                     and (config.sections["transfers"]["reveal_trusted_shares"]
                          or permission_level == PermissionLevel.TRUSTED)):
-                folder_data = self.share_dbs.get("trusted_streams", {}).get(folder_path)
+                folder_stream = self.share_dbs.get("trusted_streams", {}).get(folder_path)
 
-        core.send_message_to_peer(
-            username, FolderContentsResponse(folder_path=folder_path, token=msg.token, shares=folder_data))
+        core.send_message_to_peer(username, FolderContentsResponse(
+            folder_path=folder_path,
+            token=msg.token,
+            folder_stream=folder_stream
+        ))

@@ -34,7 +34,6 @@ from pynicotine.gtkgui.widgets.theme import add_css_class
 from pynicotine.gtkgui.widgets.theme import get_file_type_icon_name
 from pynicotine.gtkgui.widgets.theme import remove_css_class
 from pynicotine.gtkgui.widgets.treeview import TreeView
-from pynicotine.slskmessages import FileListMessage
 from pynicotine.slskmessages import UserStatus
 from pynicotine.utils import human_size
 from pynicotine.utils import humanize
@@ -573,7 +572,7 @@ class UserBrowse:
 
     def shared_file_list(self, msg):
 
-        is_empty = (not msg.list and not msg.private_list)
+        is_empty = (not msg.public_folders and not msg.private_folders)
         self.local_permission_level = msg.permission_level
 
         self.rebuild_model()
@@ -766,7 +765,7 @@ class UserBrowse:
             size = file_data.size
             file_attributes = file_data.attributes
             h_size = human_size(size, config.sections["ui"]["file_size_unit"])
-            h_quality, bitrate, h_length, length = FileListMessage.parse_audio_quality_length(size, file_attributes)
+            h_quality, bitrate, h_length, length = file_attributes.parse_quality_length(size)
 
             self.file_list_view.add_row([
                 get_file_type_icon_name(basename),
@@ -1119,8 +1118,8 @@ class UserBrowse:
 
         # Always include bitrate in tooltip
         size = treeview.get_row_value(iterator, "size_data")
-        h_quality, _bitrate, _h_length, _length = FileListMessage.parse_audio_quality_length(
-            size, file_attributes, always_show_bitrate=True)
+        h_quality, _bitrate, _h_length, _length = file_attributes.parse_quality_length(
+            size, always_show_bitrate=True)
 
         return h_quality
 
