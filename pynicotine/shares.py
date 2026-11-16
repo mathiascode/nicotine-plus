@@ -18,6 +18,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from io import BytesIO
 from itertools import chain
 from mmap import ACCESS_READ, mmap
 from multiprocessing.connection import Connection
@@ -738,13 +739,13 @@ class Scanner:
     def get_folder_stream(file_list) -> bytes:
         """Pack all files and metadata in folder."""
 
-        stream = bytearray()
-        stream += FileListMessage.pack_uint32(len(file_list))
+        buffer = BytesIO()
+        buffer.write(FileListMessage.pack_uint32(len(file_list)))
 
         for fileinfo in file_list:
-            stream += FileListMessage.pack_file_info(fileinfo)
+            FileListMessage.pack_file_info(fileinfo, buffer)
 
-        return bytes(stream)
+        return buffer.getvalue()
 
 
 class Shares:

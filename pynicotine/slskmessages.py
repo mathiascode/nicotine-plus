@@ -16,6 +16,7 @@ except ImportError:
     from hashlib import md5
 
 from dataclasses import dataclass
+from io import BytesIO
 from operator import itemgetter
 from random import randint
 from socket import inet_aton, inet_ntoa, socket
@@ -504,62 +505,50 @@ class FileListMessage(SlskMessage):
     __slots__ = ()
 
     @classmethod
-    def pack_file_info(cls, fileinfo) -> bytearray:
+    def pack_file_info(cls, fileinfo, buffer):
 
-        msg = bytearray()
+        code = 1
         virtual_file_path, size, quality, duration = fileinfo
         bitrate = is_vbr = samplerate = bitdepth = None
 
         if quality is not None:
             bitrate, is_vbr, samplerate, bitdepth = quality
 
-        msg += cls.pack_uint8(1)
-        msg += cls.pack_string(virtual_file_path)
-        msg += cls.pack_uint64(size)
-        msg += cls.pack_uint32(0)  # empty ext
-
-        num_attrs = 0
-        msg_attrs = bytearray()
-
         is_lossless = bitdepth is not None
-
         if is_lossless:
-            if duration is not None:
-                msg_attrs += cls.pack_uint32(1)
-                msg_attrs += cls.pack_uint32(duration)
-                num_attrs += 1
-
-            if samplerate is not None:
-                msg_attrs += cls.pack_uint32(4)
-                msg_attrs += cls.pack_uint32(samplerate)
-                num_attrs += 1
-
-            if bitdepth is not None:
-                msg_attrs += cls.pack_uint32(5)
-                msg_attrs += cls.pack_uint32(bitdepth)
-                num_attrs += 1
+            num_attrs = (
+                (duration is not None) + (samplerate is not None) + (bitdepth is not None)
+            )
         else:
-            if bitrate is not None:
-                msg_attrs += cls.pack_uint32(0)
-                msg_attrs += cls.pack_uint32(bitrate)
-                num_attrs += 1
+            num_attrs = (
+                (bitrate is not None) + (duration is not None) + (bitrate is not None and is_vbr is not None)
+            )
 
-            if duration is not None:
-                msg_attrs += cls.pack_uint32(1)
-                msg_attrs += cls.pack_uint32(duration)
-                num_attrs += 1
+        buffer.write(cls.pack_uint8(code))
+        buffer.write(cls.pack_string(virtual_file_path))
+        buffer.write(cls.pack_uint64(size))
+        buffer.write(cls.pack_uint32(0))
+        buffer.write(cls.pack_uint32(num_attrs))
 
-            if bitrate is not None:
-                msg_attrs += cls.pack_uint32(2)
-                msg_attrs += cls.pack_uint32(is_vbr)
-                num_attrs += 1
+        if not is_lossless and bitrate is not None:
+            buffer.write(cls.pack_uint32(0))
+            buffer.write(cls.pack_uint32(bitrate))
 
-        msg += cls.pack_uint32(num_attrs)
+        if duration is not None:
+            buffer.write(cls.pack_uint32(1))
+            buffer.write(cls.pack_uint32(duration))
 
-        if msg_attrs:
-            msg += msg_attrs
+        if not is_lossless and bitrate is not None and is_vbr is not None:
+            buffer.write(cls.pack_uint32(2))
+            buffer.write(cls.pack_uint32(is_vbr))
 
-        return msg
+        if is_lossless and samplerate is not None:
+            buffer.write(cls.pack_uint32(4))
+            buffer.write(cls.pack_uint32(samplerate))
+
+        if is_lossless and bitdepth is not None:
+            buffer.write(cls.pack_uint32(5))
+            buffer.write(cls.pack_uint32(bitdepth))
 
     @classmethod
     def parse_audio_quality_length(cls, file_size: int, attributes, always_show_bitrate: bool = False):
@@ -710,18 +699,14 @@ class Login(ServerMessage):
         self.server_address = None
         self.is_supporter = None
 
-    def make_network_message(self) -> bytearray:
-
-        msg = bytearray()
-        checksum = md5((self.username + self.password).encode()).hexdigest()
-
-        msg += self.pack_string(self.username)
-        msg += self.pack_string(self.password)
-        msg += self.pack_uint32(self.major_version)
-        msg += self.pack_string(checksum)
-        msg += self.pack_uint32(self.minor_version)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.username),
+            self.pack_string(self.password),
+            self.pack_uint32(self.major_version),
+            self.pack_string(md5((self.username + self.password).encode()).hexdigest()),
+            self.pack_uint32(self.minor_version)
+        ))
 
     def parse_network_message(self) -> None:
         self.success = self.unpack_bool()
@@ -955,12 +940,11 @@ class SayChatroom(ServerMessage):
         self.mention_type = None
         self.mention_keyword = None
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.room_name)
-        msg += self.pack_string(self.message)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.room_name),
+            self.pack_string(self.message)
+        ))
 
     def parse_network_message(self) -> None:
         self.room_name = self.unpack_string()
@@ -1004,12 +988,11 @@ class JoinRoom(ServerMessage):
         self.users = []
         self.operators = []
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.room_name)
-        msg += self.pack_uint32(self.room_type)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.room_name),
+            self.pack_uint32(self.room_type)
+        ))
 
     def parse_network_message(self) -> None:
         self.room_name = self.unpack_string()
@@ -1124,13 +1107,12 @@ class ConnectToPeer(ServerMessage):
         self.obfuscation_type = None
         self.obfuscated_port = None
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.username)
-        msg += self.pack_string(self.conn_type)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_string(self.username),
+            self.pack_string(self.conn_type)
+        ))
 
     def parse_network_message(self) -> None:
         self.username = self.unpack_string()
@@ -1165,12 +1147,11 @@ class MessageUser(ServerMessage):
         self.mention_type = None
         self.mention_keyword = None
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.username)
-        msg += self.pack_string(self.message)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.username),
+            self.pack_string(self.message)
+        ))
 
     def parse_network_message(self) -> None:
         self.message_id = self.unpack_uint32()
@@ -1216,13 +1197,12 @@ class FileSearchRoom(ServerMessage):
         self.room_id = room_id
         self.search_term = search_term
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_uint32(self.room_id)
-        msg += self.pack_string(self.search_term)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_uint32(self.room_id),
+            self.pack_string(self.search_term)
+        ))
 
 
 class FileSearch(ServerMessage):
@@ -1247,12 +1227,11 @@ class FileSearch(ServerMessage):
         self.search_term = search_term
         self.search_username = None
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.search_term)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_string(self.search_term)
+        ))
 
     def parse_network_message(self) -> None:
         self.search_username = self.unpack_string()
@@ -1329,12 +1308,11 @@ class SendConnectToken(ServerMessage):
         self.username = username
         self.token = token
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.username)
-        msg += self.pack_uint32(self.token)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.username),
+            self.pack_uint32(self.token)
+        ))
 
     def parse_network_message(self) -> None:
         self.username = self.unpack_string()
@@ -1358,12 +1336,11 @@ class SendDownloadSpeed(ServerMessage):
         self.username = username
         self.speed = speed
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.username)
-        msg += self.pack_uint32(self.speed)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.username),
+            self.pack_uint32(self.speed)
+        ))
 
 
 class SharedFoldersFiles(ServerMessage):
@@ -1381,12 +1358,11 @@ class SharedFoldersFiles(ServerMessage):
         self.num_folders = num_folders
         self.num_files = num_files
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.num_folders)
-        msg += self.pack_uint32(self.num_files)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.num_folders),
+            self.pack_uint32(self.num_files)
+        ))
 
 
 class GetUserStats(ServerMessage):
@@ -1485,13 +1461,12 @@ class UserSearch(ServerMessage):
         self.token = token
         self.search_term = search_term
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.username)
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.search_term)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.username),
+            self.pack_uint32(self.token),
+            self.pack_string(self.search_term)
+        ))
 
 
 class SimilarRecommendations(ServerMessage):
@@ -1695,15 +1670,15 @@ class AdminCommand(ServerMessage):
         self.command = command
         self.command_args = command_args
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.command)
-        msg += self.pack_uint32(len(self.command_args))
+    def make_network_message(self) -> bytes:
+        buffer = BytesIO()
+        buffer.write(self.pack_string(self.command))
+        buffer.write(self.pack_uint32(len(self.command_args)))
 
         for arg in self.command_args:
-            msg += self.pack_string(arg)
+            buffer.write(self.pack_string(arg))
 
-        return msg
+        return buffer.getvalue()
 
 
 class PlaceInLineRequest(ServerMessage):
@@ -1720,12 +1695,11 @@ class PlaceInLineRequest(ServerMessage):
         self.token = token
         self.username = username
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.username)
-        msg += self.pack_uint32(self.token)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.username),
+            self.pack_uint32(self.token)
+        ))
 
     def parse_network_message(self) -> None:
         self.username = self.unpack_string()
@@ -1750,13 +1724,12 @@ class PlaceInLineResponse(ServerMessage):
         self.username = username
         self.place = place
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.username)
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_uint32(self.place)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.username),
+            self.pack_uint32(self.token),
+            self.pack_uint32(self.place)
+        ))
 
     def parse_network_message(self) -> None:
         self.username = self.unpack_string()
@@ -1875,16 +1848,15 @@ class ExactFileSearch(ServerMessage):
         self.unknown = unknown
         self.username = None
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.file_path)
-        msg += self.pack_string(self.folder_path)
-        msg += self.pack_uint64(self.file_size)
-        msg += self.pack_uint32(self.checksum)
-        msg += self.pack_uint8(self.unknown)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_string(self.file_path),
+            self.pack_string(self.folder_path),
+            self.pack_uint64(self.file_size),
+            self.pack_uint32(self.checksum),
+            self.pack_uint8(self.unknown)
+        ))
 
     def parse_network_message(self) -> None:
         self.username = self.unpack_string()
@@ -1955,14 +1927,13 @@ class TunneledMessage(ServerMessage):
         self.ip_address = None
         self.port = None
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.username)
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_uint32(self.code)
-        msg += self.pack_string(self.message)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.username),
+            self.pack_uint32(self.token),
+            self.pack_uint32(self.code),
+            self.pack_string(self.message)
+        ))
 
     def parse_network_message(self) -> None:
         self.username = self.unpack_string()
@@ -2290,12 +2261,11 @@ class WishlistSearch(ServerMessage):
         self.token = token
         self.search_term = search_term
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.search_term)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_string(self.search_term)
+        ))
 
 
 class WishlistInterval(ServerMessage):
@@ -2502,12 +2472,11 @@ class SetRoomTicker(ServerMessage):
         self.room_name = room_name
         self.content = content
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.room_name)
-        msg += self.pack_string(self.content)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.room_name),
+            self.pack_string(self.content)
+        ))
 
 
 class AddThingIHate(ServerMessage):
@@ -2565,13 +2534,12 @@ class RoomSearch(ServerMessage):
         self.token = token
         self.search_term = search_term
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.room_name)
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.search_term)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.room_name),
+            self.pack_uint32(self.token),
+            self.pack_string(self.search_term)
+        ))
 
 
 class SendUploadSpeed(ServerMessage):
@@ -2631,12 +2599,11 @@ class GivePrivileges(ServerMessage):
         self.username = username
         self.days = days
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.username)
-        msg += self.pack_uint32(self.days)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.username),
+            self.pack_uint32(self.days)
+        ))
 
 
 class NotifyPrivileges(ServerMessage):
@@ -2653,12 +2620,11 @@ class NotifyPrivileges(ServerMessage):
         self.token = token
         self.username = username
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.username)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_string(self.username)
+        ))
 
     def parse_network_message(self) -> None:
         self.token = self.unpack_uint32()
@@ -2805,12 +2771,11 @@ class AddRoomMember(ServerMessage):
         self.room_name = room_name
         self.username = username
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.room_name)
-        msg += self.pack_string(self.username)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.room_name),
+            self.pack_string(self.username)
+        ))
 
     def parse_network_message(self) -> None:
         self.room_name = self.unpack_string()
@@ -2836,12 +2801,11 @@ class RemoveRoomMember(ServerMessage):
         self.room_name = room_name
         self.username = username
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.room_name)
-        msg += self.pack_string(self.username)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.room_name),
+            self.pack_string(self.username)
+        ))
 
     def parse_network_message(self) -> None:
         self.room_name = self.unpack_string()
@@ -3002,12 +2966,11 @@ class AddRoomOperator(ServerMessage):
         self.room_name = room_name
         self.username = username
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.room_name)
-        msg += self.pack_string(self.username)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.room_name),
+            self.pack_string(self.username)
+        ))
 
     def parse_network_message(self) -> None:
         self.room_name = self.unpack_string()
@@ -3033,12 +2996,11 @@ class RemoveRoomOperator(ServerMessage):
         self.room_name = room_name
         self.username = username
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.room_name)
-        msg += self.pack_string(self.username)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.room_name),
+            self.pack_string(self.username)
+        ))
 
     def parse_network_message(self) -> None:
         self.room_name = self.unpack_string()
@@ -3124,15 +3086,15 @@ class MessageUsers(ServerMessage):
         self.usernames = usernames
         self.message = message
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(len(self.usernames))
+    def make_network_message(self) -> bytes:
+        buffer = BytesIO()
+        buffer.write(self.pack_uint32(len(self.usernames)))
 
         for username in self.usernames:
-            msg += self.pack_string(username)
+            buffer.write(self.pack_string(username))
 
-        msg += self.pack_string(self.message)
-        return msg
+        buffer.write(self.pack_string(self.message))
+        return buffer.getvalue()
 
 
 class JoinGlobalRoom(ServerMessage):
@@ -3272,12 +3234,11 @@ class CantConnectToPeer(ServerMessage):
         self.token = token
         self.username = username
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.username)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_string(self.username)
+        ))
 
     def parse_network_message(self) -> None:
         self.token = self.unpack_uint32()
@@ -3360,13 +3321,12 @@ class PeerInit(PeerInitMessage):
         self.indirect_request_time = None
         self.outgoing_msgs = []
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.init_username)
-        msg += self.pack_string(self.conn_type)
-        msg += self.pack_uint32(0)  # Empty token
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.init_username),
+            self.pack_string(self.conn_type),
+            self.pack_uint32(0)  # Empty token
+        ))
 
     def parse_network_message(self) -> None:
         self.target_username = self.unpack_string()
@@ -3477,54 +3437,48 @@ class SharedFileListResponse(PeerMessage):
         self.unknown = 0
         self.cached_response = None
 
-    def _make_shares_list(self, share_groups):
-
-        msg_list = bytearray()
-        num_folders = 0
-
-        for shares in share_groups:
-            num_folders += len(shares)
-
-        msg_list += self.pack_uint32(num_folders)
-
-        for shares in share_groups:
-            for key in shares:
-                msg_list += self.pack_string(key)
-                msg_list += shares[key]
-
-        return msg_list
-
     def make_network_message(self) -> bytes:
         if self.cached_response is not None:
             return self.cached_response
 
         from pynicotine.shares import PermissionLevel
 
-        msg = bytearray()
-        share_groups = []
-        private_share_groups = []
+        public_share_groups = []
 
         if self.permission_level and self.public_shares:
-            share_groups.append(self.public_shares)
+            public_share_groups.append(self.public_shares)
 
         if self.permission_level in {PermissionLevel.BUDDY, PermissionLevel.TRUSTED} and self.buddy_shares:
-            share_groups.append(self.buddy_shares)
+            public_share_groups.append(self.buddy_shares)
 
         if self.permission_level == PermissionLevel.TRUSTED and self.trusted_shares:
-            share_groups.append(self.trusted_shares)
+            public_share_groups.append(self.trusted_shares)
 
-        msg += self._make_shares_list(share_groups)
+        private_share_groups = [
+            shares for shares in (self.buddy_shares, self.trusted_shares)
+            if shares and shares not in public_share_groups
+        ]
 
-        # Unknown purpose, but official clients always send a value of 0
-        msg += self.pack_uint32(self.unknown)
+        num_public_folders = sum(len(shares) for shares in public_share_groups)
+        num_private_folders = sum(len(shares) for shares in private_share_groups)
 
-        for shares in (self.buddy_shares, self.trusted_shares):
-            if shares and shares not in share_groups:
-                private_share_groups.append(shares)
+        buffer = BytesIO()
+        buffer.write(self.pack_uint32(num_public_folders))
 
-        msg += self._make_shares_list(share_groups=private_share_groups)
+        for shares in public_share_groups:
+            for folder_path in shares:
+                buffer.write(self.pack_string(folder_path))
+                buffer.write(shares[folder_path])
 
-        self.cached_response = zlib.compress(msg, ZLIB_COMPRESSION_LEVEL)
+        buffer.write(self.pack_uint32(self.unknown or 0))
+        buffer.write(self.pack_uint32(num_private_folders))
+
+        for shares in private_share_groups:
+            for folder_path in shares:
+                buffer.write(self.pack_string(folder_path))
+                buffer.write(shares[folder_path])
+
+        self.cached_response = zlib.compress(buffer.getvalue(), ZLIB_COMPRESSION_LEVEL)
         return self.cached_response
 
     def _parse_result_list(self):
@@ -3603,12 +3557,11 @@ class FileSearchRequest(PeerMessage):
         self.token = token
         self.search_term = search_term
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.search_term)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_string(self.search_term)
+        ))
 
     def parse_network_message(self) -> None:
         self.token = self.unpack_uint32()
@@ -3644,24 +3597,24 @@ class FileSearchResponse(PeerMessage):
         self.private_files = None
 
     def make_network_message(self) -> bytes:
-        msg = bytearray()
-        msg += self.pack_string(self.search_username)
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_uint32(len(self.public_shares))
+        buffer = BytesIO()
+        buffer.write(self.pack_string(self.search_username))
+        buffer.write(self.pack_uint32(self.token))
+        buffer.write(self.pack_uint32(len(self.public_shares)))
 
         for fileinfo in self.public_shares:
-            msg += FileListMessage.pack_file_info(fileinfo)
+            FileListMessage.pack_file_info(fileinfo, buffer)
 
-        msg += self.pack_bool(self.slot_available)
-        msg += self.pack_uint32(self.upload_speed)
-        msg += self.pack_uint32(self.num_queued_uploads)
-        msg += self.pack_uint32(self.unknown)
-        msg += self.pack_uint32(len(self.private_shares))
+        buffer.write(self.pack_bool(self.slot_available))
+        buffer.write(self.pack_uint32(self.upload_speed))
+        buffer.write(self.pack_uint32(self.num_queued_uploads))
+        buffer.write(self.pack_uint32(self.unknown or 0))
+        buffer.write(self.pack_uint32(len(self.private_shares)))
 
         for fileinfo in self.private_shares:
-            msg += FileListMessage.pack_file_info(fileinfo)
+            FileListMessage.pack_file_info(fileinfo, buffer)
 
-        return zlib.compress(msg, ZLIB_COMPRESSION_LEVEL)
+        return zlib.compress(buffer.getvalue(), ZLIB_COMPRESSION_LEVEL)
 
     def _parse_result_list(self):
         num_files = self.unpack_uint32()
@@ -3767,23 +3720,22 @@ class UserInfoResponse(PeerMessage):
         self.upload_permission = upload_permission
         self.has_picture = None
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.description)
+    def make_network_message(self) -> bytes:
+        buffer = BytesIO()
+        has_picture = self.picture is not None
+        buffer.write(self.pack_string(self.description))
+        buffer.write(self.pack_bool(has_picture))
 
-        if self.picture is not None:
-            msg += self.pack_bool(True)
-            msg += self.pack_uint32(len(self.picture))
-            msg += self.picture
-        else:
-            msg += self.pack_bool(False)
+        if has_picture:
+            buffer += self.pack_uint32(len(self.picture))
+            buffer += self.picture
 
-        msg += self.pack_uint32(self.num_upload_slots)
-        msg += self.pack_uint32(self.num_queued_uploads)
-        msg += self.pack_bool(self.slot_available)
-        msg += self.pack_uint32(self.upload_permission)
+        buffer.write(self.pack_uint32(self.num_upload_slots))
+        buffer.write(self.pack_uint32(self.num_queued_uploads))
+        buffer.write(self.pack_bool(self.slot_available))
+        buffer.write(self.pack_uint32(self.upload_permission))
 
-        return msg
+        return buffer.getvalue()
 
     def parse_network_message(self) -> None:
         self.description = self.unpack_string()
@@ -3818,12 +3770,11 @@ class FolderContentsRequest(PeerMessage):
         self.token = token
         self.legacy_client = legacy_client
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.folder_path, is_legacy=self.legacy_client)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_string(self.folder_path, is_legacy=self.legacy_client)
+        ))
 
     def parse_network_message(self) -> None:
         self.token = self.unpack_uint32()
@@ -3850,21 +3801,21 @@ class FolderContentsResponse(PeerMessage):
         self.folders = None
 
     def make_network_message(self) -> bytes:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.folder_path)
+        buffer = BytesIO()
+        buffer.write(self.pack_uint32(self.token))
+        buffer.write(self.pack_string(self.folder_path))
 
         if self.stream is not None:
-            msg += self.pack_uint32(1)
-            msg += self.pack_string(self.folder_path)
+            buffer.write(self.pack_uint32(1))
+            buffer.write(self.pack_string(self.folder_path))
 
             # We already saved the folder contents as a bytearray when scanning our shares
-            msg += self.stream
+            buffer.write(self.stream)
         else:
             # No folder contents
-            msg += self.pack_uint32(0)
+            buffer.write(self.pack_uint32(0))
 
-        return zlib.compress(msg, ZLIB_COMPRESSION_LEVEL)
+        return zlib.compress(buffer.getvalue(), ZLIB_COMPRESSION_LEVEL)
 
     def parse_network_message(self) -> None:
         decompressor = zlib.decompressobj()
@@ -3951,16 +3902,23 @@ class TransferRequest(PeerMessage):
         self.file_path = file_path
         self.file_size = file_size
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.direction)
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_string(self.file_path)
+    def make_network_message(self) -> bytes:
+        if self.direction == TransferDirection.DOWNLOAD:
+            return b"".join((
+                self.pack_uint32(self.direction),
+                self.pack_uint32(self.token),
+                self.pack_string(self.file_path)
+            ))
 
-        if self.direction == TransferDirection.UPLOAD:
-            msg += self.pack_uint64(self.file_size)
+        if self.file_size is None:
+            raise TypeError("'file_size' argument is required")
 
-        return msg
+        return b"".join((
+            self.pack_uint32(self.direction),
+            self.pack_uint32(self.token),
+            self.pack_string(self.file_path),
+            self.pack_uint64(self.file_size)
+        ))
 
     def parse_network_message(self) -> None:
         self.direction = self.unpack_uint32()
@@ -3996,18 +3954,22 @@ class TransferResponse(PeerMessage):
         self.reason = reason
         self.file_size = file_size
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_uint32(self.token)
-        msg += self.pack_bool(self.allowed)
+    def make_network_message(self) -> bytes:
+        if self.allowed:
+            return b"".join((
+                self.pack_uint32(self.token),
+                self.pack_bool(self.allowed),
+                self.pack_uint64(self.file_size) if self.file_size is not None else b""
+            ))
 
-        if not self.allowed:
-            msg += self.pack_string(self.reason)
+        if self.reason is None:
+            raise TypeError("'reason' argument is required")
 
-        elif self.file_size is not None:
-            msg += self.pack_uint64(self.file_size)
-
-        return msg
+        return b"".join((
+            self.pack_uint32(self.token),
+            self.pack_bool(self.allowed),
+            self.pack_string(self.reason)
+        ))
 
     def parse_network_message(self) -> None:
         self.token = self.unpack_uint32()
@@ -4080,12 +4042,11 @@ class PlaceInQueueResponse(PeerMessage):
         self.file_path = file_path
         self.place = place
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.file_path)
-        msg += self.pack_uint32(self.place)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.file_path),
+            self.pack_uint32(self.place)
+        ))
 
     def parse_network_message(self) -> None:
         self.file_path = self.unpack_string()
@@ -4133,12 +4094,11 @@ class UploadDenied(PeerMessage):
         self.file_path = file_path
         self.reason = reason
 
-    def make_network_message(self) -> bytearray:
-        msg = bytearray()
-        msg += self.pack_string(self.file_path)
-        msg += self.pack_string(self.reason)
-
-        return msg
+    def make_network_message(self) -> bytes:
+        return b"".join((
+            self.pack_string(self.file_path),
+            self.pack_string(self.reason)
+        ))
 
     def parse_network_message(self) -> None:
         self.file_path = self.unpack_string()
