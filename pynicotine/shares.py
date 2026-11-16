@@ -742,13 +742,13 @@ class Scanner:
     def get_folder_stream(file_list) -> bytes:
         """Pack all files and metadata in folder."""
 
-        stream = bytearray()
-        stream += pack_uint32(len(file_list))
-
-        for fileinfo in file_list:
-            stream += pack_file_info(fileinfo)
-
-        return bytes(stream)
+        return b"".join((
+            pack_uint32(len(file_list)),
+            *(
+                pack_file_info(fileinfo)
+                for fileinfo in file_list
+            )
+        ))
 
 
 class Shares:
