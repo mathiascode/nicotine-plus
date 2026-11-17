@@ -79,23 +79,52 @@ class UserBrowse:
         for username in self.users:
             core.users.watch_user(username, context="userbrowse")  # Get notified of user status
 
-    def send_upload_attempt_notification(self, username: str) -> None:
-        """Send notification to user when attempting to initiate upload from
-        our end."""
-
-        core.send_message_to_peer(username, UploadQueueNotification())
-
-    def _show_user(
+    def browse_user(
         self, username: str, path: str | None = None, new_request: bool = False, switch_page: bool = True
     ) -> None:
+        """Browse a user's shares."""
 
-        if username not in self.users:
-            self.users[username] = BrowsedUser(username)
+        if not username:
+            return
 
-        events.emit(
-            "user-browse-show-user", username, path=path, new_request=new_request,
-            switch_page=switch_page
-        )
+        local_username = core.users.login_username or config.sections["server"]["login"]
+
+        if username == local_username:
+            self.browse_local_shares(path, new_request=new_request, switch_page=switch_page)
+            return
+
+        new_request = self._show_user(
+            local_username, path=path, new_request=new_request, switch_page=switch_page)
+
+        if new_request:
+            self.request_user_shares(username)
+
+    def browse_local_shares(
+        self, path: str | None = None, permission_level: PermissionLevel | None = None,
+        new_request: bool = False, switch_page: bool = True
+    ) -> None:
+        """Browse your own shares."""
+
+        local_username = core.users.login_username or config.sections["server"]["login"]
+
+        if not local_username:
+            core.setup()
+            return
+
+        new_request = self._show_user(
+            local_username, path=path, new_request=new_request, switch_page=switch_page)
+
+        if not new_request:
+            return
+
+        if permission_level is None:
+            # Check our own permission level, and show relevant shares for it
+            permission_level, _reason = core.shares.check_user_permission(local_username)
+
+        msg = core.shares.compressed_shares[permission_level]
+        msg.username = local_username
+
+        Thread(target=self._parse_local_shares, args=(msg,), name="LocalShareParser").start()
 
     def remove_user(self, username: str) -> None:
 
@@ -111,46 +140,6 @@ class UserBrowse:
         for username in self.users.copy():
             self.remove_user(username)
 
-    def _parse_local_shares(self, username: str, msg: SharedFileListResponse) -> None:
-        """Parse a local shares list and show it in the UI."""
-
-        msg.username = username
-
-        try:
-            msg.parse_local_message()
-        finally:
-            msg.finish_parsing()
-
-        events.emit_main_thread("shared-file-list-response", msg)
-
-    def browse_local_shares(
-        self, path: str | None = None, permission_level: PermissionLevel | None = None,
-        new_request: bool = False, switch_page: bool = True
-    ) -> None:
-        """Browse your own shares."""
-
-        username = core.users.login_username or config.sections["server"]["login"]
-
-        if not username:
-            core.setup()
-            return
-
-        if username not in self.users:
-            new_request = True
-
-        if new_request:
-            if not permission_level:
-                # Check our own permission level, and show relevant shares for it
-                current_permission_level, _reason = core.shares.check_user_permission(username)
-            else:
-                current_permission_level = permission_level
-
-            msg = core.shares.compressed_shares.get(current_permission_level)
-            Thread(target=self._parse_local_shares, args=(username, msg), name="LocalShareParser").start()
-
-        self._show_user(username, path=path, new_request=new_request, switch_page=switch_page)
-        core.users.watch_user(username, context="userbrowse")
-
     def request_user_shares(self, username: str) -> None:
 
         if core.users.login_status == UserStatus.OFFLINE:
@@ -159,31 +148,6 @@ class UserBrowse:
 
         core.send_message_to_network_thread(AddAllowedResponse(SharedFileListResponse, username))
         core.send_message_to_peer(username, SharedFileListRequest())
-
-    def browse_user(self, username: str, path=None, new_request=False, switch_page=True) -> None:
-        """Browse a user's shares."""
-
-        if not username:
-            return
-
-        browsed_user = self.users.get(username)
-        local_username = core.users.login_username or config.sections["server"]["login"]
-
-        if browsed_user is None:
-            new_request = True
-
-        elif new_request:
-            browsed_user.clear()
-
-        if username == local_username:
-            self.browse_local_shares(path, new_request=new_request, switch_page=switch_page)
-            return
-
-        self._show_user(username, path=path, new_request=new_request, switch_page=switch_page)
-        core.users.watch_user(username, context="userbrowse")
-
-        if new_request:
-            self.request_user_shares(username)
 
     def create_user_shares_folder(self) -> str | None:
 
@@ -200,19 +164,6 @@ class UserBrowse:
             return None
 
         return shares_folder
-
-    def iter_matching_folders(self, requested_folder_path: str, browsed_user: BrowsedUser, recurse: bool = False):
-
-        for folders in (browsed_user.public_folders, browsed_user.private_folders):
-            for folder_path, files in folders.items():
-                if (requested_folder_path != folder_path
-                        and not (recurse and folder_path.startswith(f"{requested_folder_path}\\"))):
-                    continue
-
-                yield folder_path, files
-
-                if not recurse:
-                    return
 
     def load_shares_list_from_disk(self, file_path: str) -> None:
 
@@ -362,6 +313,19 @@ class UserBrowse:
         except Exception as error:
             log.add(_("Cannot save shares for user %(user)s: %(error)s"), {"user": username, "error": error})
 
+    def iter_matching_folders(self, requested_folder_path: str, browsed_user: BrowsedUser, recurse: bool = False):
+
+        for folders in (browsed_user.public_folders, browsed_user.private_folders):
+            for folder_path, files in folders.items():
+                if (requested_folder_path != folder_path
+                        and not (recurse and folder_path.startswith(f"{requested_folder_path}\\"))):
+                    continue
+
+                yield folder_path, files
+
+                if not recurse:
+                    return
+
     def download_file(
         self, username: str, folder_path: str, file_data, download_folder_path: str | None = None
     ) -> None:
@@ -430,6 +394,12 @@ class UserBrowse:
             for file_data in files:
                 core.uploads.enqueue_upload(username, virtual_path="\\".join([folder_path, file_data.path]))
 
+    def send_upload_attempt_notification(self, username: str) -> None:
+        """Send notification to user when attempting to initiate upload from
+        our end."""
+
+        core.send_message_to_peer(username, UploadQueueNotification())
+
     def show_user_statistics(self, username: str) -> None:
 
         browsed_user = self.users.get(username)
@@ -464,6 +434,35 @@ class UserBrowse:
         file_path = file_path.replace("/", "\\")
 
         self.browse_user(username, path=file_path)
+
+    def _show_user(
+        self, username: str, path: str | None =None, new_request: bool = False, switch_page: bool = True
+    ) -> bool:
+
+        browsed_user = self.users.get(username)
+
+        if browsed_user is None:
+            self.users[username] = BrowsedUser(username)
+            new_request = True
+
+        elif new_request:
+            browsed_user.clear()
+
+        events.emit(
+            "user-browse-show-user", username, path=path, new_request=new_request,
+            switch_page=switch_page
+        )
+        core.users.watch_user(username, context="userbrowse")
+        return new_request
+
+    def _parse_local_shares(self, msg: SharedFileListResponse) -> None:
+
+        try:
+            msg.parse_local_message()
+        finally:
+            msg.finish_parsing()
+
+        events.emit_main_thread("shared-file-list-response", msg)
 
     def _peer_connection_error(self, username: str, conn_type: ConnectionType, msgs, is_offline: bool = False) -> None:
 
