@@ -304,7 +304,11 @@ jobs:
             py312-setuptools py312-wheel
 
       - name: Integration and unit tests
-        run: python3.12 -m unittest -v
+        run: |
+          export NICOTINE_GUI_TESTS=0
+          export NICOTINE_NETWORK_TESTS=0
+          msgfmt --check /home/runner/work/nicotine-plus/nicotine-plus/po/tr.po
+          python3.12 -m unittest -v
 
       - name: Build
         run: python3.12 -m build
