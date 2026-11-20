@@ -350,13 +350,18 @@ jobs:
         run: |
           sudo pkgin -y update
           sudo pkgin -y upgrade
-          sudo pkgin -y install gettext-tools python314 py314-build py314-gobject3 \
+          sudo pkgin -y install gettext-tools gtk3+ labwc python314 py314-build py314-gobject3 \
             py314-setuptools
 
       - name: Integration and unit tests
         run: |
           PATH=/usr/pkg/sbin:/usr/pkg/bin:$PATH
-          export NICOTINE_GUI_TESTS=0
+          export WLR_BACKENDS=headless
+          export XDG_RUNTIME_DIR=/tmp
+          export DBUS_SESSION_BUS_ADDRESS=
+          export GTK_A11Y=none
+          export GDK_BACKEND=wayland
+          labwc > /dev/null 2>&1 &
           python3.14 -m unittest -v
 
       - name: Build
