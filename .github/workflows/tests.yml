@@ -350,13 +350,15 @@ jobs:
         run: |
           sudo pkgin -y update
           sudo pkgin -y upgrade
-          sudo pkgin -y install gettext-tools python314 py314-build py314-gobject3 \
+          sudo pkgin -y install gettext-tools gtk4 python314 py314-build py314-gobject3 \
             py314-setuptools
 
       - name: Integration and unit tests
         run: |
-          PATH=/usr/pkg/sbin:/usr/pkg/bin:$PATH
-          export NICOTINE_GUI_TESTS=0
+          PATH=/usr/pkg/sbin:/usr/pkg/bin:/usr/X11R7/bin:$PATH
+          export GTK_A11Y=none
+          export DISPLAY=:99
+          Xvfb :99 > /dev/null 2>&1 &
           python3.14 -m unittest -v
 
       - name: Build
