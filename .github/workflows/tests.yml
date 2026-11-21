@@ -271,18 +271,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo pkg upgrade -y
-          sudo pkg install -y cage dejavu gettext gtk4 py312-build py312-pygobject \
-            py312-setuptools py312-wheel
+          sudo pkg install -y gettext gtk4 py312-build py312-pygobject \
+            py312-setuptools py312-wheel xorg-vfbserver
 
       - name: Integration and unit tests
         run: |
-          export WLR_BACKENDS=headless
-          export XDG_RUNTIME_DIR=/tmp
-          export DBUS_SESSION_BUS_ADDRESS=
           export GTK_A11Y=none
-          export GDK_BACKEND=wayland
-
-          cage python3.12 -m unittest -v
+          export DISPLAY=:99
+          Xvfb :99 > /dev/null 2>&1 &
+          python3.12 -m unittest -v
 
       - name: Build
         run: python3.12 -m build
@@ -393,7 +390,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo pkg upgrade -y
-          sudo pkg install -y dejavu gettext gtk4 py312-build py312-pygobject \
+          sudo pkg install -y gettext gtk4 py312-build py312-pygobject \
             py312-setuptools py312-wheel xorg-vfbserver
 
       - name: Integration and unit tests
