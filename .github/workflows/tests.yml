@@ -484,6 +484,52 @@ jobs:
       - name: Build without isolation
         run: python3.14 -m build --no-isolation
 
+  openindiana:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: cpa.sh {0}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up OpenIndiana
+        uses: cross-platform-actions/action@7037457d8fb8a439e85b4a6da7b4b44566523be0
+        with:
+          operating_system: openindiana
+          version: '2026.10.30'
+          environment_variables: NICOTINE_NETWORK_TESTS
+
+      - name: Install dependencies
+        run: |
+          sudo pkg install developer/build/ninja developer/build/pkg-config developer/clang-23 \
+            library/desktop/gobject/gobject-introspection library/desktop/gtk4 library/python/build-314 \
+            library/python/setuptools-314 library/python/wheel-314 system/font/truetype/roboto \
+            text/gnu-gettext x11/header/xproto x11/server/xvfb
+          sudo python3.14 -m ensurepip
+          sudo python3.14 -m pip install PyGObject
+
+      - name: Integration and unit tests
+        run: |
+          PATH=/usr/gnu/bin:$PATH
+          export GTK_A11Y=none
+          export DISPLAY=:99
+          Xvfb :99 > /dev/null 2>&1 &
+          python3.14 -m unittest -v
+
+      - name: Build
+        run: |
+          PATH=/usr/gnu/bin:$PATH
+          python3.14 -m build
+
+      - name: Build without isolation
+        run: |
+          PATH=/usr/gnu/bin:$PATH
+          python3.14 -m build --no-isolation
+
   omnios:
     runs-on: ubuntu-26.04
     timeout-minutes: 15
